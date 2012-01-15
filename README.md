@@ -39,7 +39,7 @@ print ls("-l")
 ```
 
 Notice that these aren't Python functions, **these are running the binary
-commands on your system by resolving your PATH,** much like Bash does.
+commands** on your system by resolving your PATH, much like Bash does.
 
 ```python
 longest_line = wc(__file__, "-L")
