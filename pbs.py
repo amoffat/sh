@@ -29,14 +29,13 @@ import traceback
 import os
 import re
 import logging
-
-
+import socket
+from glob import glob
 
 
 
 
 class ErrorReturnCode(Exception): pass
-class CommandException(Exception): pass
 class CommandNotFound(Exception): pass
 
 rc_exc_regex = re.compile("ErrorReturnCode_(\d+)")
@@ -54,23 +53,41 @@ def get_rc_exc(rc):
 
 
 
+def which(program):
+    def is_exe(fpath):
+        return os.path.exists(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
 
 class Command(object):
-    def __init__(self, name):
-        self.path = Environment.which(name)
-        if not self.path:
+    @classmethod
+    def create(cls, program):
+        path = which(program)
+        if not path:
             # our actual command might have a dash in it, but we can't call
             # that from python (we have to use underscores), so we'll check
             # if a dash version of our underscore command exists and use that
             # if it does
-            if "_" in name:
-                name = name.replace("_", "-") 
-                self.path = Environment.which(name)
-            if not self.path:
-                raise CommandNotFound, name
+            if "_" in program: path = which(program.replace("_", "-"))        
+            if not path: return None
             
-        self.name = name
-        self.log = logging.getLogger(str(self.path))
+        return cls(path)
+    
+    def __init__(self, path):            
+        self.path = path
+        self.log = logging.getLogger(str(path))
+        
         
         self.process = None
         self._stdout = None
@@ -86,17 +103,22 @@ class Command(object):
         
     @property
     def stdout(self):
-        if self.call_args["bg"]:
-            self.process.wait()
-            return self.process.stdout.read()
-        else: return self._stdout
+        if self.call_args["bg"]: self.wait()
+        return self._stdout
     
     @property
     def stderr(self):
-        if self.call_args["bg"]:
-            self.process.wait()
-            return self.process.stderr.read()
-        else: return self._stderr
+        if self.call_args["bg"]: self.wait()
+        return self._stderr
+        
+        
+    def wait(self):
+        if self.process.returncode is not None: return
+        self._stdout, self._stderr = self.process.communicate()
+        rc = self.process.wait()
+
+        if self.stderr: self.log.error(self.stderr)
+        if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
     
         
     def __str__(self):
@@ -111,7 +133,7 @@ class Command(object):
         kwargs = kwargs.copy()
         args = list(args)
         stdin = None
-        cmd = [self.name]
+        cmd = [self.path]
         
         # pull out the pbs-specific arguments (arguments that are not to be
         # passed to the commands
@@ -123,13 +145,27 @@ class Command(object):
                 del kwargs[key]
                 
         # check if we're piping via composition
+        stdin = subp.PIPE
+        actual_stdin = None
         if args:
             first_arg = args.pop(0)
-            if isinstance(first_arg, Command): stdin = first_arg.stdout
+            if isinstance(first_arg, Command):
+                # it makes sense that if the input pipe of a command is running
+                # in the background, then this command should run in the
+                # background as well
+                if first_arg.call_args["bg"]:
+                    self.call_args["bg"] = True
+                    stdin = first_arg.process.stdout
+                else:
+                    actual_stdin = first_arg.stdout
+                     
             else: args.insert(0, first_arg)
         
         # aggregate the position arguments
-        cmd.extend([str(a) for a in args])
+        for arg in args:
+            if isinstance(arg, (list, tuple)): cmd.extend([str(a) for a in arg])
+            else: cmd.append(str(arg))
+
 
         # aggregate the keyword arguments
         for k,v in kwargs.iteritems():
@@ -145,13 +181,12 @@ class Command(object):
         
         
         self.process = subp.Popen(cmd, shell=False, env=os.environ,
-            stdin=subp.PIPE, stdout=subp.PIPE, stderr=subp.PIPE)
-    
-        if self.call_args["bg"]:
-            return self.process
-        else:
-            self._stdout, self._stderr = self.process.communicate(stdin)
-            rc = self.process.wait()
+            stdin=stdin, stdout=subp.PIPE, stderr=subp.PIPE)
+
+        if self.call_args["bg"]: return self
+        
+        self._stdout, self._stderr = self.process.communicate(actual_stdin)
+        rc = self.process.wait()
 
         if self.stderr: self.log.error(self.stderr)
         if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
@@ -159,12 +194,17 @@ class Command(object):
 
 
 
+
+
+
 class Environment(dict):
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
         
+        self["CommandNotFound"] = CommandNotFound
         self["ErrorReturnCode"] = ErrorReturnCode
-        self["argv"] = sys.argv
+        self["glob"] = glob
+        self["argv"] = sys.argv[1:]
         for i, arg in enumerate(sys.argv):
             self["ARG%d" % i] = arg
         
@@ -198,10 +238,13 @@ class Environment(dict):
         try: return os.environ[k]
         except KeyError: pass
         
-        # it must be a command then
+        # is it a custom builtin?
         builtin = getattr(self, "b_"+k, None)
         if builtin: return builtin
-        return Command(k)
+        
+        # it must be a command then
+        return Command.create(k)
+    
     
     def b_echo(self, *args, **kwargs):
         out = Command("echo")(*args, **kwargs)
@@ -212,26 +255,7 @@ class Environment(dict):
         os.chdir(path)
         
     def b_which(self, program):
-        return Command(Environment.which(program))
-        
-    @staticmethod
-    def which(program):
-        def is_exe(fpath):
-            return os.path.exists(fpath) and os.access(fpath, os.X_OK)
-    
-        fpath, fname = os.path.split(program)
-        if fpath:
-            if is_exe(program):
-                return program
-        else:
-            for path in os.environ["PATH"].split(os.pathsep):
-                exe_file = os.path.join(path, program)
-                if is_exe(exe_file):
-                    return exe_file
-    
-        return None
-
-
+        return Command.create(program)
 
 
 frame, script, line, module, code, index = inspect.stack()[1]
