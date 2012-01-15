@@ -13,6 +13,9 @@ you the good features of Bash (easy command calling, easy piping) with the
 power and flexibility of Python.  The resulting code is a normal Python script
 that you can use.
 
+
+
+
 # Integrating
 
 ```python
@@ -20,6 +23,9 @@ import pbs
 ```
 
 **That's it.**
+
+
+
 
 # Examples
 
@@ -32,7 +38,7 @@ Commands work like you'd expect:
 print ls("-l")
 ```
 
-Notice that these aren't Python functions, *these are running the binary
+Notice that these aren't Python functions, **these are running the binary
 commands on your system by resolving your PATH,** much like Bash does.
 
 ```python
@@ -98,7 +104,7 @@ except ErrorReturnCode:
 
 ## Commandline Arguments
 
-You can access commandlin arguments similar to Bash's $1, $2, etc by using
+You can access commandline arguments similar to Bash's $1, $2, etc by using
 ARG1, ARG2, etc:
 
 ```python
