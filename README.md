@@ -31,7 +31,7 @@ print ls("-l")
 ```
 
 Note that these aren't Python functions, these are running **the binary
-commands** on your system by resolving your PATH, much like Bash does.
+commands** on your system dynamically by resolving your PATH, much like Bash does.
 
 ```python
 longest_line = wc(__file__, "-L")
@@ -52,9 +52,9 @@ add_user("amoffat", system=True, shell="/bin/bash", no_create_home=True)
 
 ## Finding Commands
 
-"which" acts like the "which" command on most systems: it finds the full path
-of a binary.  This command is implemented in Python and therefore doesn't rely
-on which existing. 
+"Which" finds the full path of a program, or returns None if it doesn't exist.
+This command is one of the few commands implemented as a Python function,
+and therefore doesn't rely on the "which" program actually existing. 
 
 ```python
 print which("python") # "/usr/bin/python"
@@ -64,7 +64,7 @@ print which("some_command") # None
 if not which("supervisorctl"): apt_get("install", "supervisor", "-y")
 ```
 
-You can also run a command from which:
+You can also use the return argument of "which" as the program:
 
 ```python
 etc_files = str(which("ls")("/etc", "-1")).split()
