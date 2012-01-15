@@ -66,6 +66,8 @@ on which existing.
 print which("python") # "/usr/bin/python"
 print which("ls") # "/bin/ls"
 print which("some_command") # None
+
+if not which("supervisorctl"): apt_get("install", "supervisor", "-y")
 ```
 
 You can also run a command from which:
