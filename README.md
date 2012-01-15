@@ -20,7 +20,7 @@ script that does Bash-like things easily.
 import pbs
 ```
 
-**That's it.**
+That's it.
 
 
 
@@ -36,7 +36,7 @@ Commands work like you'd expect:
 print ls("-l")
 ```
 
-Notice that these aren't Python functions, **these are running the binary
+Note that these aren't Python functions, these are running **the binary
 commands** on your system by resolving your PATH, much like Bash does.
 
 ```python
