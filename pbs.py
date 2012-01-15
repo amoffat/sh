@@ -59,8 +59,7 @@ def which(program):
 
     fpath, fname = os.path.split(program)
     if fpath:
-        if is_exe(program):
-            return program
+        if is_exe(program): return program
     else:
         for path in os.environ["PATH"].split(os.pathsep):
             exe_file = os.path.join(path, program)
@@ -201,6 +200,7 @@ class Environment(dict):
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
         
+        self["Command"] = Command
         self["CommandNotFound"] = CommandNotFound
         self["ErrorReturnCode"] = ErrorReturnCode
         self["glob"] = glob
