@@ -14,7 +14,7 @@ PBS is currently Python 2 only.
 
 # Using
 
-Importing works either from a script (recommended) or from the command-line:
+Importing works either from a script (recommended) or from the Python shell:
 
 ```python
 import pbs
