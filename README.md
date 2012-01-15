@@ -17,9 +17,6 @@ script that does Bash-like things easily.
 import pbs
 ```
 
-That's it.
-
-
 
 
 # Examples
