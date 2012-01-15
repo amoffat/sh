@@ -1,7 +1,7 @@
 PBS: Python (in) Bash Script
 
 Ever find yourself writing obtuse Bash code (with a background browser tab
-to Advanced Bash Scripting http://tldp.org/LDP/abs/html/) to do something 
+to [Advanced Bash Scripting](http://tldp.org/LDP/abs/html/)) to do something 
 that would take you 4 seconds in Python?  But do you also avoid writing
 Bash-like scripts in Python because subprocess is so damn verbose?
 
@@ -11,7 +11,7 @@ PBS is a **highly experimental** replacement for your everyday bash scripts.
 PBS gives
 you the good features of Bash (easy command calling, easy piping) with the
 power and flexibility of Python.  The resulting code is a normal Python script
-that you can use.
+that does Bash-like things easily.
 
 
 
