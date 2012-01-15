@@ -13,13 +13,22 @@ script that does Bash-like things easily.
 
 # Integrating
 
-You **must** import pbs from within a script.  PBS does not (currently)
-execute as a stand-alone interactive CLI, nor can it be imported from the Python REPL.
+Importing works either from a script (recommended), or from the command-line,
+or it can be run as a stand-alone script that launches a REPL.  If you're
+importing, import it like this:
 
 ```python
 import pbs
 ```
 
+not like this:
+
+```python
+from pbs import *
+```
+
+PBS does magic under the hood, so although the examples have commands like
+"ls()", these are not in the global scope because of a "from pbs import *"
 
 
 # Examples

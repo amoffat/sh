@@ -34,6 +34,8 @@ from glob import glob
 
 
 
+VERSION = "0.1"
+
 
 class ErrorReturnCode(Exception): pass
 class CommandNotFound(Exception): pass
@@ -119,6 +121,8 @@ class Command(object):
         if self.stderr: self.log.error(self.stderr)
         if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
     
+    def __repr__(self):
+        return str(self)
         
     def __str__(self):
         return unicode(self).encode('utf-8')
@@ -258,30 +262,59 @@ class Environment(dict):
         return Command.create(program)
 
 
-frame, script, line, module, code, index = inspect.stack()[1]
-f_globals = frame.f_globals
-
-logging.basicConfig(
-    level=logging.DEBUG if f_globals.get("debug", False) else logging.INFO,
-    format="(%(process)d) %(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 
 
-# we avoid recursion by removing the line that imports us :)
-with open(script, "r") as h: code = h.readlines()
-code.pop(line-1)
-code = "".join(code)
+
+def run_repl(env):
+    banner = "\n>> PBS v{version}\n>> https://github.com/amoffat/pbs\n"
+    
+    print banner.format(version=VERSION)
+    while True:
+        try: line = raw_input("pbs> ")
+        except (ValueError, EOFError): break
+            
+        try: exec compile(line, "<dummy>", "single") in env, env
+        except SystemExit: break
+        except: print traceback.format_exc()
+
+    # cleans up our last line
+    print
 
 
-env = Environment(f_globals)
-env.update(f_globals)
 
-exit_code = 0
-try: exec code in env, env
-except SystemExit, e: exit_code = e.code
-except: print traceback.format_exc()
+# we're being run as a stand-alone script, fire up a REPL
+if __name__ == "__main__":
+    env = Environment(globals())
+    run_repl(env)
+    
+# we're bein imported from somewhere
+else:
+    frame, script, line, module, code, index = inspect.stack()[1]
+    env = Environment(frame.f_globals)
+    
+    logging.basicConfig(
+        level=logging.DEBUG if env.get("debug", False) else logging.INFO,
+        format="(%(process)d) %(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    
+    # are we being imported from a REPL? start our REPL
+    if script == "<stdin>":
+        run_repl(env)
+        
+    # we're being imported from a script
+    else:
+        exit_code = 0
+        
+        # we avoid recursion by removing the line that imports us :)
+        with open(script, "r") as h: source = h.readlines()
+        source.pop(line-1)
+        source = "".join(code)
+    
+        try: exec source in env, env
+        except SystemExit, e: exit_code = e.code
+        except: print traceback.format_exc()
 
-# we exit so we don't actually run the script that we were imported from
-# (which would be running it "again", since we just executed the script with
-# exec
-exit(exit_code)
+        # we exit so we don't actually run the script that we were imported from
+        # (which would be running it "again", since we just executed the script
+        # with exec
+        exit(exit_code)
