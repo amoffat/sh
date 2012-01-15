@@ -13,6 +13,9 @@ script that does Bash-like things easily.
 
 # Integrating
 
+You **must** import pbs from within a script.  PBS does not (currently)
+execute as a stand-alone interactive CLI, nor can it be imported from the Python REPL.
+
 ```python
 import pbs
 ```
