@@ -50,6 +50,18 @@ curl("http://duckduckgo.com/", "-o page.html", silent=True)
 add_user("amoffat", system=True, shell="/bin/bash", no_create_home=True)
 ```
 
+## Piping
+
+Piping has become function composition:
+
+```python
+# sort this directory by biggest file
+print sort(du(glob("*"), "-sb"), "-rn")
+
+# print the number of folders and files in /etc
+print wc(ls("/etc", "-1"), "-l")
+```
+
 ## Finding Commands
 
 "Which" finds the full path of a program, or returns None if it doesn't exist.
@@ -119,17 +131,6 @@ ns = parser.parse_args(argv)
 print ns.x
 ```
 
-## Piping!
-
-Piping has become function composition:
-
-```python
-# sort this directory by biggest file
-print sort(du(glob("*"), "-sb"), "-rn")
-
-# print the number of folders and files in /etc
-print wc(ls("/etc", "-1"), "-l")
-```
 
 ## Background Processes
 
