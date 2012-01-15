@@ -1,6 +1,6 @@
 Ever find yourself with a browser tab opened to [Advanced Bash Scripting](http://tldp.org/LDP/abs/html/),
 writing obtuse Bash code to do something that would take you 4 seconds in Python?
-Yeah, me too.
+Yeah, I have too.
 
 Python in Bash Scripts (PBS) is an experimental replacement for your everyday
 bash scripts
