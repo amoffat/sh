@@ -308,7 +308,7 @@ else:
         # we avoid recursion by removing the line that imports us :)
         with open(script, "r") as h: source = h.readlines()
         source.pop(line-1)
-        source = "".join(code)
+        source = "".join(source)
     
         try: exec source in env, env
         except SystemExit, e: exit_code = e.code
