@@ -11,7 +11,7 @@ script that does Bash-like things easily.
 
 
 
-# Integrating
+# Using
 
 Importing works either from a script (recommended) or from the command-line:
 
@@ -23,7 +23,7 @@ Or you run it as a stand-alone REPL:
 
     $> python pbs.py
 
-Note, do not import like this:
+Note, _do not_ import like this:
 
 ```python
 from pbs import *
