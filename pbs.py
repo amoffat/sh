@@ -262,7 +262,7 @@ frame, script, line, module, code, index = inspect.stack()[1]
 f_globals = frame.f_globals
 
 logging.basicConfig(
-    level=logging.DEBUG if f_globals.get("debug", True) else logging.INFO,
+    level=logging.DEBUG if f_globals.get("debug", False) else logging.INFO,
     format="(%(process)d) %(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
