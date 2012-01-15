@@ -8,6 +8,7 @@ that gives you the good features of Bash (easy command calling, easy piping)
 with the power and flexibility of Python.  The resulting code is a normal Python
 script that does Bash-like things easily.
 
+PBS is currently Python 2 only.
 
 
 
