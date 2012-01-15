@@ -2,7 +2,8 @@ Ever find yourself with a browser tab opened to [Advanced Bash Scripting](http:/
 writing obtuse Bash code to do something that would take you 4 seconds in Python?
 Yeah, me too.
 
-PBS is an *experimental* replacement for your everyday bash scripts
+Python in Bash Scripts (PBS) is an *experimental* replacement for your everyday
+bash scripts
 that gives you the good features of Bash (easy command calling, easy piping)
 with the power and flexibility of Python.  The resulting code is a normal Python
 script that does Bash-like things easily.
