@@ -1,11 +1,10 @@
 PBS: Python (in) Bash Script
 
-Ever find yourself writing obtuse Bash code (with a background browser tab
-to [Advanced Bash Scripting](http://tldp.org/LDP/abs/html/)) to do something 
-that would take you 4 seconds in Python?  But do you also avoid writing
-Bash-like scripts in Python because subprocess is so damn verbose?
+Ever find yourself with a browser tab opened to [Advanced Bash Scripting](http://tldp.org/LDP/abs/html/),
+writing obtuse Bash code to do something that would take you 4 seconds in Python?
+I have.
 
-Enter PBS.
+So I wrote PBS.
 
 PBS is a **highly experimental** replacement for your everyday bash scripts.
 PBS gives
