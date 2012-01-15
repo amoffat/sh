@@ -13,22 +13,24 @@ script that does Bash-like things easily.
 
 # Integrating
 
-Importing works either from a script (recommended), or from the command-line,
-or it can be run as a stand-alone script that launches a REPL.  If you're
-importing, import it like this:
+Importing works either from a script (recommended) or from the command-line:
 
 ```python
 import pbs
 ```
 
-not like this:
+Or you run it as a stand-alone REPL:
+
+    $> python pbs.py
+
+Note, do not import like this:
 
 ```python
 from pbs import *
 ```
 
-PBS does magic under the hood, so although the examples have commands like
-"ls()", these are not in the global scope because of a "from pbs import *"
+PBS does magic under the hood, so although the examples have top-level commands
+like "ls()", these are automatically put in the global scope from "import pbs"
 
 
 # Examples
