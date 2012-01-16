@@ -147,6 +147,15 @@ class Command(object):
     
     def __repr__(self):
         return str(self)
+
+    def __long__(self):
+        return long(str(self))
+
+    def __float__(self):
+        return float(str(self))
+
+    def __int__(self):
+        return int(str(self))
         
     def __str__(self):
         return unicode(self).encode('utf-8')
