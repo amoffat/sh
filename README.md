@@ -1,12 +1,10 @@
 Ever find yourself with a browser tab opened to [Advanced Bash Scripting](http://tldp.org/LDP/abs/html/),
-writing obtuse Bash code to do something that would take you 4 seconds in Python?
+writing obtuse Bash code to do something that would take you 4 seconds in Python,
+if only calling programs and piping output were as easy in Python as it is in Bash?
 Yeah, I have too.
 
-Python in Bash Scripts (PBS) is an experimental replacement for your everyday
-bash scripts
-that gives you the good features of Bash (easy command calling, easy piping)
-with the power and flexibility of Python.  The resulting code is a normal Python
-script that does Bash-like things easily.
+PBS helps you write shell scripts in Python by giving you the good features of
+Bash (easy command calling, easy piping) with the power and flexibility of Python.
 
 PBS is currently Python 2 only.
 
