@@ -31,6 +31,7 @@ import re
 import logging
 import socket
 from glob import glob
+import shlex
 
 
 
@@ -184,13 +185,16 @@ class Command(object):
                     stdin = first_arg.process.stdout
                 else:
                     actual_stdin = first_arg.stdout
-                     
             else: args.insert(0, first_arg)
         
         # aggregate the position arguments
         for arg in args:
-            if isinstance(arg, (list, tuple)): cmd.extend([str(a) for a in arg])
-            else: cmd.append(str(arg))
+            # i should've commented why i did this, because now i don't
+            # remember.  for some reason, some command was more natural
+            # taking a list?
+            if isinstance(arg, (list, tuple)):
+                for sub_arg in arg: cmd.extend(shlex.split(str(a)))
+            else: cmd.extend(shlex.split(str(arg)))
 
 
         # aggregate the keyword arguments
