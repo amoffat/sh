@@ -149,13 +149,13 @@ class Command(object):
         return str(self)
 
     def __long__(self):
-        return long(str(self))
+        return long(str(self).strip())
 
     def __float__(self):
-        return float(str(self))
+        return float(str(self).strip())
 
     def __int__(self):
-        return int(str(self))
+        return int(str(self).strip())
         
     def __str__(self):
         return unicode(self).encode('utf-8')
