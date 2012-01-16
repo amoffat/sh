@@ -1,6 +1,6 @@
 Ever find yourself with a browser tab opened to [Advanced Bash Scripting](http://tldp.org/LDP/abs/html/),
 writing obtuse Bash code to do something that would take you 4 seconds in Python?
-Yeah, me too.
+Yeah, I have too.
 
 Python in Bash Scripts (PBS) is an experimental replacement for your everyday
 bash scripts
@@ -8,12 +8,13 @@ that gives you the good features of Bash (easy command calling, easy piping)
 with the power and flexibility of Python.  The resulting code is a normal Python
 script that does Bash-like things easily.
 
+PBS is currently Python 2 only.
 
 
 
-# Integrating
+# Using
 
-Importing works either from a script (recommended) or from the command-line:
+Importing works either from a script (recommended) or from the Python shell:
 
 ```python
 import pbs
@@ -23,7 +24,7 @@ Or you run it as a stand-alone REPL:
 
     $> python pbs.py
 
-Note, do not import like this:
+Note, _do not_ import like this:
 
 ```python
 from pbs import *
