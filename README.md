@@ -22,15 +22,6 @@ Or you run it as a stand-alone REPL:
 
     $> python pbs.py
 
-Note, _do not_ import like this:
-
-```python
-from pbs import *
-```
-
-PBS does magic under the hood, so although the examples have top-level commands
-like "ls()", these are automatically put in the global scope from "import pbs"
-
 
 # Examples
 
