@@ -87,19 +87,25 @@ def which(program):
 
     return None
 
+def resolve_program(program):
+    path = which(program)
+    if not path:
+        # our actual command might have a dash in it, but we can't call
+        # that from python (we have to use underscores), so we'll check
+        # if a dash version of our underscore command exists and use that
+        # if it does
+        if "_" in program: path = which(program.replace("_", "-"))        
+        if not path: return None
+    return path
+
 
 class Command(object):
     @classmethod
-    def create(cls, program):
-        path = which(program)
+    def create(cls, program, raise_exc=True):
+        path = resolve_program(program)
         if not path:
-            # our actual command might have a dash in it, but we can't call
-            # that from python (we have to use underscores), so we'll check
-            # if a dash version of our underscore command exists and use that
-            # if it does
-            if "_" in program: path = which(program.replace("_", "-"))        
-            if not path: raise CommandNotFound(program)
-            
+            if raise_exc: raise CommandNotFound(program)
+            else: return None
         return cls(path)
     
     def __init__(self, path):            
@@ -276,7 +282,7 @@ class Environment(dict):
         os.chdir(path)
         
     def b_which(self, program):
-        return Command.create(program)
+        return Command.create(program, raise_exc=False)
 
 
 
@@ -301,7 +307,11 @@ def run_repl(env):
 
 # we're being run as a stand-alone script, fire up a REPL
 if __name__ == "__main__":
-    env = Environment(globals())
+    globs = globals()
+    f_globals = {}
+    for k in ["__builtins__", "__doc__", "__name__", "__package__"]:
+        f_globals[k] = globs[k]
+    env = Environment(f_globals)
     run_repl(env)
     
 # we're bein imported from somewhere
