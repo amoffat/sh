@@ -37,7 +37,24 @@ from glob import glob
 VERSION = "0.1"
 
 
-class ErrorReturnCode(Exception): pass
+class ErrorReturnCode(Exception):
+    truncate_cap = 200
+
+    def __init__(self, stdout, stderr):
+        self.stdout = stdout
+        self.stderr = stderr
+
+        tstdout = self.stdout[:self.truncate_cap] 
+        out_delta = len(self.stdout) - len(tstdout)
+        if out_delta: tstdout += "... (%d more, please see e.stdout)" % out_delta
+
+        tstderr = self.stderr[:self.truncate_cap]
+        err_delta = len(self.stderr) - len(tstderr)
+        if err_delta: tstderr += "... (%d more, please see e.stderr)" % err_delta
+
+        msg = "\n\nSTDOUT:\n\n  %s\nSTDERR:\n\n  %s" % (tstdout, tstderr)
+        super(ErrorReturnCode, self).__init__(msg)
+
 class CommandNotFound(Exception): pass
 
 rc_exc_regex = re.compile("ErrorReturnCode_(\d+)")
@@ -81,7 +98,7 @@ class Command(object):
             # if a dash version of our underscore command exists and use that
             # if it does
             if "_" in program: path = which(program.replace("_", "-"))        
-            if not path: return None
+            if not path: raise CommandNotFound(program)
             
         return cls(path)
     
