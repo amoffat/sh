@@ -206,7 +206,7 @@ class Command(object):
         
         
         
-        self.process = subp.Popen(cmd, shell=False, env=os.environ,
+        self.process = subp.Popen(' '.join(cmd), shell=True, env=os.environ,
             stdin=stdin, stdout=subp.PIPE, stderr=subp.PIPE)
 
         if self.call_args["bg"]: return self
