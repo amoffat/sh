@@ -158,5 +158,5 @@ You can also pipe together background processes!
 ```python
 p = wc(curl("http://github.com/", silent=True, pbs_bg=True), "--bytes")
 print "prints immediately!"
-print "byte count of github: %d" % int(str(p).strip()) # lazily completes
+print "byte count of github: %d" % int(p) # lazily completes
 ```
