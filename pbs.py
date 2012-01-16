@@ -98,7 +98,7 @@ class Command(object):
             # if a dash version of our underscore command exists and use that
             # if it does
             if "_" in program: path = which(program.replace("_", "-"))        
-            if not path: return None
+            if not path: raise CommandNotFound(program)
             
         return cls(path)
     
