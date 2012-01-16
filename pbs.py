@@ -41,7 +41,8 @@ VERSION = "0.1"
 class ErrorReturnCode(Exception):
     truncate_cap = 200
 
-    def __init__(self, stdout, stderr):
+    def __init__(self, cmd, stdout, stderr):
+        self.cmd = cmd
         self.stdout = stdout
         self.stderr = stderr
 
@@ -53,7 +54,8 @@ class ErrorReturnCode(Exception):
         err_delta = len(self.stderr) - len(tstderr)
         if err_delta: tstderr += "... (%d more, please see e.stderr)" % err_delta
 
-        msg = "\n\nSTDOUT:\n\n  %s\nSTDERR:\n\n  %s" % (tstdout, tstderr)
+        msg = "\n\nRan: %r\n\nSTDOUT:\n\n  %s\nSTDERR:\n\n  %s" %\
+            (cmd, tstdout, tstderr)
         super(ErrorReturnCode, self).__init__(msg)
 
 class CommandNotFound(Exception): pass
@@ -169,6 +171,7 @@ class Command(object):
         kwargs = kwargs.copy()
         args = list(args)
         stdin = None
+        final_args = []
         cmd = [self.path]
         
         # pull out the pbs-specific arguments (arguments that are not to be
@@ -202,20 +205,30 @@ class Command(object):
             # remember.  for some reason, some command was more natural
             # taking a list?
             if isinstance(arg, (list, tuple)):
-                for sub_arg in arg: cmd.extend(shlex.split(str(a)))
-            else: cmd.extend(shlex.split(str(arg)))
+                for sub_arg in arg: final_args.append(str(sub_arg))
+            else: final_args.append(str(arg))
 
 
         # aggregate the keyword arguments
         for k,v in kwargs.iteritems():
-            k = k.replace("_", "-")
-            # we have to do the "and not in" test because isinstance(True, int)
-            # returns True!?
-            if isinstance(v, (int, float, basestring)) and v not in (True, False): arg = "--%s=%s" % (k, v)
-            else: arg = "--" + k
-            cmd.append(arg)
+            # we're passing a short arg as a kwarg, example:
+            # cut(d="\t")
+            if len(k) == 1:
+                if v is True: arg = "-"+k
+                else: arg = "-%s %r" % (k, v)
 
-        self.log.debug("running %r", " ".join(cmd))
+            # we're doing a long arg
+            else:
+                k = k.replace("_", "-")
+
+                if v is True: arg = "--"+k
+                else: arg = "--%s=%s" % (k, v)
+            final_args.append(arg)
+
+        cmd.extend(shlex.split(" ".join(final_args)))
+        # for logging/debugging
+        self._command_ran = " ".join(cmd)
+        self.log.debug("running %r", self._command_ran)
         
         
         
@@ -228,7 +241,7 @@ class Command(object):
         rc = self.process.wait()
 
         if self.stderr: self.log.error(self.stderr)
-        if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
+        if rc != 0: raise get_rc_exc(rc)(self._command_ran, self.stdout, self.stderr)
         return self
 
 
