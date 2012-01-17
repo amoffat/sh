@@ -83,7 +83,7 @@ if not which("supervisorctl"): apt_get("install", "supervisor", "-y")
 You can also use the return argument of "which" as the program:
 
 ```python
-etc_files = str(which("ls")("/etc", "-1")).split()
+etc_files = which("ls")("/etc", "-1").split()
 ```
 
 ## Environment Variables
