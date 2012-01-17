@@ -6,8 +6,6 @@ Yeah, I have too.
 PBS helps you write shell scripts in Python by giving you the good features of
 Bash (easy command calling, easy piping) with the power and flexibility of Python.
 
-PBS is currently Python 2 only.
-
 
 
 # Using
@@ -50,8 +48,8 @@ long-form commandline option:
 # resolves to "curl http://duckduckgo.com/ -o page.html --silent"
 curl("http://duckduckgo.com/", "-o page.html", silent=True)
 
-# resolves to "add_user amoffat --system --shell=/bin/bash --no-create-home"
-add_user("amoffat", system=True, shell="/bin/bash", no_create_home=True)
+# resolves to "adduser amoffat --system --shell=/bin/bash --no-create-home"
+adduser("amoffat", system=True, shell="/bin/bash", no_create_home=True)
 ```
 
 ## Piping
