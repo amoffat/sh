@@ -8,7 +8,7 @@ Bash (easy command calling, easy piping) with the power and flexibility of Pytho
 
 
 
-# Using
+# Usage
 
 Importing works either from a script (recommended) or from the Python shell:
 
@@ -63,6 +63,25 @@ print sort(du(glob("*"), "-sb"), "-rn")
 # print the number of folders and files in /etc
 print wc(ls("/etc", "-1"), "-l")
 ```
+
+## Sudo
+
+Sudo can be called from a with context:
+
+```python
+with sudo:
+    print ls("/root")
+```
+
+If you're required to enter a password, you will be prompted.  If you need
+to run a command in a with context AND call it, for example, specifying
+a -p prompt with sudo, you need to use the pbs_with keyword argument:
+
+```python
+with sudo(p=">", pbs_with=True):
+    print ls("/root")
+```
+
 
 ## Finding Commands
 

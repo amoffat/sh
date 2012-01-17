@@ -41,8 +41,8 @@ VERSION = "0.1"
 class ErrorReturnCode(Exception):
     truncate_cap = 200
 
-    def __init__(self, cmd, stdout, stderr):
-        self.cmd = cmd
+    def __init__(self, full_cmd, stdout, stderr):
+        self.full_cmd = full_cmd
         self.stdout = stdout
         self.stderr = stderr
 
@@ -55,7 +55,7 @@ class ErrorReturnCode(Exception):
         if err_delta: tstderr += "... (%d more, please see e.stderr)" % err_delta
 
         msg = "\n\nRan: %r\n\nSTDOUT:\n\n  %s\nSTDERR:\n\n  %s" %\
-            (cmd, tstdout, tstderr)
+            (full_cmd, tstdout, tstderr)
         super(ErrorReturnCode, self).__init__(msg)
 
 class CommandNotFound(Exception): pass
@@ -103,6 +103,8 @@ def resolve_program(program):
 
 
 class Command(object):
+    prepend_stack = []
+
     @classmethod
     def create(cls, program, raise_exc=True):
         path = resolve_program(program)
@@ -122,6 +124,7 @@ class Command(object):
         
         self.call_args = {
             "bg": False, # run command in background
+            "with": False, # prepend the command to every command after it
         }
         
     def __getattr__(self, p):
@@ -165,13 +168,24 @@ class Command(object):
         if self.process: return self.stdout
         else: return self.path
 
+    def __enter__(self):
+        self.prepend_stack.append([self.path])
+
+    def __exit__(self, typ, value, traceback):
+        self.prepend_stack.pop()
 
     def __call__(self, *args, **kwargs):
         kwargs = kwargs.copy()
         args = list(args)
         stdin = None
         final_args = []
-        cmd = [self.path]
+        cmd = []
+
+        # aggregate any with contexts
+        for prepend in self.prepend_stack:
+            cmd.extend(prepend)
+
+        cmd.append(self.path)
         
         # pull out the pbs-specific arguments (arguments that are not to be
         # passed to the commands
@@ -229,13 +243,19 @@ class Command(object):
         self._command_ran = " ".join(cmd)
         self.log.debug("running %r", self._command_ran)
         
+
+        # with contexts shouldn't run at all yet, they prepend
+        # to every command in the context
+        if self.call_args["with"]:
+            Command.prepend_stack.append(cmd)
+            return self
         
-        
+
         self.process = subp.Popen(cmd, shell=False, env=os.environ,
             stdin=stdin, stdout=subp.PIPE, stderr=subp.PIPE)
 
         if self.call_args["bg"]: return self
-        
+
         self._stdout, self._stderr = self.process.communicate(actual_stdin)
         rc = self.process.wait()
 
