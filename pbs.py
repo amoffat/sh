@@ -271,20 +271,28 @@ class Environment(dict):
         else: dict.__setitem__(self, k, v)
         
     def __missing__(self, k):
-        # check if we're naming a dynamically generated ReturnCode exception
-        try: return rc_exc_cache[k]
-        except KeyError:
-            m = rc_exc_regex.match(k)
-            if m: return get_rc_exc(int(m.group(1)))
-            
-        # are we naming a commandline argument?
-        if k.startswith("ARG"):
-            self.log.error("%s not found", k)
-            return None
-            
-        # is it a builtin?
-        try: return getattr(self["__builtins__"], k)
-        except AttributeError: pass
+        # if we end with "_" just go ahead and skip searching
+        # our namespace for python stuff.  this was mainly for the
+        # command "id", which is a popular program for finding
+        # if a user exists, but also a python function for getting
+        # the address of an object.  so can call the python
+        # version by "id" and the program version with "id_"
+        if not k.endswith("_"):
+            # check if we're naming a dynamically generated ReturnCode exception
+            try: return rc_exc_cache[k]
+            except KeyError:
+                m = rc_exc_regex.match(k)
+                if m: return get_rc_exc(int(m.group(1)))
+                
+            # are we naming a commandline argument?
+            if k.startswith("ARG"):
+                self.log.error("%s not found", k)
+                return None
+                
+            # is it a builtin?
+            try: return getattr(self["__builtins__"], k)
+            except AttributeError: pass
+        else: k = k.rstrip("_")
         
         # how about an environment variable?
         try: return os.environ[k]
