@@ -125,13 +125,13 @@ if ARG10 is None: do_something()
 ```
 
 You can access the entire argparse/optparse-friendly list of commandline
-arguments through "argv".  This is recommended for flexibility:
+arguments through "ARGV".  This is recommended for flexibility:
 
 ```python
 import argparse
 parser = argparse.ArgumentParser(prog="PROG")
 parser.add_argument("-x", default=3, type=int)
-ns = parser.parse_args(argv)
+ns = parser.parse_args(ARGV)
 print ns.x
 ```
 
