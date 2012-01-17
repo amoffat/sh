@@ -124,9 +124,8 @@ class Command(object):
             "bg": False, # run command in background
         }
         
-        
-    def _reader_thread(self, fd, buffer):
-        buffer.append(fd.read())
+    def __getattr__(self, p):
+        return getattr(self.stdout, p)
         
     @property
     def stdout(self):
