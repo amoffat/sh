@@ -103,6 +103,7 @@ def resolve_program(program):
 
 
 class Command(object):
+    prepend_stack = []
     @classmethod
     def create(cls, program, raise_exc=True):
         path = resolve_program(program)
@@ -165,13 +166,21 @@ class Command(object):
         if self.process: return self.stdout
         else: return self.path
 
+    def __enter__(self):
+      self.prepend_stack.append((self.path,))
+
+    def __exit__(self, typ, value, traceback):
+      self.prepend_stack.pop()
 
     def __call__(self, *args, **kwargs):
         kwargs = kwargs.copy()
         args = list(args)
         stdin = None
         final_args = []
-        cmd = [self.path]
+        cmd = []
+        for command in self.prepend_stack:
+          cmd.extend(command)
+        cmd.append(self.path)
         
         # pull out the pbs-specific arguments (arguments that are not to be
         # passed to the commands
@@ -230,12 +239,12 @@ class Command(object):
         self.log.debug("running %r", self._command_ran)
         
         
-        
+
         self.process = subp.Popen(cmd, shell=False, env=os.environ,
             stdin=stdin, stdout=subp.PIPE, stderr=subp.PIPE)
 
         if self.call_args["bg"]: return self
-        
+
         self._stdout, self._stderr = self.process.communicate(actual_stdin)
         rc = self.process.wait()
 
