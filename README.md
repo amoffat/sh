@@ -1,8 +1,3 @@
-Ever find yourself with a browser tab opened to [Advanced Bash Scripting](http://tldp.org/LDP/abs/html/),
-writing obtuse Bash code to do something that would take you 4 seconds in Python,
-if only calling programs and piping output were as easy in Python as it is in Bash?
-Yeah, I have too.
-
 PBS is a unique **subprocess wrapper** that maps your system programs to
 Python functions dynamically.  PBS helps you write shell scripts in
 Python by giving you the good features of Bash (easy command calling, easy piping)
