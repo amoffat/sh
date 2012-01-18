@@ -3,8 +3,10 @@ writing obtuse Bash code to do something that would take you 4 seconds in Python
 if only calling programs and piping output were as easy in Python as it is in Bash?
 Yeah, I have too.
 
-PBS helps you write shell scripts in Python by giving you the good features of
-Bash (easy command calling, easy piping) with the power and flexibility of Python.
+PBS is a unique **subprocess wrapper** that maps your system programs to
+Python functions dynamically.  PBS helps you write shell scripts in
+Python by giving you the good features of Bash (easy command calling, easy piping)
+with all the power and flexibility of Python.
 
 
 
@@ -25,19 +27,24 @@ Or you run it as a stand-alone REPL:
 
 ## Executing Commands
 
-Commands work like you'd expect:
+Commands work like you'd expect.  **Just call your program's name like
+a function:**
 
 ```python
 # print the contents of this directory 
 print ls("-l")
-```
 
-Note that these aren't Python functions, these are running **the binary
-commands** on your system dynamically by resolving your PATH, much like Bash does.
-
-```python
+# get the longest line of this file
 longest_line = wc(__file__, "-L")
+
+# get interface information
+print ifconfig("eth0")
 ```
+
+Note that these aren't Python functions, these are running the binary
+commands on your system dynamically by resolving your PATH, much like Bash does.
+In this way, all the programs on your system are easily available
+in Python.
 
 ## Keyword Arguments
 
