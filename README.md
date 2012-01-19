@@ -44,14 +44,21 @@ in Python.
 ## Keyword Arguments
 
 Keyword arguments also work like you'd expect: they get replaced with the
-long-form commandline option:
+long-form and short-form commandline option:
 
 ```python
 # resolves to "curl http://duckduckgo.com/ -o page.html --silent"
-curl("http://duckduckgo.com/", "-o page.html", silent=True)
+curl("http://duckduckgo.com/", o="page.html", silent=True)
+
+# or if you prefer not to use keyword arguments, these do the same thing:
+curl("http://duckduckgo.com/", "-o page.html", "--silent")
+curl("http://duckduckgo.com/", "-o", "page.html", "--silent")
 
 # resolves to "adduser amoffat --system --shell=/bin/bash --no-create-home"
 adduser("amoffat", system=True, shell="/bin/bash", no_create_home=True)
+
+# or
+adduser("amoffat", "--system", "--shell /bin/bash", "--no_create_home")
 ```
 
 ## Piping
