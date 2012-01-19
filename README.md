@@ -4,16 +4,29 @@ Python by giving you the good features of Bash (easy command calling, easy pipin
 with all the power and flexibility of Python.
 
 
+**If you're coming from v0.1, you'll need to use "from pbs import *"
+instead of "import pbs" to get the same behavior of v0.1**
+
 
 # Usage
 
-Importing works either from a script (recommended) or from the Python shell:
+If you're writing a shell-style script, import the following way:
 
 ```python
-import pbs
+from pbs import *
 ```
 
-Or you run it as a stand-alone REPL:
+This will make all of your system programs available to the script.
+Note that this does not actually import every system program, but
+provides a dynamic lookup mechanism.
+
+Or if you just want to import a few system programs:
+
+```python
+from pbs import ifconfig, supervisorctl, ffmpeg
+```
+
+You can also try out PBS through an interactive REPL:
 
     $> python pbs.py
 
@@ -73,18 +86,21 @@ print sort(du(glob("*"), "-sb"), "-rn")
 print wc(ls("/etc", "-1"), "-l")
 ```
 
-## Sudo
+## Sudo and With Contexts
 
-Sudo can be called from a with context:
+Commands can be run within a "with" context.  Popular commands using this
+might be "sudo" or "fakeroot":
 
 ```python
 with sudo:
     print ls("/root")
 ```
 
-If you're required to enter a password, you will be prompted.  If you need
+If you need
 to run a command in a with context AND call it, for example, specifying
-a -p prompt with sudo, you need to use the pbs_with keyword argument:
+a -p prompt with sudo, you need to use the pbs_with keyword argument.
+This let's the command know that it's being run from a with context so
+it can behave correctly.
 
 ```python
 with sudo(p=">", pbs_with=True):
@@ -106,7 +122,8 @@ print which("some_command") # None
 if not which("supervisorctl"): apt_get("install", "supervisor", "-y")
 ```
 
-You can also use the return argument of "which" as the program:
+You can also use the return argument of "which" as the program, but
+it's not too useful:
 
 ```python
 etc_files = which("ls")("/etc", "-1").split()
@@ -114,13 +131,16 @@ etc_files = which("ls")("/etc", "-1").split()
 
 ## Environment Variables
 
-Environment variables are available globally much like they are in Bash:
+Environment variables are available much like they are in Bash:
 
 ```python
 print HOME
 print SHELL
 print PS1
 ```
+
+Of course, if you're not doing "from pbs import", you'll need to prefix
+these appropriately.
 
 ## Exceptions
 
@@ -186,9 +206,3 @@ p = wc(curl("http://github.com/", silent=True, pbs_bg=True), "--bytes")
 print "prints immediately!"
 print "byte count of github: %d" % int(p) # lazily completes
 ```
-
-# Yes I Know
-
-This code "violates" quite a few Python conventions to do what it does.
-It is not for the faint of heart.  But if you see value in it,
-more power to you!
