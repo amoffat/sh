@@ -28,14 +28,13 @@ import sys
 import traceback
 import os
 import re
-import logging
 import socket
 from glob import glob
 import shlex
 
 
 
-VERSION = "0.1"
+VERSION = "0.2"
 
 
 class ErrorReturnCode(Exception):
@@ -115,7 +114,6 @@ class Command(object):
     
     def __init__(self, path):            
         self.path = path
-        self.log = logging.getLogger(str(path))
         
         
         self.process = None
@@ -239,9 +237,8 @@ class Command(object):
             final_args.append(arg)
 
         cmd.extend(shlex.split(" ".join(final_args)))
-        # for logging/debugging
+        # for debugging
         self._command_ran = " ".join(cmd)
-        self.log.debug("running %r", self._command_ran)
         
 
         # with contexts shouldn't run at all yet, they prepend
@@ -282,7 +279,6 @@ class Environment(dict):
         
         # this needs to be last
         self["env"] = os.environ
-        self.log = logging.getLogger("environment")
         
     def __setitem__(self, k, v):
         # are we altering an environment variable?
@@ -306,13 +302,12 @@ class Environment(dict):
                 
             # are we naming a commandline argument?
             if k.startswith("ARG"):
-                self.log.error("%s not found", k)
                 return None
                 
             # is it a builtin?
             try: return getattr(self["__builtins__"], k)
             except AttributeError: pass
-        else: k = k.rstrip("_")
+        elif not k.startswith("_"): k = k.rstrip("_")
         
         # how about an environment variable?
         try: return os.environ[k]
@@ -358,6 +353,22 @@ def run_repl(env):
 
 
 
+
+# this is a thin wrapper around THIS module (we patch sys.modules[__name__]).
+# this is in the case that the user does a "from pbs import whatever"
+# in other words, they only want to import certain programs, not the whole
+# system PATH worth of commands.  in this case, we just proxy the
+# import lookup to our Environment class
+class SelfWrapper(object):
+    def __init__(self, self_module):
+        self.self_module = self_module
+        self.env = Environment(globals())
+    
+    def __getattr__(self, name):
+        return self.env[name]
+
+
+
 # we're being run as a stand-alone script, fire up a REPL
 if __name__ == "__main__":
     globs = globals()
@@ -371,30 +382,41 @@ if __name__ == "__main__":
 else:
     frame, script, line, module, code, index = inspect.stack()[1]
     env = Environment(frame.f_globals)
-    
-    logging.basicConfig(
-        level=logging.DEBUG if env.get("debug", False) else logging.INFO,
-        format="(%(process)d) %(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    
+
+
     # are we being imported from a REPL? start our REPL
     if script == "<stdin>":
         run_repl(env)
         
     # we're being imported from a script
     else:
-        exit_code = 0
-        
-        # we avoid recursion by removing the line that imports us :)
+        # we need to analyze how we were imported
         with open(script, "r") as h: source = h.readlines()
-        source.pop(line-1)
-        source = "".join(source)
-    
-        try: exec source in env, env
-        except SystemExit, e: exit_code = e.code
-        except: print traceback.format_exc()
+        import_line = source[line-1]
 
-        # we exit so we don't actually run the script that we were imported from
-        # (which would be running it "again", since we just executed the script
-        # with exec
-        exit(exit_code)
+        # this it the most magical choice.  basically we're trying to import
+        # all of the system programs into our script.  the only way to do
+        # this is going to be to exec the source in modified global scope.
+        # there might be a less magical way to do this...
+        if "*" in import_line:
+            # we avoid recursion by removing the line that imports us :)
+            source.pop(line-1)
+            source = "".join(source)
+        
+            exit_code = 0
+            try: exec source in env, env
+            except SystemExit, e: exit_code = e.code
+            except: print traceback.format_exc()
+
+            # we exit so we don't actually run the script that we were imported from
+            # (which would be running it "again", since we just executed the script
+            # with exec
+            exit(exit_code)
+
+        # this is the least magical choice.  we're importing either a
+        # selection of programs or we're just importing the pbs module.
+        # in this case, let's just wrap ourselves with a module that has
+        # __getattr__ so our program lookups can be done there
+        else:
+            self = sys.modules[__name__]
+            sys.modules[__name__] = SelfWrapper(self)
