@@ -267,6 +267,10 @@ class Command(object):
 
 
 
+# this class is used directly when we do a "from pbs import *".  it allows
+# lookups to names that aren't found in the global scope to be searched
+# for as a program.  for example, if "ls" isn't found in the program's
+# scope, we consider it a system program and try to find it.
 class Environment(dict):
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
