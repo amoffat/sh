@@ -21,6 +21,10 @@
 #===============================================================================
 
 
+# project page:
+# https://github.com/amoffat/pbs
+
+
 from collections import defaultdict as dd
 import subprocess as subp
 import inspect
