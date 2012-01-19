@@ -179,3 +179,9 @@ p = wc(curl("http://github.com/", silent=True, pbs_bg=True), "--bytes")
 print "prints immediately!"
 print "byte count of github: %d" % int(p) # lazily completes
 ```
+
+# Yes I Know
+
+This code "violates" quite a few Python conventions to do what it does.
+It is not for the faint of heart.  But if you see value in it,
+more power to you!
