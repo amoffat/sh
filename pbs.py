@@ -382,9 +382,9 @@ else:
     env = Environment(frame.f_globals)
 
 
-    # are we being imported from a REPL? start our REPL
+    # are we being imported from a REPL? don't allow
     if script == "<stdin>":
-        run_repl(env)
+        raise RuntimeError, "Do not import PBS from the shell."
         
     # we're being imported from a script
     else:
