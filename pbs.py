@@ -376,7 +376,7 @@ if __name__ == "__main__":
     env = Environment(f_globals)
     run_repl(env)
     
-# we're bein imported from somewhere
+# we're being imported from somewhere
 else:
     frame, script, line, module, code, index = inspect.stack()[1]
     env = Environment(frame.f_globals)
@@ -388,6 +388,7 @@ else:
         
     # we're being imported from a script
     else:
+
         # we need to analyze how we were imported
         with open(script, "r") as h: source = h.readlines()
         import_line = source[line-1]
@@ -397,6 +398,11 @@ else:
         # this is going to be to exec the source in modified global scope.
         # there might be a less magical way to do this...
         if "*" in import_line:
+            # do not let us import * from anywhere but a stand-alone script
+            if frame.f_globals["__name__"] != "__main__":
+                raise RuntimeError, "Do not do 'from pbs import *' \
+from anywhere other than a stand-alone script.  Do a 'from pbs import program' instead."
+
             # we avoid recursion by removing the line that imports us :)
             source.pop(line-1)
             source = "".join(source)

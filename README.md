@@ -203,9 +203,3 @@ p = wc(curl("http://github.com/", silent=True, pbs_bg=True), "--bytes")
 print "prints immediately!"
 print "byte count of github: %d" % int(p) # lazily completes
 ```
-
-# Gotchas
-
-Do not do a "from pbs import *" from anywhere other than a standalone script.
-There is heavy magic going on in the background with that particular import,
-and it cannot be guaranteed to work correctly.
