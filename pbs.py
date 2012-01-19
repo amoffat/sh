@@ -149,6 +149,7 @@ class Command(object):
         rc = self.process.wait()
 
         if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
+        return self
     
     def __repr__(self):
         return str(self)
