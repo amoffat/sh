@@ -206,3 +206,7 @@ p = wc(curl("http://github.com/", silent=True, pbs_bg=True), "--bytes")
 print "prints immediately!"
 print "byte count of github: %d" % int(p) # lazily completes
 ```
+
+This lets you start long-running commands at the beginning of your script
+(like a file download) and continue performing other commands in the
+foreground.
