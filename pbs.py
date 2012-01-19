@@ -144,7 +144,6 @@ class Command(object):
         self._stdout, self._stderr = self.process.communicate()
         rc = self.process.wait()
 
-        if self.stderr: self.log.error(self.stderr)
         if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
     
     def __repr__(self):
@@ -256,7 +255,6 @@ class Command(object):
         self._stdout, self._stderr = self.process.communicate(actual_stdin)
         rc = self.process.wait()
 
-        if self.stderr: self.log.error(self.stderr)
         if rc != 0: raise get_rc_exc(rc)(self._command_ran, self.stdout, self.stderr)
         return self
 
