@@ -4,10 +4,6 @@ Python by giving you the good features of Bash (easy command calling, easy pipin
 with all the power and flexibility of Python.
 
 
-**If you're coming from v0.1, you'll need to use "from pbs import *"
-instead of "import pbs" to get the same behavior of v0.1**
-
-
 # Usage
 
 If you're writing a shell-style script, import the following way:
