@@ -3,6 +3,8 @@ Python functions dynamically.  PBS helps you write shell scripts in
 Python by giving you the good features of Bash (easy command calling, easy piping)
 with all the power and flexibility of Python.
 
+PBS is not a collection of system commands implemented in Python.
+
 
 # Usage
 
