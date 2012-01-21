@@ -180,7 +180,7 @@ class Command(object):
         kwargs = kwargs.copy()
         args = list(args)
         stdin = None
-        final_args = []
+        processed_args = []
         cmd = []
 
         # aggregate any with contexts
@@ -220,8 +220,8 @@ class Command(object):
             # remember.  for some reason, some command was more natural
             # taking a list?
             if isinstance(arg, (list, tuple)):
-                for sub_arg in arg: final_args.append(str(sub_arg))
-            else: final_args.append(str(arg))
+                for sub_arg in arg: processed_args.append(str(sub_arg))
+            else: processed_args.append(str(arg))
 
 
         # aggregate the keyword arguments
@@ -238,9 +238,19 @@ class Command(object):
 
                 if v is True: arg = "--"+k
                 else: arg = "--%s=%s" % (k, v)
-            final_args.append(arg)
+            processed_args.append(arg)
 
-        cmd.extend(shlex.split(" ".join(final_args)))
+        # makes sure our arguments are broken up correctly
+        split_args = shlex.split(" ".join(processed_args))
+
+        # now glob-expand each arg and compose the final list
+        final_args = []
+        for arg in split_args:
+            expanded = glob(arg)
+            if expanded: final_args.extend(expanded)
+            else: final_args.append(arg)
+
+        cmd.extend(final_args)
         # for debugging
         self._command_ran = " ".join(cmd)
         
@@ -279,7 +289,6 @@ class Environment(dict):
         self["Command"] = Command
         self["CommandNotFound"] = CommandNotFound
         self["ErrorReturnCode"] = ErrorReturnCode
-        self["glob"] = glob
         self["ARGV"] = sys.argv[1:]
         for i, arg in enumerate(sys.argv):
             self["ARG%d" % i] = arg
