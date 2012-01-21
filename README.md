@@ -78,7 +78,7 @@ Piping has become function composition:
 
 ```python
 # sort this directory by biggest file
-print sort(du(glob("*"), "-sb"), "-rn")
+print sort(du("*", "-sb"), "-rn")
 
 # print the number of folders and files in /etc
 print wc(ls("/etc", "-1"), "-l")
