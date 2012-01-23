@@ -1,3 +1,9 @@
+```python
+from pbs import ifconfig
+
+print ifconfig("eth0")
+```
+
 PBS is a unique subprocess wrapper that maps your system programs to
 Python functions dynamically.  PBS helps you write shell scripts in
 Python by giving you the good features of Bash (easy command calling, easy piping)
