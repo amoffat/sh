@@ -120,13 +120,6 @@ print which("some_command") # None
 if not which("supervisorctl"): apt_get("install", "supervisor", "-y")
 ```
 
-You can also use the return argument of "which" as the program, but
-it's not too useful:
-
-```python
-etc_files = which("ls")("/etc", "-1").split()
-```
-
 ## Environment Variables
 
 Environment variables are available much like they are in Bash:
