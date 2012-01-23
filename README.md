@@ -201,3 +201,30 @@ print "byte count of github: %d" % int(p) # lazily completes
 This lets you start long-running commands at the beginning of your script
 (like a file download) and continue performing other commands in the
 foreground.
+
+
+## Weirdly-named commands
+
+PBS automatically handles underscore-dash conversions.  For example, if you want to call apt-get:
+
+```python
+apt_get("install", "mplayer", y=True)
+```
+
+PBS looks for "apt_get", but if it doesn't find it, replaces all underscores with dashes and searches
+again.  If the command still isn't found, a CommandNotFound exception is raised.
+
+Commands with other, more uncommonly-named symbols in them must be accessed directly through
+The "Command" class wrapper.  The Command class takes the full path to the program as a string:
+
+```python
+p27 = Command(which("python2.7"))
+print p27("-h")
+```
+
+The Command wrapper is also useful for commands that are not in your standard PATH:
+
+```python
+script = Command("/tmp/temporary-script.sh")
+print script()
+```
