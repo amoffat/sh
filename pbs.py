@@ -346,7 +346,7 @@ class Environment(dict):
         os.chdir(path)
         
     def b_which(self, program):
-        return Command.create(program, raise_exc=False)
+        return which(program)
 
 
 
