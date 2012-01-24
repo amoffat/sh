@@ -135,8 +135,16 @@ print SHELL
 print PS1
 ```
 
-Of course, if you're not doing "from pbs import", you'll need to prefix
-these appropriately.
+You can set enviroment variables the usual way, through the os.environ
+mapping:
+
+```python
+import os
+os.environ["TEST"] = "123"
+```
+
+Now any new subprocess commands called from the script will be able to
+access that environment variable.
 
 ## Exceptions
 
