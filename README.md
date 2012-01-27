@@ -101,12 +101,12 @@ with sudo:
 
 If you need
 to run a command in a with context AND call it, for example, specifying
-a -p prompt with sudo, you need to use the pbs_with keyword argument.
+a -p prompt with sudo, you need to use the "_with" keyword argument.
 This let's the command know that it's being run from a with context so
 it can behave correctly.
 
 ```python
-with sudo(p=">", pbs_with=True):
+with sudo(p=">", _with=True):
     print ls("/root")
 ```
 
@@ -188,7 +188,7 @@ print ns.x
 
 ## Background Processes
 
-Commands can be run in the background with the special pbs_bg=True keyword
+Commands can be run in the background with the special _bg=True keyword
 argument:
 
 ```python
@@ -197,7 +197,7 @@ sleep(3)
 print "...3 seconds later"
 
 # doesn't block
-p = sleep(3, pbs_bg=True)
+p = sleep(3, _bg=True)
 print "prints immediately!"
 p.wait()
 print "...and 3 seconds later"
@@ -206,7 +206,7 @@ print "...and 3 seconds later"
 You can also pipe together background processes!
 
 ```python
-p = wc(curl("http://github.com/", silent=True, pbs_bg=True), "--bytes")
+p = wc(curl("http://github.com/", silent=True, _bg=True), "--bytes")
 print "prints immediately!"
 print "byte count of github: %d" % int(p) # lazily completes
 ```
@@ -228,7 +228,7 @@ PBS looks for "apt_get", but if it doesn't find it, replaces all underscores wit
 again.  If the command still isn't found, a CommandNotFound exception is raised.
 
 Commands with other, more uncommonly-named symbols in them must be accessed directly through
-The "Command" class wrapper.  The Command class takes the full path to the program as a string:
+the "Command" class wrapper.  The Command class takes the full path to the program as a string:
 
 ```python
 p27 = Command(which("python2.7"))
