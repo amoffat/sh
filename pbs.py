@@ -38,7 +38,7 @@ import shlex
 
 
 
-VERSION = "0.2"
+VERSION = "0.3"
 
 
 class ErrorReturnCode(Exception):
@@ -192,7 +192,7 @@ class Command(object):
         # pull out the pbs-specific arguments (arguments that are not to be
         # passed to the commands
         for parg, default in self.call_args.iteritems():
-            key = "pbs_" + parg
+            key = "_" + parg
             self.call_args[parg] = default
             if key in kwargs:
                 self.call_args[parg] = kwargs[key] 
