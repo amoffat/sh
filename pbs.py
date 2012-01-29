@@ -404,7 +404,7 @@ else:
 
     # are we being imported from a REPL? don't allow
     if script == "<stdin>":
-        raise RuntimeError, "Do not import PBS from the shell."
+        raise RuntimeError("Do not import PBS from the shell.")
         
     # we're being imported from a script
     else:
@@ -420,8 +420,8 @@ else:
         if "*" in import_line:
             # do not let us import * from anywhere but a stand-alone script
             if frame.f_globals["__name__"] != "__main__":
-                raise RuntimeError, "Do not do 'from pbs import *' \
-from anywhere other than a stand-alone script.  Do a 'from pbs import program' instead."
+                raise RuntimeError("Do not do 'from pbs import *' \
+from anywhere other than a stand-alone script.  Do a 'from pbs import program' instead.")
 
             # we avoid recursion by removing the line that imports us :)
             source.pop(line-1)
