@@ -164,7 +164,8 @@ class Command(object):
         return int(str(self).strip())
         
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        try: return unicode(self).encode('utf-8') # python2
+        except NameError: return self.__unicode__().decode('utf-8') # python3
         
     def __unicode__(self):
         if self.process: return self.stdout
