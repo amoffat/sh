@@ -175,7 +175,7 @@ class Command(object):
             Command.prepend_stack.append([self.path])
 
     def __exit__(self, typ, value, traceback):
-        if Command.prepend_stack != []:
+        if Command.prepend_stack:
             Command.prepend_stack.pop()
 
     def __call__(self, *args, **kwargs):
