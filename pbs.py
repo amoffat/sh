@@ -341,7 +341,7 @@ class Environment(dict):
     
     def b_echo(self, *args, **kwargs):
         out = Command("echo")(*args, **kwargs)
-        print out
+        print(out)
         return out
     
     def b_cd(self, path):
@@ -357,17 +357,17 @@ class Environment(dict):
 def run_repl(env):
     banner = "\n>> PBS v{version}\n>> https://github.com/amoffat/pbs\n"
     
-    print banner.format(version=VERSION)
+    print(banner.format(version=VERSION))
     while True:
         try: line = raw_input("pbs> ")
         except (ValueError, EOFError): break
             
         try: exec compile(line, "<dummy>", "single") in env, env
         except SystemExit: break
-        except: print traceback.format_exc()
+        except: print(traceback.format_exc())
 
     # cleans up our last line
-    print
+    print('')
 
 
 
@@ -430,7 +430,7 @@ from anywhere other than a stand-alone script.  Do a 'from pbs import program' i
             exit_code = 0
             try: exec source in env, env
             except SystemExit, e: exit_code = e.code
-            except: print traceback.format_exc()
+            except: print(traceback.format_exc())
 
             # we exit so we don't actually run the script that we were imported from
             # (which would be running it "again", since we just executed the script
