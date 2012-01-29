@@ -171,10 +171,12 @@ class Command(object):
         else: return self.path
 
     def __enter__(self):
-        self.prepend_stack.append([self.path])
+        if not self.call_args["with"]:
+            Command.prepend_stack.append([self.path])
 
     def __exit__(self, typ, value, traceback):
-        self.prepend_stack.pop()
+        if Command.prepend_stack:
+            Command.prepend_stack.pop()
 
     def __call__(self, *args, **kwargs):
         kwargs = kwargs.copy()
