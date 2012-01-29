@@ -165,10 +165,10 @@ class Command(object):
         
     def __str__(self):
         try: return unicode(self).encode('utf-8') # python2
-        except NameError: return self.__unicode__().decode('utf-8') # python3
+        except NameError: return self.__unicode__() # python3
         
     def __unicode__(self):
-        if self.process: return self.stdout
+        if self.process: return self.stdout.decode('utf-8') # byte string
         else: return self.path
 
     def __enter__(self):
