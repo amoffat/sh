@@ -359,7 +359,9 @@ def run_repl(env):
     
     print(banner.format(version=VERSION))
     while True:
-        try: line = raw_input("pbs> ")
+        try:
+            try: line = raw_input("pbs> ") # python2
+            except NameError: line = input("pbs> ") # python3
         except (ValueError, EOFError): break
             
         try: exec(compile(line, "<dummy>", "single"), env, env)
