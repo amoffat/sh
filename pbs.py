@@ -362,7 +362,7 @@ def run_repl(env):
         try: line = raw_input("pbs> ")
         except (ValueError, EOFError): break
             
-        try: exec compile(line, "<dummy>", "single") in env, env
+        try: exec(compile(line, "<dummy>", "single"), env, env)
         except SystemExit: break
         except: print(traceback.format_exc())
 
@@ -428,7 +428,7 @@ from anywhere other than a stand-alone script.  Do a 'from pbs import program' i
             source = "".join(source)
         
             exit_code = 0
-            try: exec source in env, env
+            try: exec(source, env, env)
             except SystemExit, e: exit_code = e.code
             except: print(traceback.format_exc())
 
