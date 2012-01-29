@@ -429,7 +429,7 @@ from anywhere other than a stand-alone script.  Do a 'from pbs import program' i
         
             exit_code = 0
             try: exec(source, env, env)
-            except SystemExit, e: exit_code = e.code
+            except SystemExit as e: exit_code = e.code
             except: print(traceback.format_exc())
 
             # we exit so we don't actually run the script that we were imported from
