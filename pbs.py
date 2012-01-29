@@ -193,7 +193,8 @@ class Command(object):
         
         # pull out the pbs-specific arguments (arguments that are not to be
         # passed to the commands
-        for parg, default in self.call_args.iteritems():
+        for parg in self.call_args:
+            default = self.call_args[parg]
             key = "_" + parg
             self.call_args[parg] = default
             if key in kwargs:
@@ -227,7 +228,8 @@ class Command(object):
 
 
         # aggregate the keyword arguments
-        for k,v in kwargs.iteritems():
+        for k in kwargs:
+            v = kwargs[k]
             # we're passing a short arg as a kwarg, example:
             # cut(d="\t")
             if len(k) == 1:
@@ -361,7 +363,7 @@ def run_repl(env):
     while True:
         try:
             try: line = raw_input("pbs> ") # python2
-            except NameError: line = input("pbs> ") # python3
+            except NameError: line = input("pbs> ") # python3 (raw_input became input)
         except (ValueError, EOFError): break
             
         try: exec(compile(line, "<dummy>", "single"), env, env)
