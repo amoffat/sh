@@ -164,10 +164,11 @@ class Command(object):
         return int(str(self).strip())
         
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        try: return unicode(self).encode('utf-8') # python2
+        except NameError: return self.__unicode__() # python3
         
     def __unicode__(self):
-        if self.process: return self.stdout
+        if self.process: return self.stdout.decode('utf-8') # byte string
         else: return self.path
 
     def __enter__(self):
@@ -193,7 +194,7 @@ class Command(object):
         
         # pull out the pbs-specific arguments (arguments that are not to be
         # passed to the commands
-        for parg, default in self.call_args.iteritems():
+        for parg, default in self.call_args.items():
             key = "_" + parg
             self.call_args[parg] = default
             if key in kwargs:
@@ -227,7 +228,7 @@ class Command(object):
 
 
         # aggregate the keyword arguments
-        for k,v in kwargs.iteritems():
+        for k,v in kwargs.items():
             # we're passing a short arg as a kwarg, example:
             # cut(d="\t")
             if len(k) == 1:
@@ -341,7 +342,7 @@ class Environment(dict):
     
     def b_echo(self, *args, **kwargs):
         out = Command("echo")(*args, **kwargs)
-        print out
+        print(out)
         return out
     
     def b_cd(self, path):
@@ -357,17 +358,19 @@ class Environment(dict):
 def run_repl(env):
     banner = "\n>> PBS v{version}\n>> https://github.com/amoffat/pbs\n"
     
-    print banner.format(version=VERSION)
+    print(banner.format(version=VERSION))
     while True:
-        try: line = raw_input("pbs> ")
+        try:
+            try: line = raw_input("pbs> ") # python2
+            except NameError: line = input("pbs> ") # python3 (raw_input became input)
         except (ValueError, EOFError): break
             
-        try: exec compile(line, "<dummy>", "single") in env, env
+        try: exec(compile(line, "<dummy>", "single"), env, env)
         except SystemExit: break
-        except: print traceback.format_exc()
+        except: print(traceback.format_exc())
 
     # cleans up our last line
-    print
+    print('')
 
 
 
@@ -404,7 +407,7 @@ else:
 
     # are we being imported from a REPL? don't allow
     if script == "<stdin>":
-        raise RuntimeError, "Do not import PBS from the shell."
+        raise RuntimeError("Do not import PBS from the shell.")
         
     # we're being imported from a script
     else:
@@ -420,17 +423,17 @@ else:
         if "*" in import_line:
             # do not let us import * from anywhere but a stand-alone script
             if frame.f_globals["__name__"] != "__main__":
-                raise RuntimeError, "Do not do 'from pbs import *' \
-from anywhere other than a stand-alone script.  Do a 'from pbs import program' instead."
+                raise RuntimeError("Do not do 'from pbs import *' \
+from anywhere other than a stand-alone script.  Do a 'from pbs import program' instead.")
 
             # we avoid recursion by removing the line that imports us :)
             source.pop(line-1)
             source = "".join(source)
         
             exit_code = 0
-            try: exec source in env, env
-            except SystemExit, e: exit_code = e.code
-            except: print traceback.format_exc()
+            try: exec(source, env, env)
+            except SystemExit as e: exit_code = e.code
+            except: print(traceback.format_exc())
 
             # we exit so we don't actually run the script that we were imported from
             # (which would be running it "again", since we just executed the script
