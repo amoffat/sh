@@ -38,7 +38,12 @@ import shlex
 
 
 
-VERSION = "0.3"
+VERSION = "0.4"
+IS_PY3 = sys.version_info.major == 3
+
+if IS_PY3: raw_input = input
+
+
 
 
 class ErrorReturnCode(Exception):
@@ -164,8 +169,8 @@ class Command(object):
         return int(str(self).strip())
         
     def __str__(self):
-        try: return unicode(self).encode('utf-8') # python2
-        except NameError: return self.__unicode__() # python3
+        if IS_PY3: return self.__unicode__()
+        else: return unicode(self).encode('utf-8')
         
     def __unicode__(self):
         if self.process: return self.stdout.decode('utf-8') # byte string
@@ -360,9 +365,7 @@ def run_repl(env):
     
     print(banner.format(version=VERSION))
     while True:
-        try:
-            try: line = raw_input("pbs> ") # python2
-            except NameError: line = input("pbs> ") # python3 (raw_input became input)
+        try: line = raw_input("pbs> ")
         except (ValueError, EOFError): break
             
         try: exec(compile(line, "<dummy>", "single"), env, env)
