@@ -194,8 +194,7 @@ class Command(object):
         
         # pull out the pbs-specific arguments (arguments that are not to be
         # passed to the commands
-        for parg in self.call_args:
-            default = self.call_args[parg]
+        for parg, default in self.call_args.items():
             key = "_" + parg
             self.call_args[parg] = default
             if key in kwargs:
@@ -229,8 +228,7 @@ class Command(object):
 
 
         # aggregate the keyword arguments
-        for k in kwargs:
-            v = kwargs[k]
+        for k,v in kwargs.items():
             # we're passing a short arg as a kwarg, example:
             # cut(d="\t")
             if len(k) == 1:
