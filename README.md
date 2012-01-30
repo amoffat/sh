@@ -74,7 +74,7 @@ curl("http://duckduckgo.com/", "-o", "page.html", "--silent")
 adduser("amoffat", system=True, shell="/bin/bash", no_create_home=True)
 
 # or
-adduser("amoffat", "--system", "--shell /bin/bash", "--no_create_home")
+adduser("amoffat", "--system", "--shell /bin/bash", "--no-create-home")
 ```
 
 ## Piping
