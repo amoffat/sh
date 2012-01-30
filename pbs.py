@@ -266,9 +266,8 @@ class Command(object):
         if self.call_args["with"]:
             Command.prepend_stack.append(cmd)
             return self
-        
 
-        self.process = subp.Popen(cmd, shell=False, env=os.environ,
+        self.process = subp.Popen(self._command_ran, shell=True, env=os.environ,
             stdin=stdin, stdout=subp.PIPE, stderr=subp.PIPE)
 
         if self.call_args["bg"]: return self
