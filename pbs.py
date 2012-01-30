@@ -25,14 +25,12 @@
 # https://github.com/amoffat/pbs
 
 
-from collections import defaultdict as dd
 import subprocess as subp
 import inspect
 import sys
 import traceback
 import os
 import re
-import socket
 from glob import glob
 import shlex
 
