@@ -412,8 +412,8 @@ else:
     env = Environment(frame.f_globals)
 
 
-    # are we being imported from a REPL? don't allow
-    if script == "<stdin>" or script == "<ipython console>":
+    # are we being imported from a REPL?
+    if script.startswith("<") and script.endswith(">") :
         self = sys.modules[__name__]
         sys.modules[__name__] = SelfWrapper(self)
         
