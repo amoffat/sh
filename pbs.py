@@ -314,7 +314,8 @@ class Environment(dict):
         # import * from a repl.  so, raise an exception, since
         # that's really the only sensible thing to do
         if k == "__all__":
-            raise RuntimeError("Cannot import * from the commandline, please see <insert doc>")
+            raise RuntimeError("Cannot import * from the commandline, please \
+see <insert doc>")
 
         # if we end with "_" just go ahead and skip searching
         # our namespace for python stuff.  this was mainly for the
@@ -443,9 +444,9 @@ from anywhere other than a stand-alone script.  Do a 'from pbs import program' i
             except SystemExit as e: exit_code = e.code
             except: print(traceback.format_exc())
 
-            # we exit so we don't actually run the script that we were imported from
-            # (which would be running it "again", since we just executed the script
-            # with exec
+            # we exit so we don't actually run the script that we were imported
+            # from (which would be running it "again", since we just executed
+            # the script with exec
             exit(exit_code)
 
         # this is the least magical choice.  we're importing either a
