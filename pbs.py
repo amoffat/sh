@@ -33,6 +33,7 @@ import os
 import re
 from glob import glob
 import shlex
+import warnings
 
 
 
@@ -309,6 +310,12 @@ class Environment(dict):
         else: dict.__setitem__(self, k, v)
         
     def __missing__(self, k):
+        # the only way we'd get to here is if we've tried to
+        # import * from a repl.  so, raise an exception, since
+        # that's really the only sensible thing to do
+        if k == "__all__":
+            raise RuntimeError("Cannot import * from the commandline, please see <insert doc>")
+
         # if we end with "_" just go ahead and skip searching
         # our namespace for python stuff.  this was mainly for the
         # command "id", which is a popular program for finding
@@ -408,7 +415,8 @@ else:
 
     # are we being imported from a REPL? don't allow
     if script == "<stdin>":
-        raise RuntimeError("Do not import PBS from the shell.")
+        self = sys.modules[__name__]
+        sys.modules[__name__] = SelfWrapper(self)
         
     # we're being imported from a script
     else:
