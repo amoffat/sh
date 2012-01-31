@@ -238,6 +238,27 @@ This lets you start long-running commands at the beginning of your script
 (like a file download) and continue performing other commands in the
 foreground.
 
+## Redirection
+
+PBS can redirect the standard and error output streams of a process to a file. 
+This is done with the special _out and _err keyword arguments. You can pass a
+filename or a file object as the argument value. When the name of an already 
+existing file is passed, the contents of the file will be overwritten.
+
+```python
+ls(_out="files.list")
+ls("nonexistent", _err="error.txt")
+```
+
+PBS can also redirect the error output stream to the standard output stream,
+using the special _err_to_out=True keyword argument.
+
+Redirected streams are not available on the Command object, in other words:
+
+```python
+ls(_out="foo").stdout == None
+sleep(3, _err_to_out).stderr == None
+```
 
 ## Weirdly-named Commands
 

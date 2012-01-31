@@ -51,13 +51,21 @@ class ErrorReturnCode(Exception):
         self.stdout = stdout
         self.stderr = stderr
 
-        tstdout = self.stdout[:self.truncate_cap] 
-        out_delta = len(self.stdout) - len(tstdout)
-        if out_delta: tstdout += "... (%d more, please see e.stdout)" % out_delta
-
-        tstderr = self.stderr[:self.truncate_cap]
-        err_delta = len(self.stderr) - len(tstderr)
-        if err_delta: tstderr += "... (%d more, please see e.stderr)" % err_delta
+        if self.stdout != None:
+            tstdout = self.stdout[:self.truncate_cap] 
+            out_delta = len(self.stdout) - len(tstdout)
+            if out_delta: 
+                tstdout += "... (%d more, please see e.stdout)" % out_delta
+        else:
+            tstdout = "<redirected>"
+            
+        if self.stderr != None:
+            tstderr = self.stderr[:self.truncate_cap]
+            err_delta = len(self.stderr) - len(tstderr)
+            if err_delta: 
+                tstderr += "... (%d more, please see e.stderr)" % err_delta
+        else:
+            tstderr = "<redirected>"
 
         msg = "\n\nRan: %r\n\nSTDOUT:\n\n  %s\nSTDERR:\n\n  %s" %\
             (full_cmd, tstdout, tstderr)
@@ -129,6 +137,9 @@ class Command(object):
         self.call_args = {
             "bg": False, # run command in background
             "with": False, # prepend the command to every command after it
+            "out": None, # redirect STDOUT
+            "err": None, # redirect STDIN
+            "err_to_out": None, # redirect STDERR to STDOUT
         }
         
     def __getattr__(self, p):
@@ -170,7 +181,11 @@ class Command(object):
         else: return unicode(self).encode('utf-8')
         
     def __unicode__(self):
-        if self.process: return self.stdout.decode('utf-8') # byte string
+        if self.process: 
+            if self.stdout:
+                return self.stdout.decode('utf-8') # byte string
+            else:
+                return ""
         else: return self.path
 
     def __enter__(self):
@@ -266,9 +281,27 @@ class Command(object):
             Command.prepend_stack.append(cmd)
             return self
         
+        out = self.call_args["out"]
+        if isinstance(out, file):
+            stdout = out
+        elif out:
+            stdout = file(str(out), 'w')
+        else:
+            stdout = subp.PIPE
+        
+        err = self.call_args["err"]
+        if isinstance(err, file):
+            stderr = err
+        elif err:
+            stderr = file(str(err), 'w')
+        elif self.call_args["err_to_out"]:
+            stderr = subp.STDOUT
+        else:
+            stderr = subp.PIPE
+            
 
         self.process = subp.Popen(cmd, shell=False, env=os.environ,
-            stdin=stdin, stdout=subp.PIPE, stderr=subp.PIPE)
+            stdin=stdin, stdout=stdout, stderr=stderr)
 
         if self.call_args["bg"]: return self
 
@@ -351,7 +384,8 @@ see \"Limitations\" here: %s" % PROJECT_URL)
     
     def b_echo(self, *args, **kwargs):
         out = Command("echo")(*args, **kwargs)
-        print(out)
+        if out.stdout:
+            print(out)
         return out
     
     def b_cd(self, path):
