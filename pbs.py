@@ -437,7 +437,9 @@ a stand-alone script.  Do a 'from pbs import program' instead. Please see \
 
             warnings.warn("Importing * from pbs is magical and therefore has \
 some limitations.  Please become familiar with them under \"Limitations\" \
-here: %s" % PROJECT_URL, RuntimeWarning, stacklevel=2)
+here: %s  To avoid this warning, use a warning filter or import your \
+programs directly with \"from pbs import <program>\"" % PROJECT_URL,
+RuntimeWarning, stacklevel=2)
 
             # we avoid recursion by removing the line that imports us :)
             source = "".join(source[line:])
