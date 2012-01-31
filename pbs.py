@@ -25,6 +25,7 @@
 # https://github.com/amoffat/pbs
 
 
+from collections import Sequence
 import subprocess as subp
 import inspect
 import sys
@@ -82,6 +83,7 @@ def get_rc_exc(rc):
 
 
 def which(program):
+    program = str(program)
     def is_exe(fpath):
         return os.path.exists(fpath) and os.access(fpath, os.X_OK)
 
@@ -280,9 +282,18 @@ class Command(object):
         return self
 
 
+environment_contents = {
+        "Command": Command,
+        "CommandNotFound": CommandNotFound,
+        "ErrorReturnCode": ErrorReturnCode,
+        "ARGV": sys.argv[1:],
+    }
 
+for i, arg in enumerate(sys.argv):
+    environment_contents["ARG%d" % i] = arg
 
-
+# this needs to be last
+environment_contents["env"] = os.environ
 
 # this class is used directly when we do a "from pbs import *".  it allows
 # lookups to names that aren't found in the global scope to be searched
@@ -291,17 +302,8 @@ class Command(object):
 class Environment(dict):
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
-        
-        self["Command"] = Command
-        self["CommandNotFound"] = CommandNotFound
-        self["ErrorReturnCode"] = ErrorReturnCode
-        self["ARGV"] = sys.argv[1:]
-        for i, arg in enumerate(sys.argv):
-            self["ARG%d" % i] = arg
-        
-        # this needs to be last
-        self["env"] = os.environ
-        
+        self.update(environment_contents)
+
     def __setitem__(self, k, v):
         # are we altering an environment variable?
         if "env" in self and k in self["env"]: self["env"][k] = v
@@ -385,66 +387,65 @@ class SelfWrapper(object):
     def __init__(self, self_module):
         self.self_module = self_module
         self.env = Environment(globals())
-    
+
     def __getattr__(self, name):
+        if name == '__all__':
+            return __all__
         return self.env[name]
 
 
+# Let's just wrap ourselves with a module that has
+# __getattr__ so our program lookups can be done there
 
-# we're being run as a stand-alone script, fire up a REPL
-if __name__ == "__main__":
+self = sys.modules[__name__]
+sys.modules[__name__] = SelfWrapper(self)
+
+
+class Everything(Sequence):
+    """A lazily populated list-like object that contains all commands
+    """
+    def __init__(self):
+        self._list = None
+
+    def make_list(self):
+        if self._list:
+            return
+        all_exports = set(environment_contents)
+        for path in Environment(globals())['PATH'].split(os.pathsep):
+            try:
+                commands = os.listdir(path)
+            except OSError:
+                pass
+            for command in commands:
+                full_path = os.path.join(path, command)
+                if not os.path.isdir(full_path) and os.access(full_path, os.X_OK):
+                    all_exports.add(command)
+        self._list = sorted(all_exports)
+
+    def __iter__(self):
+        self.make_list()
+        return iter(self._list)
+
+    def __len__(self):
+        self.make_list()
+        return len(self._list)
+
+    def __contains__(self, item):
+        self.make_list()
+        return item in self._list
+
+    def __getitem__(self, index):
+        self.make_list()
+        return self._list[index]
+
+# Register Everything
+__all__ = Everything()
+
+if __name__ == '__main__':
+    # Fire up a REPL
     globs = globals()
     f_globals = {}
     for k in ["__builtins__", "__doc__", "__name__", "__package__"]:
         f_globals[k] = globs[k]
     env = Environment(f_globals)
     run_repl(env)
-    
-# we're being imported from somewhere
-else:
-    frame, script, line, module, code, index = inspect.stack()[1]
-    env = Environment(frame.f_globals)
-
-
-    # are we being imported from a REPL? don't allow
-    if script == "<stdin>":
-        raise RuntimeError("Do not import PBS from the shell.")
-        
-    # we're being imported from a script
-    else:
-
-        # we need to analyze how we were imported
-        with open(script, "r") as h: source = h.readlines()
-        import_line = source[line-1]
-
-        # this it the most magical choice.  basically we're trying to import
-        # all of the system programs into our script.  the only way to do
-        # this is going to be to exec the source in modified global scope.
-        # there might be a less magical way to do this...
-        if "*" in import_line:
-            # do not let us import * from anywhere but a stand-alone script
-            if frame.f_globals["__name__"] != "__main__":
-                raise RuntimeError("Do not do 'from pbs import *' \
-from anywhere other than a stand-alone script.  Do a 'from pbs import program' instead.")
-
-            # we avoid recursion by removing the line that imports us :)
-            source.pop(line-1)
-            source = "".join(source)
-        
-            exit_code = 0
-            try: exec(source, env, env)
-            except SystemExit as e: exit_code = e.code
-            except: print(traceback.format_exc())
-
-            # we exit so we don't actually run the script that we were imported from
-            # (which would be running it "again", since we just executed the script
-            # with exec
-            exit(exit_code)
-
-        # this is the least magical choice.  we're importing either a
-        # selection of programs or we're just importing the pbs module.
-        # in this case, let's just wrap ourselves with a module that has
-        # __getattr__ so our program lookups can be done there
-        else:
-            self = sys.modules[__name__]
-            sys.modules[__name__] = SelfWrapper(self)
