@@ -433,8 +433,13 @@ else:
         if "*" in import_line:
             # do not let us import * from anywhere but a stand-alone script
             if frame.f_globals["__name__"] != "__main__":
-                raise RuntimeError("Do not do 'from pbs import *' \
-from anywhere other than a stand-alone script.  Do a 'from pbs import program' instead.")
+                raise RuntimeError("Cannot import * from anywhere other than \
+a stand-alone script.  Do a 'from pbs import program' instead. Please see \
+<insert documentation>")
+
+            warnings.warn("Importing * from pbs is magical and therefore has \
+some caveats.  Please become familiar with them here: <insert docs>\
+", RuntimeWarning)
 
             # we avoid recursion by removing the line that imports us :)
             source = "".join(source[line:])
