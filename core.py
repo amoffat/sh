@@ -80,7 +80,7 @@ class Command(UnicodeMixin):
     def create(cls, program, raise_exc=True):
         path = Command.resolve_program(program)
         if not path:
-            if raise_exc: raise CommandNotFound(program)
+            if raise_exc: raise CommandNotFound(program.replace("_", "-"))
             else: return None
         return cls(path)
 
@@ -115,7 +115,7 @@ class Command(UnicodeMixin):
         self._stdout, self._stderr = self.process.communicate()
         rc = self.process.wait()
 
-        if rc != 0: raise __get_rc_exc__(rc)(self.stdout, self.stderr)
+        if rc != 0: raise Environment.__get_rc_exc__(rc)(self.stdout, self.stderr)
         return self
 
     @classmethod
@@ -264,7 +264,7 @@ class Command(UnicodeMixin):
         self._stdout, self._stderr = self.process.communicate(actual_stdin)
         rc = self.process.wait()
 
-        if rc != 0: raise __get_rc_exc__(rc)(self._command_ran, self.stdout, self.stderr)
+        if rc != 0: raise Environment.__get_rc_exc__(rc)(self._command_ran, self.stdout, self.stderr)
         return self
 
 
@@ -273,6 +273,9 @@ class Command(UnicodeMixin):
 # for as a program.  for example, if "ls" isn't found in the program's
 # scope, we consider it a system program and try to find it.
 class Environment(dict):
+    rc_exc_regex = re.compile("ErrorReturnCode_(\d+)")
+    rc_exc_cache = {}
+
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
 
@@ -285,9 +288,6 @@ class Environment(dict):
 
         # this needs to be last
         self["env"] = os.environ
-        self["rc_exc_regex"] = re.compile("ErrorReturnCode_(\d+)")
-        self["rc_exc_cache"] = {}
-
 
     def __setitem__(self, k, v):
         # are we altering an environment variable?
@@ -295,14 +295,14 @@ class Environment(dict):
         # no?  just setting a regular name
         else: dict.__setitem__(self, k, v)
 
-
-    def __get_rc_exc__(rc):
-        try: return self["rc_exc_cache"][rc]
+    @classmethod
+    def __get_rc_exc__(self, rc):
+        try: return self.rc_exc_cache[rc]
         except KeyError: pass
 
         name = "ErrorReturnCode_%d" % rc
         exc = type(name, (ErrorReturnCode,), {})
-        self["rc_exc_cache"][name] = exc
+        self.rc_exc_cache[name] = exc
         return exc
 
 
@@ -316,10 +316,10 @@ class Environment(dict):
         # version by "id" and the program version with "id_"
         if not k.endswith("_"):
             # check if we're naming a dynamically generated ReturnCode exception
-            try: return self["rc_exc_cache"][k]
+            try: return self.rc_exc_cache[k]
             except KeyError:
-                m = self["rc_exc_regex"].match(k)
-                if m: return __get_rc_exc__(int(m.group(1)))
+                m = self.rc_exc_regex.match(k)
+                if m: return Environment.__get_rc_exc__(int(m.group(1)))
 
             # are we naming a commandline argument?
             if k.startswith("ARG"):
