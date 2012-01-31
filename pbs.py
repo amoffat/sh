@@ -21,9 +21,6 @@
 #===============================================================================
 
 
-# project page:
-# https://github.com/amoffat/pbs
-
 
 import subprocess as subp
 import inspect
@@ -33,10 +30,12 @@ import os
 import re
 from glob import glob
 import shlex
+import warnings
 
 
 
-VERSION = "0.4"
+VERSION = "0.5"
+PROJECT_URL = "https://github.com/amoffat/pbs"
 IS_PY3 = sys.version_info[0] == 3
 
 if IS_PY3: raw_input = input
@@ -309,6 +308,13 @@ class Environment(dict):
         else: dict.__setitem__(self, k, v)
         
     def __missing__(self, k):
+        # the only way we'd get to here is if we've tried to
+        # import * from a repl.  so, raise an exception, since
+        # that's really the only sensible thing to do
+        if k == "__all__":
+            raise RuntimeError("Cannot import * from the commandline, please \
+see \"Limitations\" here: %s" % PROJECT_URL)
+
         # if we end with "_" just go ahead and skip searching
         # our namespace for python stuff.  this was mainly for the
         # command "id", which is a popular program for finding
@@ -408,7 +414,8 @@ else:
 
     # are we being imported from a REPL? don't allow
     if script == "<stdin>":
-        raise RuntimeError("Do not import PBS from the shell.")
+        self = sys.modules[__name__]
+        sys.modules[__name__] = SelfWrapper(self)
         
     # we're being imported from a script
     else:
@@ -424,8 +431,15 @@ else:
         if "*" in import_line:
             # do not let us import * from anywhere but a stand-alone script
             if frame.f_globals["__name__"] != "__main__":
-                raise RuntimeError("Do not do 'from pbs import *' \
-from anywhere other than a stand-alone script.  Do a 'from pbs import program' instead.")
+                raise RuntimeError("Cannot import * from anywhere other than \
+a stand-alone script.  Do a 'from pbs import program' instead. Please see \
+\"Limitations\" here: %s" % PROJECT_URL)
+
+            warnings.warn("Importing * from pbs is magical and therefore has \
+some limitations.  Please become familiar with them under \"Limitations\" \
+here: %s  To avoid this warning, use a warning filter or import your \
+programs directly with \"from pbs import <program>\"" % PROJECT_URL,
+RuntimeWarning, stacklevel=2)
 
             # we avoid recursion by removing the line that imports us :)
             source = "".join(source[line:])
@@ -435,9 +449,9 @@ from anywhere other than a stand-alone script.  Do a 'from pbs import program' i
             except SystemExit as e: exit_code = e.code
             except: print(traceback.format_exc())
 
-            # we exit so we don't actually run the script that we were imported from
-            # (which would be running it "again", since we just executed the script
-            # with exec
+            # we exit so we don't actually run the script that we were imported
+            # from (which would be running it "again", since we just executed
+            # the script with exec
             exit(exit_code)
 
         # this is the least magical choice.  we're importing either a

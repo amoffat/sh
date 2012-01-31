@@ -1,7 +1,7 @@
 PBS is a unique subprocess wrapper that maps your system programs to
 Python functions dynamically.  PBS helps you write shell scripts in
-Python by giving you the good features of Bash (easy command calling, easy piping)
-with all the power and flexibility of Python.
+Python by giving you the good features of Bash (easy command calling, easy
+piping) with all the power and flexibility of Python.
 
 ```python
 from pbs import ifconfig
@@ -13,23 +13,46 @@ PBS is not a collection of system commands implemented in Python.
 
 # Usage
 
-If you're writing a shell-style script, import the following way:
+The easiest way (and least magical way) to get up and running is to import pbs
+directly or import your program from pbs:
+
+```python
+import pbs
+print pbs.ifconfig("eth0")
+
+from pbs import ifconfig
+print ifconfig("eth0")
+```
+
+The alternative way is to import *all* of your system programs by using star
+import.  Note that this does not actually import every system program, but
+provides a dynamic lookup mechanism.  This usage pattern is suited for one-file
+shell scripts:
 
 ```python
 from pbs import *
+print ifconfig("eth0")
+print du()
 ```
 
-This will make all of your system programs available to the script.
-Note that this does not actually import every system program, but
-provides a dynamic lookup mechanism.
+There are some important caveats when using star import, and the code will
+raise a warning to notify you of such.  Please review the limitations under
+the last section "Limitations".
 
-Or if you just want to import a few system programs:
+A less common usage pattern is through PBS Command wrapper, which takes a
+full path to a command and returns a callable object.  This is useful for
+programs that have weird characters in their names or programs that aren't in
+your $PATH:
 
 ```python
-from pbs import ifconfig, supervisorctl, ffmpeg
+import pbs
+ffmpeg = pbs.Command("/usr/bin/ffmpeg")
+ffmpeg(movie_file)
 ```
 
-You can also try out PBS through an interactive REPL:
+The last usage pattern is for trying PBS through an interactive REPL.  By
+default, this acts like a star import (so all of your system programs will be
+immediately available as functions):
 
     $> python pbs.py
 
@@ -216,19 +239,22 @@ This lets you start long-running commands at the beginning of your script
 foreground.
 
 
-## Weirdly-named commands
+## Weirdly-named Commands
 
-PBS automatically handles underscore-dash conversions.  For example, if you want to call apt-get:
+PBS automatically handles underscore-dash conversions.  For example, if you want
+to call apt-get:
 
 ```python
 apt_get("install", "mplayer", y=True)
 ```
 
-PBS looks for "apt_get", but if it doesn't find it, replaces all underscores with dashes and searches
-again.  If the command still isn't found, a CommandNotFound exception is raised.
+PBS looks for "apt_get", but if it doesn't find it, replaces all underscores
+with dashes and searches again.  If the command still isn't found, a
+CommandNotFound exception is raised.
 
-Commands with other, more uncommonly-named symbols in them must be accessed directly through
-the "Command" class wrapper.  The Command class takes the full path to the program as a string:
+Commands with other, less-commonly symbols in their names must be accessed
+directly through the "Command" class wrapper.  The Command class takes the full
+path to the program as a string:
 
 ```python
 p27 = Command(which("python2.7"))
@@ -241,3 +267,17 @@ The Command wrapper is also useful for commands that are not in your standard PA
 script = Command("/tmp/temporary-script.sh")
 print script()
 ```
+
+## Limitations
+
+PBS's main limitations come from the use of star import.  If you're interested
+as to why these limitations exist, please take a look at the source.  In
+general, when using star import:
+
+* Do the import as soon as possible, at the top of the script.
+* Do not do the star import on an indented line (so don't do it from within an
+if statement, or function, etc)
+* (Disabled anyway, but) Do not star import from the Python shell.  If you want
+to muck around in a REPL shell, run PBS as a script, which will launch a REPL.
+* (Disabled anyway, but) Do not star import from anywhere other than a main 
+script.
