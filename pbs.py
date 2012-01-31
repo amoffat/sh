@@ -21,9 +21,6 @@
 #===============================================================================
 
 
-# project page:
-# https://github.com/amoffat/pbs
-
 
 import subprocess as subp
 import inspect
@@ -38,6 +35,7 @@ import warnings
 
 
 VERSION = "0.4"
+PROJECT_URL = "https://github.com/amoffat/pbs"
 IS_PY3 = sys.version_info[0] == 3
 
 if IS_PY3: raw_input = input
@@ -315,7 +313,7 @@ class Environment(dict):
         # that's really the only sensible thing to do
         if k == "__all__":
             raise RuntimeError("Cannot import * from the commandline, please \
-see <insert doc>")
+see \"Limitations\" here: %s" % PROJECT_URL)
 
         # if we end with "_" just go ahead and skip searching
         # our namespace for python stuff.  this was mainly for the
@@ -435,11 +433,11 @@ else:
             if frame.f_globals["__name__"] != "__main__":
                 raise RuntimeError("Cannot import * from anywhere other than \
 a stand-alone script.  Do a 'from pbs import program' instead. Please see \
-<insert documentation>")
+\"Limitations\" here: %s" % PROJECT_URL)
 
             warnings.warn("Importing * from pbs is magical and therefore has \
-some caveats.  Please become familiar with them here: <insert docs>\
-", RuntimeWarning)
+some limitations.  Please become familiar with them under \"Limitations\" \
+here: %s" % PROJECT_URL, RuntimeWarning)
 
             # we avoid recursion by removing the line that imports us :)
             source = "".join(source[line:])
