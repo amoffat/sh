@@ -428,8 +428,7 @@ else:
 from anywhere other than a stand-alone script.  Do a 'from pbs import program' instead.")
 
             # we avoid recursion by removing the line that imports us :)
-            source.pop(line-1)
-            source = "".join(source)
+            source = "".join(source[line:])
         
             exit_code = 0
             try: exec(source, env, env)
