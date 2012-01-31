@@ -28,6 +28,19 @@ Or if you just want to import a few system programs:
 ```python
 from pbs import ifconfig, supervisorctl, ffmpeg
 ```
+You can also import pbs, and then call programs like this:
+
+```python
+import pbs
+pbs.ffmpeg()
+```
+Or you can explicitly assign a command to a function name:
+
+```python
+import pbs
+ffmpeg = pbs.Command(pbs.which("ffmpeg")) # command takes full path
+ffmpeg()
+```
 
 You can also try out PBS through an interactive REPL:
 
