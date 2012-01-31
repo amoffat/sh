@@ -413,7 +413,7 @@ else:
 
 
     # are we being imported from a REPL? don't allow
-    if script == "<stdin>":
+    if script == "<stdin>" or script == "<ipython console>":
         self = sys.modules[__name__]
         sys.modules[__name__] = SelfWrapper(self)
         
