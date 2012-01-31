@@ -3,7 +3,7 @@ except ImportError: from setuptools import setup
 
 setup(
     name="pbs",
-    version="0.5",
+    version="0.6",
     description="Python subprocess wrapper",
     author="Andrew Moffat",
     author_email="andrew.robert.moffat@gmail.com",
