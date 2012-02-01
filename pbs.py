@@ -108,7 +108,8 @@ def resolve_program(program):
         # that from python (we have to use underscores), so we'll check
         # if a dash version of our underscore command exists and use that
         # if it does
-        if "_" in program: path = which(program.replace("_", "-"))        
+        if "_" in program: path = which(program.replace("_", "-"))
+        if os.name == "nt": path = which("%s.exe" % program)
         if not path: return None
     return path
 
@@ -120,17 +121,20 @@ class Command(object):
     def create(cls, program, raise_exc=True):
         path = resolve_program(program)
         if not path:
+            if os.name == "nt" and program in nt_internal_command:
+                return cls("cmd.exe", default_args=["/S", "/C", program])
             if raise_exc: raise CommandNotFound(program)
             else: return None
         return cls(path)
     
-    def __init__(self, path):            
+    def __init__(self, path, default_args=[]):
         self.path = path
         
         self.process = None
         self._stdout = None
         self._stderr = None
-        
+
+        self.default_args = list(default_args)
         self.call_args = {
             "bg": False, # run command in background
             "with": False, # prepend the command to every command after it
@@ -191,7 +195,7 @@ class Command(object):
 
     def __call__(self, *args, **kwargs):
         kwargs = kwargs.copy()
-        args = list(args)
+        args = self.default_args + list(args)
         stdin = None
         processed_args = []
         cmd = []
@@ -490,3 +494,20 @@ RuntimeWarning, stacklevel=2)
         else:
             self = sys.modules[__name__]
             sys.modules[__name__] = SelfWrapper(self)
+
+
+nt_internal_command = None
+if os.name == "nt":
+    import re
+    def get_nt_internal_command():
+        regex = re.compile('''([A-Z][A-Z]*)\s''')
+
+        cmd = Command("cmd.exe")
+        help_string = str( cmd("/K", "help") )
+        print str(help_string)
+        print regex.findall(str(help_string))
+
+        ret =  [ int_cmd.lower() for int_cmd in regex.findall(str(help_string)) ]
+        print ret
+        return ret
+    nt_internal_command= get_nt_internal_command()
