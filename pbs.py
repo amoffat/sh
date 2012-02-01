@@ -34,7 +34,7 @@ import warnings
 
 
 
-VERSION = "0.7"
+VERSION = "0.71"
 PROJECT_URL = "https://github.com/amoffat/pbs"
 IS_PY3 = sys.version_info[0] == 3
 
@@ -180,7 +180,7 @@ class Command(object):
     def __unicode__(self):
         if self.process: 
             if self.stdout: return self.stdout.decode("utf-8") # byte string
-            else: return u""
+            else: return ""
         else: return self.path
 
     def __enter__(self):
