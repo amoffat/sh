@@ -115,6 +115,22 @@ print sort(du("*", "-sb"), "-rn")
 print wc(ls("/etc", "-1"), "-l")
 ```
 
+## Redirection
+
+PBS can redirect the standard and error output streams of a process to a file. 
+This is done with the special _out and _err keyword arguments. You can pass a
+filename or a file object as the argument value. When the name of an already 
+existing file is passed, the contents of the file will be overwritten.
+
+```python
+ls(_out="files.list")
+ls("nonexistent", _err="error.txt")
+```
+
+PBS can also redirect the error output stream to the standard output stream,
+using the special _err_to_out=True keyword argument.
+
+
 ## Sudo and With Contexts
 
 Commands can be run within a "with" context.  Popular commands using this
@@ -135,6 +151,35 @@ it can behave correctly.
 with sudo(p=">", _with=True):
     print ls("/root")
 ```
+
+## Background Processes
+
+Commands can be run in the background with the special _bg=True keyword
+argument:
+
+```python
+# blocks
+sleep(3)
+print "...3 seconds later"
+
+# doesn't block
+p = sleep(3, _bg=True)
+print "prints immediately!"
+p.wait()
+print "...and 3 seconds later"
+```
+
+You can also pipe together background processes!
+
+```python
+p = wc(curl("http://github.com/", silent=True, _bg=True), "--bytes")
+print "prints immediately!"
+print "byte count of github: %d" % int(p) # lazily completes
+```
+
+This lets you start long-running commands at the beginning of your script
+(like a file download) and continue performing other commands in the
+foreground.
 
 
 ## Finding Commands
@@ -211,50 +256,6 @@ ns = parser.parse_args(ARGV)
 print ns.x
 ```
 
-
-## Background Processes
-
-Commands can be run in the background with the special _bg=True keyword
-argument:
-
-```python
-# blocks
-sleep(3)
-print "...3 seconds later"
-
-# doesn't block
-p = sleep(3, _bg=True)
-print "prints immediately!"
-p.wait()
-print "...and 3 seconds later"
-```
-
-You can also pipe together background processes!
-
-```python
-p = wc(curl("http://github.com/", silent=True, _bg=True), "--bytes")
-print "prints immediately!"
-print "byte count of github: %d" % int(p) # lazily completes
-```
-
-This lets you start long-running commands at the beginning of your script
-(like a file download) and continue performing other commands in the
-foreground.
-
-## Redirection
-
-PBS can redirect the standard and error output streams of a process to a file. 
-This is done with the special _out and _err keyword arguments. You can pass a
-filename or a file object as the argument value. When the name of an already 
-existing file is passed, the contents of the file will be overwritten.
-
-```python
-ls(_out="files.list")
-ls("nonexistent", _err="error.txt")
-```
-
-PBS can also redirect the error output stream to the standard output stream,
-using the special _err_to_out=True keyword argument.
 
 ## Weirdly-named Commands
 
