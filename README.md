@@ -291,12 +291,14 @@ PBS now index the internal command from cmd.exe (i.e. at, dir, call, goto and et
 and automaticly search for *.exe command in the path
 
 and now this is also possible:
+
 ```python
 from pbs import ipconfig
 print ipconfig("/all")
 ```
 
 and internal commands:
+
 ```python
 from pbs import dir
 print dir("*.c")
