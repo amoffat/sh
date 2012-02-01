@@ -34,7 +34,7 @@ import warnings
 
 
 
-VERSION = "0.6"
+VERSION = "0.7"
 PROJECT_URL = "https://github.com/amoffat/pbs"
 IS_PY3 = sys.version_info[0] == 3
 
@@ -51,15 +51,21 @@ class ErrorReturnCode(Exception):
         self.stdout = stdout
         self.stderr = stderr
 
-        tstdout = self.stdout[:self.truncate_cap] 
-        out_delta = len(self.stdout) - len(tstdout)
-        if out_delta: tstdout += "... (%d more, please see e.stdout)" % out_delta
+        if self.stdout is None: tstdout = "<redirected>"
+        else:
+            tstdout = self.stdout[:self.truncate_cap] 
+            out_delta = len(self.stdout) - len(tstdout)
+            if out_delta: 
+                tstdout += "... (%d more, please see e.stdout)" % out_delta
+            
+        if self.stderr is None: tstderr = "<redirected>"
+        else:
+            tstderr = self.stderr[:self.truncate_cap]
+            err_delta = len(self.stderr) - len(tstderr)
+            if err_delta: 
+                tstderr += "... (%d more, please see e.stderr)" % err_delta
 
-        tstderr = self.stderr[:self.truncate_cap]
-        err_delta = len(self.stderr) - len(tstderr)
-        if err_delta: tstderr += "... (%d more, please see e.stderr)" % err_delta
-
-        msg = "\n\nRan: %r\n\nSTDOUT:\n\n  %s\nSTDERR:\n\n  %s" %\
+        msg = "\n\nRan: %r\n\nSTDOUT:\n\n  %s\n\nSTDERR:\n\n  %s" %\
             (full_cmd, tstdout, tstderr)
         super(ErrorReturnCode, self).__init__(msg)
 
@@ -121,7 +127,6 @@ class Command(object):
     def __init__(self, path):            
         self.path = path
         
-        
         self.process = None
         self._stdout = None
         self._stderr = None
@@ -129,10 +134,13 @@ class Command(object):
         self.call_args = {
             "bg": False, # run command in background
             "with": False, # prepend the command to every command after it
+            "out": None, # redirect STDOUT
+            "err": None, # redirect STDERR
+            "err_to_out": None, # redirect STDERR to STDOUT
         }
         
     def __getattr__(self, p):
-        return getattr(self.stdout, p)
+        return getattr(str(self), p)
         
     @property
     def stdout(self):
@@ -167,19 +175,19 @@ class Command(object):
         
     def __str__(self):
         if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode('utf-8')
+        else: return unicode(self).encode("utf-8")
         
     def __unicode__(self):
-        if self.process: return self.stdout.decode('utf-8') # byte string
+        if self.process: 
+            if self.stdout: return self.stdout.decode("utf-8") # byte string
+            else: return u""
         else: return self.path
 
     def __enter__(self):
-        if not self.call_args["with"]:
-            Command.prepend_stack.append([self.path])
+        if not self.call_args["with"]: Command.prepend_stack.append([self.path])
 
     def __exit__(self, typ, value, traceback):
-        if Command.prepend_stack:
-            Command.prepend_stack.pop()
+        if Command.prepend_stack: Command.prepend_stack.pop()
 
     def __call__(self, *args, **kwargs):
         kwargs = kwargs.copy()
@@ -189,9 +197,8 @@ class Command(object):
         cmd = []
 
         # aggregate any with contexts
-        for prepend in self.prepend_stack:
-            cmd.extend(prepend)
-
+        for prepend in self.prepend_stack: cmd.extend(prepend)
+        
         cmd.append(self.path)
         
         # pull out the pbs-specific arguments (arguments that are not to be
@@ -266,12 +273,33 @@ class Command(object):
             Command.prepend_stack.append(cmd)
             return self
         
+        
+        # stdout redirection
+        stdout = subp.PIPE
+        out = self.call_args["out"]
+        if out:
+            if isinstance(out, file): stdout = out
+            else: stdout = file(str(out), "w")
+        
+        # stderr redirection
+        stderr = subp.PIPE
+        err = self.call_args["err"]
+        if err:
+            if isinstance(err, file): stderr = err
+            else: stderr = file(str(err), "w")
+            
+        if self.call_args["err_to_out"]: stderr = stdout
+            
 
+        # leave shell=False
         self.process = subp.Popen(cmd, shell=False, env=os.environ,
-            stdin=stdin, stdout=subp.PIPE, stderr=subp.PIPE)
+            stdin=stdin, stdout=stdout, stderr=stderr)
 
+        # we're running in the background, return self and let us lazily
+        # evaluate
         if self.call_args["bg"]: return self
 
+        # run and block
         self._stdout, self._stderr = self.process.communicate(actual_stdin)
         rc = self.process.wait()
 
@@ -351,7 +379,8 @@ see \"Limitations\" here: %s" % PROJECT_URL)
     
     def b_echo(self, *args, **kwargs):
         out = Command("echo")(*args, **kwargs)
-        print(out)
+        # no point printing if we're redirecting...
+        if out.stdout is not None: print(out)
         return out
     
     def b_cd(self, path):
