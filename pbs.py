@@ -257,7 +257,10 @@ class Command(object):
             processed_args.append(arg)
 
         # makes sure our arguments are broken up correctly
-        split_args = shlex.split(" ".join(processed_args))
+        if os.name == 'nt':
+            split_args = processed_args
+        else:
+            split_args = shlex.split(" ".join(processed_args))
 
         # now glob-expand each arg and compose the final list
         final_args = []
@@ -294,7 +297,7 @@ class Command(object):
             
         if self.call_args["err_to_out"]: stderr = stdout
             
-
+        if os.name == 'nt': cmd = " ".join(cmd)
         # leave shell=False
         self.process = subp.Popen(cmd, shell=False, env=os.environ,
             stdin=stdin, stdout=stdout, stderr=stderr)

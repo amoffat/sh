@@ -1,8 +1,8 @@
 import os
 import unittest
 
-
-class PbsTestSuite(unittest.TestCase):
+@unittest.skipUnless(os.name == 'posix', 'Requires POSIX')
+class PbsPosixTestSuite(unittest.TestCase):
     def test_no_arg(self):
         import pwd
         from pbs import whoami
@@ -34,6 +34,22 @@ class PbsTestSuite(unittest.TestCase):
         s2 = 'test'
         self.assertEqual(s1, s2)
 
+@unittest.skipUnless(os.name == 'nt', 'Requires NT')
+class PbsNtTestSuite(unittest.TestCase):
+    def test_nt_internal_commands(self):
+        from pbs import ECHO
 
+        s1 = unicode(ECHO("test")).strip()
+        s2 = 'test'
+        self.assertEqual(s1, s2)
+ 
+    def test_nt_internal_commands_pipe(self):
+        from pbs import dir, find
+        # dir /b /a | find /c /v ""
+        c1 = int(find(dir("/b", "/a"),'/c', '/v','""'))
+        c2 = len(os.listdir('.'))
+        self.assertEqual(c1, c2)
+        
+    #self.assertIn("Volume Serial Number", s1)  
 if __name__ == '__main__':
     unittest.main()
