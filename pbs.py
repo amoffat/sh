@@ -257,6 +257,7 @@ class Command(object):
             processed_args.append(arg)
 
         # makes sure our arguments are broken up correctly
+        # on windows don't use it, it's removes some of the argument of the user
         if os.name == 'nt':
             split_args = processed_args
         else:
@@ -297,7 +298,10 @@ class Command(object):
             
         if self.call_args["err_to_out"]: stderr = stdout
             
-        if os.name == 'nt': cmd = " ".join(cmd)
+        if os.name == 'nt':
+            # on windows avoid passing via subprocess.list2cmdline
+            # it's casuing a havoc when parameter with quotes are needed
+            cmd = " ".join(cmd)
         # leave shell=False
         self.process = subp.Popen(cmd, shell=False, env=os.environ,
             stdin=stdin, stdout=stdout, stderr=stderr)
