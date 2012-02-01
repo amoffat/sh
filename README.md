@@ -10,6 +10,9 @@ print ifconfig("eth0")
 
 PBS is not a collection of system commands implemented in Python.
 
+# Getting
+
+    $> pip install pbs
 
 # Usage
 
