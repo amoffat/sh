@@ -253,13 +253,6 @@ ls("nonexistent", _err="error.txt")
 PBS can also redirect the error output stream to the standard output stream,
 using the special _err_to_out=True keyword argument.
 
-Redirected streams are not available on the Command object, in other words:
-
-```python
-ls(_out="foo").stdout == None
-sleep(3, _err_to_out).stderr == None
-```
-
 ## Weirdly-named Commands
 
 PBS automatically handles underscore-dash conversions.  For example, if you want
