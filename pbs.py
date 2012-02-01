@@ -121,7 +121,7 @@ class Command(object):
     def create(cls, program, raise_exc=True):
         path = resolve_program(program)
         if not path:
-            if os.name == "nt" and program in nt_internal_command:
+            if os.name == "nt" and program.lower() in nt_internal_command:
                 return cls("cmd.exe", default_args=["/S", "/C", program])
             if raise_exc: raise CommandNotFound(program)
             else: return None
@@ -500,14 +500,10 @@ nt_internal_command = None
 if os.name == "nt":
     import re
     def get_nt_internal_command():
+        ''' find all internal commands via help command'''
         regex = re.compile('''([A-Z][A-Z]*)\s''')
-
         cmd = Command("cmd.exe")
         help_string = str( cmd("/K", "help") )
-        print str(help_string)
-        print regex.findall(str(help_string))
-
         ret =  [ int_cmd.lower() for int_cmd in regex.findall(str(help_string)) ]
-        print ret
         return ret
     nt_internal_command= get_nt_internal_command()
