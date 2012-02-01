@@ -34,7 +34,7 @@ import warnings
 
 
 
-VERSION = "0.6"
+VERSION = "0.7"
 PROJECT_URL = "https://github.com/amoffat/pbs"
 IS_PY3 = sys.version_info[0] == 3
 
