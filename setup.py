@@ -1,5 +1,14 @@
+import os
+import sys
+
 try: from distutils.core import setup
 except ImportError: from setuptools import setup
+
+
+if sys.argv[-1] == 'test':
+    os.system('python test.py')
+    sys.exit()
+
 
 setup(
     name="pbs",
