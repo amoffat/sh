@@ -3,6 +3,7 @@ import unittest
 
 
 class PbsTestSuite(unittest.TestCase):
+    @unittest.skipUnless(os.name == 'posix', 'Requires POSIX')
     def test_no_arg(self):
         import pwd
         from pbs import whoami
@@ -10,24 +11,28 @@ class PbsTestSuite(unittest.TestCase):
         u2 = pwd.getpwuid(os.geteuid())[0]
         self.assertEqual(u1, u2)
 
+    @unittest.skipUnless(os.name == 'posix', 'Requires POSIX')
     def test_short_bool_option(self):
         from pbs import id
         i1 = int(id(u=True))
         i2 = os.geteuid()
         self.assertEqual(i1, i2)
 
+    @unittest.skipUnless(os.name == 'posix', 'Requires POSIX')
     def test_long_bool_option(self):
         from pbs import id
         i1 = int(id(user=True, real=True))
         i2 = os.getuid()
         self.assertEqual(i1, i2)
 
+    @unittest.skipUnless(os.name == 'posix', 'Requires POSIX')
     def test_composition(self):
         from pbs import ls, wc
         c1 = int(wc(ls(A=True), l=True))
         c2 = len(os.listdir('.'))
         self.assertEqual(c1, c2)
 
+    @unittest.skipUnless(os.name == 'posix', 'Requires POSIX')
     def test_short_option(self):
         from pbs import sh
         s1 = unicode(sh(c='echo test')).strip()
