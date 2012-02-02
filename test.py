@@ -74,5 +74,17 @@ class PbsTestSuite(unittest.TestCase):
         c2 = len(os.listdir('.'))
         self.assertEqual(c1, c2)
         
+    @requires_nt
+    def test_nt_noglob(self):
+        from pbs import ipconfig, ErrorReturnCode_1
+        try:
+            ret = ipconfig("/?", _noglob=True)
+        except Exception as err:
+            self.assertIn("/?" , err.full_cmd)
+        try:
+            ret = ipconfig("/?", _noglob=False)
+        except Exception as err:
+            self.assertNotIn("/?", err.full_cmd)
+        
 if __name__ == '__main__':
     unittest.main()

@@ -141,6 +141,7 @@ class Command(object):
             "out": None, # redirect STDOUT
             "err": None, # redirect STDERR
             "err_to_out": None, # redirect STDERR to STDOUT
+            "noglob": False # skip globbing if true
         }
         
     def __getattr__(self, p):
@@ -266,7 +267,10 @@ class Command(object):
         # now glob-expand each arg and compose the final list
         final_args = []
         for arg in split_args:
-            expanded = glob(arg)
+            if not self.call_args["noglob"]:
+                expanded = glob(arg)
+            else:
+                expanded = None
             if expanded: final_args.extend(expanded)
             else: final_args.append(arg)
 
