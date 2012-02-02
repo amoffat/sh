@@ -34,10 +34,10 @@ import warnings
 
 
 
-VERSION = "0.71"
-PROJECT_URL = "https://github.com/amoffat/pbs"
-IS_PY3 = sys.version_info[0] == 3
+__version__ = "0.75"
+__project_url__ = "https://github.com/amoffat/pbs"
 
+IS_PY3 = sys.version_info[0] == 3
 if IS_PY3: raw_input = input
 
 
@@ -341,7 +341,7 @@ class Environment(dict):
         # that's really the only sensible thing to do
         if k == "__all__":
             raise RuntimeError("Cannot import * from the commandline, please \
-see \"Limitations\" here: %s" % PROJECT_URL)
+see \"Limitations\" here: %s" % __project_url__)
 
         # if we end with "_" just go ahead and skip searching
         # our namespace for python stuff.  this was mainly for the
@@ -389,7 +389,7 @@ see \"Limitations\" here: %s" % PROJECT_URL)
 def run_repl(env):
     banner = "\n>> PBS v{version}\n>> https://github.com/amoffat/pbs\n"
     
-    print(banner.format(version=VERSION))
+    print(banner.format(version=__version__))
     while True:
         try: line = raw_input("pbs> ")
         except (ValueError, EOFError): break
@@ -455,12 +455,12 @@ else:
             if frame.f_globals["__name__"] != "__main__":
                 raise RuntimeError("Cannot import * from anywhere other than \
 a stand-alone script.  Do a 'from pbs import program' instead. Please see \
-\"Limitations\" here: %s" % PROJECT_URL)
+\"Limitations\" here: %s" % __project_url__)
 
             warnings.warn("Importing * from pbs is magical and therefore has \
 some limitations.  Please become familiar with them under \"Limitations\" \
 here: %s  To avoid this warning, use a warning filter or import your \
-programs directly with \"from pbs import <program>\"" % PROJECT_URL,
+programs directly with \"from pbs import <program>\"" % __project_url__,
 RuntimeWarning, stacklevel=2)
 
             # we avoid recursion by removing the line that imports us :)

@@ -1,5 +1,6 @@
 import os
 import sys
+import pbs
 
 try: from distutils.core import setup
 except ImportError: from setuptools import setup
@@ -12,7 +13,7 @@ if sys.argv[-1] == "test":
 
 setup(
     name="pbs",
-    version="0.71",
+    version=pbs.__version__,
     description="Python subprocess wrapper",
     author="Andrew Moffat",
     author_email="andrew.robert.moffat@gmail.com",
