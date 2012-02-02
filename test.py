@@ -41,6 +41,12 @@ class PbsTestSuite(unittest.TestCase):
         s1 = unicode(sh(c="echo test")).strip()
         s2 = "test"
         self.assertEqual(s1, s2)
+        
+    @requires_posix
+    def test_long_option(self):
+        from pbs import sed, echo
+        out = unicode(sed(echo("test"), expression="s/test/lol/")).strip()
+        self.assertEqual(out, "lol")
 
 
 if __name__ == "__main__":
