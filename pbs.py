@@ -376,13 +376,6 @@ see \"Limitations\" here: %s" % PROJECT_URL)
         # it must be a command then
         return Command.create(k)
     
-    
-    def b_echo(self, *args, **kwargs):
-        out = Command("echo")(*args, **kwargs)
-        # no point printing if we're redirecting...
-        if out.stdout is not None: print(out)
-        return out
-    
     def b_cd(self, path):
         os.chdir(path)
         
