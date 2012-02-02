@@ -47,6 +47,17 @@ class PbsTestSuite(unittest.TestCase):
         from pbs import sed, echo
         out = unicode(sed(echo("test"), expression="s/test/lol/")).strip()
         self.assertEqual(out, "lol")
+        
+    @requires_posix
+    def test_command_wrapper(self):
+        from pbs import Command, which
+        
+        ls = Command(which("ls"))
+        wc = Command(which("wc"))
+        
+        c1 = int(wc(ls(A=True), l=True))
+        c2 = len(os.listdir("."))
+        self.assertEqual(c1, c2)
 
 
 if __name__ == "__main__":
