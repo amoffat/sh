@@ -5,8 +5,8 @@ try: from distutils.core import setup
 except ImportError: from setuptools import setup
 
 
-if sys.argv[-1] == 'test':
-    os.system('python test.py')
+if sys.argv[-1] == "test":
+    os.system("python test.py")
     sys.exit()
 
 

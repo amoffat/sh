@@ -1,1 +1,1 @@
-include *.md
+include AUTHORS.md LICENSE.txt README.md test.py
