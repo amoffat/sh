@@ -75,6 +75,13 @@ class PbsTestSuite(unittest.TestCase):
         now = time.time()
         self.assertTrue(now - start > sleep_time)
                 
+    @requires_posix
+    def test_with_context(self):
+        from pbs import time, ls
+        with time:
+            out = ls().stderr
+        self.assertTrue("pagefaults" in out)
+
 
 if __name__ == "__main__":
     unittest.main()
