@@ -100,6 +100,23 @@ class PbsTestSuite(unittest.TestCase):
         self.assertTrue("pagefaults" in out)
 
 
+    @requires_posix
+    def test_out_redirection(self):
+        import tempfile
+        from pbs import ls
+
+        file_obj = tempfile.TemporaryFile()
+        out = ls(_out=file_obj)
+        
+        self.assertTrue(len(out) == 0)
+
+        file_obj.seek(0)
+        actual_out = file_obj.read()
+
+        self.assertTrue(len(actual_out) != 0)
+
+
+
 
 if __name__ == "__main__":
     unittest.main()
