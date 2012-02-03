@@ -239,15 +239,15 @@ Glob-expansion is not done on your arguments.  For example, this will not work:
 
 ```python
 from pbs import du
-print du("*")
+print du("\*")
 ```
 
-You'll get an error to the effect of "cannot access `*': No such file or directory".
-This is because the "*" needs to be glob expanded:
+You'll get an error to the effect of "cannot access '\*': No such file or directory".
+This is because the "\*" needs to be glob expanded:
 
 ```python
 from pbs import du, glob
-print du(glob("*")) 
+print du(glob("\*")) 
 ```
 
 
