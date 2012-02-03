@@ -162,6 +162,9 @@ class Command(object):
         if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
         return self
     
+    def __len__(self):
+        return len(str(self))
+    
     def __repr__(self):
         return str(self)
 
