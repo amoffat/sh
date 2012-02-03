@@ -113,6 +113,77 @@ def resolve_program(program):
     return path
 
 
+
+class RunningCommand(object):
+    def __init__(self, command_ran, process, call_args, stdin=None):
+        self.command_ran = command_ran
+        self.process = process
+        self._stdout = None
+        self._stderr = None
+        self.call_args = call_args
+
+        # we're running in the background, return self and let us lazily
+        # evaluate
+        if self.call_args["bg"]: return
+
+        # run and block
+        self._stdout, self._stderr = self.process.communicate(stdin)
+        rc = self.process.wait()
+
+        if rc != 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
+
+    def __enter__(self):
+        if self.call_args["with"]:
+            Command.prepend_stack.append([self.path])
+
+    def __exit__(self, typ, value, traceback):
+        if self.call_args["with"] and Command.prepend_stack:
+            Command.prepend_stack.pop()
+   
+    def __str__(self):
+        if IS_PY3: return self.__unicode__()
+        else: return unicode(self).encode("utf-8")
+        
+    def __unicode__(self):
+        if self.process: 
+            if self.stdout: return self.stdout.decode("utf-8") # byte string
+            else: return ""
+
+    def __getattr__(self, p):
+        return getattr(str(self), p)
+     
+    def __repr__(self):
+        return str(self)
+
+    def __long__(self):
+        return long(str(self).strip())
+
+    def __float__(self):
+        return float(str(self).strip())
+
+    def __int__(self):
+        return int(str(self).strip())
+         
+    @property
+    def stdout(self):
+        if self.call_args["bg"]: self.wait()
+        return self._stdout
+    
+    @property
+    def stderr(self):
+        if self.call_args["bg"]: self.wait()
+        return self._stderr
+
+    def wait(self):
+        if self.process.returncode is not None: return
+        self._stdout, self._stderr = self.process.communicate()
+        rc = self.process.wait()
+
+        if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
+        return self
+     
+
+
 class Command(object):
     prepend_stack = []
 
@@ -126,70 +197,33 @@ class Command(object):
     
     def __init__(self, path):            
         self.path = path
+       
+      
+    def __str__(self):
+        if IS_PY3: return self.__unicode__()
+        else: return unicode(self).encode("utf-8")
         
-        self.process = None
-        self._stdout = None
-        self._stderr = None
-        
-        self.call_args = {
+    def __unicode__(self):
+        return self.path
+
+    def __enter__(self):
+        if self.call_args["with"]:
+            Command.prepend_stack.append([self.path])
+
+    def __exit__(self, typ, value, traceback):
+        if self.call_args["with"] and Command.prepend_stack:
+            Command.prepend_stack.pop()
+ 
+    
+    def __call__(self, *args, **kwargs):
+        call_args = {
             "bg": False, # run command in background
             "with": False, # prepend the command to every command after it
             "out": None, # redirect STDOUT
             "err": None, # redirect STDERR
             "err_to_out": None, # redirect STDERR to STDOUT
         }
-        
-    def __getattr__(self, p):
-        return getattr(str(self), p)
-        
-    @property
-    def stdout(self):
-        if self.call_args["bg"]: self.wait()
-        return self._stdout
-    
-    @property
-    def stderr(self):
-        if self.call_args["bg"]: self.wait()
-        return self._stderr
-        
-        
-    def wait(self):
-        if self.process.returncode is not None: return
-        self._stdout, self._stderr = self.process.communicate()
-        rc = self.process.wait()
-
-        if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
-        return self
-    
-    def __repr__(self):
-        return str(self)
-
-    def __long__(self):
-        return long(str(self).strip())
-
-    def __float__(self):
-        return float(str(self).strip())
-
-    def __int__(self):
-        return int(str(self).strip())
-        
-    def __str__(self):
-        if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode("utf-8")
-        
-    def __unicode__(self):
-        if self.process: 
-            if self.stdout: return self.stdout.decode("utf-8") # byte string
-            else: return ""
-        else: return self.path
-
-    def __enter__(self):
-        if not self.call_args["with"]: Command.prepend_stack.append([self.path])
-
-    def __exit__(self, typ, value, traceback):
-        if Command.prepend_stack: Command.prepend_stack.pop()
-
-    def __call__(self, *args, **kwargs):
+     
         kwargs = kwargs.copy()
         args = list(args)
         stdin = None
@@ -203,11 +237,11 @@ class Command(object):
         
         # pull out the pbs-specific arguments (arguments that are not to be
         # passed to the commands
-        for parg, default in self.call_args.items():
+        for parg, default in call_args.items():
             key = "_" + parg
-            self.call_args[parg] = default
+            call_args[parg] = default
             if key in kwargs:
-                self.call_args[parg] = kwargs[key] 
+                call_args[parg] = kwargs[key] 
                 del kwargs[key]
                 
         # check if we're piping via composition
@@ -215,12 +249,12 @@ class Command(object):
         actual_stdin = None
         if args:
             first_arg = args.pop(0)
-            if isinstance(first_arg, Command):
+            if isinstance(first_arg, RunningCommand):
                 # it makes sense that if the input pipe of a command is running
                 # in the background, then this command should run in the
                 # background as well
                 if first_arg.call_args["bg"]:
-                    self.call_args["bg"] = True
+                    call_args["bg"] = True
                     stdin = first_arg.process.stdout
                 else:
                     actual_stdin = first_arg.stdout
@@ -263,48 +297,38 @@ class Command(object):
             else: final_args.append(arg)
 
         cmd.extend(final_args)
-        # for debugging
-        self._command_ran = " ".join(cmd)
+        command_ran = " ".join(cmd)
         
 
         # with contexts shouldn't run at all yet, they prepend
         # to every command in the context
-        if self.call_args["with"]:
+        if call_args["with"]:
             Command.prepend_stack.append(cmd)
-            return self
+            return RunningCommand(command_ran, None, call_args)
         
         
         # stdout redirection
         stdout = subp.PIPE
-        out = self.call_args["out"]
+        out = call_args["out"]
         if out:
             if isinstance(out, file): stdout = out
             else: stdout = file(str(out), "w")
         
         # stderr redirection
         stderr = subp.PIPE
-        err = self.call_args["err"]
+        err = call_args["err"]
         if err:
             if isinstance(err, file): stderr = err
             else: stderr = file(str(err), "w")
             
-        if self.call_args["err_to_out"]: stderr = stdout
+        if call_args["err_to_out"]: stderr = stdout
             
 
         # leave shell=False
-        self.process = subp.Popen(cmd, shell=False, env=os.environ,
+        process = subp.Popen(cmd, shell=False, env=os.environ,
             stdin=stdin, stdout=stdout, stderr=stderr)
 
-        # we're running in the background, return self and let us lazily
-        # evaluate
-        if self.call_args["bg"]: return self
-
-        # run and block
-        self._stdout, self._stderr = self.process.communicate(actual_stdin)
-        rc = self.process.wait()
-
-        if rc != 0: raise get_rc_exc(rc)(self._command_ran, self.stdout, self.stderr)
-        return self
+        return RunningCommand(command_ran, process, call_args, actual_stdin)
 
 
 
