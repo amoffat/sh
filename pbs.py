@@ -137,6 +137,7 @@ class Command(object):
             "out": None, # redirect STDOUT
             "err": None, # redirect STDERR
             "err_to_out": None, # redirect STDERR to STDOUT
+            "fg": None, # run command in foreground
         }
         
     def __getattr__(self, p):
@@ -192,7 +193,6 @@ class Command(object):
     def __call__(self, *args, **kwargs):
         kwargs = kwargs.copy()
         args = list(args)
-        stdin = None
         processed_args = []
         cmd = []
 
@@ -210,8 +210,11 @@ class Command(object):
                 self.call_args[parg] = kwargs[key] 
                 del kwargs[key]
                 
+        # set pipe to None if we're outputting straight to CLI
+        pipe = None if self.call_args["fg"] else subp.PIPE
+        
         # check if we're piping via composition
-        stdin = subp.PIPE
+        stdin = pipe
         actual_stdin = None
         if args:
             first_arg = args.pop(0)
@@ -275,14 +278,14 @@ class Command(object):
         
         
         # stdout redirection
-        stdout = subp.PIPE
+        stdout = pipe
         out = self.call_args["out"]
         if out:
             if isinstance(out, file): stdout = out
             else: stdout = file(str(out), "w")
         
         # stderr redirection
-        stderr = subp.PIPE
+        stderr = pipe
         err = self.call_args["err"]
         if err:
             if isinstance(err, file): stderr = err
