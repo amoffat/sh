@@ -7,6 +7,19 @@ requires_posix = unittest.skipUnless(os.name == "posix", "Requires POSIX")
 
 class PbsTestSuite(unittest.TestCase):
     @requires_posix
+    def test_print_command(self):
+        from pbs import ls, which
+        actual_location = which("ls")
+        out = str(ls)
+        self.assertEqual(out, actual_location)
+
+    @requires_posix
+    def test_which(self):
+        from pbs import which, ls
+        self.assertEqual(which("fjoawjefojawe"), None)
+        self.assertEqual(which("ls"), str(ls))
+        
+    @requires_posix
     def test_no_arg(self):
         import pwd
         from pbs import whoami
@@ -75,6 +88,65 @@ class PbsTestSuite(unittest.TestCase):
         now = time.time()
         self.assertTrue(now - start > sleep_time)
                 
+    @requires_posix
+    def test_with_context(self):
+        from pbs import time, ls
+        with time:
+            out = ls().stderr
+        self.assertTrue("pagefaults" in out)
+
+
+    @requires_posix
+    def test_with_context_args(self):
+        from pbs import time, ls
+        with time(verbose=True, _with=True):
+            out = ls().stderr
+        self.assertTrue("Voluntary context switches" in out)
+
+
+    @requires_posix
+    def test_err_to_out(self):
+        from pbs import time, ls
+        with time(_with=True):
+            out = ls(_err_to_out=True)
+
+        self.assertTrue("pagefaults" in out)
+
+
+    @requires_posix
+    def test_out_redirection(self):
+        import tempfile
+        from pbs import ls
+
+        file_obj = tempfile.TemporaryFile()
+        out = ls(_out=file_obj)
+        
+        self.assertTrue(len(out) == 0)
+
+        file_obj.seek(0)
+        actual_out = file_obj.read()
+
+        self.assertTrue(len(actual_out) != 0)
+
+
+    @requires_posix
+    def test_err_redirection(self):
+        import tempfile
+        from pbs import time, ls
+
+        file_obj = tempfile.TemporaryFile()
+
+        with time(_with=True):
+            out = ls(_err=file_obj)
+        
+        file_obj.seek(0)
+        actual_out = file_obj.read()
+
+        self.assertTrue(len(actual_out) != 0)
+
+
+
+
 
 if __name__ == "__main__":
     unittest.main()
