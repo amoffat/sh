@@ -126,6 +126,10 @@ class RunningCommand(object):
         # evaluate
         if self.call_args["bg"]: return
 
+        # we're running this command as a with context, don't do anything
+        # because nothing was started to run from Command.__call__
+        if self.call_args["with"]: return
+
         # run and block
         self._stdout, self._stderr = self.process.communicate(stdin)
         rc = self.process.wait()
@@ -133,8 +137,11 @@ class RunningCommand(object):
         if rc != 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
 
     def __enter__(self):
-        if self.call_args["with"]:
-            Command.prepend_stack.append([self.path])
+        # we don't actually do anything here because anything that should
+        # have been done would have been done in the Command.__call__ call.
+        # essentially all that has to happen is the comand be pushed on
+        # the prepend stack.
+        pass
 
     def __exit__(self, typ, value, traceback):
         if self.call_args["with"] and Command.prepend_stack:
@@ -310,7 +317,7 @@ class Command(object):
 
         cmd.extend(final_args)
         command_ran = " ".join(cmd)
-        
+
 
         # with contexts shouldn't run at all yet, they prepend
         # to every command in the context
