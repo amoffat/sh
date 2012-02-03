@@ -34,7 +34,7 @@ import warnings
 
 
 
-__version__ = "0.75"
+__version__ = "0.81"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
@@ -149,6 +149,7 @@ class RunningCommand(object):
             if self.stdout: return self.stdout.decode("utf-8") # byte string
             else: return ""
 
+
     def __getattr__(self, p):
         return getattr(str(self), p)
      
@@ -181,7 +182,10 @@ class RunningCommand(object):
 
         if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
         return self
-     
+    
+    def __len__(self):
+        return len(str(self))
+
 
 
 class Command(object):
@@ -226,7 +230,6 @@ class Command(object):
      
         kwargs = kwargs.copy()
         args = list(args)
-        stdin = None
         processed_args = []
         cmd = []
 
@@ -244,8 +247,11 @@ class Command(object):
                 call_args[parg] = kwargs[key] 
                 del kwargs[key]
                 
+        # set pipe to None if we're outputting straight to CLI
+        pipe = None if self.call_args["fg"] else subp.PIPE
+        
         # check if we're piping via composition
-        stdin = subp.PIPE
+        stdin = pipe
         actual_stdin = None
         if args:
             first_arg = args.pop(0)
@@ -289,12 +295,19 @@ class Command(object):
         # makes sure our arguments are broken up correctly
         split_args = shlex.split(" ".join(processed_args))
 
-        # now glob-expand each arg and compose the final list
-        final_args = []
-        for arg in split_args:
-            expanded = glob(arg)
-            if expanded: final_args.extend(expanded)
-            else: final_args.append(arg)
+        # we used to glob, but now we don't.  the reason being, escaping globs
+        # doesn't work.  also, adding a _noglob attribute doesn't allow the
+        # flexibility to glob some args and not others.  so we have to leave
+        # the globbing up to the user entirely
+        #=======================================================================
+        # # now glob-expand each arg and compose the final list
+        # final_args = []
+        # for arg in split_args:
+        #    expanded = glob(arg)
+        #    if expanded: final_args.extend(expanded)
+        #    else: final_args.append(arg)
+        #=======================================================================
+        final_args = split_args
 
         cmd.extend(final_args)
         command_ran = " ".join(cmd)
@@ -308,14 +321,14 @@ class Command(object):
         
         
         # stdout redirection
-        stdout = subp.PIPE
+        stdout = pipe
         out = call_args["out"]
         if out:
             if isinstance(out, file): stdout = out
             else: stdout = file(str(out), "w")
         
         # stderr redirection
-        stderr = subp.PIPE
+        stderr = pipe
         err = call_args["err"]
         if err:
             if isinstance(err, file): stderr = err
