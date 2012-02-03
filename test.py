@@ -83,5 +83,13 @@ class PbsTestSuite(unittest.TestCase):
         self.assertTrue("pagefaults" in out)
 
 
+    @requires_posix
+    def test_with_context_args(self):
+        from pbs import time, ls
+        with time(verbose=True, _with=True):
+            out = ls().stderr
+        self.assertTrue("Voluntary context switches" in out)
+
+
 if __name__ == "__main__":
     unittest.main()
