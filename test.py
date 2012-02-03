@@ -12,6 +12,12 @@ class PbsTestSuite(unittest.TestCase):
         actual_location = which("ls")
         out = str(ls)
         self.assertEqual(out, actual_location)
+
+    @requires_posix
+    def test_which(self):
+        from pbs import which, ls
+        self.assertEqual(which("fjoawjefojawe"), None)
+        self.assertEqual(which("ls"), str(ls))
         
     @requires_posix
     def test_no_arg(self):
