@@ -211,12 +211,10 @@ class Command(object):
         return self.path
 
     def __enter__(self):
-        if self.call_args["with"]:
-            Command.prepend_stack.append([self.path])
+        Command.prepend_stack.append([self.path])
 
     def __exit__(self, typ, value, traceback):
-        if self.call_args["with"] and Command.prepend_stack:
-            Command.prepend_stack.pop()
+        Command.prepend_stack.pop()
  
     
     def __call__(self, *args, **kwargs):
