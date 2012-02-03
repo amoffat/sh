@@ -261,12 +261,19 @@ class Command(object):
         # makes sure our arguments are broken up correctly
         split_args = shlex.split(" ".join(processed_args))
 
-        # now glob-expand each arg and compose the final list
-        final_args = []
-        for arg in split_args:
-            expanded = glob(arg)
-            if expanded: final_args.extend(expanded)
-            else: final_args.append(arg)
+        # we used to glob, but now we don't.  the reason being, escaping globs
+        # doesn't work.  also, adding a _noglob attribute doesn't allow the
+        # flexibility to glob some args and not others.  so we have to leave
+        # the globbing up to the user entirely
+        #=======================================================================
+        # # now glob-expand each arg and compose the final list
+        # final_args = []
+        # for arg in split_args:
+        #    expanded = glob(arg)
+        #    if expanded: final_args.extend(expanded)
+        #    else: final_args.append(arg)
+        #=======================================================================
+        final_args = split_args
 
         cmd.extend(final_args)
         # for debugging
