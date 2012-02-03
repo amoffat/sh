@@ -7,6 +7,13 @@ requires_posix = unittest.skipUnless(os.name == "posix", "Requires POSIX")
 
 class PbsTestSuite(unittest.TestCase):
     @requires_posix
+    def test_print_command(self):
+        from pbs import ls, which
+        actual_location = which("ls")
+        out = str(ls)
+        self.assertEqual(out, actual_location)
+        
+    @requires_posix
     def test_no_arg(self):
         import pwd
         from pbs import whoami
