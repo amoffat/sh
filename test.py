@@ -116,6 +116,23 @@ class PbsTestSuite(unittest.TestCase):
         self.assertTrue(len(actual_out) != 0)
 
 
+    @requires_posix
+    def test_err_redirection(self):
+        import tempfile
+        from pbs import time, ls
+
+        file_obj = tempfile.TemporaryFile()
+
+        with time(_with=True):
+            out = ls(_err=file_obj)
+        
+        file_obj.seek(0)
+        actual_out = file_obj.read()
+
+        self.assertTrue(len(actual_out) != 0)
+
+
+
 
 
 if __name__ == "__main__":
