@@ -34,7 +34,7 @@ import warnings
 
 
 
-__version__ = "0.75"
+__version__ = "0.81"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
@@ -141,7 +141,7 @@ class Command(object):
             "out": None, # redirect STDOUT
             "err": None, # redirect STDERR
             "err_to_out": None, # redirect STDERR to STDOUT
-            "noglob": False # skip globbing if true
+            "fg": None, # run command in foreground
         }
         
     def __getattr__(self, p):
@@ -165,6 +165,9 @@ class Command(object):
 
         if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
         return self
+    
+    def __len__(self):
+        return len(str(self))
     
     def __repr__(self):
         return str(self)
@@ -197,7 +200,6 @@ class Command(object):
     def __call__(self, *args, **kwargs):
         kwargs = kwargs.copy()
         args = self.default_args + list(args)
-        stdin = None
         processed_args = []
         cmd = []
 
@@ -215,8 +217,11 @@ class Command(object):
                 self.call_args[parg] = kwargs[key] 
                 del kwargs[key]
                 
+        # set pipe to None if we're outputting straight to CLI
+        pipe = None if self.call_args["fg"] else subp.PIPE
+        
         # check if we're piping via composition
-        stdin = subp.PIPE
+        stdin = pipe
         actual_stdin = None
         if args:
             first_arg = args.pop(0)
@@ -264,15 +269,19 @@ class Command(object):
         else:
             split_args = shlex.split(" ".join(processed_args))
 
-        # now glob-expand each arg and compose the final list
-        final_args = []
-        for arg in split_args:
-            if not self.call_args["noglob"]:
-                expanded = glob(arg)
-            else:
-                expanded = None
-            if expanded: final_args.extend(expanded)
-            else: final_args.append(arg)
+        # we used to glob, but now we don't.  the reason being, escaping globs
+        # doesn't work.  also, adding a _noglob attribute doesn't allow the
+        # flexibility to glob some args and not others.  so we have to leave
+        # the globbing up to the user entirely
+        #=======================================================================
+        # # now glob-expand each arg and compose the final list
+        # final_args = []
+        # for arg in split_args:
+        #    expanded = glob(arg)
+        #    if expanded: final_args.extend(expanded)
+        #    else: final_args.append(arg)
+        #=======================================================================
+        final_args = split_args
 
         cmd.extend(final_args)
         # for debugging
@@ -287,14 +296,14 @@ class Command(object):
         
         
         # stdout redirection
-        stdout = subp.PIPE
+        stdout = pipe
         out = self.call_args["out"]
         if out:
             if isinstance(out, file): stdout = out
             else: stdout = file(str(out), "w")
         
         # stderr redirection
-        stderr = subp.PIPE
+        stderr = pipe
         err = self.call_args["err"]
         if err:
             if isinstance(err, file): stderr = err
@@ -507,7 +516,7 @@ if os.name == "nt":
         ''' find all internal commands via help command'''
         regex = re.compile('''([A-Z][A-Z]*)\s''')
         cmd = Command("cmd.exe")
-        help_string = str( cmd("/K", "help") )
+        help_string = str( cmd("/K", "help", ) )
         ret =  [ int_cmd.lower() for int_cmd in regex.findall(str(help_string)) ]
         return ret
     nt_internal_command= get_nt_internal_command()

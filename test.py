@@ -58,6 +58,22 @@ class PbsTestSuite(unittest.TestCase):
         c2 = len(os.listdir("."))
         self.assertEqual(c1, c2)
 
+    @requires_posix
+    def test_background(self):
+        from pbs import sleep
+        import time
+        
+        start = time.time()
+        sleep_time = 1
+        p = sleep(sleep_time, _bg=True)
+
+        now = time.time()
+        self.assertTrue(now - start < sleep_time)
+
+        p.wait()
+        now = time.time()
+        self.assertTrue(now - start > sleep_time)
+                
     @requires_nt
     def test_nt_internal_commands(self):
         from pbs import ECHO
@@ -75,16 +91,14 @@ class PbsTestSuite(unittest.TestCase):
         self.assertEqual(c1, c2)
         
     @requires_nt
-    def test_nt_noglob(self):
+    def test_nt_extranl_command(self):
         from pbs import ipconfig, ErrorReturnCode_1
         try:
-            ret = ipconfig("/?", _noglob=True)
+            ret = ipconfig("/?")
         except Exception as err:
+            # windows program fails with err 1, on help [/?] weird...
             self.assertIn("/?" , err.full_cmd)
-        try:
-            ret = ipconfig("/?", _noglob=False)
-        except Exception as err:
-            self.assertNotIn("/?", err.full_cmd)
+            self.assertIn("Display this help message" , err.stdout)
         
 if __name__ == '__main__':
     unittest.main()
