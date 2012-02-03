@@ -333,9 +333,8 @@ class Command(object):
             if isinstance(err, file): stderr = err
             else: stderr = file(str(err), "w")
             
-        if call_args["err_to_out"]: stderr = stdout
+        if call_args["err_to_out"]: stderr = subp.STDOUT
             
-
         # leave shell=False
         process = subp.Popen(cmd, shell=False, env=os.environ,
             stdin=stdin, stdout=stdout, stderr=stderr)
