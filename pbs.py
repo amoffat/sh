@@ -156,6 +156,8 @@ class RunningCommand(object):
             if self.stdout: return self.stdout.decode("utf-8") # byte string
             else: return ""
 
+    def __contains__(self, item):
+        return item in str(self)
 
     def __getattr__(self, p):
         return getattr(str(self), p)
