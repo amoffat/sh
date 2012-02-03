@@ -221,6 +221,7 @@ class Command(object):
     
     def __call__(self, *args, **kwargs):
         call_args = {
+            "fg": False, # run command in foreground
             "bg": False, # run command in background
             "with": False, # prepend the command to every command after it
             "out": None, # redirect STDOUT
@@ -248,7 +249,7 @@ class Command(object):
                 del kwargs[key]
                 
         # set pipe to None if we're outputting straight to CLI
-        pipe = None if self.call_args["fg"] else subp.PIPE
+        pipe = None if call_args["fg"] else subp.PIPE
         
         # check if we're piping via composition
         stdin = pipe
