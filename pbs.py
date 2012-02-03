@@ -211,10 +211,12 @@ class Command(object):
     def __init__(self, path):            
         self.path = path
        
-      
     def __str__(self):
         if IS_PY3: return self.__unicode__()
         else: return unicode(self).encode("utf-8")
+
+    def __repr__(self):
+        return str(self)
         
     def __unicode__(self):
         return self.path
