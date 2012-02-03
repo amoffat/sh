@@ -59,6 +59,22 @@ class PbsTestSuite(unittest.TestCase):
         c2 = len(os.listdir("."))
         self.assertEqual(c1, c2)
 
+    @requires_posix
+    def test_background(self):
+        from pbs import sleep
+        import time
+        
+        start = time.time()
+        sleep_time = 1
+        p = sleep(sleep_time, _bg=True)
+
+        now = time.time()
+        self.assertTrue(now - start < sleep_time)
+
+        p.wait()
+        now = time.time()
+        self.assertTrue(now - start > sleep_time)
+                
 
 if __name__ == "__main__":
     unittest.main()
