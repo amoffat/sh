@@ -16,7 +16,7 @@ PBS is not a collection of system commands implemented in Python.
 
 # Usage
 
-The easiest way (and least magical way) to get up and running is to import pbs
+The easiest way to get up and running is to import pbs
 directly or import your program from pbs:
 
 ```python
@@ -26,21 +26,6 @@ print pbs.ifconfig("eth0")
 from pbs import ifconfig
 print ifconfig("eth0")
 ```
-
-The alternative way is to import *all* of your system programs by using star
-import.  Note that this does not actually import every system program, but
-provides a dynamic lookup mechanism.  This usage pattern is suited for one-file
-shell scripts:
-
-```python
-from pbs import *
-print ifconfig("eth0")
-print du()
-```
-
-There are some important caveats when using star import, and the code will
-raise a warning to notify you of such.  Please review the limitations under
-the last section "Limitations".
 
 A less common usage pattern is through PBS Command wrapper, which takes a
 full path to a command and returns a callable object.  This is useful for
@@ -327,17 +312,3 @@ The Command wrapper is also useful for commands that are not in your standard PA
 script = Command("/tmp/temporary-script.sh")
 print script()
 ```
-
-## Limitations
-
-PBS's main limitations come from the use of star import.  If you're interested
-as to why these limitations exist, please take a look at the source.  In
-general, when using star import:
-
-* Do the import as soon as possible, at the top of the script.
-* Do not do the star import on an indented line (so don't do it from within an
-if statement, or function, etc)
-* (Disabled anyway, but) Do not star import from the Python shell.  If you want
-to muck around in a REPL shell, run PBS as a script, which will launch a REPL.
-* (Disabled anyway, but) Do not star import from anywhere other than a main 
-script.
