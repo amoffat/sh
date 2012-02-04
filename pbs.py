@@ -33,7 +33,7 @@ from types import ModuleType
 
 
 
-__version__ = "0.82"
+__version__ = "0.90"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
