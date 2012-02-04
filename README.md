@@ -16,7 +16,7 @@ PBS is not a collection of system commands implemented in Python.
 
 # Usage
 
-The easiest way (and least magical way) to get up and running is to import pbs
+The easiest way to get up and running is to import pbs
 directly or import your program from pbs:
 
 ```python
@@ -26,21 +26,6 @@ print pbs.ifconfig("eth0")
 from pbs import ifconfig
 print ifconfig("eth0")
 ```
-
-The alternative way is to import *all* of your system programs by using star
-import.  Note that this does not actually import every system program, but
-provides a dynamic lookup mechanism.  This usage pattern is suited for one-file
-shell scripts:
-
-```python
-from pbs import *
-print ifconfig("eth0")
-print du()
-```
-
-There are some important caveats when using star import, and the code will
-raise a warning to notify you of such.  Please review the limitations under
-the last section "Limitations".
 
 A less common usage pattern is through PBS Command wrapper, which takes a
 full path to a command and returns a callable object.  This is useful for
@@ -182,6 +167,30 @@ This lets you start long-running commands at the beginning of your script
 foreground.
 
 
+## Foreground Processes
+
+Foreground processes are processes that you want to interact directly with
+the default stdout and stdin of your terminal.  In other words, these are
+processes that you do not want to return their output as a return value
+of their call.  An example would be opening a text editor:
+
+```python
+vim(file_to_edit)
+```
+
+This will block because pbs will be trying to aggregate the output
+of the command to python, without displaying anything to the screen. The
+solution is the "_fg" special keyword arg:
+
+```python
+vim(file_to_edit, _fg=True)
+```
+
+This will open vim as expected and let you use it as expected, with all
+the input coming from the keyboard and the output going to the screen.
+The return value of a foreground process is an empty string.
+
+
 ## Finding Commands
 
 "Which" finds the full path of a program, or returns None if it doesn't exist.
@@ -232,6 +241,24 @@ except ErrorReturnCode:
     print "unknown error"
     exit(1)
 ```
+
+## Globbing
+
+Glob-expansion is not done on your arguments.  For example, this will not work:
+
+```python
+from pbs import du
+print du("*")
+```
+
+You'll get an error to the effect of "cannot access '\*': No such file or directory".
+This is because the "\*" needs to be glob expanded:
+
+```python
+from pbs import du, glob
+print du(glob("*")) 
+```
+
 
 ## Commandline Arguments
 
@@ -303,17 +330,3 @@ and internal commands:
 from pbs import dir
 print dir("*.c")
 ```
-
-## Limitations
-
-PBS's main limitations come from the use of star import.  If you're interested
-as to why these limitations exist, please take a look at the source.  In
-general, when using star import:
-
-* Do the import as soon as possible, at the top of the script.
-* Do not do the star import on an indented line (so don't do it from within an
-if statement, or function, etc)
-* (Disabled anyway, but) Do not star import from the Python shell.  If you want
-to muck around in a REPL shell, run PBS as a script, which will launch a REPL.
-* (Disabled anyway, but) Do not star import from anywhere other than a main 
-script.

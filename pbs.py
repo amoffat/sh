@@ -23,18 +23,17 @@
 
 
 import subprocess as subp
-import inspect
 import sys
 import traceback
 import os
 import re
 from glob import glob
 import shlex
-import warnings
+from types import ModuleType
 
 
 
-__version__ = "0.81"
+__version__ = "0.90"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
@@ -109,66 +108,58 @@ def resolve_program(program):
         # if a dash version of our underscore command exists and use that
         # if it does
         if "_" in program: path = which(program.replace("_", "-"))
-        if os.name == "nt": path = which("%s.exe" % program)
+        if os.name == "nt": path = which("%s.exe" % program)  
         if not path: return None
     return path
-
-
-class Command(object):
-    prepend_stack = []
-
-    @classmethod
-    def create(cls, program, raise_exc=True):
-        path = resolve_program(program)
-        if not path:
-            if os.name == "nt" and program.lower() in nt_internal_command:
-                return cls("cmd.exe", default_args=["/S", "/C", program])
-            if raise_exc: raise CommandNotFound(program)
-            else: return None
-        return cls(path)
     
-    def __init__(self, path, default_args=[]):
-        self.path = path
-        
-        self.process = None
+class RunningCommand(object):
+    def __init__(self, command_ran, process, call_args, stdin=None):
+        self.command_ran = command_ran
+        self.process = process
         self._stdout = None
         self._stderr = None
+        self.call_args = call_args
 
-        self.default_args = list(default_args)
-        self.call_args = {
-            "bg": False, # run command in background
-            "with": False, # prepend the command to every command after it
-            "out": None, # redirect STDOUT
-            "err": None, # redirect STDERR
-            "err_to_out": None, # redirect STDERR to STDOUT
-            "fg": None, # run command in foreground
-        }
-        
-    def __getattr__(self, p):
-        return getattr(str(self), p)
-        
-    @property
-    def stdout(self):
-        if self.call_args["bg"]: self.wait()
-        return self._stdout
-    
-    @property
-    def stderr(self):
-        if self.call_args["bg"]: self.wait()
-        return self._stderr
-        
-        
-    def wait(self):
-        if self.process.returncode is not None: return
-        self._stdout, self._stderr = self.process.communicate()
+        # we're running in the background, return self and let us lazily
+        # evaluate
+        if self.call_args["bg"]: return
+
+        # we're running this command as a with context, don't do anything
+        # because nothing was started to run from Command.__call__
+        if self.call_args["with"]: return
+
+        # run and block
+        self._stdout, self._stderr = self.process.communicate(stdin)
         rc = self.process.wait()
 
-        if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
-        return self
-    
-    def __len__(self):
-        return len(str(self))
-    
+        if rc != 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
+
+    def __enter__(self):
+        # we don't actually do anything here because anything that should
+        # have been done would have been done in the Command.__call__ call.
+        # essentially all that has to happen is the comand be pushed on
+        # the prepend stack.
+        pass
+
+    def __exit__(self, typ, value, traceback):
+        if self.call_args["with"] and Command.prepend_stack:
+            Command.prepend_stack.pop()
+   
+    def __str__(self):
+        if IS_PY3: return self.__unicode__()
+        else: return unicode(self).encode("utf-8")
+        
+    def __unicode__(self):
+        if self.process: 
+            if self.stdout: return self.stdout.decode("utf-8") # byte string
+            else: return ""
+
+    def __contains__(self, item):
+        return item in str(self)
+
+    def __getattr__(self, p):
+        return getattr(str(self), p)
+     
     def __repr__(self):
         return str(self)
 
@@ -180,29 +171,81 @@ class Command(object):
 
     def __int__(self):
         return int(str(self).strip())
+         
+    @property
+    def stdout(self):
+        if self.call_args["bg"]: self.wait()
+        return self._stdout
+    
+    @property
+    def stderr(self):
+        if self.call_args["bg"]: self.wait()
+        return self._stderr
+
+    def wait(self):
+        if self.process.returncode is not None: return
+        self._stdout, self._stderr = self.process.communicate()
+        rc = self.process.wait()
+
+        if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
+        return self
+    
+    def __len__(self):
+        return len(str(self))
+
+
+
+class Command(object):
+    prepend_stack = []
+
+    @classmethod
+    def create(cls, program, raise_exc=True):
+        path = resolve_program(program)
+        if not path:
+            # handle nt internal commands
+            if os.name == 'nt' and program.lower() in nt_internal_command:
+                return cls(program, default_args=["cmd.exe", "/s", "/c"])
+                
+            if raise_exc: raise CommandNotFound(program)
+            else: return None
+        return cls(path)
+    
+    def __init__(self, path, default_args=[]):            
+        self.path = path
+        self.default_args = list(default_args)
         
     def __str__(self):
         if IS_PY3: return self.__unicode__()
         else: return unicode(self).encode("utf-8")
+
+    def __repr__(self):
+        return str(self)
         
     def __unicode__(self):
-        if self.process: 
-            if self.stdout: return self.stdout.decode("utf-8") # byte string
-            else: return ""
-        else: return self.path
+        return self.path
 
     def __enter__(self):
-        if not self.call_args["with"]: Command.prepend_stack.append([self.path])
+        Command.prepend_stack.append([self.path])
 
     def __exit__(self, typ, value, traceback):
-        if Command.prepend_stack: Command.prepend_stack.pop()
-
+        Command.prepend_stack.pop()
+ 
+    
     def __call__(self, *args, **kwargs):
+        call_args = {
+            "fg": False, # run command in foreground
+            "bg": False, # run command in background
+            "with": False, # prepend the command to every command after it
+            "out": None, # redirect STDOUT
+            "err": None, # redirect STDERR
+            "err_to_out": None, # redirect STDERR to STDOUT
+        }
+     
         kwargs = kwargs.copy()
-        args = self.default_args + list(args)
+        args = list(args)
         processed_args = []
-        cmd = []
-
+        cmd = self.default_args + []
+        
         # aggregate any with contexts
         for prepend in self.prepend_stack: cmd.extend(prepend)
         
@@ -210,27 +253,27 @@ class Command(object):
         
         # pull out the pbs-specific arguments (arguments that are not to be
         # passed to the commands
-        for parg, default in self.call_args.items():
+        for parg, default in call_args.items():
             key = "_" + parg
-            self.call_args[parg] = default
+            call_args[parg] = default
             if key in kwargs:
-                self.call_args[parg] = kwargs[key] 
+                call_args[parg] = kwargs[key] 
                 del kwargs[key]
                 
         # set pipe to None if we're outputting straight to CLI
-        pipe = None if self.call_args["fg"] else subp.PIPE
+        pipe = None if call_args["fg"] else subp.PIPE
         
         # check if we're piping via composition
         stdin = pipe
         actual_stdin = None
         if args:
             first_arg = args.pop(0)
-            if isinstance(first_arg, Command):
+            if isinstance(first_arg, RunningCommand):
                 # it makes sense that if the input pipe of a command is running
                 # in the background, then this command should run in the
                 # background as well
                 if first_arg.call_args["bg"]:
-                    self.call_args["bg"] = True
+                    call_args["bg"] = True
                     stdin = first_arg.process.stdout
                 else:
                     actual_stdin = first_arg.stdout
@@ -284,57 +327,44 @@ class Command(object):
         final_args = split_args
 
         cmd.extend(final_args)
-        # for debugging
-        self._command_ran = " ".join(cmd)
-        
+        command_ran = " ".join(cmd)
+
 
         # with contexts shouldn't run at all yet, they prepend
         # to every command in the context
-        if self.call_args["with"]:
+        if call_args["with"]:
             Command.prepend_stack.append(cmd)
-            return self
+            return RunningCommand(command_ran, None, call_args)
         
         
         # stdout redirection
         stdout = pipe
-        out = self.call_args["out"]
+        out = call_args["out"]
         if out:
             if isinstance(out, file): stdout = out
             else: stdout = file(str(out), "w")
         
         # stderr redirection
         stderr = pipe
-        err = self.call_args["err"]
+        err = call_args["err"]
         if err:
             if isinstance(err, file): stderr = err
             else: stderr = file(str(err), "w")
             
-        if self.call_args["err_to_out"]: stderr = stdout
+        if call_args["err_to_out"]: stderr = subp.STDOUT
             
         if os.name == 'nt':
             # on windows avoid passing via subprocess.list2cmdline
             # it's casuing a havoc when parameter with quotes are needed
             cmd = " ".join(cmd)
+
         # leave shell=False
-        self.process = subp.Popen(cmd, shell=False, env=os.environ,
+        process = subp.Popen(cmd, shell=False, env=os.environ,
             stdin=stdin, stdout=stdout, stderr=stderr)
 
-        # we're running in the background, return self and let us lazily
-        # evaluate
-        if self.call_args["bg"]: return self
+        return RunningCommand(command_ran, process, call_args, actual_stdin)
 
-        # run and block
-        self._stdout, self._stderr = self.process.communicate(actual_stdin)
-        rc = self.process.wait()
-
-        if rc != 0: raise get_rc_exc(rc)(self._command_ran, self.stdout, self.stderr)
-        return self
-
-
-
-
-
-
+        
 # this class is used directly when we do a "from pbs import *".  it allows
 # lookups to names that aren't found in the global scope to be searched
 # for as a program.  for example, if "ls" isn't found in the program's
@@ -364,8 +394,8 @@ class Environment(dict):
         # import * from a repl.  so, raise an exception, since
         # that's really the only sensible thing to do
         if k == "__all__":
-            raise RuntimeError("Cannot import * from the commandline, please \
-see \"Limitations\" here: %s" % __project_url__)
+            raise ImportError("Cannot import * from pbs. \
+Please import pbs or import programs individually.")
 
         # if we end with "_" just go ahead and skip searching
         # our namespace for python stuff.  this was mainly for the
@@ -408,7 +438,18 @@ see \"Limitations\" here: %s" % __project_url__)
 
 
 
-
+nt_internal_command = None
+if os.name == "nt":
+    import re
+    def get_nt_internal_command():
+        ''' find all internal commands via help command'''
+        regex = re.compile('''([A-Z][A-Z]*)\s''')
+        cmd = Command("cmd.exe")
+        help_string = str( cmd("/K", "help", ) )
+        ret =  [ int_cmd.lower() for int_cmd in regex.findall(str(help_string)) ]
+        return ret
+    nt_internal_command = get_nt_internal_command()
+    
 
 def run_repl(env):
     banner = "\n>> PBS v{version}\n>> https://github.com/amoffat/pbs\n"
@@ -423,7 +464,7 @@ def run_repl(env):
         except: print(traceback.format_exc())
 
     # cleans up our last line
-    print('')
+    print("")
 
 
 
@@ -433,13 +474,22 @@ def run_repl(env):
 # in other words, they only want to import certain programs, not the whole
 # system PATH worth of commands.  in this case, we just proxy the
 # import lookup to our Environment class
-class SelfWrapper(object):
+class SelfWrapper(ModuleType):
     def __init__(self, self_module):
+        # this is super ugly to have to copy attributes like this,
+        # but it seems to be the only way to make reload() behave
+        # nicely.  if i make these attributes dynamic lookups in
+        # __getattr__, reload sometimes chokes in weird ways...
+        for attr in ["__builtins__", "__doc__", "__name__", "__package__"]:
+            setattr(self, attr, getattr(self_module, attr))
+
         self.self_module = self_module
         self.env = Environment(globals())
     
     def __getattr__(self, name):
         return self.env[name]
+
+
 
 
 
@@ -454,69 +504,6 @@ if __name__ == "__main__":
     
 # we're being imported from somewhere
 else:
-    frame, script, line, module, code, index = inspect.stack()[1]
-    env = Environment(frame.f_globals)
-
-
-    # are we being imported from a REPL?
-    if script.startswith("<") and script.endswith(">") :
-        self = sys.modules[__name__]
-        sys.modules[__name__] = SelfWrapper(self)
-        
-    # we're being imported from a script
-    else:
-
-        # we need to analyze how we were imported
-        with open(script, "r") as h: source = h.readlines()
-        import_line = source[line-1]
-
-        # this it the most magical choice.  basically we're trying to import
-        # all of the system programs into our script.  the only way to do
-        # this is going to be to exec the source in modified global scope.
-        # there might be a less magical way to do this...
-        if "*" in import_line:
-            # do not let us import * from anywhere but a stand-alone script
-            if frame.f_globals["__name__"] != "__main__":
-                raise RuntimeError("Cannot import * from anywhere other than \
-a stand-alone script.  Do a 'from pbs import program' instead. Please see \
-\"Limitations\" here: %s" % __project_url__)
-
-            warnings.warn("Importing * from pbs is magical and therefore has \
-some limitations.  Please become familiar with them under \"Limitations\" \
-here: %s  To avoid this warning, use a warning filter or import your \
-programs directly with \"from pbs import <program>\"" % __project_url__,
-RuntimeWarning, stacklevel=2)
-
-            # we avoid recursion by removing the line that imports us :)
-            source = "".join(source[line:])
-        
-            exit_code = 0
-            try: exec(source, env, env)
-            except SystemExit as e: exit_code = e.code
-            except: print(traceback.format_exc())
-
-            # we exit so we don't actually run the script that we were imported
-            # from (which would be running it "again", since we just executed
-            # the script with exec
-            exit(exit_code)
-
-        # this is the least magical choice.  we're importing either a
-        # selection of programs or we're just importing the pbs module.
-        # in this case, let's just wrap ourselves with a module that has
-        # __getattr__ so our program lookups can be done there
-        else:
-            self = sys.modules[__name__]
-            sys.modules[__name__] = SelfWrapper(self)
-
-
-nt_internal_command = None
-if os.name == "nt":
-    import re
-    def get_nt_internal_command():
-        ''' find all internal commands via help command'''
-        regex = re.compile('''([A-Z][A-Z]*)\s''')
-        cmd = Command("cmd.exe")
-        help_string = str( cmd("/K", "help", ) )
-        ret =  [ int_cmd.lower() for int_cmd in regex.findall(str(help_string)) ]
-        return ret
-    nt_internal_command= get_nt_internal_command()
+    self = sys.modules[__name__]
+    sys.modules[__name__] = SelfWrapper(self)
+    
