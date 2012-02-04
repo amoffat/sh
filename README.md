@@ -182,6 +182,30 @@ This lets you start long-running commands at the beginning of your script
 foreground.
 
 
+## Foreground Processes
+
+Foreground processes are processes that you want to interact directly with
+the default stdout and stdin of your terminal.  In other words, these are
+processes that you do not want to return their output as a return value
+of their call.  An example would be opening a text editor:
+
+```python
+vim(file_to_edit)
+```
+
+This will block because pbs will be trying to aggregate the output
+of the command to python, without displaying anything to the screen. The
+solution is the "_fg" special keyword arg:
+
+```python
+vim(file_to_edit, _fg=True)
+```
+
+This will open vim as expected and let you use it as expected, with all
+the input coming from the keyboard and the output going to the screen.
+The return value of a foreground process is an empty string.
+
+
 ## Finding Commands
 
 "Which" finds the full path of a program, or returns None if it doesn't exist.

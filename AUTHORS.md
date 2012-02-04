@@ -12,3 +12,5 @@
 * tingletech
 * tdudziak
 * Arjen Stolk
+* nemec
+* fruch
