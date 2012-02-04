@@ -31,6 +31,7 @@ import re
 from glob import glob
 import shlex
 import warnings
+from types import ModuleType
 
 
 
@@ -445,7 +446,7 @@ def run_repl(env):
         except: print(traceback.format_exc())
 
     # cleans up our last line
-    print('')
+    print("")
 
 
 
@@ -455,8 +456,15 @@ def run_repl(env):
 # in other words, they only want to import certain programs, not the whole
 # system PATH worth of commands.  in this case, we just proxy the
 # import lookup to our Environment class
-class SelfWrapper(object):
+class SelfWrapper(ModuleType):
     def __init__(self, self_module):
+        # this is super ugly to have to copy attributes like this,
+        # but it seems to be the only way to make reload() behave
+        # nicely.  if i make these attributes dynamic lookups in
+        # __getattr__, reload sometimes chokes in weird ways...
+        for attr in ["__builtins__", "__doc__", "__name__", "__package__"]:
+            setattr(self, attr, getattr(self_module, attr))
+
         self.self_module = self_module
         self.env = Environment(globals())
     
