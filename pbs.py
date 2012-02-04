@@ -23,14 +23,12 @@
 
 
 import subprocess as subp
-import inspect
 import sys
 import traceback
 import os
 import re
 from glob import glob
 import shlex
-import warnings
 from types import ModuleType
 
 
@@ -387,8 +385,8 @@ class Environment(dict):
         # import * from a repl.  so, raise an exception, since
         # that's really the only sensible thing to do
         if k == "__all__":
-            raise RuntimeError("Cannot import * from the commandline, please \
-see \"Limitations\" here: %s" % __project_url__)
+            raise ImportError("Cannot import * from pbs. \
+Please import pbs or import programs individually.")
 
         # if we end with "_" just go ahead and skip searching
         # our namespace for python stuff.  this was mainly for the
@@ -473,6 +471,8 @@ class SelfWrapper(ModuleType):
 
 
 
+
+
 # we're being run as a stand-alone script, fire up a REPL
 if __name__ == "__main__":
     globs = globals()
@@ -484,56 +484,5 @@ if __name__ == "__main__":
     
 # we're being imported from somewhere
 else:
-    frame, script, line, module, code, index = inspect.stack()[1]
-    env = Environment(frame.f_globals)
-
-
-    # are we being imported from a REPL?
-    if script.startswith("<") and script.endswith(">") :
-        self = sys.modules[__name__]
-        sys.modules[__name__] = SelfWrapper(self)
-        
-    # we're being imported from a script
-    else:
-
-        # we need to analyze how we were imported
-        with open(script, "r") as h: source = h.readlines()
-        import_line = source[line-1]
-
-        # this it the most magical choice.  basically we're trying to import
-        # all of the system programs into our script.  the only way to do
-        # this is going to be to exec the source in modified global scope.
-        # there might be a less magical way to do this...
-        if "*" in import_line:
-            # do not let us import * from anywhere but a stand-alone script
-            if frame.f_globals["__name__"] != "__main__":
-                raise RuntimeError("Cannot import * from anywhere other than \
-a stand-alone script.  Do a 'from pbs import program' instead. Please see \
-\"Limitations\" here: %s" % __project_url__)
-
-            warnings.warn("Importing * from pbs is magical and therefore has \
-some limitations.  Please become familiar with them under \"Limitations\" \
-here: %s  To avoid this warning, use a warning filter or import your \
-programs directly with \"from pbs import <program>\"" % __project_url__,
-RuntimeWarning, stacklevel=2)
-
-            # we avoid recursion by removing the line that imports us :)
-            source = "".join(source[line:])
-        
-            exit_code = 0
-            try: exec(source, env, env)
-            except SystemExit as e: exit_code = e.code
-            except: print(traceback.format_exc())
-
-            # we exit so we don't actually run the script that we were imported
-            # from (which would be running it "again", since we just executed
-            # the script with exec
-            exit(exit_code)
-
-        # this is the least magical choice.  we're importing either a
-        # selection of programs or we're just importing the pbs module.
-        # in this case, let's just wrap ourselves with a module that has
-        # __getattr__ so our program lookups can be done there
-        else:
-            self = sys.modules[__name__]
-            sys.modules[__name__] = SelfWrapper(self)
+    self = sys.modules[__name__]
+    sys.modules[__name__] = SelfWrapper(self)
