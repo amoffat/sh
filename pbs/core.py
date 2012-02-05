@@ -1,6 +1,5 @@
 #===============================================================================
-# Copyright (C) 2011 by Andrew Moffat
-# Copyright (C) 2012 by Harshavardhana
+# Copyright (C) 2011-2012 by Andrew Moffat
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,14 +19,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 #===============================================================================
-
-
-# project page:
-# https://github.com/amoffat/pbs
-
-# project page: 
-# https://github.com/harshavardhana/pbs
-
 import sys
 import re
 import os

@@ -1,7 +1,7 @@
 PBS is a unique subprocess wrapper that maps your system programs to
 Python functions dynamically.  PBS helps you write shell scripts in
-Python by giving you the good features of Bash (easy command calling, easy piping)
-with all the power and flexibility of Python.
+Python by giving you the good features of Bash (easy command calling, easy
+piping) with all the power and flexibility of Python.
 
 ```python
 from pbs import ifconfig
@@ -10,26 +10,37 @@ print ifconfig("eth0")
 
 PBS is not a collection of system commands implemented in Python.
 
+# Getting
+
+    $> pip install pbs
 
 # Usage
 
-If you're writing a shell-style script, import the following way:
+The easiest way to get up and running is to import pbs
+directly or import your program from pbs:
 
 ```python
-from pbs import *
+import pbs
+print pbs.ifconfig("eth0")
+
+from pbs import ifconfig
+print ifconfig("eth0")
 ```
 
-This will make all of your system programs available to the script.
-Note that this does not actually import every system program, but
-provides a dynamic lookup mechanism.
-
-Or if you just want to import a few system programs:
+A less common usage pattern is through PBS Command wrapper, which takes a
+full path to a command and returns a callable object.  This is useful for
+programs that have weird characters in their names or programs that aren't in
+your $PATH:
 
 ```python
-from pbs import ifconfig, supervisorctl, ffmpeg
+import pbs
+ffmpeg = pbs.Command("/usr/bin/ffmpeg")
+ffmpeg(movie_file)
 ```
 
-You can also try out PBS through an interactive REPL:
+The last usage pattern is for trying PBS through an interactive REPL.  By
+default, this acts like a star import (so all of your system programs will be
+immediately available as functions):
 
     $> python pbs.py
 
@@ -83,11 +94,27 @@ Piping has become function composition:
 
 ```python
 # sort this directory by biggest file
-print sort(du("*", "-sb"), "-rn")
+print sort(du(glob("*"), "-sb"), "-rn")
 
 # print the number of folders and files in /etc
 print wc(ls("/etc", "-1"), "-l")
 ```
+
+## Redirection
+
+PBS can redirect the standard and error output streams of a process to a file. 
+This is done with the special _out and _err keyword arguments. You can pass a
+filename or a file object as the argument value. When the name of an already 
+existing file is passed, the contents of the file will be overwritten.
+
+```python
+ls(_out="files.list")
+ls("nonexistent", _err="error.txt")
+```
+
+PBS can also redirect the error output stream to the standard output stream,
+using the special _err_to_out=True keyword argument.
+
 
 ## Sudo and With Contexts
 
@@ -109,6 +136,59 @@ it can behave correctly.
 with sudo(p=">", _with=True):
     print ls("/root")
 ```
+
+## Background Processes
+
+Commands can be run in the background with the special _bg=True keyword
+argument:
+
+```python
+# blocks
+sleep(3)
+print "...3 seconds later"
+
+# doesn't block
+p = sleep(3, _bg=True)
+print "prints immediately!"
+p.wait()
+print "...and 3 seconds later"
+```
+
+You can also pipe together background processes!
+
+```python
+p = wc(curl("http://github.com/", silent=True, _bg=True), "--bytes")
+print "prints immediately!"
+print "byte count of github: %d" % int(p) # lazily completes
+```
+
+This lets you start long-running commands at the beginning of your script
+(like a file download) and continue performing other commands in the
+foreground.
+
+
+## Foreground Processes
+
+Foreground processes are processes that you want to interact directly with
+the default stdout and stdin of your terminal.  In other words, these are
+processes that you do not want to return their output as a return value
+of their call.  An example would be opening a text editor:
+
+```python
+vim(file_to_edit)
+```
+
+This will block because pbs will be trying to aggregate the output
+of the command to python, without displaying anything to the screen. The
+solution is the "_fg" special keyword arg:
+
+```python
+vim(file_to_edit, _fg=True)
+```
+
+This will open vim as expected and let you use it as expected, with all
+the input coming from the keyboard and the output going to the screen.
+The return value of a foreground process is an empty string.
 
 
 ## Finding Commands
@@ -162,6 +242,24 @@ except ErrorReturnCode:
     exit(1)
 ```
 
+## Globbing
+
+Glob-expansion is not done on your arguments.  For example, this will not work:
+
+```python
+from pbs import du
+print du("*")
+```
+
+You'll get an error to the effect of "cannot access '\*': No such file or directory".
+This is because the "\*" needs to be glob expanded:
+
+```python
+from pbs import du, glob
+print du(glob("*")) 
+```
+
+
 ## Commandline Arguments
 
 You can access commandline arguments similar to Bash's $1, $2, etc by using
@@ -186,49 +284,22 @@ print ns.x
 ```
 
 
-## Background Processes
+## Weirdly-named Commands
 
-Commands can be run in the background with the special _bg=True keyword
-argument:
-
-```python
-# blocks
-sleep(3)
-print "...3 seconds later"
-
-# doesn't block
-p = sleep(3, _bg=True)
-print "prints immediately!"
-p.wait()
-print "...and 3 seconds later"
-```
-
-You can also pipe together background processes!
-
-```python
-p = wc(curl("http://github.com/", silent=True, _bg=True), "--bytes")
-print "prints immediately!"
-print "byte count of github: %d" % int(p) # lazily completes
-```
-
-This lets you start long-running commands at the beginning of your script
-(like a file download) and continue performing other commands in the
-foreground.
-
-
-## Weirdly-named commands
-
-PBS automatically handles underscore-dash conversions.  For example, if you want to call apt-get:
+PBS automatically handles underscore-dash conversions.  For example, if you want
+to call apt-get:
 
 ```python
 apt_get("install", "mplayer", y=True)
 ```
 
-PBS looks for "apt_get", but if it doesn't find it, replaces all underscores with dashes and searches
-again.  If the command still isn't found, a CommandNotFound exception is raised.
+PBS looks for "apt_get", but if it doesn't find it, replaces all underscores
+with dashes and searches again.  If the command still isn't found, a
+CommandNotFound exception is raised.
 
-Commands with other, more uncommonly-named symbols in them must be accessed directly through
-the "Command" class wrapper.  The Command class takes the full path to the program as a string:
+Commands with other, less-commonly symbols in their names must be accessed
+directly through the "Command" class wrapper.  The Command class takes the full
+path to the program as a string:
 
 ```python
 p27 = Command(which("python2.7"))

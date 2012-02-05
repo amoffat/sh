@@ -1,6 +1,5 @@
 #===============================================================================
-# Copyright (C) 2011 by Andrew Moffat
-# Copyright (C) 2012 by Harshavardhana
+# Copyright (C) 2011-2012 by Andrew Moffat
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,18 +21,31 @@
 #===============================================================================
 
 
-# project page:
-# https://github.com/amoffat/pbs
+"""PBS
 
-# project page: 
-# https://github.com/harshavardhana/pbs
+PBS is a unique subprocess wrapper that maps your system programs to Python functions dynamically. 
+PBS helps you write shell scripts in Python by giving you the good features of Bash (easy command 
+calling, easy piping) with all the power and flexibility of Python.
+
+Normally used as shown below
+
+   from pbs import ifconfig
+   ......
+   print ifconfig("eth0")
+   ......
+"""
 
 import inspect
 import sys
 import traceback
 import os
 
-from core import Environment, SelfWrapper
+from core import *
+
+#--start constants--
+__version__ = "0.90"
+__project_url__ = "https://github.com/amoffat/pbs"
+#--end constants--
 
 frame, script, line, module, code, index = inspect.stack()[1]
 env = Environment(frame.f_globals)
@@ -72,3 +84,4 @@ from anywhere other than a stand-alone script.  Do a 'from pbs import program' i
 else:
     self = sys.modules[__name__]
     sys.modules[__name__] = SelfWrapper(self)
+
