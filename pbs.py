@@ -200,7 +200,7 @@ class RunningCommand(object):
 class Command(object):
     prepend_stack = []
 
-    def partial(self, *args, **kwargs):
+    def bake(self, *args, **kwargs):
         fn = Command(self.path)
         fn._partial = True
         fn._partial_args = list(args)
