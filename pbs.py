@@ -156,6 +156,9 @@ class RunningCommand(object):
             if self.stdout: return self.stdout.decode("utf-8") # byte string
             else: return ""
 
+    def __eq__(self, other):
+        return str(self) == str(other)
+
     def __contains__(self, item):
         return item in str(self)
 

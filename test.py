@@ -153,6 +153,16 @@ class PbsTestSuite(unittest.TestCase):
         self.assertTrue("pagefaults" in out)
 
 
+    @requires_posix
+    def test_output_equivalence(self):
+        from pbs import whoami
+
+        iam1 = whoami()
+        iam2 = whoami()
+
+        self.assertEqual(iam1, iam2)
+
+
 
 if __name__ == "__main__":
     unittest.main()
