@@ -30,6 +30,7 @@ import re
 from glob import glob
 import shlex
 from types import ModuleType
+from functools import partial
 
 
 
@@ -155,6 +156,9 @@ class RunningCommand(object):
             if self.stdout: return self.stdout.decode("utf-8") # byte string
             else: return ""
 
+    def __eq__(self, other):
+        return str(self) == str(other)
+
     def __contains__(self, item):
         return item in str(self)
 
@@ -199,16 +203,30 @@ class RunningCommand(object):
 class Command(object):
     prepend_stack = []
 
+    def bake(self, *args, **kwargs):
+        fn = Command(self.path)
+        fn._partial = True
+        fn._partial_args = list(args)
+        fn._partial_kwargs = kwargs
+        return fn
+
     @classmethod
-    def create(cls, program, raise_exc=True):
+    def create(cls, program):
         path = resolve_program(program)
         if not path:
             if raise_exc: raise CommandNotFound(program)
             else: return None
         return cls(path)
+
+    def __getattr__(self, name):
+        if self._partial: return partial(self, name)
+        raise AttributeError
     
     def __init__(self, path):            
         self.path = path
+        self._partial = False
+        self._partial_args = []
+        self._partial_kwargs = {}
        
     def __str__(self):
         if IS_PY3: return self.__unicode__()
@@ -225,7 +243,7 @@ class Command(object):
 
     def __exit__(self, typ, value, traceback):
         Command.prepend_stack.pop()
- 
+
     
     def __call__(self, *args, **kwargs):
         call_args = {
@@ -239,12 +257,16 @@ class Command(object):
      
         kwargs = kwargs.copy()
         args = list(args)
+
+        kwargs.update(self._partial_kwargs)
+        args = self._partial_args + args
+
         processed_args = []
         cmd = []
 
         # aggregate any with contexts
         for prepend in self.prepend_stack: cmd.extend(prepend)
-        
+
         cmd.append(self.path)
         
         # pull out the pbs-specific arguments (arguments that are not to be
@@ -350,6 +372,7 @@ class Command(object):
             stdin=stdin, stdout=stdout, stderr=stderr)
 
         return RunningCommand(command_ran, process, call_args, actual_stdin)
+
 
 
 

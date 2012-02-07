@@ -144,7 +144,23 @@ class PbsTestSuite(unittest.TestCase):
 
         self.assertTrue(len(actual_out) != 0)
 
+    @requires_posix
+    def test_bake(self):
+        from pbs import time
+        timed = time.bake()
 
+        out = timed.ls("/", _err_to_out=True)
+        self.assertTrue("pagefaults" in out)
+
+
+    @requires_posix
+    def test_output_equivalence(self):
+        from pbs import whoami
+
+        iam1 = whoami()
+        iam2 = whoami()
+
+        self.assertEqual(iam1, iam2)
 
 
 

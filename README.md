@@ -205,6 +205,43 @@ print which("some_command") # None
 if not which("supervisorctl"): apt_get("install", "supervisor", "-y")
 ```
 
+## Baking
+
+PBS is capable of "baking" arguments into commands.  This is similar
+to the stdlib functools.partial wrapper.  An example can speak volumes:
+
+```python
+from pbs import ssh
+
+# calling whoami on the server.  this is tedious to do if you're running
+# any more than a few commands.
+iam1 = ssh("myserver.com", "whoami")
+
+# wouldn't it be nice to bake the common parameters into the ssh command?
+myserver = ssh.bake("myserver.com")
+iam2 = myserver.whoami()
+
+assert(iam1 == iam2) # True!
+```
+
+Now that the "myserver" callable represents a baked ssh command, you
+can call anything on the server in an easy fashion:
+
+```python
+print server.tail("/var/log/dumb_daemon.log", n=100)
+```
+
+Of course, you can bake more than just ssh commands.  You can bake arguments
+into any command.  Suppose you didn't want to use a "with sudo" context every
+time you did some superuser commands.  You could bake a root callable:
+
+```python
+from pbs import sudo
+root = sudo.bake()
+print root.ls("/root")
+```
+
+
 ## Environment Variables
 
 Environment variables are available much like they are in Bash:
