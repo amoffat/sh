@@ -68,6 +68,19 @@ commands on your system dynamically by resolving your PATH, much like Bash does.
 In this way, all the programs on your system are easily available
 in Python.
 
+You can also call attributes on commands.  This translates to the command
+name followed by the attribute name:
+
+```python
+from pbs import git
+
+# resolves to "git branch -v"
+print git.branch("-v")
+```
+
+This is useful for commands whose first argument is often another sub-command
+like git, svn, time, sudo.  See "Baking" for advanced usage of this.
+
 ## Keyword Arguments
 
 Keyword arguments also work like you'd expect: they get replaced with the
@@ -249,27 +262,6 @@ can call anything on the server in an easy fashion:
 # resolves to "ssh myserver.com tail /var/log/dumb_daemon.log -n 100"
 print myserver.tail("/var/log/dumb_daemon.log", n=100)
 ```
-
-Of course, you can bake more than just ssh commands.  You can bake arguments
-into any command.  Suppose you didn't want to use a "with sudo" context every
-time you did some superuser commands.  You could bake a root callable:
-
-```python
-from pbs import sudo
-
-root = sudo.bake()
-print root.ls("/root")
-```
-
-Or say you wanted to run your git commands easily:
-
-```python
-from pbs import git
-
-git = git.bake()
-print git.status() # or git.st(), if that's your "status" alias
-```
-
 
 ## Environment Variables
 

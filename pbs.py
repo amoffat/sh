@@ -144,8 +144,8 @@ class RunningCommand(object):
         pass
 
     def __exit__(self, typ, value, traceback):
-        if self.call_args["with"] and Command.prepend_stack:
-            Command.prepend_stack.pop()
+        if self.call_args["with"] and Command._prepend_stack:
+            Command._prepend_stack.pop()
    
     def __str__(self):
         if IS_PY3: return self.__unicode__()
@@ -201,27 +201,43 @@ class RunningCommand(object):
 
 
 class Command(object):
-    prepend_stack = []
+    _prepend_stack = []
 
     def bake(self, *args, **kwargs):
-        fn = Command(self.path)
+        fn = Command(self._path)
         fn._partial = True
         fn._partial_args = list(args)
         fn._partial_kwargs = kwargs
         return fn
 
     @classmethod
-    def create(cls, program):
+    def _create(cls, program):
         path = resolve_program(program)
         if not path: raise CommandNotFound(program)
         return cls(path)
 
-    def __getattr__(self, name):
+    def __getattribute__(self, name):
+        # convenience
+        getattr = partial(object.__getattribute__, self)
+
+        
+        # the logic here is, if an attribute starts with an
+        # underscore, always try to find it, because it's very unlikely
+        # that a first command will start with an underscore, example:
+        # "git _command" will probably never exist.
+
+        # after that, we check to see if the attribute actually exists
+        # on the Command object, but only return that if we're not
+        # a baked object.
+        if name.startswith("_"): return getattr(name)
+        try: attr = getattr(name)
+        except AttributeError: return partial(self, name)
+
         if self._partial: return partial(self, name)
-        raise AttributeError
+        return attr
     
     def __init__(self, path):            
-        self.path = path
+        self._path = path
         self._partial = False
         self._partial_args = []
         self._partial_kwargs = {}
@@ -234,13 +250,13 @@ class Command(object):
         return str(self)
         
     def __unicode__(self):
-        return self.path
+        return self._path
 
     def __enter__(self):
-        Command.prepend_stack.append([self.path])
+        Command._prepend_stack.append([self._path])
 
     def __exit__(self, typ, value, traceback):
-        Command.prepend_stack.pop()
+        Command._prepend_stack.pop()
 
     
     def __call__(self, *args, **kwargs):
@@ -263,9 +279,9 @@ class Command(object):
         cmd = []
 
         # aggregate any with contexts
-        for prepend in self.prepend_stack: cmd.extend(prepend)
+        for prepend in self._prepend_stack: cmd.extend(prepend)
 
-        cmd.append(self.path)
+        cmd.append(self._path)
         
         # pull out the pbs-specific arguments (arguments that are not to be
         # passed to the commands
@@ -345,7 +361,7 @@ class Command(object):
         # with contexts shouldn't run at all yet, they prepend
         # to every command in the context
         if call_args["with"]:
-            Command.prepend_stack.append(cmd)
+            Command._prepend_stack.append(cmd)
             return RunningCommand(command_ran, None, call_args)
         
         
@@ -440,7 +456,7 @@ Please import pbs or import programs individually.")
         if builtin: return builtin
         
         # it must be a command then
-        return Command.create(k)
+        return Command._create(k)
     
     def b_cd(self, path):
         os.chdir(path)
