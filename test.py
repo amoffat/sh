@@ -144,7 +144,13 @@ class PbsTestSuite(unittest.TestCase):
 
         self.assertTrue(len(actual_out) != 0)
 
+    @requires_posix
+    def test_partial(self):
+        from pbs import time
+        timed = time.partial()
 
+        out = timed.ls("/", _err_to_out=True)
+        self.assertTrue("pagefaults" in out)
 
 
 
