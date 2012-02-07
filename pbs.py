@@ -213,9 +213,7 @@ class Command(object):
     @classmethod
     def create(cls, program):
         path = resolve_program(program)
-        if not path:
-            if raise_exc: raise CommandNotFound(program)
-            else: return None
+        if not path: raise CommandNotFound(program)
         return cls(path)
 
     def __getattr__(self, name):
