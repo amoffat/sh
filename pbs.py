@@ -200,6 +200,24 @@ class RunningCommand(object):
 
 
 
+class BakedCommand(partial):
+    def __init__(self, cmd, attr):
+        self._cmd = cmd
+        self._attr = attr
+        partial.__init__(self, cmd)
+        
+    def __str__(self):
+        if IS_PY3: return self.__unicode__()
+        else: return unicode(self).encode("utf-8")
+
+    def __repr__(self):
+        return str(self)
+        
+    def __unicode__(self):
+        return "%s %s" % (self._cmd, self._attr)
+
+
+
 class Command(object):
     _prepend_stack = []
 
@@ -219,7 +237,7 @@ class Command(object):
     def __getattribute__(self, name):
         # convenience
         getattr = partial(object.__getattribute__, self)
-
+        baked_cmd = BakedCommand(self, name)
         
         # the logic here is, if an attribute starts with an
         # underscore, always try to find it, because it's very unlikely
@@ -231,9 +249,9 @@ class Command(object):
         # a baked object.
         if name.startswith("_"): return getattr(name)
         try: attr = getattr(name)
-        except AttributeError: return partial(self, name)
+        except AttributeError: return baked_cmd
 
-        if self._partial: return partial(self, name)
+        if self._partial: return baked_cmd
         return attr
     
     def __init__(self, path):            
