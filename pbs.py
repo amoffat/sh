@@ -30,10 +30,11 @@ import re
 from glob import glob
 import shlex
 from types import ModuleType
+from functools import partial
 
 
 
-__version__ = "0.90"
+__version__ = "0.92"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
@@ -154,6 +155,9 @@ class RunningCommand(object):
             if self.stdout: return self.stdout.decode("utf-8") # byte string
             else: return ""
 
+    def __eq__(self, other):
+        return str(self) == str(other)
+
     def __contains__(self, item):
         return item in str(self)
 
@@ -198,22 +202,34 @@ class RunningCommand(object):
 class Command(object):
     prepend_stack = []
 
+    def bake(self, *args, **kwargs):
+        fn = Command(self.path)
+        fn._partial = True
+        fn._partial_args = list(args)
+        fn._partial_kwargs = kwargs
+        return fn
+
     @classmethod
-    def create(cls, program, raise_exc=True):
+    def create(cls, program):
         path = resolve_program(program)
         if not path:
             # handle nt internal commands
             if os.name == 'nt' and program.lower() in nt_internal_command:
-                return cls(program, default_args=["cmd.exe", "/s", "/c"])
+                return getattr(cls("cmd.exe").bake("/s", "/c"), program)
                 
-            if raise_exc: raise CommandNotFound(program)
-            else: return None
+            else: raise CommandNotFound(program)
         return cls(path)
+
+    def __getattr__(self, name):
+        if self._partial: return partial(self, name)
+        raise AttributeError
     
-    def __init__(self, path, default_args=[]):            
+    def __init__(self, path):            
         self.path = path
-        self.default_args = list(default_args)
-        
+        self._partial = False
+        self._partial_args = []
+        self._partial_kwargs = {}
+       
     def __str__(self):
         if IS_PY3: return self.__unicode__()
         else: return unicode(self).encode("utf-8")
@@ -229,7 +245,7 @@ class Command(object):
 
     def __exit__(self, typ, value, traceback):
         Command.prepend_stack.pop()
- 
+
     
     def __call__(self, *args, **kwargs):
         call_args = {
@@ -243,12 +259,16 @@ class Command(object):
      
         kwargs = kwargs.copy()
         args = list(args)
+
+        kwargs.update(self._partial_kwargs)
+        args = self._partial_args + args
+
         processed_args = []
-        cmd = self.default_args + []
+        cmd = []
         
         # aggregate any with contexts
         for prepend in self.prepend_stack: cmd.extend(prepend)
-        
+
         cmd.append(self.path)
         
         # pull out the pbs-specific arguments (arguments that are not to be
@@ -364,7 +384,7 @@ class Command(object):
 
         return RunningCommand(command_ran, process, call_args, actual_stdin)
 
-        
+
 # this class is used directly when we do a "from pbs import *".  it allows
 # lookups to names that aren't found in the global scope to be searched
 # for as a program.  for example, if "ls" isn't found in the program's

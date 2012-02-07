@@ -169,5 +169,25 @@ class PbsTestSuite(unittest.TestCase):
             self.assertIn("/?" , err.full_cmd)
             self.assertIn("Display this help message" , err.stdout)
         
-if __name__ == '__main__':
+    @requires_posix
+    def test_bake(self):
+        from pbs import time
+        timed = time.bake()
+
+        out = timed.ls("/", _err_to_out=True)
+        self.assertTrue("pagefaults" in out)
+
+
+    @requires_posix
+    def test_output_equivalence(self):
+        from pbs import whoami
+
+        iam1 = whoami()
+        iam2 = whoami()
+
+        self.assertEqual(iam1, iam2)
+
+
+
+if __name__ == "__main__":
     unittest.main()
