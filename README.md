@@ -256,8 +256,18 @@ time you did some superuser commands.  You could bake a root callable:
 
 ```python
 from pbs import sudo
+
 root = sudo.bake()
 print root.ls("/root")
+```
+
+Or say you wanted to run your git commands easily:
+
+```python
+from pbs import git
+
+git = git.bake()
+print git.status() # or git.st(), if that's your "status" alias
 ```
 
 
