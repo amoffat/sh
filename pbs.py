@@ -221,19 +221,18 @@ class BakedCommand(partial):
 class Command(object):
     _prepend_stack = []
 
-    def bake(self, *args, **kwargs):
-        fn = Command(self._path)
-        fn._partial = True
-        fn._partial_args = list(args)
-        fn._partial_kwargs = kwargs
-        return fn
-
     @classmethod
     def _create(cls, program):
         path = resolve_program(program)
         if not path: raise CommandNotFound(program)
         return cls(path)
-
+    
+    def __init__(self, path):            
+        self._path = path
+        self._partial = False
+        self._partial_args = []
+        self._partial_kwargs = {}
+        
     def __getattribute__(self, name):
         # convenience
         getattr = partial(object.__getattribute__, self)
@@ -254,11 +253,12 @@ class Command(object):
         if self._partial: return baked_cmd
         return attr
     
-    def __init__(self, path):            
-        self._path = path
-        self._partial = False
-        self._partial_args = []
-        self._partial_kwargs = {}
+    def bake(self, *args, **kwargs):
+        fn = Command(self._path)
+        fn._partial = True
+        fn._partial_args = list(args)
+        fn._partial_kwargs = kwargs
+        return fn
        
     def __str__(self):
         if IS_PY3: return self.__unicode__()
