@@ -78,8 +78,9 @@ from pbs import git
 print git.branch("-v")
 ```
 
-This is useful for commands whose first argument is often another sub-command
-like git, svn, time, sudo.  See "Baking" for advanced usage of this.
+It turns out this is extremely useful for commands whose first argument is often
+another sub-command (like git, svn, time, sudo, etc).
+See "Baking" for an advanced usage of this.
 
 ## Keyword Arguments
 
