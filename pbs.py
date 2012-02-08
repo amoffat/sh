@@ -34,7 +34,7 @@ from functools import partial
 
 
 
-__version__ = "0.92"
+__version__ = "0.93"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
@@ -144,8 +144,8 @@ class RunningCommand(object):
         pass
 
     def __exit__(self, typ, value, traceback):
-        if self.call_args["with"] and Command.prepend_stack:
-            Command.prepend_stack.pop()
+        if self.call_args["with"] and Command._prepend_stack:
+            Command._prepend_stack.pop()
    
     def __str__(self):
         if IS_PY3: return self.__unicode__()
@@ -200,31 +200,119 @@ class RunningCommand(object):
 
 
 
-class Command(object):
-    prepend_stack = []
+class BakedCommand(partial):
+    def __init__(self, cmd, attr):
+        self._cmd = cmd
+        self._attr = attr
+        partial.__init__(self, cmd)
+        
+    def __str__(self):
+        if IS_PY3: return self.__unicode__()
+        else: return unicode(self).encode("utf-8")
 
-    def bake(self, *args, **kwargs):
-        fn = Command(self.path)
-        fn._partial = True
-        fn._partial_args = list(args)
-        fn._partial_kwargs = kwargs
-        return fn
+    def __repr__(self):
+        return str(self)
+        
+    def __unicode__(self):
+        return "%s %s" % (self._cmd, self._attr)
+
+
+
+class Command(object):
+    _prepend_stack = []
+    
+    call_args = {
+        "fg": False, # run command in foreground
+        "bg": False, # run command in background
+        "with": False, # prepend the command to every command after it
+        "out": None, # redirect STDOUT
+        "err": None, # redirect STDERR
+        "err_to_out": None, # redirect STDERR to STDOUT
+    }
 
     @classmethod
-    def create(cls, program):
+    def _create(cls, program):
         path = resolve_program(program)
         if not path: raise CommandNotFound(program)
         return cls(path)
-
-    def __getattr__(self, name):
-        if self._partial: return partial(self, name)
-        raise AttributeError
     
     def __init__(self, path):            
-        self.path = path
+        self._path = path
         self._partial = False
-        self._partial_args = []
-        self._partial_kwargs = {}
+        self._partial_baked_args = []
+        self._partial_call_args = {}
+        
+    def __getattribute__(self, name):
+        # convenience
+        getattr = partial(object.__getattribute__, self)
+        baked_cmd = BakedCommand(self, name)
+        
+        # the logic here is, if an attribute starts with an
+        # underscore, always try to find it, because it's very unlikely
+        # that a first command will start with an underscore, example:
+        # "git _command" will probably never exist.
+
+        # after that, we check to see if the attribute actually exists
+        # on the Command object, but only return that if we're not
+        # a baked object.
+        if name.startswith("_"): return getattr(name)
+        try: attr = getattr(name)
+        except AttributeError: return baked_cmd
+
+        if self._partial: return baked_cmd
+        return attr
+
+    
+    @staticmethod
+    def _extract_call_args(kwargs):
+        kwargs = kwargs.copy()
+        call_args = Command.call_args.copy()
+        for parg, default in call_args.items():
+            key = "_" + parg
+            if key in kwargs:
+                call_args[parg] = kwargs[key] 
+                del kwargs[key]
+        return call_args, kwargs
+
+
+    @staticmethod
+    def _compile_args(args, kwargs):
+        processed_args = []
+                
+        # aggregate positional args
+        for arg in args:
+            if isinstance(arg, (list, tuple)):
+                for sub_arg in arg: processed_args.append(str(sub_arg))
+            else: processed_args.append(str(arg))
+
+        # aggregate the keyword arguments
+        for k,v in kwargs.items():
+            # we're passing a short arg as a kwarg, example:
+            # cut(d="\t")
+            if len(k) == 1:
+                if v is True: arg = "-"+k
+                else: arg = "-%s %r" % (k, v)
+
+            # we're doing a long arg
+            else:
+                k = k.replace("_", "-")
+
+                if v is True: arg = "--"+k
+                else: arg = "--%s=%s" % (k, v)
+            processed_args.append(arg)
+
+        processed_args = shlex.split(" ".join(processed_args))
+        return processed_args
+ 
+    
+    def bake(self, *args, **kwargs):
+        fn = Command(self._path)
+        fn._partial = True
+
+        fn._partial_call_args, kwargs = self._extract_call_args(kwargs)
+        processed_args = self._compile_args(args, kwargs)
+        fn._partial_baked_args = processed_args
+        return fn
        
     def __str__(self):
         if IS_PY3: return self.__unicode__()
@@ -234,48 +322,34 @@ class Command(object):
         return str(self)
         
     def __unicode__(self):
-        return self.path
+        baked_args = " ".join(self._partial_baked_args)
+        if baked_args: baked_args = " " + baked_args
+        return self._path + baked_args
 
     def __enter__(self):
-        Command.prepend_stack.append([self.path])
+        Command._prepend_stack.append([self._path])
 
     def __exit__(self, typ, value, traceback):
-        Command.prepend_stack.pop()
-
+        Command._prepend_stack.pop()
+            
     
     def __call__(self, *args, **kwargs):
-        call_args = {
-            "fg": False, # run command in foreground
-            "bg": False, # run command in background
-            "with": False, # prepend the command to every command after it
-            "out": None, # redirect STDOUT
-            "err": None, # redirect STDERR
-            "err_to_out": None, # redirect STDERR to STDOUT
-        }
      
         kwargs = kwargs.copy()
         args = list(args)
 
-        kwargs.update(self._partial_kwargs)
-        args = self._partial_args + args
-
-        processed_args = []
         cmd = []
 
         # aggregate any with contexts
-        for prepend in self.prepend_stack: cmd.extend(prepend)
+        for prepend in self._prepend_stack: cmd.extend(prepend)
 
-        cmd.append(self.path)
+        cmd.append(self._path)
         
-        # pull out the pbs-specific arguments (arguments that are not to be
-        # passed to the commands
-        for parg, default in call_args.items():
-            key = "_" + parg
-            call_args[parg] = default
-            if key in kwargs:
-                call_args[parg] = kwargs[key] 
-                del kwargs[key]
+
+        call_args, kwargs = self._extract_call_args(kwargs)
+        call_args.update(self._partial_call_args)
                 
+
         # set pipe to None if we're outputting straight to CLI
         pipe = None if call_args["fg"] else subp.PIPE
         
@@ -295,34 +369,10 @@ class Command(object):
                     actual_stdin = first_arg.stdout
             else: args.insert(0, first_arg)
         
-        # aggregate the position arguments
-        for arg in args:
-            # i should've commented why i did this, because now i don't
-            # remember.  for some reason, some command was more natural
-            # taking a list?
-            if isinstance(arg, (list, tuple)):
-                for sub_arg in arg: processed_args.append(str(sub_arg))
-            else: processed_args.append(str(arg))
-
-
-        # aggregate the keyword arguments
-        for k,v in kwargs.items():
-            # we're passing a short arg as a kwarg, example:
-            # cut(d="\t")
-            if len(k) == 1:
-                if v is True: arg = "-"+k
-                else: arg = "-%s %r" % (k, v)
-
-            # we're doing a long arg
-            else:
-                k = k.replace("_", "-")
-
-                if v is True: arg = "--"+k
-                else: arg = "--%s=%s" % (k, v)
-            processed_args.append(arg)
+        processed_args = self._compile_args(args, kwargs)
 
         # makes sure our arguments are broken up correctly
-        split_args = shlex.split(" ".join(processed_args))
+        split_args = self._partial_baked_args + processed_args
 
         # we used to glob, but now we don't.  the reason being, escaping globs
         # doesn't work.  also, adding a _noglob attribute doesn't allow the
@@ -345,7 +395,7 @@ class Command(object):
         # with contexts shouldn't run at all yet, they prepend
         # to every command in the context
         if call_args["with"]:
-            Command.prepend_stack.append(cmd)
+            Command._prepend_stack.append(cmd)
             return RunningCommand(command_ran, None, call_args)
         
         
@@ -440,7 +490,7 @@ Please import pbs or import programs individually.")
         if builtin: return builtin
         
         # it must be a command then
-        return Command.create(k)
+        return Command._create(k)
     
     def b_cd(self, path):
         os.chdir(path)
