@@ -261,22 +261,22 @@ class Command(object):
 
         if self._partial: return baked_cmd
         return attr
+
     
-    def bake(self, *args, **kwargs):
-        fn = Command(self._path)
-        fn._partial = True
-        
-        # pull out the pbs-specific arguments (arguments that are not to be
-        # passed to the commands
+    @staticmethod
+    def _extract_call_args(kwargs):
+        kwargs = kwargs.copy()
         call_args = Command.call_args.copy()
-        fn._partial_call_args = call_args
         for parg, default in call_args.items():
             key = "_" + parg
             if key in kwargs:
                 call_args[parg] = kwargs[key] 
                 del kwargs[key]
-                
-                
+        return call_args, kwargs
+
+
+    @staticmethod
+    def _compile_args(args, kwargs):
         processed_args = []
                 
         # aggregate positional args
@@ -284,7 +284,6 @@ class Command(object):
             if isinstance(arg, (list, tuple)):
                 for sub_arg in arg: processed_args.append(str(sub_arg))
             else: processed_args.append(str(arg))
-
 
         # aggregate the keyword arguments
         for k,v in kwargs.items():
@@ -301,9 +300,18 @@ class Command(object):
                 if v is True: arg = "--"+k
                 else: arg = "--%s=%s" % (k, v)
             processed_args.append(arg)
-                
-        baked_args = shlex.split(" ".join(processed_args))
-        fn._partial_baked_args = baked_args
+
+        processed_args = shlex.split(" ".join(processed_args))
+        return processed_args
+ 
+    
+    def bake(self, *args, **kwargs):
+        fn = Command(self._path)
+        fn._partial = True
+
+        fn._partial_call_args, kwargs = self._extract_call_args(kwargs)
+        processed_args = self._compile_args(args, kwargs)
+        fn._partial_baked_args = processed_args
         return fn
        
     def __str__(self):
@@ -326,15 +334,10 @@ class Command(object):
             
     
     def __call__(self, *args, **kwargs):
-        # we do a copy because we don't want to change the original call_args.
-        # that should stay pristeen between Command calls
-        call_args = Command.call_args.copy()
-        call_args.update(self._partial_call_args)
      
         kwargs = kwargs.copy()
         args = list(args)
 
-        processed_args = []
         cmd = []
 
         # aggregate any with contexts
@@ -342,14 +345,11 @@ class Command(object):
 
         cmd.append(self._path)
         
-        # pull out the pbs-specific arguments (arguments that are not to be
-        # passed to the commands
-        for parg, default in call_args.items():
-            key = "_" + parg
-            if key in kwargs:
-                call_args[parg] = kwargs[key] 
-                del kwargs[key]
+
+        call_args, kwargs = self._extract_call_args(kwargs)
+        call_args.update(self._partial_call_args)
                 
+
         # set pipe to None if we're outputting straight to CLI
         pipe = None if call_args["fg"] else subp.PIPE
         
@@ -369,35 +369,10 @@ class Command(object):
                     actual_stdin = first_arg.stdout
             else: args.insert(0, first_arg)
         
-        # aggregate the position arguments
-        for arg in args:
-            # i should've commented why i did this, because now i don't
-            # remember.  for some reason, some command was more natural
-            # taking a list?
-            if isinstance(arg, (list, tuple)):
-                for sub_arg in arg: processed_args.append(str(sub_arg))
-            else: processed_args.append(str(arg))
-
-
-        # aggregate the keyword arguments
-        for k,v in kwargs.items():
-            # we're passing a short arg as a kwarg, example:
-            # cut(d="\t")
-            if len(k) == 1:
-                if v is True: arg = "-"+k
-                else: arg = "-%s %r" % (k, v)
-
-            # we're doing a long arg
-            else:
-                k = k.replace("_", "-")
-
-                if v is True: arg = "--"+k
-                else: arg = "--%s=%s" % (k, v)
-            processed_args.append(arg)
+        processed_args = self._compile_args(args, kwargs)
 
         # makes sure our arguments are broken up correctly
-        split_args = shlex.split(" ".join(processed_args))
-        split_args = self._partial_baked_args + split_args
+        split_args = self._partial_baked_args + processed_args
 
         # we used to glob, but now we don't.  the reason being, escaping globs
         # doesn't work.  also, adding a _noglob attribute doesn't allow the
