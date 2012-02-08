@@ -44,7 +44,7 @@ if IS_PY3: raw_input = input
 
 
 class ErrorReturnCode(Exception):
-    truncate_cap = 200
+    truncate_cap = 600
 
     def __init__(self, full_cmd, stdout, stderr):
         self.full_cmd = full_cmd
