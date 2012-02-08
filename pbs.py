@@ -220,6 +220,15 @@ class BakedCommand(partial):
 
 class Command(object):
     _prepend_stack = []
+    
+    call_args = {
+        "fg": False, # run command in foreground
+        "bg": False, # run command in background
+        "with": False, # prepend the command to every command after it
+        "out": None, # redirect STDOUT
+        "err": None, # redirect STDERR
+        "err_to_out": None, # redirect STDERR to STDOUT
+    }
 
     @classmethod
     def _create(cls, program):
@@ -230,8 +239,8 @@ class Command(object):
     def __init__(self, path):            
         self._path = path
         self._partial = False
-        self._partial_args = []
-        self._partial_kwargs = {}
+        self._partial_baked_args = []
+        self._partial_call_args = {}
         
     def __getattribute__(self, name):
         # convenience
@@ -256,8 +265,45 @@ class Command(object):
     def bake(self, *args, **kwargs):
         fn = Command(self._path)
         fn._partial = True
-        fn._partial_args = list(args)
-        fn._partial_kwargs = kwargs
+        
+        # pull out the pbs-specific arguments (arguments that are not to be
+        # passed to the commands
+        call_args = Command.call_args.copy()
+        fn._partial_call_args = call_args
+        for parg, default in call_args.items():
+            key = "_" + parg
+            if key in kwargs:
+                call_args[parg] = kwargs[key] 
+                del kwargs[key]
+                
+                
+        processed_args = []
+                
+        # aggregate positional args
+        for arg in args:
+            if isinstance(arg, (list, tuple)):
+                for sub_arg in arg: processed_args.append(str(sub_arg))
+            else: processed_args.append(str(arg))
+
+
+        # aggregate the keyword arguments
+        for k,v in kwargs.items():
+            # we're passing a short arg as a kwarg, example:
+            # cut(d="\t")
+            if len(k) == 1:
+                if v is True: arg = "-"+k
+                else: arg = "-%s %r" % (k, v)
+
+            # we're doing a long arg
+            else:
+                k = k.replace("_", "-")
+
+                if v is True: arg = "--"+k
+                else: arg = "--%s=%s" % (k, v)
+            processed_args.append(arg)
+                
+        baked_args = shlex.split(" ".join(processed_args))
+        fn._partial_baked_args = baked_args
         return fn
        
     def __str__(self):
@@ -268,30 +314,25 @@ class Command(object):
         return str(self)
         
     def __unicode__(self):
-        return self._path
+        baked_args = " ".join(self._partial_baked_args)
+        if baked_args: baked_args = " " + baked_args
+        return self._path + baked_args
 
     def __enter__(self):
         Command._prepend_stack.append([self._path])
 
     def __exit__(self, typ, value, traceback):
         Command._prepend_stack.pop()
-
+            
     
     def __call__(self, *args, **kwargs):
-        call_args = {
-            "fg": False, # run command in foreground
-            "bg": False, # run command in background
-            "with": False, # prepend the command to every command after it
-            "out": None, # redirect STDOUT
-            "err": None, # redirect STDERR
-            "err_to_out": None, # redirect STDERR to STDOUT
-        }
+        # we do a copy because we don't want to change the original call_args.
+        # that should stay pristeen between Command calls
+        call_args = Command.call_args.copy()
+        call_args.update(self._partial_call_args)
      
         kwargs = kwargs.copy()
         args = list(args)
-
-        kwargs.update(self._partial_kwargs)
-        args = self._partial_args + args
 
         processed_args = []
         cmd = []
@@ -305,7 +346,6 @@ class Command(object):
         # passed to the commands
         for parg, default in call_args.items():
             key = "_" + parg
-            call_args[parg] = default
             if key in kwargs:
                 call_args[parg] = kwargs[key] 
                 del kwargs[key]
@@ -357,6 +397,7 @@ class Command(object):
 
         # makes sure our arguments are broken up correctly
         split_args = shlex.split(" ".join(processed_args))
+        split_args = self._partial_baked_args + split_args
 
         # we used to glob, but now we don't.  the reason being, escaping globs
         # doesn't work.  also, adding a _noglob attribute doesn't allow the
