@@ -34,7 +34,7 @@ from functools import partial
 
 
 
-__version__ = "0.93"
+__version__ = "0.94"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
@@ -199,11 +199,14 @@ class RunningCommand(object):
 
 
 
-class BakedCommand(partial):
+class BakedCommand(object):
     def __init__(self, cmd, attr):
         self._cmd = cmd
         self._attr = attr
-        partial.__init__(self, cmd)
+        self._partial = partial(cmd, attr)
+        
+    def __call__(self, *args, **kwargs):
+        return self._partial(*args, **kwargs)
         
     def __str__(self):
         if IS_PY3: return self.__unicode__()
@@ -249,7 +252,6 @@ class Command(object):
     def __getattribute__(self, name):
         # convenience
         getattr = partial(object.__getattribute__, self)
-        baked_cmd = BakedCommand(self, name)
         
         # the logic here is, if an attribute starts with an
         # underscore, always try to find it, because it's very unlikely
@@ -261,9 +263,9 @@ class Command(object):
         # a baked object.
         if name.startswith("_"): return getattr(name)
         try: attr = getattr(name)
-        except AttributeError: return baked_cmd
+        except AttributeError: return BakedCommand(self, name)
 
-        if self._partial: return baked_cmd
+        if self._partial: return BakedCommand(self, name)
         return attr
 
     
