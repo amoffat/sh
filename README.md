@@ -68,6 +68,20 @@ commands on your system dynamically by resolving your PATH, much like Bash does.
 In this way, all the programs on your system are easily available
 in Python.
 
+You can also call attributes on commands.  This translates to the command
+name followed by the attribute name:
+
+```python
+from pbs import git
+
+# resolves to "git branch -v"
+print git.branch("-v")
+```
+
+It turns out this is extremely useful for commands whose first argument is often
+another sub-command (like git, svn, time, sudo, etc).
+See "Baking" for an advanced usage of this.
+
 ## Keyword Arguments
 
 Keyword arguments also work like you'd expect: they get replaced with the
@@ -214,52 +228,42 @@ to the stdlib functools.partial wrapper.  An example can speak volumes:
 from pbs import ls
 
 ls = ls.bake("-la")
+print ls # "/usr/bin/ls -la"
 
-# resolves to "ls -la"
-print ls() 
+# resolves to "ls / -la"
+print ls("/") 
 ```
 
 The idea is that calling "bake" on a command creates a callable object 
 that automatically passes along all of the arguments passed into "bake".
-This gets **really interesting** when you try to call an attribute on
-the baked command: instead of throwing an AttributeError, it passes the
-attribute name as the first argument to a call.  Here's an example
-of why this is useful:
+This gets **really interesting** when you combine this with the attribute
+access on a command:
 
 ```python
 from pbs import ssh
 
 # calling whoami on the server.  this is tedious to do if you're running
 # any more than a few commands.
-iam1 = ssh("myserver.com", "whoami")
+iam1 = ssh("myserver.com", "-p 1393", "whoami")
 
 # wouldn't it be nice to bake the common parameters into the ssh command?
-myserver = ssh.bake("myserver.com")
+myserver = ssh.bake("myserver.com", p=1393)
 
-# resolves to "ssh myserver.com whoami"
+print myserver # "/usr/bin/ssh myserver.com -p 1393"
+
+# resolves to "/usr/bin/ssh myserver.com -p 1393 whoami"
 iam2 = myserver.whoami()
 
 assert(iam1 == iam2) # True!
 ```
 
 Now that the "myserver" callable represents a baked ssh command, you
-can call anything on the server in an easy fashion:
+can call anything on the server easily:
 
 ```python
-# resolves to "ssh myserver.com tail /var/log/dumb_daemon.log -n 100"
+# resolves to "/usr/bin/ssh myserver.com -p 1393 tail /var/log/dumb_daemon.log -n 100"
 print myserver.tail("/var/log/dumb_daemon.log", n=100)
 ```
-
-Of course, you can bake more than just ssh commands.  You can bake arguments
-into any command.  Suppose you didn't want to use a "with sudo" context every
-time you did some superuser commands.  You could bake a root callable:
-
-```python
-from pbs import sudo
-root = sudo.bake()
-print root.ls("/root")
-```
-
 
 ## Environment Variables
 

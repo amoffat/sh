@@ -155,7 +155,7 @@ class PbsTestSuite(unittest.TestCase):
     def test_nt_internal_commands_pipe(self):
         from pbs import dir, find
         # dir /b /a | find /c /v ""
-        c1 = int(find(dir("/b", "/a"),'/c', '/v','""'))
+        c1 = int(find(dir("/b", "/a"),'/c', '/v','\\"\\"'))
         c2 = len(os.listdir('.'))
         self.assertEqual(c1, c2)
         
@@ -170,12 +170,18 @@ class PbsTestSuite(unittest.TestCase):
             self.assertIn("Display this help message" , err.stdout)
         
     @requires_posix
-    def test_bake(self):
+    def test_subcommand(self):
         from pbs import time
-        timed = time.bake()
 
-        out = timed.ls("/", _err_to_out=True)
+        out = time.ls(_err_to_out=True)
         self.assertTrue("pagefaults" in out)
+
+    @requires_posix
+    def test_bake(self):
+        from pbs import time, ls
+        timed = time.bake("--verbose", _err_to_out=True)
+        out = timed.ls()
+        self.assertTrue("Voluntary context switches" in out)
 
 
     @requires_posix
