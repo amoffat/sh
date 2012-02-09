@@ -300,7 +300,7 @@ class Command(object):
                 k = k.replace("_", "-")
 
                 if v is True: arg = "--"+k
-                else: arg = "--%s=%s" % (k, v)
+                else: arg = "--%s=%r" % (k, v)
             processed_args.append(arg)
 
         processed_args = shlex.split(" ".join(processed_args))
