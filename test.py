@@ -60,6 +60,12 @@ class PbsTestSuite(unittest.TestCase):
         from pbs import sed, echo
         out = unicode(sed(echo("test"), expression="s/test/lol/")).strip()
         self.assertEqual(out, "lol")
+
+    @requires_posix
+    def test_long_option_space_argument(self):
+        from pbs import sed, echo
+        out = unicode(sed(echo("test test"), expression="s/test test/lol lol/")).strip()
+        self.assertEqual(out, "lol lol")
         
     @requires_posix
     def test_command_wrapper(self):

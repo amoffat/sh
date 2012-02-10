@@ -292,20 +292,23 @@ class Command(object):
             # we're passing a short arg as a kwarg, example:
             # cut(d="\t")
             if len(k) == 1:
-                if v is True: arg = "-"+k
-                else: arg = "-%s %r" % (k, v)
+                if v is True: 
+                    processed_args.append("-"+k)
+                else:
+                    processed_args.append('-'+k)
+                    processed_args.append(v)
 
             # we're doing a long arg
             else:
                 k = k.replace("_", "-")
 
-                if v is True: arg = "--"+k
-                else: arg = "--%s=%s" % (k, v)
-            processed_args.append(arg)
+                if v is True: 
+                    processed_args.append("--"+k)
+                else:
+                    processed_args.append("--"+k)
+                    processed_args.append(v)
 
-        processed_args = shlex.split(" ".join(processed_args))
         return processed_args
- 
     
     def bake(self, *args, **kwargs):
         fn = Command(self._path)
