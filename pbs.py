@@ -32,6 +32,11 @@ import shlex
 from types import ModuleType
 from functools import partial
 
+# for incremental stdout/err output
+from threading  import Thread
+try: from Queue import Queue, Empty
+except ImportError: from queue import Queue, Empty  # python 3.x
+
 
 
 __version__ = "0.82"
@@ -122,6 +127,7 @@ class RunningCommand(object):
         self._stderr = None
         self.call_args = call_args
 
+        return
         # we're running in the background, return self and let us lazily
         # evaluate
         if self.call_args["bg"]: return
@@ -188,6 +194,7 @@ class RunningCommand(object):
         return self._stderr
 
     def wait(self):
+        #self.process.wait()
         if self.process.returncode is not None: return
         self._stdout, self._stderr = self.process.communicate()
         rc = self.process.wait()
@@ -315,6 +322,22 @@ class Command(object):
         processed_args = self._compile_args(args, kwargs)
         fn._partial_baked_args = processed_args
         return fn
+
+
+    @staticmethod
+    def _collect_stream(stream, fn, bufsize=1):
+        try:
+            # line buffered
+            if bufsize == 1:
+                for line in iter(stream.readline, ""): fn(line)
+            # unbuffered or buffered by amount
+            else:
+                if bufsize == 0: bufsize = 1
+                for chunk in iter(partial(stream.read, bufsize), ""):
+                    fn(chunk)
+        finally:
+            stream.close()
+
        
     def __str__(self):
         if IS_PY3: return self.__unicode__()
@@ -400,26 +423,47 @@ class Command(object):
             Command._prepend_stack.append(cmd)
             return RunningCommand(command_ran, None, call_args)
         
-        
+
+        def create_collector_thread(stream, fn, bufsize):
+            t = Thread(target=self._collect_stream, args=(stream, fn, bufsize))
+            t.daemon = True # thread dies with the program
+            t.start()
+
+
         # stdout redirection
+        incremental_stdout = False
         stdout = pipe
         out = call_args["out"]
         if out:
-            if isinstance(out, file): stdout = out
+            if callable(out): incremental_stdout = True 
+            elif isinstance(out, file): stdout = out
             else: stdout = file(str(out), "w")
         
+
         # stderr redirection
+        incremental_stderr = False
         stderr = pipe
         err = call_args["err"]
         if err:
-            if isinstance(err, file): stderr = err
+            if callable(err): incremental_stderr = True
+            elif isinstance(err, file): stderr = err
             else: stderr = file(str(err), "w")
+        # if we didn't set an incremental stderr handler, but we did for
+        # stdout, we need to disable piping stderr, otherwise the OS
+        # buffer for stderr will back up (since we're not reading off of
+        # it), and our code will lock up
+        elif incremental_stdout: stderr = None
+        if incremental_stderr: stdout = False
             
         if call_args["err_to_out"]: stderr = subp.STDOUT
             
         # leave shell=False
         process = subp.Popen(cmd, shell=False, env=os.environ,
             stdin=stdin, stdout=stdout, stderr=stderr)
+
+        # did we pass in a callable for _out or _err?  link those up
+        if incremental_stdout: create_collector_thread(process.stdout, out, 1)
+        if incremental_stderr: create_collector_thread(process.stderr, err, 1)
 
         return RunningCommand(command_ran, process, call_args, actual_stdin)
 
