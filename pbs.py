@@ -33,9 +33,7 @@ from types import ModuleType
 from functools import partial
 
 # for incremental stdout/err output
-from threading  import Thread
-try: from Queue import Queue, Empty
-except ImportError: from queue import Queue, Empty  # python 3.x
+from threading  import Thread, Event
 
 
 
@@ -120,27 +118,78 @@ def resolve_program(program):
 
 
 class RunningCommand(object):
-    def __init__(self, command_ran, process, call_args, stdin=None):
+    def __init__(self, command_ran, process, call_args, stdin=None,
+            stdout_callback=None, stderr_callback=None):
+        
         self.command_ran = command_ran
         self.process = process
-        self._stdout = None
-        self._stderr = None
+        self._stdout = []
+        self._stderr = []
+        self._stdout_thread = None
+        self._stderr_thread = None
         self.call_args = call_args
+        self.is_collecting_streams = bool(stdout_callback or stderr_callback)
 
-        return
+
+        if self.is_collecting_streams and not call_args["fg"] and \
+            not call_args["with"] and not self.done:
+            
+            self._start_collecting = Event()
+                        
+            # the idea here is, we're going to set ALL the processes streams
+            # (stdout and stderr) to some kind of stream handler callback if
+            # one or more is already set.  the ones that aren't set will just
+            # get aggregated to a buffer
+            self._stdout_thread = self._collector_thread(
+                process.stdout, stdout_callback, call_args["bufsize"],
+                self._stdout)
+            
+            self._stderr_thread = self._collector_thread(
+                process.stderr, stderr_callback, call_args["bufsize"],
+                self._stderr)
+            
+            self._start_collecting.set()
+            return
+
         # we're running in the background, return self and let us lazily
         # evaluate
-        if self.call_args["bg"]: return
+        if call_args["bg"]: return
 
         # we're running this command as a with context, don't do anything
-        # because nothing was started to run from Command.__call__
-        if self.call_args["with"]: return
+        # because nothing was started to run from Command.__call__ (there's
+        # no self.process)
+        if call_args["with"]: return
 
         # run and block
-        self._stdout, self._stderr = self.process.communicate(stdin)
+        out, err = self.process.communicate(stdin)
+        
+        # translate the possible Nones to empty strings
+        out = out or ""
+        err = err or ""
+        
+        # we do this for consistency for the part that's threaded.  for the
+        # threaded code, we collect the stdout and stderr into a list for
+        # for performance (appending to a list has better performance than +=
+        # a string).  so even though this stdout and stderr wasn't aggregated,
+        # and will probably be relatively small, we make it look like a list
+        # so all the other functions that use self._stdout and self._stderr
+        # can safely assume it's a list
+        self._stdout = [out]
+        self._stderr = [err]
+        
         rc = self.process.wait()
 
         if rc != 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
+        
+    @property
+    def stdout(self):
+        if self.call_args["bg"]: self.wait()
+        return "".join(self._stdout)
+    
+    @property
+    def stderr(self):
+        if self.call_args["bg"]: self.wait()
+        return "".join(self._stderr)
 
     def __enter__(self):
         # we don't actually do anything here because anything that should
@@ -182,25 +231,81 @@ class RunningCommand(object):
 
     def __int__(self):
         return int(str(self).strip())
-         
-    @property
-    def stdout(self):
-        if self.call_args["bg"]: self.wait()
-        return self._stdout
+    
+    def _collect_stream(self, stream, fn, bufsize, agg_to):
+        # this is used to determine whether or not we need to check the return
+        # code of the process and possibly raise an exception.  we have to do
+        # it only with the last thread, because we have to be sure that the
+        # possible exception code will only run once 
+        def is_last_thread():
+            return (not self._stdout_thread.is_alive()) or \
+                (not self._stderr_thread.is_alive())
+            
+        # we can't actually start collecting yet until both threads have
+        # started, the reason being, if one thread exits very quickly (for
+        # example, if the command errored out), the stdout and stderr are
+        # both used in the exception handling, but if both threads haven't
+        # started, we don't exactly have stdout and stderr
+        self._start_collecting.wait()
+            
+        try:
+            # line buffered
+            if bufsize == 1:
+                for line in iter(stream.readline, ""):
+                    agg_to.append(line)
+                    if fn and fn(line): break
+                    
+            # unbuffered or buffered by amount
+            else:
+                # we have this ridiculous line because we're sticking with how
+                # subprocess.Popen interprets bufsize.  1 for line-buffered,
+                # 0 for unbuffered, and any other amount for
+                # that-amount-buffered.  since we're already in this branch,
+                # we're buffered by a fixed amount (not line-buffered), so
+                # go ahead and translate bufsize to that real amount.
+                if bufsize == 0: bufsize = 1
+                
+                for chunk in iter(partial(stream.read, bufsize), ""):
+                    agg_to.append(chunk)
+                    if fn and fn(chunk): break
+                    
+        finally:
+            if is_last_thread():
+                rc = self.process.wait()
+                if rc != 0: raise get_rc_exc(rc)(
+                        self.command_ran,
+                        self.stdout,
+                        self.stderr
+                    )
+                
+    
+    def _collector_thread(self, stream, fn, bufsize, agg_to):
+        args = (stream, fn, bufsize, agg_to)
+        thrd = Thread(target=self._collect_stream, args=args)
+        thrd.daemon = True # thread dies with the program
+        thrd.start()
+        return thrd
     
     @property
-    def stderr(self):
-        if self.call_args["bg"]: self.wait()
-        return self._stderr
+    def done(self):
+        return self.process.returncode is not None
 
     def wait(self):
-        #self.process.wait()
-        if self.process.returncode is not None: return
-        self._stdout, self._stderr = self.process.communicate()
-        rc = self.process.wait()
-
-        if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
-        return self
+        if self.done: return self
+        
+        if self.is_collecting_streams:
+            self._stdout_thread.join()
+            self._stderr_thread.join()
+        
+        else:
+            # otherwise we need to wait until we've terminated
+            self._stdout, self._stderr = self.process.communicate()
+            rc = self.process.wait()
+    
+            if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
+            # return ourselves, so that we can do something like "print p.wait()"
+            # and it will print the stdout of p
+            return self
     
     def __len__(self):
         return len(str(self))
@@ -238,6 +343,7 @@ class Command(object):
         "out": None, # redirect STDOUT
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
+        "bufsize": 1,
     }
 
     @classmethod
@@ -322,22 +428,6 @@ class Command(object):
         processed_args = self._compile_args(args, kwargs)
         fn._partial_baked_args = processed_args
         return fn
-
-
-    @staticmethod
-    def _collect_stream(stream, fn, bufsize=1):
-        try:
-            # line buffered
-            if bufsize == 1:
-                for line in iter(stream.readline, ""): fn(line)
-            # unbuffered or buffered by amount
-            else:
-                if bufsize == 0: bufsize = 1
-                for chunk in iter(partial(stream.read, bufsize), ""):
-                    fn(chunk)
-        finally:
-            stream.close()
-
        
     def __str__(self):
         if IS_PY3: return self.__unicode__()
@@ -422,38 +512,26 @@ class Command(object):
         if call_args["with"]:
             Command._prepend_stack.append(cmd)
             return RunningCommand(command_ran, None, call_args)
-        
-
-        def create_collector_thread(stream, fn, bufsize):
-            t = Thread(target=self._collect_stream, args=(stream, fn, bufsize))
-            t.daemon = True # thread dies with the program
-            t.start()
 
 
         # stdout redirection
-        incremental_stdout = False
+        stdout_callback = None
         stdout = pipe
         out = call_args["out"]
         if out:
-            if callable(out): incremental_stdout = True 
+            if callable(out): stdout_callback = out
             elif isinstance(out, file): stdout = out
             else: stdout = file(str(out), "w")
         
 
         # stderr redirection
-        incremental_stderr = False
+        stderr_callback = None
         stderr = pipe
         err = call_args["err"]
         if err:
-            if callable(err): incremental_stderr = True
+            if callable(err): stderr_callback = err
             elif isinstance(err, file): stderr = err
             else: stderr = file(str(err), "w")
-        # if we didn't set an incremental stderr handler, but we did for
-        # stdout, we need to disable piping stderr, otherwise the OS
-        # buffer for stderr will back up (since we're not reading off of
-        # it), and our code will lock up
-        elif incremental_stdout: stderr = None
-        if incremental_stderr: stdout = False
             
         if call_args["err_to_out"]: stderr = subp.STDOUT
             
@@ -461,11 +539,9 @@ class Command(object):
         process = subp.Popen(cmd, shell=False, env=os.environ,
             stdin=stdin, stdout=stdout, stderr=stderr)
 
-        # did we pass in a callable for _out or _err?  link those up
-        if incremental_stdout: create_collector_thread(process.stdout, out, 1)
-        if incremental_stderr: create_collector_thread(process.stderr, err, 1)
 
-        return RunningCommand(command_ran, process, call_args, actual_stdin)
+        return RunningCommand(command_ran, process, call_args, actual_stdin,
+            stdout_callback, stderr_callback)
 
 
 
