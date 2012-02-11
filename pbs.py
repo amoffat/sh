@@ -35,6 +35,8 @@ import inspect
 
 # for incremental stdout/err output
 from threading  import Thread, Event
+try: from Queue import Queue, Empty
+except ImportError: from queue import Queue, Empty  # python 3.x
 
 
 
@@ -133,7 +135,7 @@ class RunningCommand(object):
         # these are for aggregating the stdout and stderr
         self._stdout = []
         self._stderr = []
-        self._stdin = "derp"
+        self._stdin = Queue()
 
         # these may or may not exist depending whether or not we've passed
         # a callback in to _out or _err
@@ -170,10 +172,15 @@ class RunningCommand(object):
                 self._stderr)
             
             
-            process.stdin.write("wat\n")
-            process.stdin.flush()
-                
-            #Thread(target=derp
+            def stdin_flusher(our_stdin, process_stdin):
+                while True:
+                    chunk = our_stdin.get()
+                    process_stdin.write(chunk)
+                    process_stdin.flush()
+                                    
+            thrd = Thread(target=stdin_flusher, args=(self._stdin, self.process.stdin))
+            thrd.daemon = True
+            thrd.start()
             
             # kick off the threads
             self._start_collecting.set()
@@ -288,7 +295,7 @@ class RunningCommand(object):
             if bufsize == 1:
                 for line in iter(stream.readline, ""):
                     agg_to.append(line)
-                    if call_fn and fn(line, self): call_fn = False
+                    if call_fn and fn(line, self, self._stdin): call_fn = False
                     
             # unbuffered or buffered by amount
             else:
@@ -302,7 +309,7 @@ class RunningCommand(object):
                 
                 for chunk in iter(partial(stream.read, bufsize), ""):
                     agg_to.append(chunk)
-                    if call_fn and fn(chunk, self): call_fn = False
+                    if call_fn and fn(chunk, self, self._stdin): call_fn = False
                     
         finally:
             if is_last_thread():
@@ -556,10 +563,10 @@ class Command(object):
         # they're callable) because if the signature is incorrect, an exception
         # will be raised from within a thread, and this won't stop execution
         def check_inc_callback(key, fn):
-            if len(inspect.getargspec(fn).args) != 2:
-                raise ValueError("%s callback takes 2 arguments: chunk \
-(representing the incremental output) and process (representing the running \
-command object)." % key)
+            if len(inspect.getargspec(fn).args) != 3:
+                raise ValueError("%s callback takes 3 arguments: chunk \
+(the incremental output), process (the running command object), and \
+stdin (a Queue to send your stdin to)." % key)
             return fn
 
 
