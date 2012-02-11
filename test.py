@@ -35,6 +35,7 @@ class PbsTestSuite(unittest.TestCase):
         with self.assertRaises(TypeError):
             ls(_fg=True, _bg=True)
             
+            
     def test_exception(self):
         from pbs import ls, ErrorReturnCode_2
         
@@ -172,6 +173,14 @@ class PbsTestSuite(unittest.TestCase):
         out = timed.ls()
         self.assertTrue("Voluntary context switches" in out)
 
+
+    def test_bake_args_come_first(self):
+        from pbs import ls
+        ls = ls.bake(full_time=True)
+        
+        ran = ls("-la").command_ran
+        ft = ran.index("full-time")
+        self.assertTrue("-la" in ran[ft:]) 
 
     
     def test_output_equivalence(self):
