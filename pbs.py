@@ -35,8 +35,10 @@ import inspect
 
 # for incremental stdout/err output
 from threading  import Thread, Event
+try: from thread import interrupt_main
+except ImportError: from _thread import interrupt_main # 3
 try: from Queue import Queue, Empty
-except ImportError: from queue import Queue, Empty  # python 3.x
+except ImportError: from queue import Queue, Empty  # 3
 
 
 
@@ -123,8 +125,7 @@ def resolve_program(program):
 
 
 class RunningCommand(object):
-    def __init__(self, command_ran, process, call_args, stdin=None,
-            stdout_callback=None, stderr_callback=None):
+    def __init__(self, command_ran, process, call_args, stdin=None):
 
         # this is purely for debugging
         self.command_ran = command_ran
@@ -147,13 +148,19 @@ class RunningCommand(object):
 
         # this is a convenience attribute for determining if we have any
         # collector threads running
-        self.is_collecting_streams = bool(stdout_callback or stderr_callback)
+        self.is_collecting_streams = bool(
+            callable(call_args["out"]) or
+            callable(call_args["err"]) or
+            call_args["for"]
+        )
 
 
         # do we need to start any collector threads?  read the conditions
         # in this 'if' very carefully
         if self.is_collecting_streams and not call_args["fg"] and \
             not call_args["with"] and not self.done:
+            
+            self._for_queue = Queue()
             
             # this is required for syncing the start of the collection
             # threads.  read self._collect_streams comments to see why
@@ -165,12 +172,10 @@ class RunningCommand(object):
             # one or more is already set.  the ones that aren't set will just
             # get aggregated to a buffer
             self._stdout_thread = self._collector_thread(
-                process.stdout, stdout_callback, call_args["bufsize"],
-                self._stdout)
+                process.stdout, call_args["out"], self._stdout, self._for_queue)
             
             self._stderr_thread = self._collector_thread(
-                process.stderr, stderr_callback, call_args["bufsize"],
-                self._stderr)
+                process.stderr, call_args["err"], self._stderr)
             
             
             def stdin_flusher(our_stdin, process_stdin):
@@ -242,6 +247,22 @@ class RunningCommand(object):
         # essentially all that has to happen is the comand be pushed on
         # the prepend stack.
         pass
+    
+    def __iter__(self):
+        return self
+    
+    def next(self):
+        # we do this because if get blocks, we can't catch a KeyboardInterrupt
+        # so the slight timeout allows for that.
+        while True:
+            try: chunk = self._for_queue.get(False, .001)
+            except Empty: pass
+            else:
+                if chunk is None: raise StopIteration()
+                return chunk
+            
+     # python 3
+    __next__ = next
 
     def __exit__(self, typ, value, traceback):
         if self.call_args["with"] and Command._prepend_stack:
@@ -283,7 +304,7 @@ class RunningCommand(object):
     def __int__(self):
         return int(str(self).strip())
     
-    def _collect_stream(self, stream, fn, bufsize, agg_to):
+    def _collect_stream(self, stream, fn, bufsize, agg_to, for_queue):
         # this is used to determine whether or not we need to check the return
         # code of the process and possibly raise an exception.  we have to do
         # it only with the last thread, because we have to be sure that the
@@ -326,6 +347,7 @@ class RunningCommand(object):
                 for line in iter(stream.readline, sentinel):
                     if IS_PY3: line = line.decode("utf8")
                     agg_to.append(line)
+                    if for_queue: for_queue.put(line)
                     if call_fn and fn(line, *args): call_fn = False
                     
             # unbuffered or buffered by amount
@@ -343,8 +365,16 @@ class RunningCommand(object):
                     agg_to.append(chunk)
                     if call_fn and fn(chunk, *args): call_fn = False
                     
+        except KeyboardInterrupt:
+            interrupt_main()
+                    
         finally:
+            # so any interators can stop
+            if for_queue: for_queue.put(None)
+            
             stream.close()
+            
+            # test for exception if we're the last thread
             if is_last_thread():
                 rc = self.process.wait()
                 if rc > 0: raise get_rc_exc(rc)(
@@ -354,8 +384,8 @@ class RunningCommand(object):
                     )
                 
     
-    def _collector_thread(self, stream, fn, bufsize, agg_to):
-        args = (stream, fn, bufsize, agg_to)
+    def _collector_thread(self, stream, fn, agg_to, for_queue=None):
+        args = (stream, fn, self.call_args["bufsize"], agg_to, for_queue)
         thrd = Thread(target=self._collect_stream, args=args)
         thrd.daemon = True # thread dies with the program
         thrd.start()
@@ -419,7 +449,7 @@ class Command(object):
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
         "bufsize": 1,
-        "generator": None,
+        "for": None,
     }
     
     # these are arguments that cannot be called together, because they wouldn't
@@ -615,22 +645,18 @@ class Command(object):
 
 
         # stdout redirection
-        stdout_callback = None
         stdout = pipe
         out = call_args["out"]
-        if out:
-            if callable(out): stdout_callback = out
-            elif hasattr(out, "read"): stdout = out
+        if out and not callable(out):
+            if hasattr(out, "read"): stdout = out
             else: stdout = file(str(out), "w")
         
 
         # stderr redirection
-        stderr_callback = None
         stderr = pipe
         err = call_args["err"]
-        if err:
-            if callable(err): stderr_callback = err
-            elif hasattr(err, "read"): stderr = err
+        if err and not callable(err):
+            if hasattr(err, "read"): stderr = err
             else: stderr = file(str(err), "w")
             
         if call_args["err_to_out"]: stderr = subp.STDOUT
@@ -640,8 +666,7 @@ class Command(object):
             stdin=stdin, stdout=stdout, stderr=stderr)
 
 
-        return RunningCommand(command_ran, process, call_args, actual_stdin,
-            stdout_callback, stderr_callback)
+        return RunningCommand(command_ran, process, call_args, actual_stdin)
 
 
 

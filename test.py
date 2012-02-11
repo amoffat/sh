@@ -474,6 +474,25 @@ for i in xrange(5):
         
         self.assertTrue("4" not in p)
         self.assertTrue("4" not in stdout)
+        
+        
+    def test_for_generator(self):
+        from pbs import tail, python
+        
+        py = create_tmp_test("""
+import sys
+import os
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+for i in xrange(42): 
+    print i
+""")
+
+        out = []
+        for line in python(py.name, _for=True): out.append(line)
+        self.assertTrue(len(out) == 42)
 
 
 
