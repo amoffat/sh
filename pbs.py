@@ -247,13 +247,15 @@ class RunningCommand(object):
         # both used in the exception handling, but if both threads haven't
         # started, we don't exactly have stdout and stderr
         self._start_collecting.wait()
+
+        call_fn = bool(fn)
             
         try:
             # line buffered
             if bufsize == 1:
                 for line in iter(stream.readline, ""):
                     agg_to.append(line)
-                    if fn and fn(line): break
+                    if call_fn and fn(line, self.process): call_fn = False
                     
             # unbuffered or buffered by amount
             else:
@@ -267,7 +269,7 @@ class RunningCommand(object):
                 
                 for chunk in iter(partial(stream.read, bufsize), ""):
                     agg_to.append(chunk)
-                    if fn and fn(chunk): break
+                    if call_fn and fn(chunk, self.process): call_fn = False
                     
         finally:
             if is_last_thread():
