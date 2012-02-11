@@ -1,14 +1,25 @@
 import os
 import unittest
 import tempfile
+import sys
 
 
-requires_posix = unittest.skipUnless(os.name == "posix", "Requires POSIX")
+IS_PY3 = sys.version_info[0] == 3
+
+
+skipUnless = getattr(unittest, "skipUnless", None)
+if not skipUnless:
+    def skipUnless(*args, **kwargs):
+        def wrapper(thing): return thing
+        return wrapper
+        
+requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
 
 
 
 def create_tmp_test(code):        
     py = tempfile.NamedTemporaryFile()
+    if IS_PY3: code = bytes(code, "UTF-8")
     py.write(code)
     py.flush()
     return py
@@ -42,22 +53,19 @@ class PbsTestSuite(unittest.TestCase):
 
     def test_incompatible_special_args(self):
         from pbs import ls
-        with self.assertRaises(TypeError):
-            ls(_fg=True, _bg=True)
+        self.assertRaises(TypeError, ls, _fg=True, _bg=True)
             
             
     def test_exception(self):
         from pbs import ls, ErrorReturnCode_2
-        
-        with self.assertRaises(ErrorReturnCode_2):
-            ls("/aofwje/garogjao4a/eoan3on")
+        self.assertRaises(ErrorReturnCode_2, ls, "/aofwje/garogjao4a/eoan3on")
             
             
     def test_command_not_found(self):
         from pbs import CommandNotFound
         
-        with self.assertRaises(CommandNotFound):
-            from pbs import aowjgoawjoeijaowjellll
+        def do_import(): from pbs import aowjgoawjoeijaowjellll
+        self.assertRaises(CommandNotFound, do_import)
             
             
     def test_command_wrapper_equivalence(self):

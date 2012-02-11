@@ -7,8 +7,16 @@ except ImportError: from setuptools import setup
 
 
 if sys.argv[-1] == "test":
-    os.system("python test.py")
-    sys.exit()
+    versions = ("2.6", "2.7", "3")
+    
+    for version in versions:    
+        try: py = pbs.Command("python%s" % version)
+        except pbs.CommandNotFound: pass
+        else:
+            print "Testing Python%s" % version
+            py("test.py", _fg=True)
+            print
+    exit(0)
 
 
 setup(
