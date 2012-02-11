@@ -1,9 +1,19 @@
 import os
 import unittest
-
+import tempfile
 
 
 requires_posix = unittest.skipUnless(os.name == "posix", "Requires POSIX")
+
+
+
+def create_tmp_test(code):        
+    py = tempfile.NamedTemporaryFile()
+    py.write(code)
+    py.flush()
+    return py
+
+
 
 
 
@@ -207,12 +217,9 @@ class PbsTestSuite(unittest.TestCase):
 
 
     def test_stdout_callback(self):
-        import tempfile
         from pbs import python
         
-        py = tempfile.NamedTemporaryFile()
-        
-        py.write("""
+        py = create_tmp_test("""
 import sys
 import os
 
@@ -221,7 +228,6 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in xrange(5): print i
 """)
-        py.flush()
         
         stdout = []
         def agg(line): stdout.append(line)
@@ -234,13 +240,10 @@ for i in xrange(5): print i
         
         
     def test_stdout_callback_no_wait(self):
-        import tempfile
         from pbs import python
         import time
         
-        py = tempfile.NamedTemporaryFile()
-        
-        py.write("""
+        py = create_tmp_test("""
 import sys
 import os
 import time
@@ -252,7 +255,6 @@ for i in xrange(5):
     print i
     time.sleep(.5)
 """)
-        py.flush()
         
         stdout = []
         def agg(line): stdout.append(line)
@@ -268,12 +270,9 @@ for i in xrange(5):
         
         
     def test_stdout_callback_line_buffered(self):
-        import tempfile
         from pbs import python
         
-        py = tempfile.NamedTemporaryFile()
-        
-        py.write("""
+        py = create_tmp_test("""
 import sys
 import os
 
@@ -282,7 +281,6 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in xrange(5): print "herpderp"
 """)
-        py.flush()
         
         stdout = []
         def agg(line): stdout.append(line)
@@ -295,12 +293,9 @@ for i in xrange(5): print "herpderp"
         
         
     def test_stdout_callback_line_unbuffered(self):
-        import tempfile
         from pbs import python
         
-        py = tempfile.NamedTemporaryFile()
-        
-        py.write("""
+        py = create_tmp_test("""
 import sys
 import os
 
@@ -309,7 +304,6 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in xrange(5): print "herpderp"
 """)
-        py.flush()
         
         stdout = []
         def agg(char): stdout.append(char)
@@ -322,12 +316,9 @@ for i in xrange(5): print "herpderp"
         
         
     def test_stdout_callback_buffered(self):
-        import tempfile
         from pbs import python
         
-        py = tempfile.NamedTemporaryFile()
-        
-        py.write("""
+        py = create_tmp_test("""
 import sys
 import os
 
@@ -336,7 +327,6 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in xrange(5): sys.stdout.write("herpderp")
 """)
-        py.flush()
         
         stdout = []
         def agg(chunk): stdout.append(chunk)
@@ -349,12 +339,9 @@ for i in xrange(5): sys.stdout.write("herpderp")
         
         
     def test_stdout_callback_with_input(self):
-        import tempfile
         from pbs import python
         
-        py = tempfile.NamedTemporaryFile()
-        
-        py.write("""
+        py = create_tmp_test("""
 import sys
 import os
 
@@ -365,7 +352,6 @@ for i in xrange(5): print i
 derp = raw_input("herp? ")
 print derp
 """)
-        py.flush()
         
         def agg(line, stdin):
             if line.strip() == "4": stdin.put("derp\n")
@@ -378,12 +364,9 @@ print derp
         
         
     def test_stdout_callback_exit(self):
-        import tempfile
         from pbs import python
         
-        py = tempfile.NamedTemporaryFile()
-        
-        py.write("""
+        py = create_tmp_test("""
 import sys
 import os
 
@@ -392,7 +375,6 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in xrange(5): print i
 """)
-        py.flush()
         
         stdout = []
         def agg(line):
@@ -409,12 +391,9 @@ for i in xrange(5): print i
         
         
     def test_stdout_callback_terminate(self):
-        import tempfile
         from pbs import python
         
-        py = tempfile.NamedTemporaryFile()
-        
-        py.write("""
+        py = create_tmp_test("""
 import sys
 import os
 import time
@@ -426,7 +405,6 @@ for i in xrange(5):
     print i
     time.sleep(.5)
 """)
-        py.flush()
         
         stdout = []
         def agg(line, stdin, process):
@@ -445,12 +423,9 @@ for i in xrange(5):
         
         
     def test_stdout_callback_kill(self):
-        import tempfile
         from pbs import python
         
-        py = tempfile.NamedTemporaryFile()
-        
-        py.write("""
+        py = create_tmp_test("""
 import sys
 import os
 import time
@@ -462,7 +437,6 @@ for i in xrange(5):
     print i
     time.sleep(.5)
 """)
-        py.flush()
         
         stdout = []
         def agg(line, stdin, process):
