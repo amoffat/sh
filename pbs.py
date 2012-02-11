@@ -175,8 +175,8 @@ class RunningCommand(object):
             
             def stdin_flusher(our_stdin, process_stdin):
                 while True:
-                    chunk = our_stdin.get()
-                    process_stdin.write(chunk)
+                    chunk = str(our_stdin.get())
+                    process_stdin.write(chunk.encode())
                     process_stdin.flush()
                                     
             thrd = Thread(target=stdin_flusher, args=(self._stdin, self.process.stdin))
@@ -197,11 +197,19 @@ class RunningCommand(object):
         if call_args["with"]: return
 
         # run and block
+        if IS_PY3 and stdin is not None: stdin = stdin.encode()
         out, err = self.process.communicate(stdin)
         
-        # translate the possible Nones to empty strings
-        out = out or ""
-        err = err or ""
+        if IS_PY3:
+            if out: out = out.decode("utf8")
+            else: out = ""
+            if err: err = err.decode("utf8")
+            else: err = ""
+        
+        else:    
+            # translate the possible Nones to empty strings
+            out = out or ""
+            err = err or ""
         
         # we do this for consistency for the part that's threaded.  for the
         # threaded code, we collect the stdout and stderr into a list for
@@ -245,7 +253,9 @@ class RunningCommand(object):
         
     def __unicode__(self):
         if self.process: 
-            if self.stdout: return self.stdout.decode("utf-8") # byte string
+            if self.stdout:
+                if IS_PY3: return self.stdout
+                return self.stdout.decode("utf-8") # byte string
             else: return ""
 
     def __eq__(self, other):
@@ -302,11 +312,19 @@ class RunningCommand(object):
             elif num_args == 3: args = (self._stdin, self)
          
         call_fn = bool(fn)
+        
+        # we use this sentinel primarily for python3+, because iter() takes
+        # a buffer object (for the second argument) to test against.  if we
+        # just say iter(stream, ""), it will read forever in python3, because
+        # although we're receiving data off of the stream, it's in bytes,
+        # not as a string object
+        sentinel = "".encode()
             
         try:
             # line buffered
             if bufsize == 1:
-                for line in iter(stream.readline, ""):
+                for line in iter(stream.readline, sentinel):
+                    if IS_PY3: line = line.decode("utf8")
                     agg_to.append(line)
                     if call_fn and fn(line, *args): call_fn = False
                     
@@ -320,11 +338,13 @@ class RunningCommand(object):
                 # go ahead and translate bufsize to that real amount.
                 if bufsize == 0: bufsize = 1
                 
-                for chunk in iter(partial(stream.read, bufsize), ""):
+                for chunk in iter(partial(stream.read, bufsize), sentinel):
+                    if IS_PY3: chunk = chunk.decode("utf8")
                     agg_to.append(chunk)
                     if call_fn and fn(chunk, *args): call_fn = False
                     
         finally:
+            stream.close()
             if is_last_thread():
                 rc = self.process.wait()
                 if rc > 0: raise get_rc_exc(rc)(
@@ -600,7 +620,7 @@ class Command(object):
         out = call_args["out"]
         if out:
             if callable(out): stdout_callback = out
-            elif isinstance(out, file): stdout = out
+            elif hasattr(out, "read"): stdout = out
             else: stdout = file(str(out), "w")
         
 
@@ -610,7 +630,7 @@ class Command(object):
         err = call_args["err"]
         if err:
             if callable(err): stderr_callback = err
-            elif isinstance(err, file): stderr = err
+            elif hasattr(err, "read"): stderr = err
             else: stderr = file(str(err), "w")
             
         if call_args["err_to_out"]: stderr = subp.STDOUT

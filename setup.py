@@ -6,7 +6,7 @@ try: from distutils.core import setup
 except ImportError: from setuptools import setup
 
 
-if sys.argv[-1] == "test":
+if sys.argv[1] == "test":
     versions = ("2.6", "2.7", "3")
     
     for version in versions:    
@@ -14,7 +14,7 @@ if sys.argv[-1] == "test":
         except pbs.CommandNotFound: pass
         else:
             print "Testing Python%s" % version
-            py("test.py", _fg=True)
+            py("test.py", *sys.argv[2:], _fg=True)
             print
     exit(0)
 

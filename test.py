@@ -29,7 +29,7 @@ def create_tmp_test(code):
 
 
 @requires_posix
-class PbsTestSuite(unittest.TestCase):
+class TestSuite(unittest.TestCase):
     
     def test_print_command(self):
         from pbs import ls, which
@@ -47,7 +47,7 @@ class PbsTestSuite(unittest.TestCase):
     def test_no_arg(self):
         import pwd
         from pbs import whoami
-        u1 = unicode(whoami()).strip()
+        u1 = whoami().strip()
         u2 = pwd.getpwuid(os.geteuid())[0]
         self.assertEqual(u1, u2)
 
@@ -111,14 +111,14 @@ print len(options.long_option.split())
     
     def test_short_option(self):
         from pbs import sh
-        s1 = unicode(sh(c="echo test")).strip()
+        s1 = sh(c="echo test").strip()
         s2 = "test"
         self.assertEqual(s1, s2)
         
     
     def test_long_option(self):
         from pbs import sed, echo
-        out = unicode(sed(echo("test"), expression="s/test/lol/")).strip()
+        out = sed(echo("test"), expression="s/test/lol/").strip()
         self.assertEqual(out, "lol")
         
     
@@ -185,6 +185,7 @@ print len(options.long_option.split())
 
         file_obj.seek(0)
         actual_out = file_obj.read()
+        file_obj.close()
 
         self.assertTrue(len(actual_out) != 0)
 
@@ -201,6 +202,7 @@ print len(options.long_option.split())
         
         file_obj.seek(0)
         actual_out = file_obj.read()
+        file_obj.close()
 
         self.assertTrue(len(actual_out) != 0)
 
@@ -249,9 +251,9 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in xrange(5): print i
 """)
-        
         stdout = []
-        def agg(line): stdout.append(line)
+        def agg(line):
+            stdout.append(line)
         
         p = python(py.name, _out=agg)
         p.wait()
