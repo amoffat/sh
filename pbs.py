@@ -451,7 +451,6 @@ class Command(object):
             
     
     def __call__(self, *args, **kwargs):
-     
         kwargs = kwargs.copy()
         args = list(args)
 
@@ -463,8 +462,11 @@ class Command(object):
         cmd.append(self._path)
         
 
-        call_args, kwargs = self._extract_call_args(kwargs)
-        call_args.update(self._partial_call_args)
+        # here we extract the special kwargs and override any
+        # special kwargs from the possibly baked command
+        call_args = self._partial_call_args.copy()
+        tmp_call_args, kwargs = self._extract_call_args(kwargs)
+        call_args.update(tmp_call_args)
                 
 
         # set pipe to None if we're outputting straight to CLI
