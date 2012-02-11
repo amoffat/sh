@@ -68,7 +68,7 @@ class ErrorReturnCode(Exception):
             if err_delta: 
                 tstderr += "... (%d more, please see e.stderr)" % err_delta
 
-        msg = "\n\nRan: %r\n\nSTDOUT:\n\n  %s\n\nSTDERR:\n\n  %s" %\
+        msg = "\n\n  RAN: %r\n\n  STDOUT:\n%s\n\n  STDERR:\n%s" %\
             (full_cmd, tstdout, tstderr)
         super(ErrorReturnCode, self).__init__(msg)
 
