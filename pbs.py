@@ -280,7 +280,7 @@ class RunningCommand(object):
             if bufsize == 1:
                 for line in iter(stream.readline, ""):
                     agg_to.append(line)
-                    if call_fn and fn(line, self.process): call_fn = False
+                    if call_fn and fn(line, self): call_fn = False
                     
             # unbuffered or buffered by amount
             else:
@@ -294,7 +294,7 @@ class RunningCommand(object):
                 
                 for chunk in iter(partial(stream.read, bufsize), ""):
                     agg_to.append(chunk)
-                    if call_fn and fn(chunk, self.process): call_fn = False
+                    if call_fn and fn(chunk, self): call_fn = False
                     
         finally:
             if is_last_thread():
