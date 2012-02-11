@@ -47,12 +47,13 @@ if IS_PY3: raw_input = input
 
 
 class ErrorReturnCode(Exception):
-    truncate_cap = 600
+    truncate_cap = 750
 
     def __init__(self, full_cmd, stdout, stderr):
         self.full_cmd = full_cmd
         self.stdout = stdout
         self.stderr = stderr
+
 
         if self.stdout is None: tstdout = "<redirected>"
         else:
