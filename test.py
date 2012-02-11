@@ -30,6 +30,10 @@ class PbsTestSuite(unittest.TestCase):
         u2 = pwd.getpwuid(os.geteuid())[0]
         self.assertEqual(u1, u2)
 
+    def test_incompatible_special_args(self):
+        from pbs import ls
+        with self.assertRaises(TypeError):
+            ls(_fg=True, _bg=True)
     
     def test_short_bool_option(self):
         from pbs import id

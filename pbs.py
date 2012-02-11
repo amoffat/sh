@@ -399,6 +399,11 @@ class Command(object):
         "err_to_out": None, # redirect STDERR to STDOUT
         "bufsize": 1,
     }
+    
+    incompatible_call_args = (
+        ("fg", "bg", "Command can't be run in the foreground and background"),
+        ("err", "err_to_out", "Stderr is already being redirected")
+    )
 
     @classmethod
     def _create(cls, program):
@@ -435,8 +440,8 @@ class Command(object):
     @staticmethod
     def _extract_call_args(kwargs, to_override={}):
         kwargs = kwargs.copy()
-        call_args = Command.call_args.copy()
-        for parg, default in call_args.items():
+        call_args = {}
+        for parg, default in Command.call_args.items():
             key = "_" + parg
             
             if key in kwargs:
@@ -444,7 +449,16 @@ class Command(object):
                 del kwargs[key]
             elif parg in to_override:
                 call_args[parg] = to_override[parg]
-                
+        
+        # test for incompatible call args
+        s1 = set(call_args.keys())
+        for args in Command.incompatible_call_args:
+            args = list(args)
+            error = args.pop()
+
+            if s1.issuperset(args):
+                raise TypeError("Invalid special arguments %r: %s" % (args, error))
+            
         return call_args, kwargs
 
 
@@ -516,12 +530,12 @@ class Command(object):
         for prepend in self._prepend_stack: cmd.extend(prepend)
 
         cmd.append(self._path)
-        
 
         # here we extract the special kwargs and override any
         # special kwargs from the possibly baked command
-        call_args, kwargs = self._extract_call_args(kwargs, self._partial_call_args)
-                
+        tmp_call_args, kwargs = self._extract_call_args(kwargs, self._partial_call_args)
+        call_args = Command.call_args.copy()
+        call_args.update(tmp_call_args)
 
         # set pipe to None if we're outputting straight to CLI
         pipe = None if call_args["fg"] else subp.PIPE
