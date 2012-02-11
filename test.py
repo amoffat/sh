@@ -41,6 +41,20 @@ class PbsTestSuite(unittest.TestCase):
         
         with self.assertRaises(ErrorReturnCode_2):
             ls("/aofwje/garogjao4a/eoan3on")
+            
+            
+    def test_command_not_found(self):
+        from pbs import CommandNotFound
+        
+        with self.assertRaises(CommandNotFound):
+            from pbs import aowjgoawjoeijaowjellll
+            
+            
+    def test_command_wrapper_equivalence(self):
+        from pbs import Command, ls, which
+        
+        self.assertEqual(Command(which("ls")), ls) 
+        
         
     
     def test_short_bool_option(self):

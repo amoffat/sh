@@ -391,7 +391,7 @@ class BakedCommand(object):
 class Command(object):
     _prepend_stack = []
     
-    call_args = {
+    _call_args = {
         "fg": False, # run command in foreground
         "bg": False, # run command in background
         "with": False, # prepend the command to every command after it
@@ -399,9 +399,12 @@ class Command(object):
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
         "bufsize": 1,
+        "generator": None,
     }
     
-    incompatible_call_args = (
+    # these are arguments that cannot be called together, because they wouldn't
+    # make anys ense
+    _incompatible_call_args = (
         ("fg", "bg", "Command can't be run in the foreground and background"),
         ("err", "err_to_out", "Stderr is already being redirected")
     )
@@ -442,7 +445,7 @@ class Command(object):
     def _extract_call_args(kwargs, to_override={}):
         kwargs = kwargs.copy()
         call_args = {}
-        for parg, default in Command.call_args.items():
+        for parg, default in Command._call_args.items():
             key = "_" + parg
             
             if key in kwargs:
@@ -453,7 +456,7 @@ class Command(object):
         
         # test for incompatible call args
         s1 = set(call_args.keys())
-        for args in Command.incompatible_call_args:
+        for args in Command._incompatible_call_args:
             args = list(args)
             error = args.pop()
 
@@ -505,6 +508,10 @@ class Command(object):
     def __str__(self):
         if IS_PY3: return self.__unicode__()
         else: return unicode(self).encode("utf-8")
+        
+    def __eq__(self, other):
+        try: return str(self) == str(other)
+        except: return False
 
     def __repr__(self):
         return str(self)
@@ -535,7 +542,7 @@ class Command(object):
         # here we extract the special kwargs and override any
         # special kwargs from the possibly baked command
         tmp_call_args, kwargs = self._extract_call_args(kwargs, self._partial_call_args)
-        call_args = Command.call_args.copy()
+        call_args = Command._call_args.copy()
         call_args.update(tmp_call_args)
 
         # set pipe to None if we're outputting straight to CLI
