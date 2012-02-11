@@ -129,6 +129,40 @@ ls("nonexistent", _err="error.txt")
 PBS can also redirect the error output stream to the standard output stream,
 using the special _err_to_out=True keyword argument.
 
+## Processes with Incremental Output
+
+PBS can run commands that return output incrementally.  This is done much like
+redirection: by passing an argument to either the _out or _err (or both) special
+keyword arguments, **except this time, you pass a callable.**  This callable
+will be called for each line (or chunk) of data that your command outputs:
+
+```python
+from pbs import tail
+
+def process_output(line, p):
+	print line
+
+p = tail("-f", "/var/log/some_log_file.log", _out=process_output)
+p.wait()
+```
+
+In the above example, "process_output" will be called for each new line of
+the file "some_log_file.log."  Because we also call p.wait(), this process
+will block indefinitely.  However, we can choose not to call p.wait(), and
+instead perform other tasks.
+
+A few notes about the callable:
+
+* If it returns a True value, the process will never call it again (but output
+will still be aggregated internally to .stdout and .stderr).
+* The second argument it takes is the process object that is running.  This
+is useful if you want to call .kill() or .terminate() on the process object
+based on some input received.
+
+By default, incremental output is line-buffered.  You can change this with the
+_bufsize special keyword argument.  0 means unbuffered, 1 means line-buffered,
+and anything else means buffered by that amount.
+
 
 ## Sudo and With Contexts
 
