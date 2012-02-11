@@ -214,7 +214,7 @@ class RunningCommand(object):
         
         rc = self.process.wait()
 
-        if rc > 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
+        if rc > 0: raise get_rc_exc(rc)(self.command_ran, self.stdout, self.stderr)
 
 
     @property
