@@ -2,24 +2,27 @@ import os
 import unittest
 
 
+
 requires_posix = unittest.skipUnless(os.name == "posix", "Requires POSIX")
 
 
+
+@requires_posix
 class PbsTestSuite(unittest.TestCase):
-    @requires_posix
+    
     def test_print_command(self):
         from pbs import ls, which
         actual_location = which("ls")
         out = str(ls)
         self.assertEqual(out, actual_location)
 
-    @requires_posix
+    
     def test_which(self):
         from pbs import which, ls
         self.assertEqual(which("fjoawjefojawe"), None)
         self.assertEqual(which("ls"), str(ls))
         
-    @requires_posix
+    
     def test_no_arg(self):
         import pwd
         from pbs import whoami
@@ -27,41 +30,41 @@ class PbsTestSuite(unittest.TestCase):
         u2 = pwd.getpwuid(os.geteuid())[0]
         self.assertEqual(u1, u2)
 
-    @requires_posix
+    
     def test_short_bool_option(self):
         from pbs import id
         i1 = int(id(u=True))
         i2 = os.geteuid()
         self.assertEqual(i1, i2)
 
-    @requires_posix
+    
     def test_long_bool_option(self):
         from pbs import id
         i1 = int(id(user=True, real=True))
         i2 = os.getuid()
         self.assertEqual(i1, i2)
 
-    @requires_posix
+    
     def test_composition(self):
         from pbs import ls, wc
         c1 = int(wc(ls(A=True), l=True))
         c2 = len(os.listdir("."))
         self.assertEqual(c1, c2)
 
-    @requires_posix
+    
     def test_short_option(self):
         from pbs import sh
         s1 = unicode(sh(c="echo test")).strip()
         s2 = "test"
         self.assertEqual(s1, s2)
         
-    @requires_posix
+    
     def test_long_option(self):
         from pbs import sed, echo
         out = unicode(sed(echo("test"), expression="s/test/lol/")).strip()
         self.assertEqual(out, "lol")
         
-    @requires_posix
+    
     def test_command_wrapper(self):
         from pbs import Command, which
         
@@ -72,13 +75,13 @@ class PbsTestSuite(unittest.TestCase):
         c2 = len(os.listdir("."))
         self.assertEqual(c1, c2)
 
-    @requires_posix
+    
     def test_background(self):
         from pbs import sleep
         import time
         
         start = time.time()
-        sleep_time = 1
+        sleep_time = .5
         p = sleep(sleep_time, _bg=True)
 
         now = time.time()
@@ -88,7 +91,7 @@ class PbsTestSuite(unittest.TestCase):
         now = time.time()
         self.assertTrue(now - start > sleep_time)
                 
-    @requires_posix
+    
     def test_with_context(self):
         from pbs import time, ls
         with time:
@@ -96,7 +99,7 @@ class PbsTestSuite(unittest.TestCase):
         self.assertTrue("pagefaults" in out)
 
 
-    @requires_posix
+    
     def test_with_context_args(self):
         from pbs import time, ls
         with time(verbose=True, _with=True):
@@ -104,7 +107,7 @@ class PbsTestSuite(unittest.TestCase):
         self.assertTrue("Voluntary context switches" in out)
 
 
-    @requires_posix
+    
     def test_err_to_out(self):
         from pbs import time, ls
         with time(_with=True):
@@ -113,7 +116,7 @@ class PbsTestSuite(unittest.TestCase):
         self.assertTrue("pagefaults" in out)
 
 
-    @requires_posix
+    
     def test_out_redirection(self):
         import tempfile
         from pbs import ls
@@ -129,7 +132,7 @@ class PbsTestSuite(unittest.TestCase):
         self.assertTrue(len(actual_out) != 0)
 
 
-    @requires_posix
+    
     def test_err_redirection(self):
         import tempfile
         from pbs import time, ls
@@ -144,14 +147,14 @@ class PbsTestSuite(unittest.TestCase):
 
         self.assertTrue(len(actual_out) != 0)
 
-    @requires_posix
+    
     def test_subcommand(self):
         from pbs import time
 
         out = time.ls(_err_to_out=True)
         self.assertTrue("pagefaults" in out)
 
-    @requires_posix
+    
     def test_bake(self):
         from pbs import time, ls
         timed = time.bake("--verbose", _err_to_out=True)
@@ -159,7 +162,7 @@ class PbsTestSuite(unittest.TestCase):
         self.assertTrue("Voluntary context switches" in out)
 
 
-    @requires_posix
+    
     def test_output_equivalence(self):
         from pbs import whoami
 
@@ -167,6 +170,279 @@ class PbsTestSuite(unittest.TestCase):
         iam2 = whoami()
 
         self.assertEqual(iam1, iam2)
+
+
+    def test_stdout_callback(self):
+        import tempfile
+        from pbs import python
+        
+        py = tempfile.NamedTemporaryFile()
+        
+        py.write("""
+import sys
+import os
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+for i in xrange(5): print i
+""")
+        py.flush()
+        
+        stdout = []
+        def agg(line): stdout.append(line)
+        
+        p = python(py.name, _out=agg)
+        p.wait()
+        
+        self.assertTrue(len(stdout) == 5)
+        
+        
+        
+    def test_stdout_callback_no_wait(self):
+        import tempfile
+        from pbs import python
+        import time
+        
+        py = tempfile.NamedTemporaryFile()
+        
+        py.write("""
+import sys
+import os
+import time
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+for i in xrange(5):
+    print i
+    time.sleep(.5)
+""")
+        py.flush()
+        
+        stdout = []
+        def agg(line): stdout.append(line)
+        
+        p = python(py.name, _out=agg)
+        
+        # we give a little pause to make sure that the NamedTemporaryFile
+        # exists when the python process is actually called
+        time.sleep(.5)
+        
+        self.assertTrue(len(stdout) != 5)
+        
+        
+        
+    def test_stdout_callback_line_buffered(self):
+        import tempfile
+        from pbs import python
+        
+        py = tempfile.NamedTemporaryFile()
+        
+        py.write("""
+import sys
+import os
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+for i in xrange(5): print "herpderp"
+""")
+        py.flush()
+        
+        stdout = []
+        def agg(line): stdout.append(line)
+        
+        p = python(py.name, _out=agg, _bufsize=1)
+        p.wait()
+        
+        self.assertTrue(len(stdout) == 5)
+        
+        
+        
+    def test_stdout_callback_line_unbuffered(self):
+        import tempfile
+        from pbs import python
+        
+        py = tempfile.NamedTemporaryFile()
+        
+        py.write("""
+import sys
+import os
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+for i in xrange(5): print "herpderp"
+""")
+        py.flush()
+        
+        stdout = []
+        def agg(char): stdout.append(char)
+        
+        p = python(py.name, _out=agg, _bufsize=0)
+        p.wait()
+        
+        # + 5 newlines
+        self.assertTrue(len(stdout) == (len("herpderp") * 5 + 5))
+        
+        
+    def test_stdout_callback_buffered(self):
+        import tempfile
+        from pbs import python
+        
+        py = tempfile.NamedTemporaryFile()
+        
+        py.write("""
+import sys
+import os
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+for i in xrange(5): sys.stdout.write("herpderp")
+""")
+        py.flush()
+        
+        stdout = []
+        def agg(chunk): stdout.append(chunk)
+        
+        p = python(py.name, _out=agg, _bufsize=4)
+        p.wait()
+        
+        self.assertTrue(len(stdout) == (len("herp")/2 * 5))
+        
+        
+        
+    def test_stdout_callback_with_input(self):
+        import tempfile
+        from pbs import python
+        
+        py = tempfile.NamedTemporaryFile()
+        
+        py.write("""
+import sys
+import os
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+for i in xrange(5): print i
+derp = raw_input("herp? ")
+print derp
+""")
+        py.flush()
+        
+        def agg(line, stdin):
+            if line.strip() == "4": stdin.put("derp\n")
+        
+        p = python(py.name, _out=agg)
+        p.wait()
+        
+        self.assertTrue("derp" in p)
+        
+        
+        
+    def test_stdout_callback_exit(self):
+        import tempfile
+        from pbs import python
+        
+        py = tempfile.NamedTemporaryFile()
+        
+        py.write("""
+import sys
+import os
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+for i in xrange(5): print i
+""")
+        py.flush()
+        
+        stdout = []
+        def agg(line):
+            line = line.strip()
+            stdout.append(line)
+            if line == "2": return True
+        
+        p = python(py.name, _out=agg)
+        p.wait()
+        
+        self.assertTrue("4" in p)
+        self.assertTrue("4" not in stdout)
+        
+        
+        
+    def test_stdout_callback_terminate(self):
+        import tempfile
+        from pbs import python
+        
+        py = tempfile.NamedTemporaryFile()
+        
+        py.write("""
+import sys
+import os
+import time
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+for i in xrange(5): 
+    print i
+    time.sleep(.5)
+""")
+        py.flush()
+        
+        stdout = []
+        def agg(line, stdin, process):
+            line = line.strip()
+            stdout.append(line)
+            if line == "0":
+                process.terminate()
+                return True
+        
+        p = python(py.name, _out=agg)
+        p.wait()
+        
+        self.assertTrue("4" not in p)
+        self.assertTrue("4" not in stdout)
+        
+        
+        
+    def test_stdout_callback_kill(self):
+        import tempfile
+        from pbs import python
+        
+        py = tempfile.NamedTemporaryFile()
+        
+        py.write("""
+import sys
+import os
+import time
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+for i in xrange(5): 
+    print i
+    time.sleep(.5)
+""")
+        py.flush()
+        
+        stdout = []
+        def agg(line, stdin, process):
+            line = line.strip()
+            stdout.append(line)
+            if line == "0":
+                process.kill()
+                return True
+        
+        p = python(py.name, _out=agg)
+        p.wait()
+        
+        self.assertTrue("4" not in p)
+        self.assertTrue("4" not in stdout)
 
 
 
