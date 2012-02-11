@@ -121,20 +121,38 @@ def resolve_program(program):
 class RunningCommand(object):
     def __init__(self, command_ran, process, call_args, stdin=None,
             stdout_callback=None, stderr_callback=None):
-        
+
+        # this is purely for debugging
         self.command_ran = command_ran
+
+        # process might be null if we've called our command in a with
+        # context
         self.process = process
+
+        # these are for aggregating the stdout and stderr
         self._stdout = []
         self._stderr = []
+
+        # these may or may not exist depending whether or not we've passed
+        # a callback in to _out or _err
         self._stdout_thread = None
         self._stderr_thread = None
+
         self.call_args = call_args
+
+        # this is a convenience attribute for determining if we have any
+        # collector threads running
         self.is_collecting_streams = bool(stdout_callback or stderr_callback)
 
 
+        # do we need to start any collector threads?  read the conditions
+        # in this 'if' very carefully
         if self.is_collecting_streams and not call_args["fg"] and \
             not call_args["with"] and not self.done:
             
+            # this is required for syncing the start of the collection
+            # threads.  read self._collect_streams comments to see why
+            # this is necessary
             self._start_collecting = Event()
                         
             # the idea here is, we're going to set ALL the processes streams
@@ -149,6 +167,7 @@ class RunningCommand(object):
                 process.stderr, stderr_callback, call_args["bufsize"],
                 self._stderr)
             
+            # kick off the threads
             self._start_collecting.set()
             return
 
@@ -181,7 +200,8 @@ class RunningCommand(object):
         rc = self.process.wait()
 
         if rc > 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
-        
+
+
     @property
     def stdout(self):
         if self.call_args["bg"]: self.wait()
