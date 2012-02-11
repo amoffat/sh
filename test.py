@@ -66,6 +66,19 @@ class PbsTestSuite(unittest.TestCase):
         self.assertEqual(Command(which("ls")), ls) 
         
         
+    def test_multiple_args_to_long_option(self):
+        from pbs import python
+        
+        py = create_tmp_test("""
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("-l", "--long-option", dest="long_option")
+options, args = parser.parse_args()
+print len(options.long_option.split())
+""")
+        num_args = int(python(py.name, long_option="one two three"))
+        self.assertEqual(num_args, 3)
+        
     
     def test_short_bool_option(self):
         from pbs import id
