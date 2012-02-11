@@ -288,6 +288,18 @@ class RunningCommand(object):
         # started, we don't exactly have stdout and stderr
         self._start_collecting.wait()
 
+        # here we choose how to call the callback, depending on how many
+        # arguments it takes.  the reason for this is to make it as easy as
+        # possible for people to use, without limiting them.  a new user will
+        # assume the callback takes 1 argument (the data).  as they get more
+        # advanced, they may want to terminate the process, or pass some stdin
+        # back, and will realize that they can pass a callback of more args
+        if fn:
+            num_args = len(inspect.getargspec(fn).args)
+            args = ()
+            if num_args == 2: args = (self._stdin,)
+            elif num_args == 3: args = (self._stdin, self)
+         
         call_fn = bool(fn)
             
         try:
@@ -295,7 +307,7 @@ class RunningCommand(object):
             if bufsize == 1:
                 for line in iter(stream.readline, ""):
                     agg_to.append(line)
-                    if call_fn and fn(line, self, self._stdin): call_fn = False
+                    if call_fn and fn(line, *args): call_fn = False
                     
             # unbuffered or buffered by amount
             else:
@@ -309,7 +321,7 @@ class RunningCommand(object):
                 
                 for chunk in iter(partial(stream.read, bufsize), ""):
                     agg_to.append(chunk)
-                    if call_fn and fn(chunk, self, self._stdin): call_fn = False
+                    if call_fn and fn(chunk, *args): call_fn = False
                     
         finally:
             if is_last_thread():
@@ -560,24 +572,12 @@ class Command(object):
             return RunningCommand(command_ran, None, call_args)
 
 
-
-        # we use this to check the function signature of _out and _err (if
-        # they're callable) because if the signature is incorrect, an exception
-        # will be raised from within a thread, and this won't stop execution
-        def check_inc_callback(key, fn):
-            if len(inspect.getargspec(fn).args) != 3:
-                raise ValueError("%s callback takes 3 arguments: chunk \
-(the incremental output), process (the running command object), and \
-stdin (a Queue to send your stdin to)." % key)
-            return fn
-
-
         # stdout redirection
         stdout_callback = None
         stdout = pipe
         out = call_args["out"]
         if out:
-            if callable(out): stdout_callback = check_inc_callback("_out", out)
+            if callable(out): stdout_callback = out
             elif isinstance(out, file): stdout = out
             else: stdout = file(str(out), "w")
         
@@ -587,7 +587,7 @@ stdin (a Queue to send your stdin to)." % key)
         stderr = pipe
         err = call_args["err"]
         if err:
-            if callable(err): stderr_callback = check_inc_callback("_err", err)
+            if callable(err): stderr_callback = err
             elif isinstance(err, file): stderr = err
             else: stderr = file(str(err), "w")
             
