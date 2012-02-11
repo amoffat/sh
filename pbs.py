@@ -179,7 +179,7 @@ class RunningCommand(object):
         
         rc = self.process.wait()
 
-        if rc != 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
+        if rc > 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
         
     @property
     def stdout(self):
@@ -304,7 +304,7 @@ class RunningCommand(object):
             self._stdout, self._stderr = self.process.communicate()
             rc = self.process.wait()
     
-            if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
+            if rc > 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
             # return ourselves, so that we can do something like "print p.wait()"
             # and it will print the stdout of p
             return self
