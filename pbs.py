@@ -78,13 +78,10 @@ rc_exc_regex = re.compile("ErrorReturnCode_(\d+)")
 rc_exc_cache = {}
 
 def get_rc_exc(rc):
-    if rc < 0: rc = "neg%d" % abs(rc)
-    rc = str(rc)
-
     try: return rc_exc_cache[rc]
     except KeyError: pass
     
-    name = "ErrorReturnCode_%s" % rc
+    name = "ErrorReturnCode_%d" % rc
     exc = type(name, (ErrorReturnCode,), {})
     rc_exc_cache[name] = exc
     return exc
@@ -275,7 +272,7 @@ class RunningCommand(object):
         finally:
             if is_last_thread():
                 rc = self.process.wait()
-                if rc != 0: raise get_rc_exc(rc)(
+                if rc > 0: raise get_rc_exc(rc)(
                         self.command_ran,
                         self.stdout,
                         self.stderr
