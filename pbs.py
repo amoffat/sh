@@ -421,14 +421,18 @@ class Command(object):
 
     
     @staticmethod
-    def _extract_call_args(kwargs):
+    def _extract_call_args(kwargs, to_override={}):
         kwargs = kwargs.copy()
         call_args = Command.call_args.copy()
         for parg, default in call_args.items():
             key = "_" + parg
+            
             if key in kwargs:
                 call_args[parg] = kwargs[key] 
                 del kwargs[key]
+            elif parg in to_override:
+                call_args[parg] = to_override[parg]
+                
         return call_args, kwargs
 
 
@@ -504,9 +508,7 @@ class Command(object):
 
         # here we extract the special kwargs and override any
         # special kwargs from the possibly baked command
-        call_args = self._partial_call_args.copy()
-        tmp_call_args, kwargs = self._extract_call_args(kwargs)
-        call_args.update(tmp_call_args)
+        call_args, kwargs = self._extract_call_args(kwargs, self._partial_call_args)
                 
 
         # set pipe to None if we're outputting straight to CLI
