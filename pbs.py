@@ -82,12 +82,13 @@ rc_exc_regex = re.compile("ErrorReturnCode_(\d+)")
 rc_exc_cache = {}
 
 def get_rc_exc(rc):
+    rc = int(rc)
     try: return rc_exc_cache[rc]
     except KeyError: pass
     
     name = "ErrorReturnCode_%d" % rc
     exc = type(name, (ErrorReturnCode,), {})
-    rc_exc_cache[name] = exc
+    rc_exc_cache[rc] = exc
     return exc
 
 

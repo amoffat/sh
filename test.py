@@ -34,6 +34,13 @@ class PbsTestSuite(unittest.TestCase):
         from pbs import ls
         with self.assertRaises(TypeError):
             ls(_fg=True, _bg=True)
+            
+    def test_exception(self):
+        from pbs import ls, ErrorReturnCode_2
+        
+        with self.assertRaises(ErrorReturnCode_2):
+            ls("/aofwje/garogjao4a/eoan3on")
+        
     
     def test_short_bool_option(self):
         from pbs import id
