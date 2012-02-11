@@ -31,6 +31,7 @@ from glob import glob
 import shlex
 from types import ModuleType
 from functools import partial
+import inspect
 
 # for incremental stdout/err output
 from threading  import Thread, Event
@@ -132,6 +133,7 @@ class RunningCommand(object):
         # these are for aggregating the stdout and stderr
         self._stdout = []
         self._stderr = []
+        self._stdin = "derp"
 
         # these may or may not exist depending whether or not we've passed
         # a callback in to _out or _err
@@ -166,6 +168,12 @@ class RunningCommand(object):
             self._stderr_thread = self._collector_thread(
                 process.stderr, stderr_callback, call_args["bufsize"],
                 self._stderr)
+            
+            
+            process.stdin.write("wat\n")
+            process.stdin.flush()
+                
+            #Thread(target=derp
             
             # kick off the threads
             self._start_collecting.set()
@@ -543,12 +551,24 @@ class Command(object):
             return RunningCommand(command_ran, None, call_args)
 
 
+
+        # we use this to check the function signature of _out and _err (if
+        # they're callable) because if the signature is incorrect, an exception
+        # will be raised from within a thread, and this won't stop execution
+        def check_inc_callback(key, fn):
+            if len(inspect.getargspec(fn).args) != 2:
+                raise ValueError("%s callback takes 2 arguments: chunk \
+(representing the incremental output) and process (representing the running \
+command object)." % key)
+            return fn
+
+
         # stdout redirection
         stdout_callback = None
         stdout = pipe
         out = call_args["out"]
         if out:
-            if callable(out): stdout_callback = out
+            if callable(out): stdout_callback = check_inc_callback("_out", out)
             elif isinstance(out, file): stdout = out
             else: stdout = file(str(out), "w")
         
@@ -558,7 +578,7 @@ class Command(object):
         stderr = pipe
         err = call_args["err"]
         if err:
-            if callable(err): stderr_callback = err
+            if callable(err): stderr_callback = check_inc_callback("_err", err)
             elif isinstance(err, file): stderr = err
             else: stderr = file(str(err), "w")
             
