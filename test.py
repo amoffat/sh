@@ -539,6 +539,32 @@ for letter in ascii_lowercase:
         letters = "".join(letters)
         
         self.assertEqual(ascii_uppercase, letters)
+        
+        
+    def test_generator_and_callback(self):
+        from pbs import python
+        
+        py = create_tmp_test("""
+import sys
+import os
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
+
+for i in xrange(42):
+    sys.stderr.write(str(i * 2)+"\\n") 
+    print i
+""")
+        
+        stderr = []
+        def agg(line): stderr.append(int(line.strip()))
+
+        out = []
+        for line in python(py.name, _for=True, _err=agg): out.append(line)
+        
+        self.assertTrue(len(out) == 42)
+        self.assertTrue(sum(stderr) == 1722)
 
 
 
