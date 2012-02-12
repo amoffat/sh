@@ -29,7 +29,7 @@ def create_tmp_test(code):
 
 
 @requires_posix
-class TestSuite(unittest.TestCase):
+class Basic(unittest.TestCase):
     
     def test_print_command(self):
         from pbs import ls, which
@@ -285,7 +285,7 @@ for i in xrange(5):
         p = python(py.name, _out=agg)
         
         # we give a little pause to make sure that the NamedTemporaryFile
-        # exists when the python process is actually called
+        # exists when the python process actually starts
         time.sleep(.5)
         
         self.assertTrue(len(stdout) != 5)
@@ -493,8 +493,55 @@ for i in xrange(42):
         out = []
         for line in python(py.name, _for=True): out.append(line)
         self.assertTrue(len(out) == 42)
+        
+       
+        
+    def test_for_generator_to_err(self):
+        from pbs import tail, python
+        
+        py = create_tmp_test("""
+import sys
+import os
+
+# unbuffered stdout
+sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
+
+for i in xrange(42): 
+    sys.stderr.write(str(i)+"\\n")
+""")
+
+        out = []
+        for line in python(py.name, _for="err"): out.append(line)
+        self.assertTrue(len(out) == 42)
+
+
+
+    def test_piped_generator(self):
+        from pbs import python, tr
+        from string import ascii_uppercase
+        
+        py = create_tmp_test("""
+import sys
+import os
+from string import ascii_lowercase
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+for letter in ascii_lowercase:
+    print letter
+""")
+
+        output = tr(python(py.name), "[:lower:]", "[:upper:]", _piped="out")
+        
+        letters = []
+        for line in output: letters.append(line.strip())
+        letters = "".join(letters)
+        
+        self.assertEqual(ascii_uppercase, letters)
 
 
 
 if __name__ == "__main__":
-    unittest.main()
+    suite = unittest.TestLoader().loadTestsFromTestCase(Basic)
+    unittest.TextTestRunner(verbosity=2).run(suite)

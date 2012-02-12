@@ -126,7 +126,9 @@ def resolve_program(program):
 
 class RunningCommand(object):
     def __init__(self, command_ran, process, call_args, stdin=None):
-
+        
+        self.call_args = call_args
+        
         # this is purely for debugging
         self.command_ran = command_ran
 
@@ -137,99 +139,122 @@ class RunningCommand(object):
         # these are for aggregating the stdout and stderr
         self._stdout = []
         self._stderr = []
-        self._stdin = Queue()
+        self._stdin = stdin or Queue()
 
-        # these may or may not exist depending whether or not we've passed
-        # a callback in to _out or _err
         self._stdout_thread = None
         self._stderr_thread = None
 
-        self.call_args = call_args
-
-        # this is a convenience attribute for determining if we have any
-        # collector threads running
-        self.is_collecting_streams = bool(
-            callable(call_args["out"]) or
-            callable(call_args["err"]) or
-            call_args["for"]
-        )
-
-
         # do we need to start any collector threads?  read the conditions
         # in this 'if' very carefully
-        if self.is_collecting_streams and not call_args["fg"] and \
-            not call_args["with"] and not self.done:
+        self._is_collecting = not call_args["fg"] and not call_args["with"]
+
+
+        # we use this to determine if the process shoudl block until it's 
+        # finished.  this may get changed later in this function depending
+        # on certain conditions
+        should_wait = True
+        
+        
+
+        if self._is_collecting:
+            if callable(call_args["out"]) or callable(call_args["err"]):
+                should_wait = False
             
-            self._for_queue = Queue()
+            self._stdout_queue = Queue()
+            self._stderr_queue = Queue()
+            self._pipe_queue = Queue()
             
             # this is required for syncing the start of the collection
-            # threads.  read self._collect_streams comments to see why
+            # threads.  read self._read_streams comments to see why
             # this is necessary
             self._start_collecting = Event()
-                        
-            # the idea here is, we're going to set ALL the processes streams
-            # (stdout and stderr) to some kind of stream handler callback if
-            # one or more is already set.  the ones that aren't set will just
-            # get aggregated to a buffer
-            self._stdout_thread = self._collector_thread(
-                process.stdout, call_args["out"], self._stdout, self._for_queue)
+
+            # if stdout exists, it means we've given it a PIPE, (in other words
+            # it's not being redirected to a file or something)
+            if process.stdout:
+                # reader
+                cb = call_args["out"] if callable(call_args["out"]) else None           
+                self._reader_thread(process.stdout, cb, self._stdout_queue)
+                
+                # check if our for queue is feeding off of stdout (default, if
+                # "for" is defined in the call_args)
+                pipe_queue = self._pipe_queue
+                if call_args["for"] == "err" or call_args["piped"] == "err":
+                    pipe_queue = None
+                
+                # collector    
+                self._stdout_thread = self._collector_thread(
+                    self._stdout_queue, self._stdout, pipe_queue)
             
-            self._stderr_thread = self._collector_thread(
-                process.stderr, call_args["err"], self._stderr)
+            
+            if process.stderr:
+                # reader
+                cb = call_args["err"] if callable(call_args["err"]) else None
+                self._reader_thread(process.stderr, cb, self._stderr_queue)
+                
+                # check if we've explicitly assigned the for queue to stderr
+                pipe_queue = None
+                if call_args["for"] == "err" or call_args["piped"] == "err":
+                    pipe_queue = self._pipe_queue
+                
+                # collector
+                self._stderr_thread = self._collector_thread(
+                    self._stderr_queue, self._stderr, pipe_queue)
             
             
-            def stdin_flusher(our_stdin, process_stdin):
-                while True:
-                    chunk = str(our_stdin.get())
-                    process_stdin.write(chunk.encode())
-                    process_stdin.flush()
-                                    
+            # kick off the threads
+            self._start_collecting.set()
+            
+       
+            
+        def stdin_flusher(our_stdin, process_stdin):
+            while True:
+                chunk = our_stdin.get()
+                if chunk is None: break
+                
+                process_stdin.write(chunk.encode())
+                process_stdin.flush()
+                
+            process_stdin.close()
+
+
+
+        if self._is_collecting:            
             thrd = Thread(target=stdin_flusher, args=(self._stdin, self.process.stdin))
             thrd.daemon = True
             thrd.start()
             
-            # kick off the threads
-            self._start_collecting.set()
-            return
+            
 
         # we're running in the background, return self and let us lazily
         # evaluate
-        if call_args["bg"]: return
+        if call_args["bg"]: should_wait = False
 
         # we're running this command as a with context, don't do anything
         # because nothing was started to run from Command.__call__ (there's
         # no self.process)
-        if call_args["with"]: return
+        if call_args["with"]: should_wait = False
+        
 
-        # run and block
-        if IS_PY3 and stdin is not None: stdin = stdin.encode()
-        out, err = self.process.communicate(stdin)
+        if should_wait: self.wait()
         
-        if IS_PY3:
-            if out: out = out.decode("utf8")
-            else: out = ""
-            if err: err = err.decode("utf8")
-            else: err = ""
         
-        else:    
-            # translate the possible Nones to empty strings
-            out = out or ""
-            err = err or ""
-        
-        # we do this for consistency for the part that's threaded.  for the
-        # threaded code, we collect the stdout and stderr into a list for
-        # for performance (appending to a list has better performance than +=
-        # a string).  so even though this stdout and stderr wasn't aggregated,
-        # and will probably be relatively small, we make it look like a list
-        # so all the other functions that use self._stdout and self._stderr
-        # can safely assume it's a list
-        self._stdout = [out]
-        self._stderr = [err]
-        
-        rc = self.process.wait()
+    @property
+    def done(self):
+        return self.process.returncode is not None
 
-        if rc > 0: raise get_rc_exc(rc)(self.command_ran, self.stdout, self.stderr)
+    def wait(self):
+        if self._stdout_thread: self._stdout_thread.join()
+        if self._stderr_thread: self._stderr_thread.join()
+        
+        exit_status = self.process.wait()
 
+        if exit_status > 0: raise get_rc_exc(exit_status)(
+                self.command_ran,
+                self.stdout,
+                self.stderr
+            )        
+        return self
 
     @property
     def stdout(self):
@@ -240,7 +265,98 @@ class RunningCommand(object):
     def stderr(self):
         if self.call_args["bg"]: self.wait()
         return "".join(self._stderr)
+    
+    
+    def _read_stream(self, stream, fn, bufsize, queue):            
+        # we can't actually start collecting yet until both threads have
+        # started, the reason being, if one thread exits very quickly (for
+        # example, if the command errored out), the stdout and stderr are
+        # both used in the exception handling, but if both threads haven't
+        # started, we don't exactly have stdout and stderr
+        self._start_collecting.wait()
 
+        # here we choose how to call the callback, depending on how many
+        # arguments it takes.  the reason for this is to make it as easy as
+        # possible for people to use, without limiting them.  a new user will
+        # assume the callback takes 1 argument (the data).  as they get more
+        # advanced, they may want to terminate the process, or pass some stdin
+        # back, and will realize that they can pass a callback of more args
+        if fn:
+            num_args = len(inspect.getargspec(fn).args)
+            args = ()
+            if num_args == 2: args = (self._stdin,)
+            elif num_args == 3: args = (self._stdin, self)
+         
+        call_fn = bool(fn)
+        
+        # we use this sentinel primarily for python3+, because iter() takes
+        # a buffer object (for the second argument) to test against.  if we
+        # just say iter(stream, ""), it will read forever in python3, because
+        # although we're receiving data off of the stream, it's in bytes,
+        # not as a string object
+        sentinel = "".encode()
+            
+        try:
+            # line buffered
+            if bufsize == 1:
+                for line in iter(stream.readline, sentinel):
+                    if IS_PY3: line = line.decode("utf8")
+                    queue.put(line)
+                    if call_fn and fn(line, *args): call_fn = False
+                    
+            # unbuffered or buffered by amount
+            else:
+                # we have this ridiculous line because we're sticking with how
+                # subprocess.Popen interprets bufsize.  1 for line-buffered,
+                # 0 for unbuffered, and any other amount for
+                # that-amount-buffered.  since we're already in this branch,
+                # we're buffered by a fixed amount (not line-buffered), so
+                # go ahead and translate bufsize to that real amount.
+                if bufsize == 0: bufsize = 1
+                
+                for chunk in iter(partial(stream.read, bufsize), sentinel):
+                    if IS_PY3: chunk = chunk.decode("utf8")
+                    queue.put(chunk)
+                    if call_fn and fn(chunk, *args): call_fn = False
+                    
+        except KeyboardInterrupt:
+            interrupt_main()
+                    
+        finally:
+            stream.close()
+            
+            # so our collector and possible iterator can stop
+            queue.put(None)
+                
+                
+    def _collect_stream(self, queue, buffer, pipe_queue=None):
+        while True:
+            chunk = queue.get()
+            if pipe_queue: pipe_queue.put(chunk)
+            
+            # we only test for None after possibly putting it on the pipe_queue
+            # because a None on the pipe_queue triggers the StopIteration
+            if chunk is None: break
+            buffer.append(chunk)
+        
+                
+    def _collector_thread(self, *args):
+        thrd = Thread(target=self._collect_stream, args=args)
+        thrd.daemon = True # thread dies with the program
+        thrd.start()
+        return thrd
+    
+    def _reader_thread(self, stream, fn, queue):
+        args = (stream, fn, self.call_args["bufsize"], queue)
+        thrd = Thread(target=self._read_stream, args=args)
+        thrd.daemon = True # thread dies with the program
+        thrd.start()
+        return thrd
+    
+    
+    def __len__(self):
+        return len(str(self))
+    
     def __enter__(self):
         # we don't actually do anything here because anything that should
         # have been done would have been done in the Command.__call__ call.
@@ -255,7 +371,7 @@ class RunningCommand(object):
         # we do this because if get blocks, we can't catch a KeyboardInterrupt
         # so the slight timeout allows for that.
         while True:
-            try: chunk = self._for_queue.get(False, .001)
+            try: chunk = self._pipe_queue.get(False, .001)
             except Empty: pass
             else:
                 if chunk is None: raise StopIteration()
@@ -303,117 +419,6 @@ class RunningCommand(object):
 
     def __int__(self):
         return int(str(self).strip())
-    
-    def _collect_stream(self, stream, fn, bufsize, agg_to, for_queue):
-        # this is used to determine whether or not we need to check the return
-        # code of the process and possibly raise an exception.  we have to do
-        # it only with the last thread, because we have to be sure that the
-        # possible exception code will only run once 
-        def is_last_thread():
-            return (not self._stdout_thread.is_alive()) or \
-                (not self._stderr_thread.is_alive())
-            
-        # we can't actually start collecting yet until both threads have
-        # started, the reason being, if one thread exits very quickly (for
-        # example, if the command errored out), the stdout and stderr are
-        # both used in the exception handling, but if both threads haven't
-        # started, we don't exactly have stdout and stderr
-        self._start_collecting.wait()
-
-        # here we choose how to call the callback, depending on how many
-        # arguments it takes.  the reason for this is to make it as easy as
-        # possible for people to use, without limiting them.  a new user will
-        # assume the callback takes 1 argument (the data).  as they get more
-        # advanced, they may want to terminate the process, or pass some stdin
-        # back, and will realize that they can pass a callback of more args
-        if fn:
-            num_args = len(inspect.getargspec(fn).args)
-            args = ()
-            if num_args == 2: args = (self._stdin,)
-            elif num_args == 3: args = (self._stdin, self)
-         
-        call_fn = bool(fn)
-        
-        # we use this sentinel primarily for python3+, because iter() takes
-        # a buffer object (for the second argument) to test against.  if we
-        # just say iter(stream, ""), it will read forever in python3, because
-        # although we're receiving data off of the stream, it's in bytes,
-        # not as a string object
-        sentinel = "".encode()
-            
-        try:
-            # line buffered
-            if bufsize == 1:
-                for line in iter(stream.readline, sentinel):
-                    if IS_PY3: line = line.decode("utf8")
-                    agg_to.append(line)
-                    if for_queue: for_queue.put(line)
-                    if call_fn and fn(line, *args): call_fn = False
-                    
-            # unbuffered or buffered by amount
-            else:
-                # we have this ridiculous line because we're sticking with how
-                # subprocess.Popen interprets bufsize.  1 for line-buffered,
-                # 0 for unbuffered, and any other amount for
-                # that-amount-buffered.  since we're already in this branch,
-                # we're buffered by a fixed amount (not line-buffered), so
-                # go ahead and translate bufsize to that real amount.
-                if bufsize == 0: bufsize = 1
-                
-                for chunk in iter(partial(stream.read, bufsize), sentinel):
-                    if IS_PY3: chunk = chunk.decode("utf8")
-                    agg_to.append(chunk)
-                    if call_fn and fn(chunk, *args): call_fn = False
-                    
-        except KeyboardInterrupt:
-            interrupt_main()
-                    
-        finally:
-            # so any interators can stop
-            if for_queue: for_queue.put(None)
-            
-            stream.close()
-            
-            # test for exception if we're the last thread
-            if is_last_thread():
-                rc = self.process.wait()
-                if rc > 0: raise get_rc_exc(rc)(
-                        self.command_ran,
-                        self.stdout,
-                        self.stderr
-                    )
-                
-    
-    def _collector_thread(self, stream, fn, agg_to, for_queue=None):
-        args = (stream, fn, self.call_args["bufsize"], agg_to, for_queue)
-        thrd = Thread(target=self._collect_stream, args=args)
-        thrd.daemon = True # thread dies with the program
-        thrd.start()
-        return thrd
-    
-    @property
-    def done(self):
-        return self.process.returncode is not None
-
-    def wait(self):
-        if self.done: return self
-        
-        if self.is_collecting_streams:
-            self._stdout_thread.join()
-            self._stderr_thread.join()
-        
-        else:
-            # otherwise we need to wait until we've terminated
-            self._stdout, self._stderr = self.process.communicate()
-            rc = self.process.wait()
-    
-            if rc > 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
-            # return ourselves, so that we can do something like "print p.wait()"
-            # and it will print the stdout of p
-            return self
-    
-    def __len__(self):
-        return len(str(self))
 
 
 
@@ -449,6 +454,9 @@ class Command(object):
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
         "bufsize": 1,
+        
+        # comment
+        "piped": None,
         "for": None,
     }
     
@@ -456,7 +464,8 @@ class Command(object):
     # make anys ense
     _incompatible_call_args = (
         ("fg", "bg", "Command can't be run in the foreground and background"),
-        ("err", "err_to_out", "Stderr is already being redirected")
+        ("err", "err_to_out", "Stderr is already being redirected"),
+        ("piped", "for", "You cannot iterate when this command is being piped"),
     )
 
     @classmethod
@@ -523,8 +532,8 @@ class Command(object):
         # aggregate positional args
         for arg in args:
             if isinstance(arg, (list, tuple)):
-                for sub_arg in arg: processed_args.append(str(sub_arg))
-            else: processed_args.append(str(arg))
+                for sub_arg in arg: processed_args.append(repr(sub_arg))
+            else: processed_args.append(repr(arg))
 
         # aggregate the keyword arguments
         for k,v in kwargs.items():
@@ -588,6 +597,7 @@ class Command(object):
         for prepend in self._prepend_stack: cmd.extend(prepend)
 
         cmd.append(self._path)
+        
 
         # here we extract the special kwargs and override any
         # special kwargs from the possibly baked command
@@ -607,13 +617,11 @@ class Command(object):
                 # it makes sense that if the input pipe of a command is running
                 # in the background, then this command should run in the
                 # background as well
-                if first_arg.call_args["bg"]:
-                    call_args["bg"] = True
-                    stdin = first_arg.process.stdout
-                else:
-                    actual_stdin = first_arg.stdout
+                if first_arg.call_args["bg"]: call_args["bg"] = True
+                actual_stdin = first_arg._pipe_queue
+                
             else: args.insert(0, first_arg)
-        
+            
         processed_args = self._compile_args(args, kwargs)
 
         # makes sure our arguments are broken up correctly
