@@ -139,10 +139,17 @@ class RunningCommand(object):
         # these are for aggregating the stdout and stderr
         self._stdout = []
         self._stderr = []
+        
+        # the stdin is either going to come from some other command's pipe_queue
+        # OR, we create our own queue.  our own queue can be used if we use
+        # incremental aggregator callbacks, so that we can talk directly to
+        # stdin to send data to a process
         self._stdin = stdin or Queue()
 
-        self._stdout_thread = None
-        self._stderr_thread = None
+        self._stdout_collector_thread = None
+        self._stdout_reader_thread = None
+        self._stderr_collector_thread = None
+        self._stderr_reader_thread = None
 
         # do we need to start any collector threads?  read the conditions
         # in this 'if' very carefully
@@ -159,6 +166,8 @@ class RunningCommand(object):
         if self._is_collecting:
             if callable(call_args["out"]) or callable(call_args["err"]):
                 should_wait = False
+                
+            if call_args["piped"] or call_args["for"]: should_wait = False
             
             self._stdout_queue = Queue()
             self._stderr_queue = Queue()
@@ -174,7 +183,8 @@ class RunningCommand(object):
             if process.stdout:
                 # reader
                 cb = call_args["out"] if callable(call_args["out"]) else None           
-                self._reader_thread(process.stdout, cb, self._stdout_queue)
+                self._stdout_reader_thread = self._reader_thread(
+                    process.stdout, cb, self._stdout_queue)
                 
                 # check if our for queue is feeding off of stdout (default, if
                 # "for" is defined in the call_args)
@@ -183,14 +193,15 @@ class RunningCommand(object):
                     pipe_queue = None
                 
                 # collector    
-                self._stdout_thread = self._collector_thread(
+                self._stdout_collector_thread = self._collector_thread(
                     self._stdout_queue, self._stdout, pipe_queue)
             
             
             if process.stderr:
                 # reader
                 cb = call_args["err"] if callable(call_args["err"]) else None
-                self._reader_thread(process.stderr, cb, self._stderr_queue)
+                self._stderr_reader_thread = self._reader_thread(
+                    process.stderr, cb, self._stderr_queue)
                 
                 # check if we've explicitly assigned the for queue to stderr
                 pipe_queue = None
@@ -198,7 +209,7 @@ class RunningCommand(object):
                     pipe_queue = self._pipe_queue
                 
                 # collector
-                self._stderr_thread = self._collector_thread(
+                self._stderr_collector_thread = self._collector_thread(
                     self._stderr_queue, self._stderr, pipe_queue)
             
             
@@ -207,19 +218,19 @@ class RunningCommand(object):
             
        
             
-        def stdin_flusher(our_stdin, process_stdin):
+        def stdin_flusher(stdin_pipe, process_stdin):
             while True:
-                chunk = our_stdin.get()
+                chunk = stdin_pipe.get()
                 if chunk is None: break
-                
+
+                #print chunk
                 process_stdin.write(chunk.encode())
                 process_stdin.flush()
                 
             process_stdin.close()
 
 
-
-        if self._is_collecting:            
+        if self._is_collecting:
             thrd = Thread(target=stdin_flusher, args=(self._stdin, self.process.stdin))
             thrd.daemon = True
             thrd.start()
@@ -235,17 +246,22 @@ class RunningCommand(object):
         # no self.process)
         if call_args["with"]: should_wait = False
         
-
         if should_wait: self.wait()
         
         
     @property
     def done(self):
+        self.process.poll()
         return self.process.returncode is not None
 
     def wait(self):
-        if self._stdout_thread: self._stdout_thread.join()
-        if self._stderr_thread: self._stderr_thread.join()
+        if self._stdout_collector_thread:
+            self._stdout_reader_thread.join()
+            self._stdout_collector_thread.join()
+            
+        if self._stderr_collector_thread:
+            self._stderr_reader_thread.join()
+            self._stderr_collector_thread.join()
         
         exit_status = self.process.wait()
 
@@ -374,7 +390,12 @@ class RunningCommand(object):
             try: chunk = self._pipe_queue.get(False, .001)
             except Empty: pass
             else:
-                if chunk is None: raise StopIteration()
+                if chunk is None:
+                    # we test to see if we're done before we stop iterating,
+                    # and if we are don, wait for the other streams to finish
+                    # writing their output to their buffers.
+                    if self.done: self.wait()
+                    raise StopIteration()
                 return chunk
             
      # python 3
@@ -450,6 +471,7 @@ class Command(object):
         "fg": False, # run command in foreground
         "bg": False, # run command in background
         "with": False, # prepend the command to every command after it
+        "in": None,
         "out": None, # redirect STDOUT
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
@@ -671,7 +693,7 @@ class Command(object):
             
         # leave shell=False
         process = subp.Popen(cmd, shell=False, env=os.environ,
-            stdin=stdin, stdout=stdout, stderr=stderr)
+            stdin=stdin, stdout=stdout, stderr=stderr, close_fds=True)
 
 
         return RunningCommand(command_ran, process, call_args, actual_stdin)

@@ -74,7 +74,24 @@ class Basic(unittest.TestCase):
         self.assertEqual(Command(which("ls")), ls) 
         
         
-    def test_multiple_args_to_long_option(self):
+    def test_multiple_args_short_option(self):
+        from pbs import python
+        
+        py = create_tmp_test("""
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("-l", dest="long_option")
+options, args = parser.parse_args()
+print len(options.long_option.split())
+""")
+        num_args = int(python(py.name, l="one two three"))
+        self.assertEqual(num_args, 3)
+        
+        num_args = int(python(py.name, "-l", "one's two's three's"))
+        self.assertEqual(num_args, 3)
+        
+        
+    def test_multiple_args_long_option(self):
         from pbs import python
         
         py = create_tmp_test("""
@@ -85,6 +102,9 @@ options, args = parser.parse_args()
 print len(options.long_option.split())
 """)
         num_args = int(python(py.name, long_option="one two three"))
+        self.assertEqual(num_args, 3)
+        
+        num_args = int(python(py.name, "--long-option", "one's two's three's"))
         self.assertEqual(num_args, 3)
         
     
@@ -519,26 +539,45 @@ for i in xrange(42):
     def test_piped_generator(self):
         from pbs import python, tr
         from string import ascii_uppercase
+        import time
         
-        py = create_tmp_test("""
+        py1 = create_tmp_test("""
 import sys
 import os
 from string import ascii_lowercase
+import time
 
 # unbuffered stdout
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for letter in ascii_lowercase:
     print letter
-""")
-
-        output = tr(python(py.name), "[:lower:]", "[:upper:]", _piped="out")
+    time.sleep(0.03)
+        """)
         
-        letters = []
-        for line in output: letters.append(line.strip())
-        letters = "".join(letters)
+        py2 = create_tmp_test("""
+import sys
+import os
+from string import ascii_lowercase
+import time
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+while True:
+    line = sys.stdin.readline()
+    if not line: break
+    print line.strip().upper()
+        """)
+        
+        letters = ""
+        start = time.time()
+        for line in python(python(py1.name, _piped="out"), py2.name, _for=True):
+            letters += line.strip()
+            if len(letters) == 13: half_elapsed = time.time() - start
         
         self.assertEqual(ascii_uppercase, letters)
+        self.assertTrue(.35 < half_elapsed < .5)
         
         
     def test_generator_and_callback(self):
