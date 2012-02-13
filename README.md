@@ -131,7 +131,27 @@ using the special _err_to_out=True keyword argument.
 
 ## Processes with Incremental Output
 
-PBS can run commands that return output incrementally.  This is done much like
+### Iterating
+
+You can iterate over long-running commands with the _for special keyword
+argument.  This creates a generator that you can loop over:
+
+```python
+from pbs import tail
+
+# runs forever
+for line in tail("-f", "/var/log/some_log_file.log", _for=True):
+	print line
+```
+
+By default, _for iterates over stdout, but you can change set this specifically
+by passing either "err" or "out" to _for (instead of True).  Also by default,
+output is line-buffered, but you can change this with the _bufsize special
+keyword argument (see below for a description of the _bufsize values).
+
+### Callbacks
+
+PBS can use callbacks to process output incrementally.  This is done much like
 redirection: by passing an argument to either the _out or _err (or both) special
 keyword arguments, **except this time, you pass a callable.**  This callable
 will be called for each line (or chunk) of data that your command outputs:
@@ -139,7 +159,7 @@ will be called for each line (or chunk) of data that your command outputs:
 ```python
 from pbs import tail
 
-def process_output(line, p):
+def process_output(line):
 	print line
 
 p = tail("-f", "/var/log/some_log_file.log", _out=process_output)
@@ -153,15 +173,54 @@ instead perform other tasks.
 
 A few notes about the callable:
 
-* If it returns a True value, the process will never call it again (but output
-will still be aggregated internally to .stdout and .stderr).
-* The second argument it takes is the process object that is running.  This
-is useful if you want to call .kill() or .terminate() on the process object
-based on some input received.
-
-By default, incremental output is line-buffered.  You can change this with the
+* By default, incremental output is line-buffered.  You can change this with the
 _bufsize special keyword argument.  0 means unbuffered, 1 means line-buffered,
 and anything else means buffered by that amount.
+* If it returns a True value, the process will never call it again (but output
+will still be aggregated internally to .stdout and .stderr).
+* Your callback can also accept 2 other parameters: a stdin Queue object and
+a handle to the process object itself.  See below for how to use the stdin Queue.
+The process object is useful if you want to call .kill() or .terminate() on
+the process object based on some input:
+
+```python
+from pbs import tail
+
+def process_output(line, stdin, process):
+	print line
+	if "ERROR" in line:
+		process.kill()
+		return True
+
+p = tail("-f", "/var/log/some_log_file.log", _out=process_output)
+p.wait()
+```
+
+### STDIN
+
+You can also work with the process's standard input directly from the
+callback by putting data onto the stdin Queue.  This is useful if you have an
+interactive script:
+
+```python
+import pbs
+
+def interact(line, stdin):
+	if line == "What... is the air-speed velocity of an unladen swallow?":
+		stdin.put("What do you mean? An African or European swallow?")
+		
+	elif line == "Huh? I... I don't know that....AAAAGHHHHHH":
+		cross_bridge()
+		return True
+		
+	else:
+		stdin.put("I don't know....AAGGHHHHH")
+		return True
+		
+pbs.bridgekeeper(_out=interact).wait()
+```
+
+
 
 
 ## Sudo and With Contexts
