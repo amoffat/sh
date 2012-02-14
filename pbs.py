@@ -37,8 +37,13 @@ from functools import partial
 __version__ = "0.94"
 __project_url__ = "https://github.com/amoffat/pbs"
 
-IS_PY3 = sys.version_info[0] == 3
-if IS_PY3: raw_input = input
+IS_PY3 = sys.version_info[0] >= 3
+if IS_PY3: 
+    raw_input = input
+    from io import IOBase
+    file_type = IOBase
+else:
+    file_type = file
 
 
 
@@ -405,15 +410,15 @@ class Command(object):
         stdout = pipe
         out = call_args["out"]
         if out:
-            if isinstance(out, file): stdout = out
-            else: stdout = file(str(out), "w")
+            if isinstance(out, file_type): stdout = out
+            else: stdout = open(str(out), "w")
         
         # stderr redirection
         stderr = pipe
         err = call_args["err"]
         if err:
-            if isinstance(err, file): stderr = err
-            else: stderr = file(str(err), "w")
+            if isinstance(err, file_type): stderr = err
+            else: stderr = open(str(err), "w")
             
         if call_args["err_to_out"]: stderr = subp.STDOUT
             
