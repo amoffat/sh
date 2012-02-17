@@ -284,8 +284,8 @@ class Command(object):
         # aggregate positional args
         for arg in args:
             if isinstance(arg, (list, tuple)):
-                for sub_arg in arg: processed_args.append(str(sub_arg))
-            else: processed_args.append(str(arg))
+                for sub_arg in arg: processed_args.append(repr(sub_arg))
+            else: processed_args.append(repr(arg))
 
         # aggregate the keyword arguments
         for k,v in kwargs.items():
@@ -300,7 +300,7 @@ class Command(object):
                 k = k.replace("_", "-")
 
                 if v is True: arg = "--"+k
-                else: arg = "--%s=%s" % (k, v)
+                else: arg = "--%s=%r" % (k, v)
             processed_args.append(arg)
 
         processed_args = shlex.split(" ".join(processed_args))
