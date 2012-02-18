@@ -1,16 +1,14 @@
-import openp
+import oproc
 import time
 import os
 import threading
+import pbs
+from Queue import Queue
+
+def test(line):
+    print repr(line)
+    pass
 
 
-p = openp.OProc(["/bin/ls", "/usr/lib"])
-#p = openp.OProc(["/usr/bin/gcc", "-v"])
-#p = openp.OProc(["/usr/bin/tr", "[:lower:]", "[:upper:]"])
-#p = openp.OProc(["/usr/bin/ssh", "amoffat@dev02"])
-
-#p.stdin.put("lol\n")
-
-#time.sleep(1)
-#p.kill()
-#print p.stdout
+p = pbs.tr(pbs.ls("-l"), "[:lower:]", "[:upper:]", _bufsize=1, _out=test)
+p.wait()

@@ -40,15 +40,7 @@ import signal
 import atexit
 import gc
 
-from openp import OpenP
-
-# for incremental stdout/err output
-from threading  import Thread, Event
-try: from thread import interrupt_main
-except ImportError: from _thread import interrupt_main # 3
-try: from Queue import Queue, Empty
-except ImportError: from queue import Queue, Empty  # 3
-
+from oproc import OProc
 
 
 __version__ = "0.82"
@@ -144,137 +136,32 @@ class RunningCommand(object):
         self.cmd = cmd
         self.process = None
 
-        # these are for aggregating the stdout and stderr
-        self._stdout = []
-        self._stderr = []
-        
-        # the stdin is either going to come from some other command's pipe_queue
-        # OR, we create our own queue.  our own queue can be used if we use
-        # incremental aggregator callbacks, so that we can talk directly to
-        # stdin to send data to a process
-        self._stdin = stdin or Queue()
 
-        self._stdout_collector_thread = None
-        self._stdout_reader_thread = None
-        self._stderr_collector_thread = None
-        self._stderr_reader_thread = None
-
-        # do we need to start any collector threads?  read the conditions
-        # in this 'if' very carefully
-        self._is_collecting = not call_args["fg"] and not call_args["with"]
-
-
-        # we use this to determine if the process shoudl block until it's 
-        # finished.  this may get changed later in this function depending
-        # on certain conditions
         should_wait = True
-        
-        
-        master_stdin, stdin = pty.openpty()
-
-
-        # means we're just collecting as normal, no redirection
-        #if stdout is None:
-            #master_stdout, stdout = pty.openpty()
-
-        # means we're just collecting as normal, no redirection
-        #if stderr is None:
-            #master_stderr, stderr = pty.openpty()
-            
-
-        # set pipe to None if we're outputting straight to CLI
-        pipe = None if call_args["fg"] else subp.PIPE
+        spawn_process = True
 
 
         # with contexts shouldn't run at all yet, they prepend
         # to every command in the context
         if call_args["with"]:
+            spawn_process = False
             Command._prepend_stack.append(cmd)
-        else:
-            # leave shell=False
-            self.process = OpenP(cmd)
-
-
-        if self._is_collecting:
-            if callable(call_args["out"]) or callable(call_args["err"]):
-                should_wait = False
-                
-            if call_args["piped"] or call_args["for"]: should_wait = False
-            
-            self._stdout_queue = Queue()
-            self._stderr_queue = Queue()
-            self._pipe_queue = Queue()
-            
-            # this is required for syncing the start of the collection
-            # threads.  read self._read_streams comments to see why
-            # this is necessary
-            self._start_collecting = Event()
-
-            # if stdout exists, it means we've given it a PIPE, (in other words
-            # it's not being redirected to a file or something)
-            if not stdout:
-                # reader
-                cb = call_args["out"] if callable(call_args["out"]) else None           
-                self._stdout_reader_thread = self._reader_thread(
-                    self.process.stdout, cb, self._stdout_queue)
-                
-                # check if our for queue is feeding off of stdout (default, if
-                # "for" is defined in the call_args)
-                pipe_queue = self._pipe_queue
-                if call_args["for"] == "err" or call_args["piped"] == "err":
-                    pipe_queue = None
-                
-                # collector    
-                self._stdout_collector_thread = self._collector_thread(
-                    self._stdout_queue, self._stdout, pipe_queue)
-            
-            
-            if not stderr:
-                # reader
-                cb = call_args["err"] if callable(call_args["err"]) else None
-                self._stderr_reader_thread = self._reader_thread(
-                    self.process.stderr, cb, self._stderr_queue)
-                
-                # check if we've explicitly assigned the for queue to stderr
-                pipe_queue = None
-                if call_args["for"] == "err" or call_args["piped"] == "err":
-                    pipe_queue = self._pipe_queue
-                
-                # collector
-                self._stderr_collector_thread = self._collector_thread(
-                    self._stderr_queue, self._stderr, pipe_queue)
-            
-            
-            # kick off the threads
-            self._start_collecting.set()
-            
-       
-            
-        def stdin_flusher(stdin_pipe, process_stdin):
-            while True:
-                chunk = stdin_pipe.get()
-                if chunk is None: break
-                os.write(process_stdin, chunk.encode())
-            os.close(process_stdin)
-
-
-        if self._is_collecting:
-            thrd = Thread(target=stdin_flusher, args=(self._stdin, self.process.stdin))
-            thrd.daemon = True
-            thrd.start()
-            
             
 
+        if callable(call_args["out"]) or callable(call_args["err"]):
+            should_wait = False
+            
+        if call_args["piped"] or call_args["for"]:
+            should_wait = False
+            
         # we're running in the background, return self and let us lazily
         # evaluate
         if call_args["bg"]: should_wait = False
 
-        # we're running this command as a with context, don't do anything
-        # because nothing was started to run from Command.__call__ (there's
-        # no self.process)
-        if call_args["with"]: should_wait = False
         
-        if should_wait: self.wait()
+        if spawn_process:
+            self.process = OProc(cmd, stdin, stdout, stderr,
+                bufsize=call_args["bufsize"], wait=should_wait)
         
         
     @property
@@ -283,14 +170,6 @@ class RunningCommand(object):
         return self.process.returncode is not None
 
     def wait(self):
-        if self._stdout_collector_thread:
-            self._stdout_reader_thread.join()
-            self._stdout_collector_thread.join()
-            
-        if self._stderr_collector_thread:
-            self._stderr_reader_thread.join()
-            self._stderr_collector_thread.join()
-        
         exit_status = self.process.wait()
 
         if exit_status > 0: raise get_rc_exc(exit_status)(
@@ -303,101 +182,14 @@ class RunningCommand(object):
     @property
     def stdout(self):
         if self.call_args["bg"]: self.wait()
-        return "".join(self._stdout)
+        return self.process.stdout
     
     @property
     def stderr(self):
         if self.call_args["bg"]: self.wait()
-        return "".join(self._stderr)
+        return self.process.stderr
     
-    
-    def _read_stream(self, stream, fn, bufsize, queue):            
-        # we can't actually start collecting yet until both threads have
-        # started, the reason being, if one thread exits very quickly (for
-        # example, if the command errored out), the stdout and stderr are
-        # both used in the exception handling, but if both threads haven't
-        # started, we don't exactly have stdout and stderr
-        self._start_collecting.wait()
 
-        # here we choose how to call the callback, depending on how many
-        # arguments it takes.  the reason for this is to make it as easy as
-        # possible for people to use, without limiting them.  a new user will
-        # assume the callback takes 1 argument (the data).  as they get more
-        # advanced, they may want to terminate the process, or pass some stdin
-        # back, and will realize that they can pass a callback of more args
-        if fn:
-            num_args = len(inspect.getargspec(fn).args)
-            args = ()
-            if num_args == 2: args = (self._stdin,)
-            elif num_args == 3: args = (self._stdin, self)
-         
-        call_fn = bool(fn)
-        
-        # we use this sentinel primarily for python3+, because iter() takes
-        # a buffer object (for the second argument) to test against.  if we
-        # just say iter(stream, ""), it will read forever in python3, because
-        # although we're receiving data off of the stream, it's in bytes,
-        # not as a string object
-        sentinel = "".encode()
-            
-
-        buf = []
-        line_buffered = bufsize == 1
-        if line_buffered: bufsize = 1024
-
-        try:
-            while True:
-                chunk = os.read(stream, bufsize)
-                if not chunk: break
-
-                if line_buffered:
-                    newline = chunk.find("\n")
-                    if newline == -1: continue
-                    else:
-                        buf.append(chunk[:newline+1])
-                        remainder = chunk[newline+1:]
-                        chunk = "".join(buf)
-                        buf = [remainder]
-
-                if IS_PY3: chunk = chunk.decode("utf8")
-                queue.put(chunk)
-                if call_fn and fn(chunk, *args): call_fn = False
-
-                    
-        except KeyboardInterrupt:
-            interrupt_main()
-                    
-        finally:
-            os.close(stream)
-            
-            # so our collector and possible iterator can stop
-            queue.put(None)
-                
-                
-    def _collect_stream(self, queue, buffer, pipe_queue=None):
-        while True:
-            chunk = queue.get()
-            if pipe_queue: pipe_queue.put(chunk)
-            
-            # we only test for None after possibly putting it on the pipe_queue
-            # because a None on the pipe_queue triggers the StopIteration
-            if chunk is None: break
-            buffer.append(chunk)
-        
-                
-    def _collector_thread(self, *args):
-        thrd = Thread(target=self._collect_stream, args=args)
-        thrd.daemon = True # thread dies with the program
-        thrd.start()
-        return thrd
-    
-    def _reader_thread(self, stream, fn, queue):
-        args = (stream, fn, self.call_args["bufsize"], queue)
-        thrd = Thread(target=self._read_stream, args=args)
-        thrd.daemon = True # thread dies with the program
-        thrd.start()
-        return thrd
-    
     
     def __len__(self):
         return len(str(self))
@@ -469,6 +261,9 @@ class RunningCommand(object):
 
     def __int__(self):
         return int(str(self).strip())
+
+
+
 
 
 
@@ -666,7 +461,7 @@ class Command(object):
                 # in the background, then this command should run in the
                 # background as well
                 if first_arg.call_args["bg"]: call_args["bg"] = True
-                stdin = first_arg._pipe_queue
+                stdin = first_arg.process._pipe_queue
                 
             else: args.insert(0, first_arg)
             
@@ -694,22 +489,17 @@ class Command(object):
 
 
         # stdout redirection
-        stdout = None
-        out = call_args["out"]
-        if out and not callable(out):
-            if hasattr(out, "read"): stdout = out
-            else: stdout = file(str(out), "w")
+        stdout = call_args["out"]
+        if stdout and not callable(stdout) and not hasattr(out, "write"):
+            stdout = file(str(stdout), "w")
         
 
         # stderr redirection
-        stderr = None
-        err = call_args["err"]
-        if err and not callable(err):
-            if hasattr(err, "read"): stderr = err
-            else: stderr = file(str(err), "w")
+        stderr = call_args["err"]
+        if stderr and not callable(stderr) and not hasattr(err, "write"):
+            stderr = file(str(err), "w")
             
-        if call_args["err_to_out"]: stderr = subp.STDOUT
-
+        #if call_args["err_to_out"]: stderr = subp.STDOUT
 
         return RunningCommand(cmd, call_args, stdin, stdout, stderr)
 

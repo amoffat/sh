@@ -28,19 +28,21 @@ class OProc(object):
     _procs_to_cleanup = []
     registered_cleanup = False
 
-    def __init__(self, cmd, bufsize=1, persist=False, wait=True):
+    def __init__(self, cmd, stdin=None, stdout=None, stderr=None, bufsize=1,
+            persist=False, wait=True):
+        
         if not OProc.registered_cleanup:
             atexit.register(OProc._cleanup_procs)
             OProc.registered_cleanup = True
 
 
+        self.cmd = cmd
         self.exit_code = None
         
         self.bufsize = bufsize
-        self.stdin = Queue()
-        self._stdout_queue = Queue()
-        self._stderr_queue = Queue()
+        self.stdin = stdin or Queue()
         self._pipe_queue = Queue()
+
 
         # these are for aggregating the stdout and stderr
         self._stdout = []
@@ -53,12 +55,15 @@ class OProc(object):
         gc.disable()
 
         self._stderr_fd, slave_stderr = pty.openpty()
+        self._stdin_fd, slave_stdin = pty.openpty()
+        
         try: self.pid, stdinout = pty.fork()
         except:
             if gc_was_enabled: gc.enable()
             raise
 
         if self.pid == 0:
+            os.dup2(slave_stdin, 0)
             os.dup2(slave_stderr, 2)
             
             # don't inherit file descriptors
@@ -71,7 +76,7 @@ class OProc(object):
 
         else:
             if not persist: OProc._procs_to_cleanup.append(self)
-            self._stdin_fd = stdinout
+            #self._stdin_fd = stdinout
             self._stdout_fd = stdinout
 
             self._setwinsize(24, 80)
@@ -82,11 +87,12 @@ class OProc(object):
             termios.tcsetattr(stdinout, termios.TCSANOW, attr)
 
             # start the threads
-            self._start_thread(self._write_stream, self._stdin_fd, self.stdin)
+            self._stdin_writer_thread = self._start_thread(
+                self._write_stream, self._stdin_fd, self.stdin)
             self._stdout_reader_thread = self._start_thread(
-                self._read_stream, self._stdout_fd, None, self._stdout)
+                self._read_stream, self._stdout_fd, stdout, self._stdout, self._pipe_queue)
             self._stderr_reader_thread = self._start_thread(
-                self._read_stream, self._stderr_fd, None, self._stderr)
+                self._read_stream, self._stderr_fd, stderr, self._stderr)
             
             if wait: self.wait()
             
@@ -111,9 +117,18 @@ class OProc(object):
     def _write_stream(self, stream, queue):
         while True:
             chunk = queue.get()
-            if chunk is None: break
+            
+            # EOF
+            if chunk is None:
+                os.write(stream, chr(4))
+                break
+            
+            # process exiting
+            elif chunk is False:
+                break
+            
             os.write(stream, chunk.encode())
-        os.close(stream)
+        
         
         
     @property
@@ -125,7 +140,8 @@ class OProc(object):
             if pid == self.pid:
                 alive = False
                 self.exit_code = exit_code
-                
+             
+        # no child process   
         except OSError: alive = False
             
         return alive
@@ -140,20 +156,38 @@ class OProc(object):
         return "".join(self._stderr)
     
 
-    def _read_stream(self, stream, fn, buffer, pipe_queue=None):
+    def _read_stream(self, stream, handler, buffer, pipe_queue=None):
+        if callable(handler): handler_type = "fn"
+        elif hasattr(handler, "write"): handler_type = "fd"
+        else: handler_type = None
+        
+        should_quit = False
+        
         # here we choose how to call the callback, depending on how many
         # arguments it takes.  the reason for this is to make it as easy as
         # possible for people to use, without limiting them.  a new user will
         # assume the callback takes 1 argument (the data).  as they get more
         # advanced, they may want to terminate the process, or pass some stdin
         # back, and will realize that they can pass a callback of more args
-        if fn:
-            num_args = len(inspect.getargspec(fn).args)
+        if handler_type == "fn":
+            num_args = len(inspect.getargspec(handler).args)
             args = ()
             if num_args == 2: args = (self.stdin,)
             elif num_args == 3: args = (self.stdin, self)
-         
-        call_fn = bool(fn)
+            
+            
+            
+        def write_chunk(chunk, should_quit):
+            if IS_PY3: chunk = chunk.decode("utf8")
+            if handler_type == "fn" and not should_quit:
+                should_quit = handler(chunk, *args)
+                
+            elif handler_type == "fd":
+                handler.write(chunk) 
+                
+            if pipe_queue: pipe_queue.put(chunk)        
+            buffer.append(chunk)
+            return should_quit
         
         # we use this sentinel primarily for python3+, because iter() takes
         # a buffer object (for the second argument) to test against.  if we
@@ -171,7 +205,9 @@ class OProc(object):
 
         try:
             while True:
-                read, write, err = select.select([stream], [], [], 0.01)
+                try: read, write, err = select.select([stream], [], [], 0.01)
+                except: break
+                
                 if not read:
                     if not self.alive: break
                     continue
@@ -182,29 +218,30 @@ class OProc(object):
 
                 if line_buffered:
                     
-                    to_write = []
-                    found_newline = False
-                    
+                    #if "/usr/bin/tr" in self.cmd: print repr(chunk)
                     while True:
                         newline = chunk.find("\n")
                         if newline == -1: break
-                        found_newline = True
                         
-                        to_write.append(chunk[:newline+1])
-                        chunk = chunk[newline+1:]            
+                        chunk_to_write = chunk[:newline+1]
+                        if buf:
+                            chunk_to_write = "".join(buf) + chunk_to_write
+                            buf = []
                         
-                    if found_newline:
-                        tmp = chunk
-                        chunk = "".join(buf) + "".join(to_write)
-                        buf = [tmp]
-
+                        chunk = chunk[newline+1:]
+                        
+                        #if "/usr/bin/tr" in self.cmd: print repr(chunk_to_write)
+                        write_chunk(chunk_to_write, should_quit)
+                             
+                    if chunk: buf.append(chunk)       
+                        
                     
-                if IS_PY3: chunk = chunk.decode("utf8")
-                if call_fn and fn(chunk, *args): call_fn = False
-                buffer.append(chunk)
-                    
+                else:
+                    write_chunk(chunk, should_quit)
+              
         finally:
-            os.close(stream)
+            try: os.close(stream)
+            except: pass
             
             # so our possible iterator can stop
             if pipe_queue: pipe_queue.put(None)
@@ -226,5 +263,9 @@ class OProc(object):
         
         self._stdout_reader_thread.join()
         self._stderr_reader_thread.join()
+        
+        self.stdin.put(False)
+        self._stdin_writer_thread.join()
+        
         return self.exit_code
 
