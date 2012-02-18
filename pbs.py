@@ -33,6 +33,15 @@ from types import ModuleType
 from functools import partial
 import inspect
 
+
+import pty
+import termios
+import signal
+import atexit
+import gc
+
+from openp import OpenP
+
 # for incremental stdout/err output
 from threading  import Thread, Event
 try: from thread import interrupt_main
@@ -124,17 +133,16 @@ def resolve_program(program):
 
 
 
+
+
+
+
 class RunningCommand(object):
-    def __init__(self, command_ran, process, call_args, stdin=None):
+    def __init__(self, cmd, call_args, stdin, stdout, stderr):
         
         self.call_args = call_args
-        
-        # this is purely for debugging
-        self.command_ran = command_ran
-
-        # process might be null if we've called our command in a with
-        # context
-        self.process = process
+        self.cmd = cmd
+        self.process = None
 
         # these are for aggregating the stdout and stderr
         self._stdout = []
@@ -162,6 +170,30 @@ class RunningCommand(object):
         should_wait = True
         
         
+        master_stdin, stdin = pty.openpty()
+
+
+        # means we're just collecting as normal, no redirection
+        #if stdout is None:
+            #master_stdout, stdout = pty.openpty()
+
+        # means we're just collecting as normal, no redirection
+        #if stderr is None:
+            #master_stderr, stderr = pty.openpty()
+            
+
+        # set pipe to None if we're outputting straight to CLI
+        pipe = None if call_args["fg"] else subp.PIPE
+
+
+        # with contexts shouldn't run at all yet, they prepend
+        # to every command in the context
+        if call_args["with"]:
+            Command._prepend_stack.append(cmd)
+        else:
+            # leave shell=False
+            self.process = OpenP(cmd)
+
 
         if self._is_collecting:
             if callable(call_args["out"]) or callable(call_args["err"]):
@@ -180,11 +212,11 @@ class RunningCommand(object):
 
             # if stdout exists, it means we've given it a PIPE, (in other words
             # it's not being redirected to a file or something)
-            if process.stdout:
+            if not stdout:
                 # reader
                 cb = call_args["out"] if callable(call_args["out"]) else None           
                 self._stdout_reader_thread = self._reader_thread(
-                    process.stdout, cb, self._stdout_queue)
+                    self.process.stdout, cb, self._stdout_queue)
                 
                 # check if our for queue is feeding off of stdout (default, if
                 # "for" is defined in the call_args)
@@ -197,11 +229,11 @@ class RunningCommand(object):
                     self._stdout_queue, self._stdout, pipe_queue)
             
             
-            if process.stderr:
+            if not stderr:
                 # reader
                 cb = call_args["err"] if callable(call_args["err"]) else None
                 self._stderr_reader_thread = self._reader_thread(
-                    process.stderr, cb, self._stderr_queue)
+                    self.process.stderr, cb, self._stderr_queue)
                 
                 # check if we've explicitly assigned the for queue to stderr
                 pipe_queue = None
@@ -222,12 +254,8 @@ class RunningCommand(object):
             while True:
                 chunk = stdin_pipe.get()
                 if chunk is None: break
-
-                #print chunk
-                process_stdin.write(chunk.encode())
-                process_stdin.flush()
-                
-            process_stdin.close()
+                os.write(process_stdin, chunk.encode())
+            os.close(process_stdin)
 
 
         if self._is_collecting:
@@ -266,7 +294,7 @@ class RunningCommand(object):
         exit_status = self.process.wait()
 
         if exit_status > 0: raise get_rc_exc(exit_status)(
-                self.command_ran,
+                " ".join(self.cmd),
                 self.stdout,
                 self.stderr
             )        
@@ -312,34 +340,35 @@ class RunningCommand(object):
         # not as a string object
         sentinel = "".encode()
             
+
+        buf = []
+        line_buffered = bufsize == 1
+        if line_buffered: bufsize = 1024
+
         try:
-            # line buffered
-            if bufsize == 1:
-                for line in iter(stream.readline, sentinel):
-                    if IS_PY3: line = line.decode("utf8")
-                    queue.put(line)
-                    if call_fn and fn(line, *args): call_fn = False
-                    
-            # unbuffered or buffered by amount
-            else:
-                # we have this ridiculous line because we're sticking with how
-                # subprocess.Popen interprets bufsize.  1 for line-buffered,
-                # 0 for unbuffered, and any other amount for
-                # that-amount-buffered.  since we're already in this branch,
-                # we're buffered by a fixed amount (not line-buffered), so
-                # go ahead and translate bufsize to that real amount.
-                if bufsize == 0: bufsize = 1
-                
-                for chunk in iter(partial(stream.read, bufsize), sentinel):
-                    if IS_PY3: chunk = chunk.decode("utf8")
-                    queue.put(chunk)
-                    if call_fn and fn(chunk, *args): call_fn = False
+            while True:
+                chunk = os.read(stream, bufsize)
+                if not chunk: break
+
+                if line_buffered:
+                    newline = chunk.find("\n")
+                    if newline == -1: continue
+                    else:
+                        buf.append(chunk[:newline+1])
+                        remainder = chunk[newline+1:]
+                        chunk = "".join(buf)
+                        buf = [remainder]
+
+                if IS_PY3: chunk = chunk.decode("utf8")
+                queue.put(chunk)
+                if call_fn and fn(chunk, *args): call_fn = False
+
                     
         except KeyboardInterrupt:
             interrupt_main()
                     
         finally:
-            stream.close()
+            os.close(stream)
             
             # so our collector and possible iterator can stop
             queue.put(None)
@@ -627,12 +656,9 @@ class Command(object):
         call_args = Command._call_args.copy()
         call_args.update(tmp_call_args)
 
-        # set pipe to None if we're outputting straight to CLI
-        pipe = None if call_args["fg"] else subp.PIPE
         
         # check if we're piping via composition
-        stdin = pipe
-        actual_stdin = None
+        stdin = None
         if args:
             first_arg = args.pop(0)
             if isinstance(first_arg, RunningCommand):
@@ -640,7 +666,7 @@ class Command(object):
                 # in the background, then this command should run in the
                 # background as well
                 if first_arg.call_args["bg"]: call_args["bg"] = True
-                actual_stdin = first_arg._pipe_queue
+                stdin = first_arg._pipe_queue
                 
             else: args.insert(0, first_arg)
             
@@ -664,18 +690,11 @@ class Command(object):
         final_args = split_args
 
         cmd.extend(final_args)
-        command_ran = " ".join(cmd)
 
-
-        # with contexts shouldn't run at all yet, they prepend
-        # to every command in the context
-        if call_args["with"]:
-            Command._prepend_stack.append(cmd)
-            return RunningCommand(command_ran, None, call_args)
 
 
         # stdout redirection
-        stdout = pipe
+        stdout = None
         out = call_args["out"]
         if out and not callable(out):
             if hasattr(out, "read"): stdout = out
@@ -683,20 +702,16 @@ class Command(object):
         
 
         # stderr redirection
-        stderr = pipe
+        stderr = None
         err = call_args["err"]
         if err and not callable(err):
             if hasattr(err, "read"): stderr = err
             else: stderr = file(str(err), "w")
             
         if call_args["err_to_out"]: stderr = subp.STDOUT
-            
-        # leave shell=False
-        process = subp.Popen(cmd, shell=False, env=os.environ,
-            stdin=stdin, stdout=stdout, stderr=stderr, close_fds=True)
 
 
-        return RunningCommand(command_ran, process, call_args, actual_stdin)
+        return RunningCommand(cmd, call_args, stdin, stdout, stderr)
 
 
 
