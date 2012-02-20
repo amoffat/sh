@@ -137,7 +137,7 @@ class RunningCommand(object):
         self.process = None
 
 
-        should_wait = True
+        self.should_wait = True
         spawn_process = True
 
 
@@ -149,44 +149,39 @@ class RunningCommand(object):
             
 
         if callable(call_args["out"]) or callable(call_args["err"]):
-            should_wait = False
+            self.should_wait = False
             
         if call_args["piped"] or call_args["for"]:
-            should_wait = False
+            self.should_wait = False
             
         # we're running in the background, return self and let us lazily
         # evaluate
-        if call_args["bg"]: should_wait = False
+        if call_args["bg"]: self.should_wait = False
 
         
         if spawn_process:
             self.process = OProc(cmd, stdin, stdout, stderr,
-                bufsize=call_args["bufsize"], wait=should_wait)
+                bufsize=call_args["bufsize"], wait=self.should_wait)
         
-        
-    @property
-    def done(self):
-        self.process.poll()
-        return self.process.returncode is not None
 
     def wait(self):
         exit_status = self.process.wait()
 
         if exit_status > 0: raise get_rc_exc(exit_status)(
                 " ".join(self.cmd),
-                self.stdout,
-                self.stderr
+                self.process.stdout,
+                self.process.stderr
             )        
         return self
 
     @property
     def stdout(self):
-        if self.call_args["bg"]: self.wait()
+        self.wait()
         return self.process.stdout
     
     @property
     def stderr(self):
-        if self.call_args["bg"]: self.wait()
+        self.wait()
         return self.process.stderr
     
 

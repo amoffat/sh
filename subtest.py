@@ -1,14 +1,10 @@
-import oproc
-import time
-import os
-import threading
-import pbs
-from Queue import Queue
+import pbs as sh
 
 def test(line):
     print repr(line)
-    pass
 
-
-p = pbs.tr(pbs.ls("-l"), "[:lower:]", "[:upper:]", _bufsize=1, _out=test)
+#p = sh.grep(sh.ls("/usr/lib", "-1", _piped=True), "ao", _out=test)
+p = sh.sort(sh.tr(sh.du("/usr/lib", _piped=True), "[:lower:]", "[:upper:]", _piped=True), "-n")
+#p = sh.ls("/etc", "-1", _out=test)
 p.wait()
+#print p

@@ -8,11 +8,13 @@ import atexit
 import gc
 import threading
 import traceback
+import tty
 import pickle
 import inspect
 import fcntl
 import struct
 import resource
+from collections import deque
 
 from threading import Thread, Event
 try: from Queue import Queue, Empty
@@ -29,7 +31,7 @@ class OProc(object):
     registered_cleanup = False
 
     def __init__(self, cmd, stdin=None, stdout=None, stderr=None, bufsize=1,
-            persist=False, wait=True):
+            persist=False, wait=True, ibufsize=10000):
         
         if not OProc.registered_cleanup:
             atexit.register(OProc._cleanup_procs)
@@ -38,6 +40,7 @@ class OProc(object):
 
         self.cmd = cmd
         self.exit_code = None
+        self._done_callbacks = []
         
         self.bufsize = bufsize
         self.stdin = stdin or Queue()
@@ -45,8 +48,8 @@ class OProc(object):
 
 
         # these are for aggregating the stdout and stderr
-        self._stdout = []
-        self._stderr = []
+        self._stdout = deque(maxlen=ibufsize)
+        self._stderr = deque(maxlen=ibufsize)
 
 
         # Disable gc to avoid bug where gc -> file_dealloc ->
@@ -85,6 +88,8 @@ class OProc(object):
             attr = termios.tcgetattr(stdinout)
             attr[3] = attr[3] & ~termios.ECHO
             termios.tcsetattr(stdinout, termios.TCSANOW, attr)
+            
+            tty.setraw(stdinout)
 
             # start the threads
             self._stdin_writer_thread = self._start_thread(
@@ -130,6 +135,8 @@ class OProc(object):
             os.write(stream, chunk.encode())
         
         
+    def add_done_callback(self, cb):
+        self._done_callbacks.append(cb)
         
     @property
     def alive(self):
@@ -143,7 +150,6 @@ class OProc(object):
              
         # no child process   
         except OSError: alive = False
-            
         return alive
     
         
@@ -216,9 +222,8 @@ class OProc(object):
                 except OSError: break
                 if not chunk: break
 
+
                 if line_buffered:
-                    
-                    #if "/usr/bin/tr" in self.cmd: print repr(chunk)
                     while True:
                         newline = chunk.find("\n")
                         if newline == -1: break
@@ -229,8 +234,6 @@ class OProc(object):
                             buf = []
                         
                         chunk = chunk[newline+1:]
-                        
-                        #if "/usr/bin/tr" in self.cmd: print repr(chunk_to_write)
                         write_chunk(chunk_to_write, should_quit)
                              
                     if chunk: buf.append(chunk)       
@@ -266,6 +269,8 @@ class OProc(object):
         
         self.stdin.put(False)
         self._stdin_writer_thread.join()
+        
+        for cb in self._done_callbacks: cb()
         
         return self.exit_code
 
