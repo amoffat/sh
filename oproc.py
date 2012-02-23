@@ -26,6 +26,7 @@ IS_PY3 = sys.version_info[0] == 3
 
 
 
+
 class OProc(object):
     _procs_to_cleanup = []
     registered_cleanup = False
@@ -42,12 +43,12 @@ class OProc(object):
         self.exit_code = None
         self._done_callbacks = []
         
-        self.bufsize = bufsize
         self.stdin = stdin or Queue()
         self._pipe_queue = Queue()
 
 
-        # these are for aggregating the stdout and stderr
+        # these are for aggregating the stdout and stderr.  we use a deque
+        # because we don't want to overflow
         self._stdout = deque(maxlen=ibufsize)
         self._stderr = deque(maxlen=ibufsize)
 
@@ -65,6 +66,7 @@ class OProc(object):
             if gc_was_enabled: gc.enable()
             raise
 
+        # child
         if self.pid == 0:
             os.dup2(slave_stdin, 0)
             os.dup2(slave_stderr, 2)
@@ -77,7 +79,10 @@ class OProc(object):
 
             os._exit(255)
 
+        # parent
         else:
+            if gc_was_enabled: gc.enable()
+            
             if not persist: OProc._procs_to_cleanup.append(self)
             #self._stdin_fd = stdinout
             self._stdout_fd = stdinout
@@ -92,12 +97,20 @@ class OProc(object):
             tty.setraw(stdinout)
 
             # start the threads
+            stdout_stream = StreamReader(
+                self._stdout_fd, stdout, self._stdout, bufsize,
+                self._pipe_queue
+            )
+                
+            stderr_stream = StreamReader(
+                self._stderr_fd, stderr, self._stderr, bufsize
+            )
+            
+            self._reader_thread = self._start_thread(
+                self.reader_thread, stdout_stream, stderr_stream)
+                
             self._stdin_writer_thread = self._start_thread(
                 self._write_stream, self._stdin_fd, self.stdin)
-            self._stdout_reader_thread = self._start_thread(
-                self._read_stream, self._stdout_fd, stdout, self._stdout, self._pipe_queue)
-            self._stderr_reader_thread = self._start_thread(
-                self._read_stream, self._stderr_fd, stderr, self._stderr)
             
             if wait: self.wait()
             
@@ -151,8 +164,27 @@ class OProc(object):
         # no child process   
         except OSError: alive = False
         return alive
-    
+
+
+    def reader_thread(self, stdout, stderr):
+        readers = [stdout, stderr]
         
+        while True:
+            try: read, write, err = select.select(readers, [], [], 0.01)
+            except: break
+            
+            if not read:
+                if not self.alive: break
+                continue
+
+            for stream in read:
+                error = stream.read()
+                if error: readers.remove(stream)
+                
+        stdout.close()
+        stderr.close()
+
+
     @property
     def stdout(self):
         return "".join(self._stdout)
@@ -161,94 +193,6 @@ class OProc(object):
     def stderr(self):
         return "".join(self._stderr)
     
-
-    def _read_stream(self, stream, handler, buffer, pipe_queue=None):
-        if callable(handler): handler_type = "fn"
-        elif hasattr(handler, "write"): handler_type = "fd"
-        else: handler_type = None
-        
-        should_quit = False
-        
-        # here we choose how to call the callback, depending on how many
-        # arguments it takes.  the reason for this is to make it as easy as
-        # possible for people to use, without limiting them.  a new user will
-        # assume the callback takes 1 argument (the data).  as they get more
-        # advanced, they may want to terminate the process, or pass some stdin
-        # back, and will realize that they can pass a callback of more args
-        if handler_type == "fn":
-            num_args = len(inspect.getargspec(handler).args)
-            args = ()
-            if num_args == 2: args = (self.stdin,)
-            elif num_args == 3: args = (self.stdin, self)
-            
-            
-            
-        def write_chunk(chunk, should_quit):
-            if IS_PY3: chunk = chunk.decode("utf8")
-            if handler_type == "fn" and not should_quit:
-                should_quit = handler(chunk, *args)
-                
-            elif handler_type == "fd":
-                handler.write(chunk) 
-                
-            if pipe_queue: pipe_queue.put(chunk)        
-            buffer.append(chunk)
-            return should_quit
-        
-        # we use this sentinel primarily for python3+, because iter() takes
-        # a buffer object (for the second argument) to test against.  if we
-        # just say iter(stream, ""), it will read forever in python3, because
-        # although we're receiving data off of the stream, it's in bytes,
-        # not as a string object
-        sentinel = "".encode()
-            
-
-        buf = []
-        bufsize = self.bufsize
-        line_buffered = bufsize == 1
-        if bufsize == 0: bufsize = 1
-        if line_buffered: bufsize = 1024
-
-        try:
-            while True:
-                try: read, write, err = select.select([stream], [], [], 0.01)
-                except: break
-                
-                if not read:
-                    if not self.alive: break
-                    continue
-                
-                try: chunk = os.read(stream, bufsize)
-                except OSError: break
-                if not chunk: break
-
-
-                if line_buffered:
-                    while True:
-                        newline = chunk.find("\n")
-                        if newline == -1: break
-                        
-                        chunk_to_write = chunk[:newline+1]
-                        if buf:
-                            chunk_to_write = "".join(buf) + chunk_to_write
-                            buf = []
-                        
-                        chunk = chunk[newline+1:]
-                        write_chunk(chunk_to_write, should_quit)
-                             
-                    if chunk: buf.append(chunk)       
-                        
-                    
-                else:
-                    write_chunk(chunk, should_quit)
-              
-        finally:
-            try: os.close(stream)
-            except: pass
-            
-            # so our possible iterator can stop
-            if pipe_queue: pipe_queue.put(None)
-
 
     def kill(self, sig=signal.SIGKILL):
         try: os.kill(self.pid, sig)
@@ -264,8 +208,7 @@ class OProc(object):
     def wait(self):
         if self.exit_code is None: pid, self.exit_code = os.waitpid(self.pid, 0)
         
-        self._stdout_reader_thread.join()
-        self._stderr_reader_thread.join()
+        self._reader_thread.join()
         
         self.stdin.put(False)
         self._stdin_writer_thread.join()
@@ -274,3 +217,89 @@ class OProc(object):
         
         return self.exit_code
 
+
+
+
+class StreamReader(object):
+
+    def __init__(self, stream, handler, buffer, bufsize, pipe_queue=None):
+        self.stream = stream
+        self.buffer = buffer
+        self._tmp_buffer = []
+        self.pipe_queue = pipe_queue
+
+
+        # determine buffering
+        self.line_buffered = False
+        if bufsize == 1:
+            self.line_buffered = True
+            self.bufsize = 1024
+        elif bufsize == 0: self.bufsize = 1 
+        else: self.bufsize = bufsize
+
+
+        self.handler = handler
+        if callable(handler): self.handler_type = "fn"
+        elif hasattr(handler, "write"): self.handler_type = "fd"
+        else: self.handler_type = None
+        
+        self.should_quit = False
+        
+        # here we choose how to call the callback, depending on how many
+        # arguments it takes.  the reason for this is to make it as easy as
+        # possible for people to use, without limiting them.  a new user will
+        # assume the callback takes 1 argument (the data).  as they get more
+        # advanced, they may want to terminate the process, or pass some stdin
+        # back, and will realize that they can pass a callback of more args
+        if self.handler_type == "fn":
+            num_args = len(inspect.getargspec(handler).args)
+            self.handler_args = ()
+            if num_args == 2: self.handler_args = (self.stdin,)
+            elif num_args == 3: self.handler_args = (self.stdin, self)
+            
+
+    def fileno(self):
+        return self.stream
+            
+
+    def close(self):
+        if self.pipe_queue: self.pipe_queue.put(None)
+        try: os.close(self.stream)
+        except OSError: pass
+
+
+    def write_chunk(self, chunk):
+        if IS_PY3: chunk = chunk.decode("utf8")
+        if self.handler_type == "fn" and not self.should_quit:
+            self.should_quit = self.handler(chunk, *self.handler_args)
+            
+        elif self.handler_type == "fd":
+            self.handler.write(chunk) 
+            
+        if self.pipe_queue: self.pipe_queue.put(chunk)        
+        self.buffer.append(chunk)
+
+            
+    def read(self):
+        try: chunk = os.read(self.stream, self.bufsize)
+        except OSError: return False
+        if not chunk: return False
+        
+        if self.line_buffered:
+            while True:
+                newline = chunk.find("\n")
+                if newline == -1: break
+                
+                chunk_to_write = chunk[:newline+1]
+                if self._tmp_buffer:
+                    chunk_to_write = "".join(self._tmp_buffer) + chunk_to_write
+                    self._tmp_buffer = []
+                
+                chunk = chunk[newline+1:]
+                self.write_chunk(chunk_to_write)
+                     
+            if chunk: self._tmp_buffer.append(chunk)       
+                
+        # not line buffered
+        else: self.write_chunk(chunk)
+        return True
