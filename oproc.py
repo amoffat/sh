@@ -32,7 +32,7 @@ class OProc(object):
     registered_cleanup = False
 
     def __init__(self, cmd, stdin=None, stdout=None, stderr=None, bufsize=1,
-            persist=False, wait=True, ibufsize=10000):
+            persist=False, wait=True, ibufsize=100000):
         
         if not OProc.registered_cleanup:
             atexit.register(OProc._cleanup_procs)
@@ -84,7 +84,6 @@ class OProc(object):
             if gc_was_enabled: gc.enable()
             
             if not persist: OProc._procs_to_cleanup.append(self)
-            #self._stdin_fd = stdinout
             self._stdout_fd = stdinout
 
             self._setwinsize(24, 80)
@@ -94,20 +93,22 @@ class OProc(object):
             attr[3] = attr[3] & ~termios.ECHO
             termios.tcsetattr(stdinout, termios.TCSANOW, attr)
             
+            # set raw mode, so there isn't any weird translation of newlines
+            # to \r\n and other oddities
             tty.setraw(stdinout)
 
-            # start the threads
+
+
             stdout_stream = StreamReader(
                 self._stdout_fd, stdout, self._stdout, bufsize,
                 self._pipe_queue
             )
                 
-            stderr_stream = StreamReader(
-                self._stderr_fd, stderr, self._stderr, bufsize
-            )
+            stderr_stream = StreamReader(self._stderr_fd, stderr, self._stderr,
+                bufsize)
             
-            self._reader_thread = self._start_thread(
-                self.reader_thread, stdout_stream, stderr_stream)
+            self._reader_thread = self._start_thread(self.reader_thread,
+                stdout_stream, stderr_stream)
                 
             self._stdin_writer_thread = self._start_thread(
                 self._write_stream, self._stdin_fd, self.stdin)
@@ -145,7 +146,8 @@ class OProc(object):
             elif chunk is False:
                 break
             
-            os.write(stream, chunk.encode())
+            try: os.write(stream, chunk.encode())
+            except OSError: break
         
         
     def add_done_callback(self, cb):
@@ -153,7 +155,12 @@ class OProc(object):
         
     @property
     def alive(self):
-        alive = True     
+        # this might happen on interpretter shutdown, as python is cleaning
+        # up modules (gc'ing them and setting their names to None), so we
+        # check for that
+        if os is None: return False
+        
+        alive = True
          
         try:
             pid, exit_code = os.waitpid(self.pid, os.WNOHANG)
@@ -172,6 +179,8 @@ class OProc(object):
         while True:
             try: read, write, err = select.select(readers, [], [], 0.01)
             except: break
+            
+            #print read, write, err
             
             if not read:
                 if not self.alive: break
@@ -282,8 +291,8 @@ class StreamReader(object):
             
     def read(self):
         try: chunk = os.read(self.stream, self.bufsize)
-        except OSError: return False
-        if not chunk: return False
+        except OSError: return True
+        if not chunk: return True
         
         if self.line_buffered:
             while True:
@@ -302,4 +311,3 @@ class StreamReader(object):
                 
         # not line buffered
         else: self.write_chunk(chunk)
-        return True
