@@ -382,14 +382,14 @@ class Command(object):
             # cut(d="\t")
             if len(k) == 1:
                 if v is True: arg = "-"+k
-                else: arg = "-%s %r" % (k, v)
+                else: arg = "-%s %r" % (k, v.encode("utf8"))
 
             # we're doing a long arg
             else:
                 k = k.replace("_", "-")
 
                 if v is True: arg = "--"+k
-                else: arg = "--%s=%r" % (k, v)
+                else: arg = "--%s=%r" % (k, v.encode("utf8"))
             processed_args.append(arg)
 
         processed_args = shlex.split(" ".join(processed_args))
