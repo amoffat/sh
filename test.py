@@ -26,8 +26,6 @@ def create_tmp_test(code):
 
 
 
-
-
 @requires_posix
 class Basic(unittest.TestCase):
     
@@ -622,5 +620,8 @@ for i in xrange(42):
 
 
 if __name__ == "__main__":
-    suite = unittest.TestLoader().loadTestsFromTestCase(Basic)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+    if len(sys.argv) > 1:
+        unittest.main()
+    else:
+        suite = unittest.TestLoader().loadTestsFromTestCase(Basic)
+        unittest.TextTestRunner(verbosity=2).run(suite)
