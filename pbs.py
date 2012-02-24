@@ -366,15 +366,21 @@ class Command(object):
         return call_args, kwargs
 
 
-    @staticmethod
-    def _compile_args(args, kwargs):
+    def _format_arg(self, arg):
+        if IS_PY3: arg = str(arg)
+        else: arg = unicode(arg).encode("utf8")
+        arg = '"%s"' % arg
+
+        return arg
+
+    def _compile_args(self, args, kwargs):
         processed_args = []
                 
         # aggregate positional args
         for arg in args:
             if isinstance(arg, (list, tuple)):
-                for sub_arg in arg: processed_args.append(repr(sub_arg))
-            else: processed_args.append(repr(arg))
+                for sub_arg in arg: processed_args.append(self._format_arg(sub_arg))
+            else: processed_args.append(self._format_arg(arg))
 
         # aggregate the keyword arguments
         for k,v in kwargs.items():
@@ -382,17 +388,33 @@ class Command(object):
             # cut(d="\t")
             if len(k) == 1:
                 if v is True: arg = "-"+k
-                else: arg = "-%s %r" % (k, v.encode("utf8"))
+                else: arg = "-%s %s" % (k, self._format_arg(v))
 
             # we're doing a long arg
             else:
                 k = k.replace("_", "-")
 
                 if v is True: arg = "--"+k
-                else: arg = "--%s=%r" % (k, v.encode("utf8"))
+                else: arg = "--%s=%s" % (k, self._format_arg(v))
             processed_args.append(arg)
 
-        processed_args = shlex.split(" ".join(processed_args))
+        try: processed_args = shlex.split(" ".join(processed_args))
+        except ValueError, e:
+            if str(e) == "No closing quotation":
+                exc_msg = """No closing quotation.  If you're trying to escape \
+double quotes, please note that you need to escape the escape:
+
+    # incorrect
+    print pbs.echo('test print double quote: \"')
+    print pbs.echo('test print double quote: \\"')
+    print pbs.echo("test print double quote: \\"")
+    print pbs.echo("test print double quote: \\\\"")
+
+    # correct
+    print pbs.echo('test print double quote: \\\\"')
+    print pbs.echo("test print double quote: \\\\\\"")
+"""
+                raise ValueError(exc_msg)
         return processed_args
  
     
