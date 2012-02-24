@@ -40,6 +40,9 @@ import signal
 import atexit
 import gc
 
+try: from Queue import Queue, Empty
+except ImportError: from queue import Queue, Empty  # 3
+
 from oproc import OProc
 
 
@@ -507,13 +510,13 @@ double quotes, please note that you need to escape the escape:
 
         # stdout redirection
         stdout = call_args["out"]
-        if stdout and not callable(stdout) and not hasattr(out, "write"):
+        if stdout and not callable(stdout) and not hasattr(stdout, "write"):
             stdout = file(str(stdout), "w")
         
 
         # stderr redirection
         stderr = call_args["err"]
-        if stderr and not callable(stderr) and not hasattr(err, "write"):
+        if stderr and not callable(stderr) and not hasattr(stderr, "write"):
             stderr = file(str(err), "w")
             
         #if call_args["err_to_out"]: stderr = subp.STDOUT
