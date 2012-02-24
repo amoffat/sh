@@ -37,6 +37,20 @@ class Basic(unittest.TestCase):
         out = str(ls)
         self.assertEqual(out, actual_location)
 
+    def test_unicode_arg(self):
+        pass
+    
+    def test_number_arg(self):
+        pass
+    
+    def test_list_arg(self):
+        pass
+    
+    def test_quote_escaping(self):
+        pass
+    
+    def test_environment(self):
+        pass
     
     def test_which(self):
         from pbs import which, ls
