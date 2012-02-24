@@ -99,19 +99,19 @@ class OProc(object):
 
 
 
-            stdout_stream = StreamReader(
-                self._stdout_fd, stdout, self._stdout, bufsize,
-                self._pipe_queue
-            )
+
+            stdin_stream = StreamWriter(self._stdin_fd, self.stdin)
+                                        
+            stdout_stream = StreamReader(self._stdout_fd, stdout, self._stdout,
+                bufsize, self._pipe_queue)
                 
             stderr_stream = StreamReader(self._stderr_fd, stderr, self._stderr,
                 bufsize)
             
-            self._reader_thread = self._start_thread(self.reader_thread,
-                stdout_stream, stderr_stream)
-                
-            self._stdin_writer_thread = self._start_thread(
-                self._write_stream, self._stdin_fd, self.stdin)
+            # start the main io thread
+            self._io_thread = self._start_thread(self.io_thread,
+                stdin_stream, stdout_stream, stderr_stream)
+            
             
             if wait: self.wait()
             
@@ -130,59 +130,37 @@ class OProc(object):
         thrd = threading.Thread(target=fn, args=args)
         thrd.daemon = True
         thrd.start()
-        return thrd
-
-
-    def _write_stream(self, stream, queue):
-        while True:
-            chunk = queue.get()
-            
-            # EOF
-            if chunk is None:
-                os.write(stream, chr(4))
-                break
-            
-            # process exiting
-            elif chunk is False:
-                break
-            
-            try: os.write(stream, chunk.encode())
-            except OSError: break
-        
+        return thrd            
+                
+                
         
     def add_done_callback(self, cb):
         self._done_callbacks.append(cb)
         
     @property
     def alive(self):
-        # this might happen on interpretter shutdown, as python is cleaning
-        # up modules (gc'ing them and setting their names to None), so we
-        # check for that
-        if os is None: return False
-        
-        alive = True
+        if self.exit_code is not None: return False
          
         try:
             pid, exit_code = os.waitpid(self.pid, os.WNOHANG)
             if pid == self.pid:
-                alive = False
                 self.exit_code = exit_code
+                return False
              
         # no child process   
-        except OSError: alive = False
-        return alive
+        except OSError: return False
+        return True
 
 
-    def reader_thread(self, stdout, stderr):
+    def io_thread(self, stdin, stdout, stderr):
         readers = [stdout, stderr]
+        writers = [stdin]
         
         while True:
-            try: read, write, err = select.select(readers, [], [], 0.01)
+            try: read, write, err = select.select(readers, writers, [], 0.01)
             except: break
             
-            #print read, write, err
-            
-            if not read:
+            if not read and not write:
                 if not self.alive: break
                 continue
 
@@ -190,6 +168,11 @@ class OProc(object):
                 error = stream.read()
                 if error: readers.remove(stream)
                 
+            for stream in write:
+                error = stream.write()
+                if error: writers.remove(stream)
+                
+        stdin.close()
         stdout.close()
         stderr.close()
 
@@ -206,6 +189,7 @@ class OProc(object):
     def kill(self, sig=signal.SIGKILL):
         try: os.kill(self.pid, sig)
         except OSError: pass
+        self.wait()
 
 
     @staticmethod
@@ -217,16 +201,47 @@ class OProc(object):
     def wait(self):
         if self.exit_code is None: pid, self.exit_code = os.waitpid(self.pid, 0)
         
-        self._reader_thread.join()
-        
         self.stdin.put(False)
-        self._stdin_writer_thread.join()
+        self._io_thread.join()
         
         for cb in self._done_callbacks: cb()
         
         return self.exit_code
 
 
+
+
+
+
+class StreamWriter(object):
+    def __init__(self, stream, queue):
+        self.stream = stream
+        self.queue = queue
+        
+    def fileno(self):
+        return self.stream
+
+    def write(self):
+        try: chunk = self.queue.get_nowait()
+        except Empty: return False # not ready
+        
+        # EOF
+        if chunk is None:
+            os.write(self.stream, chr(4))
+            return True
+        
+        # process exiting
+        elif chunk is False:
+            return True
+        
+        try: os.write(self.stream, chunk.encode())
+        except OSError: return True
+        
+        
+    def close(self):
+        try: os.close(self.stream)
+        except OSError: pass
+        
 
 
 class StreamReader(object):
