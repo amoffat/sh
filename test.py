@@ -160,7 +160,7 @@ print len(options.long_option.split())
         ls = Command(which("ls"))
         wc = Command(which("wc"))
         
-        c1 = int(wc(ls(A=True), l=True))
+        c1 = int(wc(ls("-A1"), l=True))
         c2 = len(os.listdir("."))
         self.assertEqual(c1, c2)
 
