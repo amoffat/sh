@@ -32,7 +32,7 @@ class OProc(object):
     registered_cleanup = False
 
     def __init__(self, cmd, stdin=None, stdout=None, stderr=None, bufsize=1,
-            persist=False, wait=True, ibufsize=100000):
+            persist=False, ibufsize=100000):
         
         if not OProc.registered_cleanup:
             atexit.register(OProc._cleanup_procs)
@@ -112,9 +112,6 @@ class OProc(object):
             self._io_thread = self._start_thread(self.io_thread,
                 stdin_stream, stdout_stream, stderr_stream)
             
-            
-            if wait: self.wait()
-            
 
     def _setwinsize(self, r, c):
         TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
@@ -136,21 +133,6 @@ class OProc(object):
         
     def add_done_callback(self, cb):
         self._done_callbacks.append(cb)
-        
-    @property
-    def alive(self):
-        if self.exit_code is not None: return False
-         
-        try:
-            pid, exit_code = os.waitpid(self.pid, os.WNOHANG)
-            if pid == self.pid:
-                self.exit_code = exit_code
-                return False
-             
-        # no child process   
-        except OSError: return False
-        return True
-
 
     def io_thread(self, stdin, stdout, stderr):
         readers = [stdout, stderr]
@@ -198,8 +180,29 @@ class OProc(object):
             proc.kill()
 
 
+    def _handle_exitstatus(self, sts):
+        if os.WIFSIGNALED(sts): return -os.WTERMSIG(sts)
+        elif os.WIFEXITED(sts): return os.WEXITSTATUS(sts)
+        else: raise RuntimeError("Unknown child exit status!")
+        
+    @property
+    def alive(self):
+        if self.exit_code is not None: return False
+         
+        try:
+            pid, exit_code = os.waitpid(self.pid, os.WNOHANG)
+            if pid == self.pid:
+                self.exit_code = self._handle_exitstatus(exit_code)
+                return False
+             
+        # no child process   
+        except OSError: return False
+        return True
+
     def wait(self):
-        if self.exit_code is None: pid, self.exit_code = os.waitpid(self.pid, 0)
+        if self.exit_code is None:
+            pid, exit_code = os.waitpid(self.pid, 0)
+            self.exit_code = self._handle_exitstatus(exit_code)
         
         self.stdin.put(False)
         self._io_thread.join()

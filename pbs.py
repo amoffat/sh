@@ -164,7 +164,10 @@ class RunningCommand(object):
         
         if spawn_process:
             self.process = OProc(cmd, stdin, stdout, stderr,
-                bufsize=call_args["bufsize"], wait=self.should_wait)
+                bufsize=call_args["bufsize"])
+            
+            if self.should_wait:
+                self.wait()
         
 
     def wait(self):
