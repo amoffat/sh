@@ -27,7 +27,6 @@ import sys
 import traceback
 import os
 import re
-from glob import glob
 import shlex
 from types import ModuleType
 from functools import partial
@@ -38,8 +37,12 @@ __version__ = "0.97"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
-if IS_PY3: raw_input = input
-
+if IS_PY3:
+    import io
+    raw_input = input
+    is_file = lambda fd: isinstance(fd, io.IOBase)
+else:
+    is_file = lambda fd: isinstance(fd, file)
 
 
 
@@ -310,7 +313,7 @@ class Command(object):
             processed_args.append(arg)
 
         try: processed_args = shlex.split(" ".join(processed_args))
-        except ValueError, e:
+        except ValueError as e:
             if str(e) == "No closing quotation":
                 exc_msg = """No closing quotation.  If you're trying to escape \
 double quotes, please note that you need to escape the escape:
@@ -427,14 +430,14 @@ double quotes, please note that you need to escape the escape:
         stdout = pipe
         out = call_args["out"]
         if out:
-            if isinstance(out, file): stdout = out
+            if is_file(out): stdout = out
             else: stdout = file(str(out), "w")
         
         # stderr redirection
         stderr = pipe
         err = call_args["err"]
         if err:
-            if isinstance(err, file): stderr = err
+            if is_file(err): stderr = err
             else: stderr = file(str(err), "w")
             
         if call_args["err_to_out"]: stderr = subp.STDOUT
