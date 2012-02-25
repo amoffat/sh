@@ -131,6 +131,7 @@ class PbsTestSuite(unittest.TestCase):
         actual_out = file_obj.read()
 
         self.assertTrue(len(actual_out) != 0)
+        file_obj.close()
 
 
     @requires_posix
@@ -147,6 +148,7 @@ class PbsTestSuite(unittest.TestCase):
         actual_out = file_obj.read()
 
         self.assertTrue(len(actual_out) != 0)
+        file_obj.close()
 
     @requires_posix
     def test_subcommand(self):
