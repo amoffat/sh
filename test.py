@@ -36,19 +36,19 @@ class Basic(unittest.TestCase):
         self.assertEqual(out, actual_location)
 
     def test_unicode_arg(self):
-        pass
+        raise NotImplementedError
     
     def test_number_arg(self):
-        pass
+        raise NotImplementedError
     
     def test_list_arg(self):
-        pass
+        raise NotImplementedError
     
     def test_quote_escaping(self):
-        pass
+        raise NotImplementedError
     
     def test_environment(self):
-        pass
+        raise NotImplementedError
     
     def test_which(self):
         from pbs import which, ls
@@ -179,6 +179,9 @@ print len(options.long_option.split())
         p.wait()
         now = time.time()
         self.assertTrue(now - start > sleep_time)
+        
+    def test_background_exception(self):
+        raise NotImplementedError
                 
     
     def test_with_context(self):
