@@ -136,7 +136,7 @@ print len(options.long_option.split())
     
     def test_composition(self):
         from pbs import ls, wc
-        c1 = int(wc(ls(A=True), l=True))
+        c1 = int(wc(ls("-A1"), l=True))
         c2 = len(os.listdir("."))
         self.assertEqual(c1, c2)
 
