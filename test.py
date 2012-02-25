@@ -1,6 +1,10 @@
 import os
 import unittest
+import sys
 
+IS_PY3 = sys.version_info[0] == 3
+if IS_PY3:
+    unicode = str
 
 requires_posix = unittest.skipUnless(os.name == "posix", "Requires POSIX")
 
@@ -93,7 +97,7 @@ class PbsTestSuite(unittest.TestCase):
         from pbs import time, ls
         with time:
             out = ls().stderr
-        self.assertTrue("pagefaults" in out)
+        self.assertTrue("pagefaults" in str(out))
 
 
     @requires_posix
@@ -101,7 +105,7 @@ class PbsTestSuite(unittest.TestCase):
         from pbs import time, ls
         with time(verbose=True, _with=True):
             out = ls().stderr
-        self.assertTrue("Voluntary context switches" in out)
+        self.assertTrue("Voluntary context switches" in str(out))
 
 
     @requires_posix
