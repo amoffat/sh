@@ -27,7 +27,6 @@ import sys
 import traceback
 import os
 import re
-from glob import glob
 import shlex
 from types import ModuleType
 from functools import partial

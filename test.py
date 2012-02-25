@@ -141,7 +141,7 @@ class PbsTestSuite(unittest.TestCase):
         file_obj = tempfile.TemporaryFile()
 
         with time(_with=True):
-            out = ls(_err=file_obj)
+            ls(_err=file_obj)
         
         file_obj.seek(0)
         actual_out = file_obj.read()
@@ -157,7 +157,7 @@ class PbsTestSuite(unittest.TestCase):
 
     @requires_posix
     def test_bake(self):
-        from pbs import time, ls
+        from pbs import time
         timed = time.bake("--verbose", _err_to_out=True)
         out = timed.ls()
         self.assertTrue("Voluntary context switches" in out)
