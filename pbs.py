@@ -139,7 +139,6 @@ class RunningCommand(object):
         self.cmd = cmd
         self.process = None
 
-
         self.should_wait = True
         spawn_process = True
 

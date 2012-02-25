@@ -216,7 +216,7 @@ print len(options.long_option.split())
         file_obj = tempfile.TemporaryFile()
         out = ls(_out=file_obj)
         
-        self.assertTrue(len(out) == 0)
+        self.assertTrue(len(out) != 0)
 
         file_obj.seek(0)
         actual_out = file_obj.read()

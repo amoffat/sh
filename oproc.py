@@ -99,7 +99,6 @@ class OProc(object):
 
 
 
-
             stdin_stream = StreamWriter(self._stdin_fd, self.stdin)
                                         
             stdout_stream = StreamReader(self._stdout_fd, stdout, self._stdout,
@@ -255,7 +254,6 @@ class StreamReader(object):
         self._tmp_buffer = []
         self.pipe_queue = pipe_queue
 
-
         # determine buffering
         self.line_buffered = False
         if bufsize == 1:
@@ -263,7 +261,6 @@ class StreamReader(object):
             self.bufsize = 1024
         elif bufsize == 0: self.bufsize = 1 
         else: self.bufsize = bufsize
-
 
         self.handler = handler
         if callable(handler): self.handler_type = "fn"
@@ -301,7 +298,7 @@ class StreamReader(object):
             self.should_quit = self.handler(chunk, *self.handler_args)
             
         elif self.handler_type == "fd":
-            self.handler.write(chunk) 
+            self.handler.write(chunk)
             
         if self.pipe_queue: self.pipe_queue.put(chunk)        
         self.buffer.append(chunk)
