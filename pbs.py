@@ -210,14 +210,11 @@ class RunningCommand(object):
         # we do this because if get blocks, we can't catch a KeyboardInterrupt
         # so the slight timeout allows for that.
         while True:
-            try: chunk = self._pipe_queue.get(False, .001)
+            try: chunk = self.process._pipe_queue.get(False, .001)
             except Empty: pass
             else:
                 if chunk is None:
-                    # we test to see if we're done before we stop iterating,
-                    # and if we are don, wait for the other streams to finish
-                    # writing their output to their buffers.
-                    if self.done: self.wait()
+                    self.wait()
                     raise StopIteration()
                 return chunk
             

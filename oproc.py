@@ -141,9 +141,7 @@ class OProc(object):
             try: read, write, err = select.select(readers, writers, [], 0.01)
             except: break
             
-            if not read and not write:
-                if not self.alive: break
-                continue
+            if not self.alive: break
 
             for stream in read:
                 error = stream.read()
