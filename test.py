@@ -308,7 +308,7 @@ print len(options.long_option.split())
         from pbs import ls
         ls = ls.bake(full_time=True)
         
-        ran = ls("-la").command_ran
+        ran = ls("-la").ran
         ft = ran.index("full-time")
         self.assertTrue("-la" in ran[ft:]) 
 

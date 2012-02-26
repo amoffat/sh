@@ -139,6 +139,7 @@ class RunningCommand(object):
         
         self.call_args = call_args
         self.cmd = cmd
+        self.ran = " ".join(cmd)
         self.process = None
 
         self.should_wait = True
