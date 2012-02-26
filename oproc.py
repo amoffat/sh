@@ -109,14 +109,14 @@ class OProc(object):
 
 
 
-            stdin_stream = StreamWriter(self._stdin_fd, self.stdin)
+            stdin_stream = StreamWriter(self, self._stdin_fd, self.stdin)
                                         
-            stdout_stream = StreamReader(self._stdout_fd, stdout, self._stdout,
+            stdout_stream = StreamReader(self, self._stdout_fd, stdout, self._stdout,
                 bufsize, self._pipe_queue)
                 
                 
             if stderr is STDOUT: stderr_stream = None 
-            else: stderr_stream = StreamReader(self._stderr_fd, stderr,
+            else: stderr_stream = StreamReader(self, self._stderr_fd, stderr,
                 self._stderr, bufsize)
             
             # start the main io thread
@@ -249,7 +249,8 @@ class OProc(object):
 
 
 class StreamWriter(object):
-    def __init__(self, stream, queue):
+    def __init__(self, process, stream, queue):
+        self.process = process
         self.stream = stream
         self.queue = queue
         
@@ -281,7 +282,8 @@ class StreamWriter(object):
 
 class StreamReader(object):
 
-    def __init__(self, stream, handler, buffer, bufsize, pipe_queue=None):
+    def __init__(self, process, stream, handler, buffer, bufsize, pipe_queue=None):
+        self.process = process
         self.stream = stream
         self.buffer = buffer
         self._tmp_buffer = []
@@ -311,8 +313,8 @@ class StreamReader(object):
         if self.handler_type == "fn":
             num_args = len(inspect.getargspec(handler).args)
             self.handler_args = ()
-            if num_args == 2: self.handler_args = (self.stdin,)
-            elif num_args == 3: self.handler_args = (self.stdin, self)
+            if num_args == 2: self.handler_args = (self.process.stdin,)
+            elif num_args == 3: self.handler_args = (self.process.stdin, self.process)
             
 
     def fileno(self):
