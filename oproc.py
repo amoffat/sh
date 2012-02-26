@@ -187,13 +187,13 @@ class OProc(object):
     def kill(self, sig=signal.SIGKILL):
         try: os.kill(self.pid, sig)
         except OSError: pass
-        self.wait()
 
 
     @staticmethod
     def _cleanup_procs():
         for proc in OProc._procs_to_cleanup:
             proc.kill()
+            proc.wait()
 
 
     def _handle_exitstatus(self, sts):
@@ -244,7 +244,7 @@ class OProc(object):
             
             for cb in self._done_callbacks: cb()
         
-        return self.exit_code
+            return self.exit_code
 
 
 
