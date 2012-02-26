@@ -75,6 +75,8 @@ print options.list_arg
     def test_quote_escaping(self):
         raise NotImplementedError
     
+    def test_multiple_pipes(self):
+        raise NotImplementedError
     
     def test_environment(self):
         from pbs import python
