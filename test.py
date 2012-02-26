@@ -1,5 +1,10 @@
 import os
 import unittest
+import sys
+
+IS_PY3 = sys.version_info[0] == 3
+if IS_PY3:
+    unicode = str
 
 requires_posix = unittest.skipUnless(os.name == "posix", "Requires POSIX")
 requires_nt = unittest.skipUnless(os.name == 'nt', 'Requires NT')
@@ -92,7 +97,7 @@ class PbsTestSuite(unittest.TestCase):
         from pbs import time, ls
         with time:
             out = ls().stderr
-        self.assertTrue("pagefaults" in out)
+        self.assertTrue("pagefaults" in str(out))
 
 
     @requires_posix
@@ -100,7 +105,7 @@ class PbsTestSuite(unittest.TestCase):
         from pbs import time, ls
         with time(verbose=True, _with=True):
             out = ls().stderr
-        self.assertTrue("Voluntary context switches" in out)
+        self.assertTrue("Voluntary context switches" in str(out))
 
 
     @requires_posix
@@ -126,6 +131,7 @@ class PbsTestSuite(unittest.TestCase):
         actual_out = file_obj.read()
 
         self.assertTrue(len(actual_out) != 0)
+        file_obj.close()
 
 
     @requires_posix
@@ -136,12 +142,13 @@ class PbsTestSuite(unittest.TestCase):
         file_obj = tempfile.TemporaryFile()
 
         with time(_with=True):
-            out = ls(_err=file_obj)
+            ls(_err=file_obj)
         
         file_obj.seek(0)
         actual_out = file_obj.read()
 
         self.assertTrue(len(actual_out) != 0)
+        file_obj.close()
 
     @requires_nt
     def test_nt_internal_commands(self):
@@ -178,7 +185,7 @@ class PbsTestSuite(unittest.TestCase):
 
     @requires_posix
     def test_bake(self):
-        from pbs import time, ls
+        from pbs import time
         timed = time.bake("--verbose", _err_to_out=True)
         out = timed.ls()
         self.assertTrue("Voluntary context switches" in out)

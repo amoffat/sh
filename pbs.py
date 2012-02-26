@@ -27,19 +27,22 @@ import sys
 import traceback
 import os
 import re
-from glob import glob
 import shlex
 from types import ModuleType
 from functools import partial
 
 
 
-__version__ = "0.94"
+__version__ = "0.98"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
-if IS_PY3: raw_input = input
-
+if IS_PY3:
+    import io
+    raw_input = input
+    is_file = lambda fd: isinstance(fd, io.IOBase)
+else:
+    is_file = lambda fd: isinstance(fd, file)
 
 
 
@@ -191,7 +194,7 @@ class RunningCommand(object):
         self._stdout, self._stderr = self.process.communicate()
         rc = self.process.wait()
 
-        if rc != 0: raise get_rc_exc(rc)(self.stdout, self.stderr)
+        if rc != 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
         return self
     
     def __len__(self):
@@ -281,15 +284,21 @@ class Command(object):
         return call_args, kwargs
 
 
-    @staticmethod
-    def _compile_args(args, kwargs):
+    def _format_arg(self, arg):
+        if IS_PY3: arg = str(arg)
+        else: arg = unicode(arg).encode("utf8")
+        arg = '"%s"' % arg
+
+        return arg
+
+    def _compile_args(self, args, kwargs):
         processed_args = []
                 
         # aggregate positional args
         for arg in args:
             if isinstance(arg, (list, tuple)):
-                for sub_arg in arg: processed_args.append(str(sub_arg))
-            else: processed_args.append(str(arg))
+                for sub_arg in arg: processed_args.append(self._format_arg(sub_arg))
+            else: processed_args.append(self._format_arg(arg))
 
         # aggregate the keyword arguments
         for k,v in kwargs.items():
@@ -297,17 +306,34 @@ class Command(object):
             # cut(d="\t")
             if len(k) == 1:
                 if v is True: arg = "-"+k
-                else: arg = "-%s %r" % (k, v)
+                else: arg = "-%s %s" % (k, self._format_arg(v))
 
             # we're doing a long arg
             else:
                 k = k.replace("_", "-")
 
                 if v is True: arg = "--"+k
-                else: arg = "--%s=%s" % (k, v)
+                else: arg = "--%s=%s" % (k, self._format_arg(v))
             processed_args.append(arg)
 
-        processed_args = shlex.split(" ".join(processed_args), posix=True)
+        try: processed_args = shlex.split(" ".join(processed_args))
+        except ValueError as e:
+            if str(e) == "No closing quotation":
+                exc_msg = """No closing quotation.  If you're trying to escape \
+double quotes, please note that you need to escape the escape:
+
+    # incorrect
+    print pbs.echo('test print double quote: \"')
+    print pbs.echo('test print double quote: \\"')
+    print pbs.echo("test print double quote: \\"")
+    print pbs.echo("test print double quote: \\\\"")
+
+    # correct
+    print pbs.echo('test print double quote: \\\\"')
+    print pbs.echo("test print double quote: \\\\\\"")
+"""
+                raise ValueError(exc_msg)
+
         return processed_args
  
     
@@ -409,14 +435,14 @@ class Command(object):
         stdout = pipe
         out = call_args["out"]
         if out:
-            if isinstance(out, file): stdout = out
+            if is_file(out): stdout = out
             else: stdout = file(str(out), "w")
         
         # stderr redirection
         stderr = pipe
         err = call_args["err"]
         if err:
-            if isinstance(err, file): stderr = err
+            if is_file(err): stderr = err
             else: stderr = file(str(err), "w")
             
         if call_args["err_to_out"]: stderr = subp.STDOUT
