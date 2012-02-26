@@ -75,8 +75,28 @@ print options.list_arg
     def test_quote_escaping(self):
         raise NotImplementedError
     
+    
     def test_environment(self):
-        raise NotImplementedError
+        from pbs import python
+        import os
+        
+        env_value = "DERP"
+        
+        py = create_tmp_test("""
+import os
+print os.environ["HERP"]
+""")
+        os.environ["HERP"] = env_value
+        out = python(py.name).strip()
+        self.assertEqual(out, env_value)
+    
+        py = create_tmp_test("""
+import pbs
+print pbs.HERP
+""")
+        out = python(py.name).strip()
+        self.assertEqual(out, env_value)
+        
     
     def test_which(self):
         from pbs import which, ls
