@@ -46,6 +46,10 @@ class OProc(object):
         self.stdin = stdin or Queue()
         self._pipe_queue = Queue()
 
+        # this is used to prevent a race condition when we're waiting for
+        # a process to end, and the OProc's internal threads are also checking
+        # for the processes's end
+        self._wait_lock = threading.Lock()
 
         # these are for aggregating the stdout and stderr.  we use a deque
         # because we don't want to overflow
@@ -186,6 +190,21 @@ class OProc(object):
     def alive(self):
         if self.exit_code is not None: return False
          
+        # what we're doing here essentially is making sure that the main thread
+        # (or another thread), isn't calling .wait() on the process.  because
+        # .wait() calls os.waitpid(self.pid, 0), we can't do an os.waitpid
+        # here...because if we did, and the process exited while in this
+        # thread, the main thread's os.waitpid(self.pid, 0) would raise OSError
+        # (because the process ended in another thread).
+        #
+        # so essentially what we're doing is, using this lock, checking if
+        # we're calling .wait(), and if we are, let .wait() get the exit code
+        # and handle the status, otherwise let us do it.
+        acquired = self._wait_lock.acquire(False)
+        if not acquired:
+            if self.exit_code is not None: return False
+            return True
+         
         try:
             pid, exit_code = os.waitpid(self.pid, os.WNOHANG)
             if pid == self.pid:
@@ -194,17 +213,21 @@ class OProc(object):
              
         # no child process   
         except OSError: return False
-        return True
+        else: return True
+        finally:
+            self._wait_lock.release()
+            
 
     def wait(self):
-        if self.exit_code is None:
-            pid, exit_code = os.waitpid(self.pid, 0)
-            self.exit_code = self._handle_exitstatus(exit_code)
-        
-        self.stdin.put(False)
-        self._io_thread.join()
-        
-        for cb in self._done_callbacks: cb()
+        with self._wait_lock:
+            if self.exit_code is None:
+                pid, exit_code = os.waitpid(self.pid, 0)
+                self.exit_code = self._handle_exitstatus(exit_code)
+            
+            self.stdin.put(False)
+            self._io_thread.join()
+            
+            for cb in self._done_callbacks: cb()
         
         return self.exit_code
 
