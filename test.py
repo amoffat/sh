@@ -105,6 +105,9 @@ print pbs.HERP
         self.assertEqual(which("fjoawjefojawe"), None)
         self.assertEqual(which("ls"), str(ls))
         
+        
+    def test_foreground(self):
+        raise NotImplementedError
     
     def test_no_arg(self):
         import pwd
@@ -580,6 +583,8 @@ for i in xrange(42):
         self.assertTrue(len(out) == 42)
         
        
+    def test_nonblocking_for(self):
+        raise NotImplementedError
         
     def test_for_generator_to_err(self):
         from pbs import tail, python
