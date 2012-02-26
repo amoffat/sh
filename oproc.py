@@ -183,11 +183,16 @@ class OProc(object):
     def stderr(self):
         return "".join(self._stderr)
     
-
-    def kill(self, sig=signal.SIGKILL):
+    
+    def send_signal(self, sig):
         try: os.kill(self.pid, sig)
         except OSError: pass
 
+    def kill(self):
+        self.send_signal(signal.SIGKILL)
+
+    def terminate(self):
+        self.send_signal(signal.SIGTERM)
 
     @staticmethod
     def _cleanup_procs():
