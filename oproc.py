@@ -25,6 +25,10 @@ IS_PY3 = sys.version_info[0] == 3
 
 
 
+# used in redirecting
+STDOUT = -1
+STDERR = -2
+
 
 
 class OProc(object):
@@ -62,7 +66,8 @@ class OProc(object):
         gc_was_enabled = gc.isenabled()
         gc.disable()
 
-        self._stderr_fd, slave_stderr = pty.openpty()
+        # only open a pty for stderr if we're not directing to stdout
+        if stderr is not STDOUT: self._stderr_fd, slave_stderr = pty.openpty()
         self._stdin_fd, slave_stdin = pty.openpty()
         
         try: self.pid, stdinout = pty.fork()
@@ -73,7 +78,8 @@ class OProc(object):
         # child
         if self.pid == 0:
             os.dup2(slave_stdin, 0)
-            os.dup2(slave_stderr, 2)
+            
+            if stderr is not STDOUT: os.dup2(slave_stderr, 2)
             
             # don't inherit file descriptors
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
@@ -108,8 +114,10 @@ class OProc(object):
             stdout_stream = StreamReader(self._stdout_fd, stdout, self._stdout,
                 bufsize, self._pipe_queue)
                 
-            stderr_stream = StreamReader(self._stderr_fd, stderr, self._stderr,
-                bufsize)
+                
+            if stderr is STDOUT: stderr_stream = None 
+            else: stderr_stream = StreamReader(self._stderr_fd, stderr,
+                self._stderr, bufsize)
             
             # start the main io thread
             self._io_thread = self._start_thread(self.io_thread,
@@ -138,8 +146,12 @@ class OProc(object):
         self._done_callbacks.append(cb)
 
     def io_thread(self, stdin, stdout, stderr):
-        readers = [stdout, stderr]
         writers = [stdin]
+        readers = []
+        
+        # they might be None in the case that we're redirecting one to the other
+        if stdout is not None: readers.append(stdout)
+        if stderr is not None: readers.append(stderr)
         
         while True:
             try: read, write, err = select.select(readers, writers, [], 0.01)
@@ -156,8 +168,8 @@ class OProc(object):
                 if error: writers.remove(stream)
                 
         stdin.close()
-        stdout.close()
-        stderr.close()
+        if stdout: stdout.close()
+        if stderr: stderr.close()
 
 
     @property

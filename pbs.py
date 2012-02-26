@@ -43,7 +43,7 @@ import gc
 try: from Queue import Queue, Empty
 except ImportError: from queue import Queue, Empty  # 3
 
-from oproc import OProc
+import oproc
 
 
 __version__ = "0.82"
@@ -162,9 +162,11 @@ class RunningCommand(object):
         # evaluate
         if call_args["bg"]: self.should_wait = False
 
+        # redirection
+        if call_args["err_to_out"]: stderr = oproc.STDOUT
         
         if spawn_process:
-            self.process = OProc(cmd, stdin, stdout, stderr,
+            self.process = oproc.OProc(cmd, stdin, stdout, stderr,
                 bufsize=call_args["bufsize"])
             
             if self.should_wait:
