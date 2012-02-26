@@ -36,7 +36,7 @@ class OProc(object):
     registered_cleanup = False
 
     def __init__(self, cmd, stdin=None, stdout=None, stderr=None, bufsize=1,
-            persist=False, ibufsize=100000):
+            persist=False, ibufsize=100000, pipe=STDOUT):
         
         if not OProc.registered_cleanup:
             atexit.register(OProc._cleanup_procs)
@@ -110,14 +110,17 @@ class OProc(object):
 
 
             stdin_stream = StreamWriter(self, self._stdin_fd, self.stdin)
-                                        
+                           
+            stdout_pipe = self._pipe_queue if pipe is STDOUT else None             
             stdout_stream = StreamReader(self, self._stdout_fd, stdout, self._stdout,
-                bufsize, self._pipe_queue)
+                bufsize, stdout_pipe)
                 
                 
             if stderr is STDOUT: stderr_stream = None 
-            else: stderr_stream = StreamReader(self, self._stderr_fd, stderr,
-                self._stderr, bufsize)
+            else:
+                stderr_pipe = self._pipe_queue if pipe is STDERR else None   
+                stderr_stream = StreamReader(self, self._stderr_fd, stderr,
+                    self._stderr, bufsize, stderr_pipe)
             
             # start the main io thread
             self._io_thread = self._start_thread(self.io_thread,

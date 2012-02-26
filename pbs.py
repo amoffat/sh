@@ -166,9 +166,18 @@ class RunningCommand(object):
         # redirection
         if call_args["err_to_out"]: stderr = oproc.STDOUT
         
+        
+        # set up which stream should write to the pipe
+        # TODO, make pipe None by default and limit the size of the Queue
+        # in oproc.OProc
+        pipe = oproc.STDOUT
+        if call_args["for"] == "out" or call_args["for"] is True: pipe = oproc.STDOUT
+        elif call_args["for"] == "err": pipe = oproc.STDERR
+        
+        
         if spawn_process:
             self.process = oproc.OProc(cmd, stdin, stdout, stderr,
-                bufsize=call_args["bufsize"])
+                bufsize=call_args["bufsize"], pipe=pipe)
             
             if self.should_wait:
                 self.wait()
