@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 import os
 import unittest
 import tempfile
@@ -5,6 +7,8 @@ import sys
 
 
 IS_PY3 = sys.version_info[0] == 3
+if IS_PY3:
+    unicode = str
 
 
 skipUnless = getattr(unittest, "skipUnless", None)
@@ -36,13 +40,37 @@ class Basic(unittest.TestCase):
         self.assertEqual(out, actual_location)
 
     def test_unicode_arg(self):
-        raise NotImplementedError
+        from pbs import echo
+        test = "漢字".decode("utf8")
+        p = echo(test).strip()
+        self.assertEqual(test, p)
     
     def test_number_arg(self):
-        raise NotImplementedError
+        from pbs import python
+        
+        py = create_tmp_test("""
+from optparse import OptionParser
+parser = OptionParser()
+options, args = parser.parse_args()
+print args[0]
+""")
+        
+        out = python(py.name, 3).strip()
+        self.assertEqual(out, "3")
     
     def test_list_arg(self):
-        raise NotImplementedError
+        from pbs import python
+        
+        py = create_tmp_test("""
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("-l", dest="list_arg")
+options, args = parser.parse_args()
+print options.list_arg
+""")
+        
+        out = python(py.name, l=[1, 2, 3]).strip()
+        self.assertEqual(out, "1 2 3")
     
     def test_quote_escaping(self):
         raise NotImplementedError

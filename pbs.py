@@ -50,7 +50,9 @@ __version__ = "0.82"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
-if IS_PY3: raw_input = input
+if IS_PY3:
+    raw_input = input
+    unicode = str
 
 
 
@@ -228,17 +230,17 @@ class RunningCommand(object):
    
     def __str__(self):
         if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode("utf-8")
+        else: return unicode(self).encode("utf8")
         
     def __unicode__(self):
         if self.process: 
             if self.stdout:
                 if IS_PY3: return self.stdout
-                return self.stdout.decode("utf-8") # byte string
+                return self.stdout.decode("utf8")
             else: return ""
 
     def __eq__(self, other):
-        return str(self) == str(other)
+        return unicode(self) == unicode(other)
 
     def __contains__(self, item):
         return item in str(self)
@@ -248,7 +250,7 @@ class RunningCommand(object):
         if p in ("send_signal", "terminate", "kill"):
             if self.process: return getattr(self.process, p)
             else: raise AttributeError
-        return getattr(str(self), p)
+        return getattr(unicode(self), p)
      
     def __repr__(self):
         return str(self)
@@ -372,8 +374,7 @@ class Command(object):
 
 
     def _format_arg(self, arg):
-        if IS_PY3: arg = str(arg)
-        else: arg = unicode(arg).encode("utf8")
+        arg = unicode(arg).encode("utf8")
         arg = '"%s"' % arg
 
         return arg
@@ -393,6 +394,8 @@ class Command(object):
             # cut(d="\t")
             if len(k) == 1:
                 if v is True: arg = "-"+k
+                elif isinstance(v, (list, tuple)):
+                    arg = "-%s %s" % (k, self._format_arg(" ".join([unicode(subv) for subv in v])))
                 else: arg = "-%s %s" % (k, self._format_arg(v))
 
             # we're doing a long arg
@@ -400,6 +403,8 @@ class Command(object):
                 k = k.replace("_", "-")
 
                 if v is True: arg = "--"+k
+                elif isinstance(v, (list, tuple)):
+                    arg = "--%s=%s" % (k, self._format_arg(" ".join([unicode(subv) for subv in v])))
                 else: arg = "--%s=%s" % (k, self._format_arg(v))
             processed_args.append(arg)
 
