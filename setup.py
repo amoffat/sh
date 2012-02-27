@@ -25,7 +25,6 @@ if sys.argv[1] == "test":
     
     for version in versions:
         run_test(version)
-        break
         
     exit(0)
 

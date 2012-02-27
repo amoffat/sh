@@ -4,6 +4,7 @@ import sys
 import termios
 import signal
 import select
+import errno
 import atexit
 import gc
 import threading
@@ -99,13 +100,14 @@ class OProc(object):
             self._setwinsize(24, 80)
 
             # turn off echoing
-            attr = termios.tcgetattr(stdinout)
+            attr = termios.tcgetattr(self._stdin_fd)
             attr[3] = attr[3] & ~termios.ECHO
-            termios.tcsetattr(stdinout, termios.TCSANOW, attr)
+            termios.tcsetattr(self._stdin_fd, termios.TCSANOW, attr)
             
             # set raw mode, so there isn't any weird translation of newlines
             # to \r\n and other oddities
             tty.setraw(stdinout)
+            if stderr is not STDOUT: tty.setraw(self._stderr_fd)
 
 
 
@@ -129,7 +131,7 @@ class OProc(object):
 
     def _setwinsize(self, r, c):
         TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
-        if TIOCSWINSZ == 2148037735L: # L is not required in Python >= 2.2.
+        if TIOCSWINSZ == 2148037735: # L is not required in Python >= 2.2.
             TIOCSWINSZ = -2146929561 # Same bits, but with sign.
 
         s = struct.pack('HHHH', r, c, 0, 0)
@@ -156,19 +158,27 @@ class OProc(object):
         if stdout is not None: readers.append(stdout)
         if stderr is not None: readers.append(stderr)
         
+
+        # TODO: find out a way to not use this.  how can we ensure that the
+        # kernel has sent all of the child's output before we break out of
+        # our loop?  waiting seems...fragile
+        quit_next_time = False
+        
         while True:
-            try: read, write, err = select.select(readers, writers, [], 0.01)
-            except: break
-            
-            if not self.alive: break
+            read, write, err = select.select(readers, writers, readers, 0)
 
             for stream in read:
-                error = stream.read()
-                if error: readers.remove(stream)
+                done = stream.read()
+                if done: readers.remove(stream)
                 
             for stream in write:
-                error = stream.write()
-                if error: writers.remove(stream)
+                done = stream.write()
+                if done: writers.remove(stream)
+                
+            if not self.alive:
+                if quit_next_time: break
+                else: quit_next_time = True
+                
                 
         stdin.close()
         if stdout: stdout.close()
@@ -330,6 +340,12 @@ class StreamReader(object):
             
 
     def close(self):
+        # write the last of any tmp buffer that might be leftover from a
+        # line-buffered process ending before a newline has been reached
+        if self._tmp_buffer:
+            self.write_chunk("".join(self._tmp_buffer))
+            self._tmp_buffer = []
+        
         if self.pipe_queue: self.pipe_queue.put(None)
         try: os.close(self.stream)
         except OSError: pass
@@ -349,9 +365,9 @@ class StreamReader(object):
             
     def read(self):
         try: chunk = os.read(self.stream, self.bufsize)
-        except OSError: return True
+        except OSError as e: return True
         if not chunk: return True
-        
+
         if self.line_buffered:
             while True:
                 newline = chunk.find("\n")

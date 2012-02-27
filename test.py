@@ -191,6 +191,14 @@ print len(options.long_option.split())
         from pbs import ls, wc
         c1 = int(wc(ls("-A1"), l=True))
         c2 = len(os.listdir("."))
+        if c1 != c2:
+            with open("/tmp/fail", "a") as h: h.write("FUCK\n")
+        self.assertEqual(c1, c2)
+        
+    def test_incremental_composition(self):
+        from pbs import ls, wc
+        c1 = int(wc(ls("-A1"), l=True, _piped=True))
+        c2 = len(os.listdir("."))
         self.assertEqual(c1, c2)
 
     
@@ -215,6 +223,7 @@ print len(options.long_option.split())
         
         c1 = int(wc(ls("-A1"), l=True))
         c2 = len(os.listdir("."))
+        
         self.assertEqual(c1, c2)
 
     

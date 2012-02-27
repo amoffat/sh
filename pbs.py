@@ -418,7 +418,7 @@ class Command(object):
             processed_args.append(arg)
 
         try: processed_args = shlex.split(" ".join(processed_args))
-        except ValueError, e:
+        except ValueError as e:
             if str(e) == "No closing quotation":
                 exc_msg = """No closing quotation.  If you're trying to escape \
 double quotes, please note that you need to escape the escape:
