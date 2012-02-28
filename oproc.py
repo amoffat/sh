@@ -161,14 +161,10 @@ class OProc(object):
         if stdout is not None: readers.append(stdout)
         if stderr is not None: readers.append(stderr)
         
-
-        # TODO: find out a way to not use this.  how can we ensure that the
-        # kernel has sent all of the child's output before we break out of
-        # our loop?  waiting seems...fragile
-        quit_next_time = False
+        break_next = False
         
         while True:
-            read, write, err = select.select(readers, writers, readers, 0)
+            read, write, err = select.select(readers, writers, [], 0)
 
             for stream in read:
                 done = stream.read()
@@ -178,9 +174,13 @@ class OProc(object):
                 done = stream.write()
                 if done: writers.remove(stream)
                 
-            if not self.alive:
-                if quit_next_time: break
-                else: quit_next_time = True
+            if not read and not self.alive:
+                if break_next: break
+                else:
+                    break_next = True
+                    # flush out the output streams
+                    for stream in readers:
+                        termios.tcdrain(stream.stream)
                 
                 
         stdin.close()
@@ -247,8 +247,7 @@ class OProc(object):
         # no child process   
         except OSError: return False
         else: return True
-        finally:
-            self._wait_lock.release()
+        finally: self._wait_lock.release()
             
 
     def wait(self):

@@ -191,8 +191,6 @@ print len(options.long_option.split())
         from pbs import ls, wc
         c1 = int(wc(ls("-A1"), l=True))
         c2 = len(os.listdir("."))
-        if c1 != c2:
-            with open("/tmp/fail", "a") as h: h.write("FUCK\n")
         self.assertEqual(c1, c2)
         
     def test_incremental_composition(self):
@@ -453,7 +451,7 @@ for i in xrange(5): sys.stdout.write("herpderp")
         
         p = python(py.name, _out=agg, _bufsize=4)
         p.wait()
-        
+
         self.assertTrue(len(stdout) == (len("herp")/2 * 5))
         
         
@@ -574,14 +572,11 @@ for i in xrange(5):
         
         
     def test_for_generator(self):
-        from pbs import tail, python
+        from pbs import python
         
         py = create_tmp_test("""
 import sys
 import os
-
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in xrange(42): 
     print i
@@ -596,7 +591,7 @@ for i in xrange(42):
         raise NotImplementedError
         
     def test_for_generator_to_err(self):
-        from pbs import tail, python
+        from pbs import python
         
         py = create_tmp_test("""
 import sys
@@ -650,13 +645,13 @@ while True:
         """)
         
         letters = ""
-        start = time.time()
         for line in python(python(py1.name, _piped="out"), py2.name, _for=True):
+            if not letters: start = time.time()
             letters += line.strip()
             if len(letters) == 13: half_elapsed = time.time() - start
         
         self.assertEqual(ascii_uppercase, letters)
-        self.assertTrue(.35 < half_elapsed < .5)
+        self.assertTrue(.35 < half_elapsed < .4)
         
         
     def test_generator_and_callback(self):
