@@ -103,7 +103,8 @@ class OProc(object):
             attr = termios.tcgetattr(self._stdin_fd)
             attr[3] = attr[3] & ~termios.ECHO
             termios.tcsetattr(self._stdin_fd, termios.TCSANOW, attr)
-            
+
+
             # set raw mode, so there isn't any weird translation of newlines
             # to \r\n and other oddities
             tty.setraw(stdinout)
@@ -111,22 +112,24 @@ class OProc(object):
 
 
 
-            stdin_stream = StreamWriter(self, self._stdin_fd, self.stdin)
+            stdin_stream = StreamWriter("stdin", self, self._stdin_fd, self.stdin)
                            
             stdout_pipe = self._pipe_queue if pipe is STDOUT else None             
-            stdout_stream = StreamReader(self, self._stdout_fd, stdout, self._stdout,
+            stdout_stream = StreamReader("stdout", self, self._stdout_fd, stdout, self._stdout,
                 bufsize, stdout_pipe)
                 
                 
             if stderr is STDOUT: stderr_stream = None 
             else:
                 stderr_pipe = self._pipe_queue if pipe is STDERR else None   
-                stderr_stream = StreamReader(self, self._stderr_fd, stderr,
+                stderr_stream = StreamReader("stderr", self, self._stderr_fd, stderr,
                     self._stderr, bufsize, stderr_pipe)
             
             # start the main io thread
             self._io_thread = self._start_thread(self.io_thread,
                 stdin_stream, stdout_stream, stderr_stream)
+            
+            
             
 
     def _setwinsize(self, r, c):
@@ -267,7 +270,8 @@ class OProc(object):
 
 
 class StreamWriter(object):
-    def __init__(self, process, stream, queue):
+    def __init__(self, name, process, stream, queue):
+        self.name = name
         self.process = process
         self.stream = stream
         self.queue = queue
@@ -300,7 +304,8 @@ class StreamWriter(object):
 
 class StreamReader(object):
 
-    def __init__(self, process, stream, handler, buffer, bufsize, pipe_queue=None):
+    def __init__(self, name, process, stream, handler, buffer, bufsize, pipe_queue=None):
+        self.name = name
         self.process = process
         self.stream = stream
         self.buffer = buffer
@@ -338,6 +343,8 @@ class StreamReader(object):
     def fileno(self):
         return self.stream
             
+    def __repr__(self):
+        return "<StreamReader %s>" % self.name
 
     def close(self):
         # write the last of any tmp buffer that might be leftover from a
