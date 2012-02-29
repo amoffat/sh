@@ -625,8 +625,8 @@ import time
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for letter in ascii_lowercase:
-    print letter
     time.sleep(0.03)
+    print letter
         """)
         
         py2 = create_tmp_test("""
@@ -651,7 +651,7 @@ while True:
             if len(letters) == 13: half_elapsed = time.time() - start
         
         self.assertEqual(ascii_uppercase, letters)
-        self.assertTrue(.35 < half_elapsed < .4)
+        self.assertTrue(.3 < half_elapsed < .4)
         
         
     def test_generator_and_callback(self):
