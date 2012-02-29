@@ -585,8 +585,8 @@ for i in xrange(42):
 """)
 
         out = []
-        for line in python(py.name, _for=True): out.append(line)
-        self.assertTrue(len(out) == 42)
+        for line in python(py.name, _for=True): out.append(int(line.strip()))
+        self.assertTrue(len(out) == 42 and sum(out) == 861)
         
        
     def test_nonblocking_for(self):
