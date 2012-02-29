@@ -240,9 +240,11 @@ print len(options.long_option.split())
         now = time.time()
         self.assertTrue(now - start > sleep_time)
         
+        
     def test_background_exception(self):
-        raise NotImplementedError
-                
+        from pbs import ls, ErrorReturnCode_2
+        p = ls("/ofawjeofj", _bg=True) # should not raise
+        self.assertRaises(ErrorReturnCode_2, p.wait) # should raise
     
     def test_with_context(self):
         from pbs import time, ls
