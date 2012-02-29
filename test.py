@@ -590,7 +590,14 @@ for i in xrange(42):
         
        
     def test_nonblocking_for(self):
-        raise NotImplementedError
+        import tempfile
+        from pbs import tail
+        from errno import EWOULDBLOCK
+        
+        tmp = tempfile.NamedTemporaryFile()
+        for line in tail("-f", tmp.name, _for_noblock=True): break
+        self.assertEqual(line, EWOULDBLOCK)
+        
         
     def test_for_generator_to_err(self):
         from pbs import python

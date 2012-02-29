@@ -39,6 +39,7 @@ import termios
 import signal
 import atexit
 import gc
+import errno
 
 try: from Queue import Queue, Empty
 except ImportError: from queue import Queue, Empty  # 3
@@ -156,7 +157,7 @@ class RunningCommand(object):
         if callable(call_args["out"]) or callable(call_args["err"]):
             self.should_wait = False
             
-        if call_args["piped"] or call_args["for"]:
+        if call_args["piped"] or call_args["for"] or call_args["for_noblock"]:
             self.should_wait = False
             
         # we're running in the background, return self and let us lazily
@@ -173,6 +174,9 @@ class RunningCommand(object):
         pipe = oproc.STDOUT
         if call_args["for"] == "out" or call_args["for"] is True: pipe = oproc.STDOUT
         elif call_args["for"] == "err": pipe = oproc.STDERR
+        
+        if call_args["for_noblock"] == "out" or call_args["for_noblock"] is True: pipe = oproc.STDOUT
+        elif call_args["for_noblock"] == "err": pipe = oproc.STDERR
         
         
         if spawn_process:
@@ -223,7 +227,8 @@ class RunningCommand(object):
         # so the slight timeout allows for that.
         while True:
             try: chunk = self.process._pipe_queue.get(False, .001)
-            except Empty: pass
+            except Empty:
+                if self.call_args["for_noblock"]: return errno.EWOULDBLOCK
             else:
                 if chunk is None:
                     self.wait()
@@ -315,6 +320,7 @@ class Command(object):
         # comment
         "piped": None,
         "for": None,
+        "for_noblock": None,
     }
     
     # these are arguments that cannot be called together, because they wouldn't
