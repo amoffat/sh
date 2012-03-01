@@ -333,10 +333,13 @@ class StreamReader(object):
         # advanced, they may want to terminate the process, or pass some stdin
         # back, and will realize that they can pass a callback of more args
         if self.handler_type == "fn":
+            implied_arg = 0
+            if inspect.ismethod(handler): implied_arg = 1
+            
             num_args = len(inspect.getargspec(handler).args)
             self.handler_args = ()
-            if num_args == 2: self.handler_args = (self.process.stdin,)
-            elif num_args == 3: self.handler_args = (self.process.stdin, self.process)
+            if num_args == implied_arg + 2: self.handler_args = (self.process.stdin,)
+            elif num_args == implied_arg + 3: self.handler_args = (self.process.stdin, self.process)
             
 
     def fileno(self):
