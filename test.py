@@ -76,7 +76,51 @@ print options.list_arg
         raise NotImplementedError
     
     def test_multiple_pipes(self):
+        from pbs import tr, python
+        import time
+        
+        py = create_tmp_test("""
+import sys
+import os
+import time
+
+# unbuffered stdout
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+
+for l in "andrew":
+    print l
+    time.sleep(.2)
+""")
+        
+        class Derp(object):
+            def __init__(self):
+                self.times = []
+                self.stdout = []
+                self.last_received = None
+        
+            def agg(self, line):            
+                self.stdout.append(line.strip())
+                now = time.time()
+                if self.last_received: self.times.append(now - self.last_received)
+                self.last_received = now
+        
+        derp = Derp()
+        p = tr(
+               tr(
+                  tr(
+                     python(py.name, _piped=True),
+                  "aw", "wa", _piped=True),
+               "ne", "en", _piped=True),
+            "dr", "rd", _out=derp.agg)
+        
+        p.wait()
+        self.assertEqual("".join(derp.stdout), "werdna")
+        self.assertTrue(all([t > .15 for t in derp.times]))
+        
+        
+    def test_manual_stdin(self):
         raise NotImplementedError
+    
     
     def test_environment(self):
         from pbs import python
@@ -653,14 +697,21 @@ while True:
     print line.strip().upper()
         """)
         
+        
+        times = []
+        last_received = None
+        
         letters = ""
         for line in python(python(py1.name, _piped="out"), py2.name, _for=True):
             if not letters: start = time.time()
             letters += line.strip()
-            if len(letters) == 13: half_elapsed = time.time() - start
+            
+            now = time.time()
+            if last_received: times.append(now - last_received)
+            last_received = now
         
         self.assertEqual(ascii_uppercase, letters)
-        self.assertTrue(.3 < half_elapsed < .4)
+        self.assertTrue(all([t > .01 for t in times]))
         
         
     def test_generator_and_callback(self):
