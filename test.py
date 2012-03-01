@@ -134,6 +134,22 @@ for l in "andrew":
         match = "".join([t.upper() for t in test])
         self.assertEqual(out, match)
         
+        
+    def test_manual_stdin_file(self):
+        from pbs import tr
+        import tempfile
+        
+        test_string = "testing\nherp\nderp\n"
+        
+        stdin = tempfile.NamedTemporaryFile()
+        stdin.write(test_string)
+        stdin.flush()
+        stdin.seek(0)
+        
+        out = tr("[:lower:]", "[:upper:]", _in=stdin)
+        
+        self.assertEqual(out, test_string.upper())
+        
     
     def test_manual_stdin_queue(self):
         from pbs import tr
