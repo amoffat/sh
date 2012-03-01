@@ -177,13 +177,14 @@ class OProc(object):
             if not read and not self.alive:
                 if break_next: break
                 else:
+                    # flush out the output streams, but don't break now
+                    # (break next) to allow select a chance to grab the drained
+                    # output
                     break_next = True
-                    # flush out the output streams
                     for stream in readers:
                         termios.tcdrain(stream.stream)
                 
                 
-        stdin.close()
         if stdout: stdout.close()
         if stderr: stderr.close()
 
@@ -256,7 +257,6 @@ class OProc(object):
                 pid, exit_code = os.waitpid(self.pid, 0)
                 self.exit_code = self._handle_exitstatus(exit_code)
             
-            self.stdin.put(False)
             self._io_thread.join()
             
             for cb in self._done_callbacks: cb()
@@ -266,30 +266,64 @@ class OProc(object):
 
 
 
+class DoneReadingStdin(Exception): pass
+class NoStdinData(Exception): pass
 
 
 class StreamWriter(object):
-    def __init__(self, name, process, stream, queue):
+    def __init__(self, name, process, stream, stdin):
         self.name = name
         self.process = process
         self.stream = stream
-        self.queue = queue
+        self.stdin = stdin
+        
+        if isinstance(stdin, Queue):
+            self.get_chunk = self.get_queue_chunk
+            
+        elif callable(stdin):
+            self.get_chunk = self.get_callable_chunk
+            
+        elif hasattr(stdin, "read"):
+            self.get_chunk = self.get_file_chunk
+            
+        elif isinstance(stdin, basestring):
+            self.stdin = iter((c+"\n" for c in stdin.split("\n")))
+            self.get_chunk = self.get_iter_chunk
+            
+        else:
+            self.stdin = iter(stdin)
+            self.get_chunk = self.get_iter_chunk
+            
         
     def fileno(self):
         return self.stream
+    
+    def get_queue_chunk(self):
+        try: chunk = self.stdin.get_nowait()
+        except Empty: raise NoStdinData
+        if chunk is None: raise DoneReadingStdin
+        return chunk
+        
+    def get_callable_chunk(self):
+        try: return self.stdin()
+        except: raise DoneReadingStdin
+        
+    def get_iter_chunk(self):
+        try: return self.stdin.next()
+        except StopIteration: raise DoneReadingStdin
+        
+    def get_file_chunk(self):
+        chunk = self.stdin.readline()
+        if not chunk: raise DoneReadingStdin
+        else: return chunk
 
     def write(self):
-        try: chunk = self.queue.get_nowait()
-        except Empty: return False # not ready
-        
-        # EOF
-        if chunk is None:
-            os.write(self.stream, chr(4))
+        try: chunk = self.get_chunk()
+        except DoneReadingStdin:
+            os.write(self.stream, chr(4)) # EOF
             return True
         
-        # process exiting
-        elif chunk is False:
-            return True
+        except NoStdinData: return False
         
         try: os.write(self.stream, chunk.encode())
         except OSError: return True

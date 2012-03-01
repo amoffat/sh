@@ -118,8 +118,38 @@ for l in "andrew":
         self.assertTrue(all([t > .15 for t in derp.times]))
         
         
-    def test_manual_stdin(self):
-        raise NotImplementedError
+    def test_manual_stdin_string(self):
+        from pbs import tr
+        
+        out = tr("[:lower:]", "[:upper:]", _in="andrew").strip()
+        self.assertEqual(out, "ANDREW")
+        
+        
+    def test_manual_stdin_iterable(self):
+        from pbs import tr
+        
+        test = ["testing\n", "herp\n", "derp\n"]
+        out = tr("[:lower:]", "[:upper:]", _in=test)
+        
+        match = "".join([t.upper() for t in test])
+        self.assertEqual(out, match)
+        
+    
+    def test_manual_stdin_queue(self):
+        from pbs import tr
+        try: from Queue import Queue, Empty
+        except ImportError: from queue import Queue, Empty
+        
+        test = ["testing\n", "herp\n", "derp\n"]
+        
+        q = Queue()
+        for t in test: q.put(t)
+        q.put(None) # EOF
+        
+        out = tr("[:lower:]", "[:upper:]", _in=q)
+        
+        match = "".join([t.upper() for t in test])
+        self.assertEqual(out, match)
     
     
     def test_environment(self):

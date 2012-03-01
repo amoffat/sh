@@ -495,7 +495,7 @@ double quotes, please note that you need to escape the escape:
 
         
         # check if we're piping via composition
-        stdin = None
+        stdin = call_args["in"]
         if args:
             first_arg = args.pop(0)
             if isinstance(first_arg, RunningCommand):
