@@ -186,12 +186,12 @@ class RunningCommand(object):
     @property
     def stdout(self):
         if self.call_args["bg"]: self.wait()
-        return self._stdout.decode("utf8")
+        return self._stdout.decode("utf8", "replace")
     
     @property
     def stderr(self):
         if self.call_args["bg"]: self.wait()
-        return self._stderr.decode("utf8")
+        return self._stderr.decode("utf8", "replace")
 
     def wait(self):
         if self.process.returncode is not None: return
