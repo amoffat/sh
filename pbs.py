@@ -283,7 +283,9 @@ class Command(object):
     def _format_arg(self, arg):
         if IS_PY3: arg = str(arg)
         else: arg = unicode(arg).encode("utf8")
-        arg = '"%s"' % arg
+        
+        for char in ('"', '$', '`'):
+            arg = arg.replace(char, '\%s' % char)
 
         return arg
 
@@ -312,23 +314,7 @@ class Command(object):
                 else: arg = "--%s=%s" % (k, self._format_arg(v))
             processed_args.append(arg)
 
-        try: processed_args = shlex.split(" ".join(processed_args))
-        except ValueError as e:
-            if str(e) == "No closing quotation":
-                exc_msg = """No closing quotation.  If you're trying to escape \
-double quotes, please note that you need to escape the escape:
-
-    # incorrect
-    print pbs.echo('test print double quote: \"')
-    print pbs.echo('test print double quote: \\"')
-    print pbs.echo("test print double quote: \\"")
-    print pbs.echo("test print double quote: \\\\"")
-
-    # correct
-    print pbs.echo('test print double quote: \\\\"')
-    print pbs.echo("test print double quote: \\\\\\"")
-"""
-                raise ValueError(exc_msg)
+        processed_args = shlex.split(" ".join(processed_args))
         return processed_args
  
     
