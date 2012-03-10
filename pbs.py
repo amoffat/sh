@@ -40,6 +40,7 @@ IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
     import io
     raw_input = input
+    unicode = str
     is_file = lambda fd: isinstance(fd, io.IOBase)
 else:
     is_file = lambda fd: isinstance(fd, file)
@@ -78,12 +79,13 @@ rc_exc_regex = re.compile("ErrorReturnCode_(\d+)")
 rc_exc_cache = {}
 
 def get_rc_exc(rc):
+    rc = int(rc)
     try: return rc_exc_cache[rc]
     except KeyError: pass
     
     name = "ErrorReturnCode_%d" % rc
     exc = type(name, (ErrorReturnCode,), {})
-    rc_exc_cache[name] = exc
+    rc_exc_cache[rc] = exc
     return exc
 
 
@@ -134,6 +136,7 @@ class RunningCommand(object):
         if self.call_args["with"]: return
 
         # run and block
+        if stdin: stdin = stdin.encode("utf8")
         self._stdout, self._stderr = self.process.communicate(stdin)
         rc = self.process.wait()
 
@@ -149,24 +152,24 @@ class RunningCommand(object):
     def __exit__(self, typ, value, traceback):
         if self.call_args["with"] and Command._prepend_stack:
             Command._prepend_stack.pop()
-   
+            
     def __str__(self):
         if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode("utf-8")
+        else: return unicode(self).encode("utf8")
         
     def __unicode__(self):
         if self.process: 
-            if self.stdout: return self.stdout.decode("utf-8") # byte string
+            if self.stdout: return self.stdout
             else: return ""
 
     def __eq__(self, other):
-        return str(self) == str(other)
+        return unicode(self) == unicode(other)
 
     def __contains__(self, item):
         return item in str(self)
 
     def __getattr__(self, p):
-        return getattr(str(self), p)
+        return getattr(unicode(self), p)
      
     def __repr__(self):
         return str(self)
@@ -183,12 +186,12 @@ class RunningCommand(object):
     @property
     def stdout(self):
         if self.call_args["bg"]: self.wait()
-        return self._stdout
+        return self._stdout.decode("utf8")
     
     @property
     def stderr(self):
         if self.call_args["bg"]: self.wait()
-        return self._stderr
+        return self._stderr.decode("utf8")
 
     def wait(self):
         if self.process.returncode is not None: return
@@ -287,6 +290,7 @@ class Command(object):
         for char in ('"', '$', '`'):
             arg = arg.replace(char, '\%s' % char)
 
+        arg = '"%s"' % arg
         return arg
 
     def _compile_args(self, args, kwargs):
@@ -314,7 +318,9 @@ class Command(object):
                 else: arg = "--%s=%s" % (k, self._format_arg(v))
             processed_args.append(arg)
 
+        #print processed_args
         processed_args = shlex.split(" ".join(processed_args))
+        #print processed_args
         return processed_args
  
     
@@ -338,6 +344,11 @@ class Command(object):
         baked_args = " ".join(self._partial_baked_args)
         if baked_args: baked_args = " " + baked_args
         return self._path + baked_args
+        
+    def __eq__(self, other):
+        try: return str(self) == str(other)
+        except: return False
+    
 
     def __enter__(self):
         Command._prepend_stack.append([self._path])
