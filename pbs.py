@@ -33,7 +33,7 @@ from functools import partial
 
 
 
-__version__ = "0.99"
+__version__ = "0.100"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
