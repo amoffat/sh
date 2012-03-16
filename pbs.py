@@ -389,10 +389,12 @@ class Command(object):
 
 
     def _format_arg(self, arg):
-        arg = unicode(arg).encode("utf8")
+        if IS_PY3: arg = str(arg)
+        else: arg = unicode(arg).encode("utf8")
+        arg = arg.replace('"', '\"')
         arg = '"%s"' % arg
-
         return arg
+
 
     def _compile_args(self, args, kwargs):
         processed_args = []
