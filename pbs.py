@@ -157,7 +157,7 @@ class RunningCommand(object):
         
     def __unicode__(self):
         if self.process: 
-            if self.stdout: return self.stdout
+            if self._stdout: return self.stdout
             else: return ""
 
     def __eq__(self, other):
