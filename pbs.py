@@ -138,9 +138,7 @@ class RunningCommand(object):
         # run and block
         if stdin: stdin = stdin.encode("utf8")
         self._stdout, self._stderr = self.process.communicate(stdin)
-        rc = self.process.wait()
-
-        if rc != 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
+        self._handle_exit_code(self.process.wait())
 
     def __enter__(self):
         # we don't actually do anything here because anything that should
@@ -196,10 +194,12 @@ class RunningCommand(object):
     def wait(self):
         if self.process.returncode is not None: return
         self._stdout, self._stderr = self.process.communicate()
-        rc = self.process.wait()
-
-        if rc != 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
+        self._handle_exit_code(self.process.wait())
         return self
+    
+    def _handle_exit_code(self, rc):
+        if rc not in self.call_args["ok_code"]:
+            raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
     
     def __len__(self):
         return len(str(self))
@@ -237,6 +237,10 @@ class Command(object):
         "out": None, # redirect STDOUT
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
+        
+        # this is for commands that may have a different exit status than the
+        # normal 0.  this can either be an integer or a list/tuple of ints
+        "ok_code": 0,
     }
 
     @classmethod
@@ -373,6 +377,11 @@ class Command(object):
         call_args, kwargs = self._extract_call_args(kwargs)
         call_args.update(self._partial_call_args)
                 
+
+        # here we normalize the ok_code to be something we can do
+        # "if return_code in call_args["ok_code"]" on
+        if not isinstance(call_args["ok_code"], (tuple, list)):
+            call_args["ok_code"] = [call_args["ok_code"]]
 
         # set pipe to None if we're outputting straight to CLI
         pipe = None if call_args["fg"] else subp.PIPE

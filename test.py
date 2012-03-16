@@ -59,6 +59,13 @@ print args[0]
         
         out = python(py.name, 3).strip()
         self.assertEqual(out, "3")
+        
+    def test_ok_code(self):
+        from pbs import ls, ErrorReturnCode_2
+        
+        self.assertRaises(ErrorReturnCode_2, ls, "/aofwje/garogjao4a/eoan3on")
+        ls("/aofwje/garogjao4a/eoan3on", _ok_code=2)
+        ls("/aofwje/garogjao4a/eoan3on", _ok_code=[2])
     
     def test_quote_escaping(self):
         from pbs import python
