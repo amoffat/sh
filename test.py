@@ -71,6 +71,13 @@ print options.list_arg
         
         out = python(py.name, l=[1, 2, 3]).strip()
         self.assertEqual(out, "1 2 3")
+        
+    def test_ok_code(self):
+        from pbs import ls, ErrorReturnCode_2
+        
+        self.assertRaises(ErrorReturnCode_2, ls, "/aofwje/garogjao4a/eoan3on")
+        ls("/aofwje/garogjao4a/eoan3on", _ok_code=2)
+        ls("/aofwje/garogjao4a/eoan3on", _ok_code=[2])
     
     def test_quote_escaping(self):
         raise NotImplementedError
