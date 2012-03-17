@@ -259,6 +259,13 @@ print len(options.long_option.split())
         self.assertTrue(now - start > sleep_time)
                 
     
+    def test_bg_to_int(self):
+        from pbs import echo
+        # bugs with background might cause the following error:
+        #   ValueError: invalid literal for int() with base 10: ''
+        self.assertEqual(int(echo("123", _bg=True)), 123)
+
+
     def test_with_context(self):
         from pbs import time, ls
         with time:
