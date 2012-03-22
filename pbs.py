@@ -291,11 +291,8 @@ class Command(object):
     def _format_arg(self, arg):
         if IS_PY3: arg = str(arg)
         else: arg = unicode(arg).encode("utf8")
-        
-        for char in ('"', '$', '`'):
-            arg = arg.replace(char, '\%s' % char)
 
-        arg = '"%s"' % arg
+        arg = '"%s"' % arg.replace('"', r'\"')
         return arg
 
     def _compile_args(self, args, kwargs):
