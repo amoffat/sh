@@ -172,22 +172,21 @@ for l in "andrew":
         from pbs import python
         import os
         
-        env_value = "DERP"
+        env = {"HERP": "DERP"}
         
         py = create_tmp_test("""
 import os
-print os.environ["HERP"]
+print os.environ["HERP"], len(os.environ)
 """)
-        os.environ["HERP"] = env_value
-        out = python(py.name).strip()
-        self.assertEqual(out, env_value)
+        out = python(py.name, _env=env).strip()
+        self.assertEqual(out, "DERP 1")
     
         py = create_tmp_test("""
-import pbs
-print pbs.HERP
+import pbs, os
+print pbs.HERP, len(os.environ)
 """)
-        out = python(py.name).strip()
-        self.assertEqual(out, env_value)
+        out = python(py.name, _env=env).strip()
+        self.assertEqual(out, "DERP 1")
         
     
     def test_which(self):
