@@ -373,6 +373,7 @@ script = Command("/tmp/temporary-script.sh")
 print script()
 ```
 
+<<<<<<< HEAD
 ## Windows Support
 PBS now index the internal command from cmd.exe (i.e. at, dir, call, goto and etc.)
 and automaticly search for *.exe command in the path
@@ -390,3 +391,21 @@ and internal commands:
 from pbs import dir
 print dir("*.c")
 ```
+=======
+## Non-standard Exit Codes
+
+Normally, if a command returns an exit code that is not 0, PBS raises an exception
+based on that exit code.  However, if you have determined that an error code
+is normal and want to retrieve the output of the command without PBS raising an
+exception, you can use the "_ok_code" special argument to suppress the exception:
+
+```python
+output = pbs.ls("dir_that_exists", "dir_that_doesnt", _ok_code=2)
+```
+
+In the above example, even though you're trying to list a directory that doesn't
+exist, you can still get the output from the directory that does exist by telling
+the command that 2 is an "ok" exit code, so don't raise an exception.
+
+_ok_code can also take a list or tuple of numbers for multiple ok exit codes. 
+>>>>>>> dfebe3ca35ec22e6d742b534e7b2e7eb0f667f65

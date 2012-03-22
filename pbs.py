@@ -27,19 +27,21 @@ import sys
 import traceback
 import os
 import re
+from glob import glob       # expose pbs.glob
 import shlex
 from types import ModuleType
 from functools import partial
 
 
 
-__version__ = "0.98"
+__version__ = "0.101"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
     import io
     raw_input = input
+    unicode = str
     is_file = lambda fd: isinstance(fd, io.IOBase)
 else:
     is_file = lambda fd: isinstance(fd, file)
@@ -78,12 +80,13 @@ rc_exc_regex = re.compile("ErrorReturnCode_(\d+)")
 rc_exc_cache = {}
 
 def get_rc_exc(rc):
+    rc = int(rc)
     try: return rc_exc_cache[rc]
     except KeyError: pass
     
     name = "ErrorReturnCode_%d" % rc
     exc = type(name, (ErrorReturnCode,), {})
-    rc_exc_cache[name] = exc
+    rc_exc_cache[rc] = exc
     return exc
 
 
@@ -93,14 +96,20 @@ def which(program):
     def is_exe(fpath):
         return os.path.exists(fpath) and os.access(fpath, os.X_OK)
 
+    def ext_candidates(fpath):
+            yield fpath
+            for ext in os.environ.get("PATHEXT", "").split(os.pathsep):
+                yield fpath + ext
+
     fpath, fname = os.path.split(program)
     if fpath:
         if is_exe(program): return program
     else:
         for path in os.environ["PATH"].split(os.pathsep):
             exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
+            for candidate in ext_candidates(exe_file):
+                if is_exe(candidate):
+                    return candidate
 
     return None
 
@@ -112,7 +121,6 @@ def resolve_program(program):
         # if a dash version of our underscore command exists and use that
         # if it does
         if "_" in program: path = which(program.replace("_", "-"))
-        if os.name == "nt": path = which("%s.exe" % program)  
         if not path: return None
     return path
     
@@ -133,10 +141,9 @@ class RunningCommand(object):
         if self.call_args["with"]: return
 
         # run and block
+        if stdin: stdin = stdin.encode("utf8")
         self._stdout, self._stderr = self.process.communicate(stdin)
-        rc = self.process.wait()
-
-        if rc != 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
+        self._handle_exit_code(self.process.wait())
 
     def __enter__(self):
         # we don't actually do anything here because anything that should
@@ -148,24 +155,24 @@ class RunningCommand(object):
     def __exit__(self, typ, value, traceback):
         if self.call_args["with"] and Command._prepend_stack:
             Command._prepend_stack.pop()
-   
+            
     def __str__(self):
         if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode("utf-8")
+        else: return unicode(self).encode("utf8")
         
     def __unicode__(self):
         if self.process: 
-            if self.stdout: return self.stdout.decode("utf-8") # byte string
+            if self._stdout: return self.stdout
             else: return ""
 
     def __eq__(self, other):
-        return str(self) == str(other)
+        return unicode(self) == unicode(other)
 
     def __contains__(self, item):
         return item in str(self)
 
     def __getattr__(self, p):
-        return getattr(str(self), p)
+        return getattr(unicode(self), p)
      
     def __repr__(self):
         return str(self)
@@ -182,20 +189,22 @@ class RunningCommand(object):
     @property
     def stdout(self):
         if self.call_args["bg"]: self.wait()
-        return self._stdout
+        return self._stdout.decode("utf8", "replace")
     
     @property
     def stderr(self):
         if self.call_args["bg"]: self.wait()
-        return self._stderr
+        return self._stderr.decode("utf8", "replace")
 
     def wait(self):
         if self.process.returncode is not None: return
         self._stdout, self._stderr = self.process.communicate()
-        rc = self.process.wait()
-
-        if rc != 0: raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
+        self._handle_exit_code(self.process.wait())
         return self
+    
+    def _handle_exit_code(self, rc):
+        if rc not in self.call_args["ok_code"]:
+            raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
     
     def __len__(self):
         return len(str(self))
@@ -233,6 +242,10 @@ class Command(object):
         "out": None, # redirect STDOUT
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
+        
+        # this is for commands that may have a different exit status than the
+        # normal 0.  this can either be an integer or a list/tuple of ints
+        "ok_code": 0,
     }
 
     @classmethod
@@ -287,8 +300,11 @@ class Command(object):
     def _format_arg(self, arg):
         if IS_PY3: arg = str(arg)
         else: arg = unicode(arg).encode("utf8")
-        arg = '"%s"' % arg
+        
+        for char in ('"', '$', '`'):
+            arg = arg.replace(char, '\%s' % char)
 
+        arg = '"%s"' % arg
         return arg
 
     def _compile_args(self, args, kwargs):
@@ -316,23 +332,9 @@ class Command(object):
                 else: arg = "--%s=%s" % (k, self._format_arg(v))
             processed_args.append(arg)
 
-        try: processed_args = shlex.split(" ".join(processed_args))
-        except ValueError as e:
-            if str(e) == "No closing quotation":
-                exc_msg = """No closing quotation.  If you're trying to escape \
-double quotes, please note that you need to escape the escape:
-
-    # incorrect
-    print pbs.echo('test print double quote: \"')
-    print pbs.echo('test print double quote: \\"')
-    print pbs.echo("test print double quote: \\"")
-    print pbs.echo("test print double quote: \\\\"")
-
-    # correct
-    print pbs.echo('test print double quote: \\\\"')
-    print pbs.echo("test print double quote: \\\\\\"")
-"""
-                raise ValueError(exc_msg)
+        #print processed_args
+        processed_args = shlex.split(" ".join(processed_args))
+        #print processed_args
 
         return processed_args
  
@@ -357,6 +359,11 @@ double quotes, please note that you need to escape the escape:
         baked_args = " ".join(self._partial_baked_args)
         if baked_args: baked_args = " " + baked_args
         return self._path + baked_args
+        
+    def __eq__(self, other):
+        try: return str(self) == str(other)
+        except: return False
+    
 
     def __enter__(self):
         Command._prepend_stack.append([self._path])
@@ -381,6 +388,11 @@ double quotes, please note that you need to escape the escape:
         call_args, kwargs = self._extract_call_args(kwargs)
         call_args.update(self._partial_call_args)
                 
+
+        # here we normalize the ok_code to be something we can do
+        # "if return_code in call_args["ok_code"]" on
+        if not isinstance(call_args["ok_code"], (tuple, list)):
+            call_args["ok_code"] = [call_args["ok_code"]]
 
         # set pipe to None if we're outputting straight to CLI
         pipe = None if call_args["fg"] else subp.PIPE
@@ -490,7 +502,9 @@ class Environment(dict):
         if k == "__all__":
             raise ImportError("Cannot import * from pbs. \
 Please import pbs or import programs individually.")
-
+        if k == "__path__":
+            #some one just asked about the path of the module
+            return os.path.dirname(__file__)
         # if we end with "_" just go ahead and skip searching
         # our namespace for python stuff.  this was mainly for the
         # command "id", which is a popular program for finding
@@ -530,7 +544,11 @@ Please import pbs or import programs individually.")
     def b_which(self, program):
         return which(program)
 
-
+    #for some reason "echo" wasn't working in win7
+    # when msys is install and it is in path
+    #if os.name == 'nt':
+    #   def b_echo(self, input_str):
+    #      return str(input_str)
 
 nt_internal_command = None
 if os.name == "nt":
