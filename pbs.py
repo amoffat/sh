@@ -238,6 +238,7 @@ class Command(object):
         "out": None, # redirect STDOUT
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
+        "env": os.environ,
         
         # this is for commands that may have a different exit status than the
         # normal 0.  this can either be an integer or a list/tuple of ints
@@ -447,7 +448,7 @@ class Command(object):
         if call_args["err_to_out"]: stderr = subp.STDOUT
             
         # leave shell=False
-        process = subp.Popen(cmd, shell=False, env=os.environ,
+        process = subp.Popen(cmd, shell=False, env=call_args["env"],
             stdin=stdin, stdout=stdout, stderr=stderr)
 
         return RunningCommand(command_ran, process, call_args, actual_stdin)
