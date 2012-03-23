@@ -405,6 +405,13 @@ print len(options.long_option.split())
         timed = time.bake("--verbose", _err_to_out=True)
         out = timed.ls()
         self.assertTrue("Voluntary context switches" in out)
+        
+        
+    def test_multiple_bakes(self):
+        from pbs import time
+        timed = time.bake("--verbose", _err_to_out=True)
+        out = timed.bake("ls")()
+        self.assertTrue("Voluntary context switches" in out)
 
 
     def test_bake_args_come_first(self):
