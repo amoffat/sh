@@ -168,6 +168,10 @@ class RunningCommand(object):
         return item in str(self)
 
     def __getattr__(self, p):
+        # let these three attributes pass through to the Popen object
+        if p in ("send_signal", "terminate", "kill"):
+            if self.process: return getattr(self.process, p)
+            else: raise AttributeError
         return getattr(unicode(self), p)
      
     def __repr__(self):
