@@ -207,26 +207,6 @@ class RunningCommand(object):
 
 
 
-class BakedCommand(object):
-    def __init__(self, cmd, attr):
-        self._cmd = cmd
-        self._attr = attr
-        self._partial = partial(cmd, attr)
-        
-    def __call__(self, *args, **kwargs):
-        return self._partial(*args, **kwargs)
-        
-    def __str__(self):
-        if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode("utf-8")
-
-    def __repr__(self):
-        return str(self)
-        
-    def __unicode__(self):
-        return "%s %s" % (self._cmd, self._attr)
-
-
 
 class Command(object):
     _prepend_stack = []
@@ -260,21 +240,9 @@ class Command(object):
     def __getattribute__(self, name):
         # convenience
         getattr = partial(object.__getattribute__, self)
-        
-        # the logic here is, if an attribute starts with an
-        # underscore, always try to find it, because it's very unlikely
-        # that a first command will start with an underscore, example:
-        # "git _command" will probably never exist.
-
-        # after that, we check to see if the attribute actually exists
-        # on the Command object, but only return that if we're not
-        # a baked object.
-        if name.startswith("_"): return getattr(name)
-        try: attr = getattr(name)
-        except AttributeError: return BakedCommand(self, name)
-
-        if self._partial: return BakedCommand(self, name)
-        return attr
+        if name.startswith("_"): return getattr(name)  
+        if name == "bake": return getattr("bake")     
+        return getattr("bake")(name)
 
     
     @staticmethod
@@ -331,9 +299,19 @@ class Command(object):
         fn = Command(self._path)
         fn._partial = True
 
-        fn._partial_call_args, kwargs = self._extract_call_args(kwargs)
-        processed_args = self._compile_args(args, kwargs)
-        fn._partial_baked_args = processed_args
+        call_args, kwargs = self._extract_call_args(kwargs)
+        
+        pruned_call_args = call_args
+        for k,v in Command.call_args.items():
+            try:
+                if pruned_call_args[k] == v:
+                    del pruned_call_args[k]
+            except KeyError: continue
+        
+        fn._partial_call_args.update(self._partial_call_args)
+        fn._partial_call_args.update(pruned_call_args)
+        fn._partial_baked_args.extend(self._partial_baked_args)
+        fn._partial_baked_args.extend(self._compile_args(args, kwargs))
         return fn
        
     def __str__(self):
