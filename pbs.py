@@ -154,7 +154,8 @@ class RunningCommand(object):
         else: return unicode(self).encode("utf8")
         
     def __unicode__(self):
-        if self.process: 
+        if self.process:
+            if self.call_args["bg"]: self.wait()
             if self._stdout: return self.stdout
             else: return ""
 
@@ -198,7 +199,7 @@ class RunningCommand(object):
         if self.process.returncode is not None: return
         self._stdout, self._stderr = self.process.communicate()
         self._handle_exit_code(self.process.wait())
-        return self
+        return str(self)
     
     def _handle_exit_code(self, rc):
         if rc not in self.call_args["ok_code"]:
