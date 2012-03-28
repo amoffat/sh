@@ -261,8 +261,6 @@ class Command(object):
     def _format_arg(self, arg):
         if IS_PY3: arg = str(arg)
         else: arg = unicode(arg).encode("utf8")
-
-        arg = '"%s"' % arg.replace('"', r'\"')
         return arg
 
     def _compile_args(self, args, kwargs):
@@ -279,20 +277,16 @@ class Command(object):
             # we're passing a short arg as a kwarg, example:
             # cut(d="\t")
             if len(k) == 1:
-                if v is True: arg = "-"+k
-                else: arg = "-%s %s" % (k, self._format_arg(v))
+                processed_args.append("-"+k)
+                if v is not True: processed_args.append(self._format_arg(v))
 
             # we're doing a long arg
             else:
                 k = k.replace("_", "-")
 
-                if v is True: arg = "--"+k
-                else: arg = "--%s=%s" % (k, self._format_arg(v))
-            processed_args.append(arg)
+                if v is True: processed_args.append("--"+k)
+                else: processed_args.append("--%s=%s" % (k, self._format_arg(v)))
 
-        #print processed_args
-        processed_args = shlex.split(" ".join(processed_args))
-        #print processed_args
         return processed_args
  
     
