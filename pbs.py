@@ -172,7 +172,8 @@ class RunningCommand(object):
         return getattr(unicode(self), p)
      
     def __repr__(self):
-        return str(self)
+        return "<RunningCommand %r, pid:%d, special_args:%r" % (
+            self.command_ran, self.process.pid, self.call_args)
 
     def __long__(self):
         return long(str(self).strip())
