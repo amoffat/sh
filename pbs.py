@@ -27,8 +27,7 @@ import sys
 import traceback
 import os
 import re
-from glob import glob       # expose pbs.glob
-import shlex
+from glob import glob
 from types import ModuleType
 from functools import partial
 
