@@ -27,24 +27,21 @@ import sys
 import traceback
 import os
 import re
-from glob import glob       # expose pbs.glob
-import shlex
+from glob import glob
 from types import ModuleType
 from functools import partial
 
 
 
-__version__ = "0.101"
+__version__ = "0.104"
 __project_url__ = "https://github.com/amoffat/pbs"
 
 IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
-    import io
     raw_input = input
     unicode = str
-    is_file = lambda fd: isinstance(fd, io.IOBase)
 else:
-    is_file = lambda fd: isinstance(fd, file)
+    pass
 
 
 
@@ -161,7 +158,8 @@ class RunningCommand(object):
         else: return unicode(self).encode("utf8")
         
     def __unicode__(self):
-        if self.process: 
+        if self.process:
+            if self.call_args["bg"]: self.wait()
             if self._stdout: return self.stdout
             else: return ""
 
@@ -172,10 +170,15 @@ class RunningCommand(object):
         return item in str(self)
 
     def __getattr__(self, p):
+        # let these three attributes pass through to the Popen object
+        if p in ("send_signal", "terminate", "kill"):
+            if self.process: return getattr(self.process, p)
+            else: raise AttributeError
         return getattr(unicode(self), p)
      
     def __repr__(self):
-        return str(self)
+        return "<RunningCommand %r, pid:%d, special_args:%r" % (
+            self.command_ran, self.process.pid, self.call_args)
 
     def __long__(self):
         return long(str(self).strip())
@@ -200,7 +203,7 @@ class RunningCommand(object):
         if self.process.returncode is not None: return
         self._stdout, self._stderr = self.process.communicate()
         self._handle_exit_code(self.process.wait())
-        return self
+        return str(self)
     
     def _handle_exit_code(self, rc):
         if rc not in self.call_args["ok_code"]:
@@ -209,26 +212,6 @@ class RunningCommand(object):
     def __len__(self):
         return len(str(self))
 
-
-
-class BakedCommand(object):
-    def __init__(self, cmd, attr):
-        self._cmd = cmd
-        self._attr = attr
-        self._partial = partial(cmd, attr)
-        
-    def __call__(self, *args, **kwargs):
-        return self._partial(*args, **kwargs)
-        
-    def __str__(self):
-        if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode("utf-8")
-
-    def __repr__(self):
-        return str(self)
-        
-    def __unicode__(self):
-        return "%s %s" % (self._cmd, self._attr)
 
 
 
@@ -242,6 +225,7 @@ class Command(object):
         "out": None, # redirect STDOUT
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
+        "env": os.environ,
         
         # this is for commands that may have a different exit status than the
         # normal 0.  this can either be an integer or a list/tuple of ints
@@ -268,21 +252,9 @@ class Command(object):
     def __getattribute__(self, name):
         # convenience
         getattr = partial(object.__getattribute__, self)
-        
-        # the logic here is, if an attribute starts with an
-        # underscore, always try to find it, because it's very unlikely
-        # that a first command will start with an underscore, example:
-        # "git _command" will probably never exist.
-
-        # after that, we check to see if the attribute actually exists
-        # on the Command object, but only return that if we're not
-        # a baked object.
-        if name.startswith("_"): return getattr(name)
-        try: attr = getattr(name)
-        except AttributeError: return BakedCommand(self, name)
-
-        if self._partial: return BakedCommand(self, name)
-        return attr
+        if name.startswith("_"): return getattr(name)  
+        if name == "bake": return getattr("bake")     
+        return getattr("bake")(name)
 
     
     @staticmethod
@@ -300,11 +272,6 @@ class Command(object):
     def _format_arg(self, arg):
         if IS_PY3: arg = str(arg)
         else: arg = unicode(arg).encode("utf8")
-        
-        for char in ('"', '$', '`'):
-            arg = arg.replace(char, '\%s' % char)
-
-        arg = '"%s"' % arg
         return arg
 
     def _compile_args(self, args, kwargs):
@@ -321,20 +288,16 @@ class Command(object):
             # we're passing a short arg as a kwarg, example:
             # cut(d="\t")
             if len(k) == 1:
-                if v is True: arg = "-"+k
-                else: arg = "-%s %s" % (k, self._format_arg(v))
+                processed_args.append("-"+k)
+                if v is not True: processed_args.append(self._format_arg(v))
 
             # we're doing a long arg
             else:
                 k = k.replace("_", "-")
 
-                if v is True: arg = "--"+k
-                else: arg = "--%s=%s" % (k, self._format_arg(v))
-            processed_args.append(arg)
+                if v is True: processed_args.append("--"+k)
+                else: processed_args.append('--%s="%s"' % (k, self._format_arg(v)))
 
-        #print processed_args
-        processed_args = shlex.split(" ".join(processed_args))
-        #print processed_args
 
         return processed_args
  
@@ -343,9 +306,19 @@ class Command(object):
         fn = Command(self._path)
         fn._partial = True
 
-        fn._partial_call_args, kwargs = self._extract_call_args(kwargs)
-        processed_args = self._compile_args(args, kwargs)
-        fn._partial_baked_args = processed_args
+        call_args, kwargs = self._extract_call_args(kwargs)
+        
+        pruned_call_args = call_args
+        for k,v in Command.call_args.items():
+            try:
+                if pruned_call_args[k] == v:
+                    del pruned_call_args[k]
+            except KeyError: continue
+        
+        fn._partial_call_args.update(self._partial_call_args)
+        fn._partial_call_args.update(pruned_call_args)
+        fn._partial_baked_args.extend(self._partial_baked_args)
+        fn._partial_baked_args.extend(self._compile_args(args, kwargs))
         return fn
        
     def __str__(self):
@@ -447,15 +420,16 @@ class Command(object):
         stdout = pipe
         out = call_args["out"]
         if out:
-            if is_file(out): stdout = out
-            else: stdout = file(str(out), "w")
+            if hasattr(out, "write"): stdout = out
+            else: stdout = open(str(out), "w")
         
         # stderr redirection
         stderr = pipe
         err = call_args["err"]
+        
         if err:
-            if is_file(err): stderr = err
-            else: stderr = file(str(err), "w")
+            if hasattr(err, "write"): stderr = err
+            else: stderr = open(str(err), "w")
             
         if call_args["err_to_out"]: stderr = subp.STDOUT
             
@@ -465,7 +439,7 @@ class Command(object):
             cmd = " ".join(cmd)
 
         # leave shell=False
-        process = subp.Popen(cmd, shell=False, env=os.environ,
+        process = subp.Popen(cmd, shell=False, env=call_args["env"],
             stdin=stdin, stdout=stdout, stderr=stderr)
 
         return RunningCommand(command_ran, process, call_args, actual_stdin)
