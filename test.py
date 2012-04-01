@@ -10,7 +10,6 @@ IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
     unicode = str
 
-
 skipUnless = getattr(unittest, "skipUnless", None)
 if not skipUnless:
     def skipUnless(*args, **kwargs):
@@ -18,21 +17,20 @@ if not skipUnless:
         return wrapper
         
 requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
-
+requires_nt = skipUnless(os.name == 'nt', 'Requires NT')
 
 
 def create_tmp_test(code):        
-    py = tempfile.NamedTemporaryFile()
+    py = tempfile.NamedTemporaryFile(delete=False)
     if IS_PY3: code = bytes(code, "UTF-8")
     py.write(code)
     py.flush()
+    py.close()
     return py
-
-
 
 @requires_posix
 class Basic(unittest.TestCase):
-    
+
     def test_print_command(self):
         from pbs import ls, which
         actual_location = which("ls")
@@ -185,12 +183,12 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-l", "--long-option", dest="long_option")
 options, args = parser.parse_args()
-print len(options.long_option.split())
+print len(options.long_option.split(" "))
 """)
         num_args = int(python(py.name, long_option="one two three"))
         self.assertEqual(num_args, 3)
         
-        num_args = int(python(py.name, "--long-option", "one's two's three's"))
+        num_args = int(python(py.name, "--long-option", "\"one's two's three's\""))
         self.assertEqual(num_args, 3)
         
     
@@ -320,7 +318,6 @@ print len(options.long_option.split())
 
         self.assertTrue(len(actual_out) != 0)
 
-    
     def test_subcommand(self):
         from pbs import time
 
@@ -359,8 +356,92 @@ print len(options.long_option.split())
 
         self.assertEqual(iam1, iam2)
 
+@requires_nt
+class WindowsBasic(unittest.TestCase):
 
+    # those are borrowed from Basic,
+    # you should have msysgit install and in PATH to run them
+    test_print_command = Basic.test_print_command.__func__
+    test_number_arg =  Basic.test_number_arg.__func__
+    test_ok_code = Basic.test_ok_code.__func__
+    # windows handle arg different , need to look into
+    # test_quote_escaping =  Basic.test_quote_escaping.__func__
 
+    # this test is depended on pbs to be installed.
+    #test_environment = Basic.test_environment.__func__
+
+    # windows and unicode, doesn't mix and match too good
+    # test_unicode_arg = Basic.test_unicode_arg.__func__
+    test_number_arg = Basic.test_number_arg.__func__
+    test_command_wrapper_equivalence = Basic.test_command_wrapper_equivalence.__func__
+
+    #windows handle arg different , need to look into
+    #test_multiple_args_short_option = Basic.test_multiple_args_short_option.__func__
+
+    test_multiple_args_long_option = Basic.test_multiple_args_long_option.__func__
+
+    #test_short_bool_option = Basic.test_short_bool_option.__func__
+    #test_long_bool_option = Basic.test_long_bool_option.__func__
+    test_composition = Basic.test_composition.__func__ # don't want to think what will happen if this fails...
+    #test_short_option = Basic.test_short_option.__func__
+    test_long_option = Basic.test_long_option.__func__
+    test_command_wrapper = Basic.test_command_wrapper.__func__
+    test_bg_to_int = Basic.test_bg_to_int.__func__
+    test_out_redirection = Basic.test_out_redirection.__func__
+    test_bake_args_come_first = Basic.test_bake_args_come_first.__func__
+    test_output_equivalence = Basic.test_output_equivalence.__func__
+
+    def test_nt_internal_commands(self):
+        from pbs import echo
+
+        s1 = unicode(echo("test")).strip()
+        s2 = 'test'
+        self.assertEqual(s1, s2)
+
+    def test_nt_internal_commands_pipe(self):
+        from pbs import dir, find
+        # dir /b /a | find /c /v ""
+        c1 = int(find(dir("/b", "/a"),'/c', '/v','\"\"'))
+        c2 = len(os.listdir('.'))
+        self.assertEqual(c1, c2)
+
+    def test_nt_external_command(self):
+        from pbs import ipconfig, ErrorReturnCode_1
+        try:
+            ret = ipconfig("/?")
+        except Exception as err:
+            # windows program fails with err 1, on help [/?] weird...
+            self.assertIn("/?" , err.full_cmd)
+            self.assertIn("Display this help message" , err.stdout)
+
+    def test_background(self):
+        from pbs import ping
+        import time
+
+        start = time.time()
+        sleep_time = 1000
+        # trick to make sleep work at windows http://malektips.com/dos0017.html
+        p = ping("127.0.0.1","-n 2", "-w %d" % sleep_time, _bg=True)
+
+        now = time.time()
+        self.assertTrue(now - start < (sleep_time/1000.0))
+
+        p.wait()
+        now = time.time()
+        self.assertTrue(now - start > (sleep_time/1000.0))
+
+    def test_bake(self):
+        from pbs import git
+        baked = git.bake( _err_to_out=True)
+        out = baked.help()
+        self.assertIn("usage", out)
+
+    def test_ok_code(self):
+        from pbs import ls, ErrorReturnCode_1
+
+        self.assertRaises(ErrorReturnCode_1, ls, "/aofwje/garogjao4a/eoan3on")
+        ls("/aofwje/garogjao4a/eoan3on", _ok_code=1)
+        ls("/aofwje/garogjao4a/eoan3on", _ok_code=[1])
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
