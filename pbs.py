@@ -27,9 +27,10 @@ import sys
 import traceback
 import os
 import re
-from glob import glob
+from glob import glob as original_glob
 from types import ModuleType
 from functools import partial
+import warnings
 
 
 
@@ -114,6 +115,11 @@ def resolve_program(program):
         if "_" in program: path = which(program.replace("_", "-"))        
         if not path: return None
     return path
+
+
+def glob(arg):    
+    return original_glob(arg) or arg
+
 
 
 
@@ -271,6 +277,9 @@ class Command(object):
         # aggregate positional args
         for arg in args:
             if isinstance(arg, (list, tuple)):
+                if not arg:
+                    warnings.warn("Empty list passed as an argument to %r. \
+If you're using glob.glob(), please use pbs.glob() instead." % self.path, stacklevel=3)
                 for sub_arg in arg: processed_args.append(self._format_arg(sub_arg))
             else: processed_args.append(self._format_arg(arg))
 
@@ -380,19 +389,6 @@ class Command(object):
 
         # makes sure our arguments are broken up correctly
         split_args = self._partial_baked_args + processed_args
-
-        # we used to glob, but now we don't.  the reason being, escaping globs
-        # doesn't work.  also, adding a _noglob attribute doesn't allow the
-        # flexibility to glob some args and not others.  so we have to leave
-        # the globbing up to the user entirely
-        #=======================================================================
-        # # now glob-expand each arg and compose the final list
-        # final_args = []
-        # for arg in split_args:
-        #    expanded = glob(arg)
-        #    if expanded: final_args.extend(expanded)
-        #    else: final_args.append(arg)
-        #=======================================================================
         final_args = split_args
 
         cmd.extend(final_args)

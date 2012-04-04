@@ -66,6 +66,21 @@ print args[0]
         self.assertRaises(ErrorReturnCode_2, ls, "/aofwje/garogjao4a/eoan3on")
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=2)
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=[2])
+        
+    def test_glob_warning(self):
+        from pbs import ls
+        from glob import glob
+        import warnings
+        
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            
+            ls(glob("ofjaoweijfaowe"))
+            
+            self.assertTrue(len(w) == 1)
+            self.assertTrue(issubclass(w[-1].category, UserWarning))
+            self.assertTrue("glob" in str(w[-1].message))
+        
     
     def test_quote_escaping(self):
         from pbs import python
