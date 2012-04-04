@@ -81,6 +81,9 @@ print args[0]
             self.assertTrue(issubclass(w[-1].category, UserWarning))
             self.assertTrue("glob" in str(w[-1].message))
         
+    def test_stdin_from_string(self):
+        from pbs import sed
+        self.assertEqual(sed(_in="test", e="s/test/lol/"), "lol")
     
     def test_quote_escaping(self):
         from pbs import python

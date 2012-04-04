@@ -227,6 +227,7 @@ class Command(object):
         "out": None, # redirect STDOUT
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
+        "in": None,
         "env": os.environ,
         
         # this is for commands that may have a different exit status than the
@@ -401,6 +402,11 @@ If you're using glob.glob(), please use pbs.glob() instead." % self.path, stackl
             Command._prepend_stack.append(cmd)
             return RunningCommand(command_ran, None, call_args)
         
+        
+        # stdin from string
+        input = call_args["in"]
+        if input:
+            actual_stdin = input
         
         # stdout redirection
         stdout = pipe
