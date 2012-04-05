@@ -71,9 +71,40 @@ print options.list_arg
         
         out = python(py.name, l=[1, 2, 3]).strip()
         self.assertEqual(out, "1 2 3")
+        
+    def test_ok_code(self):
+        from pbs import ls, ErrorReturnCode_2
+        
+        self.assertRaises(ErrorReturnCode_2, ls, "/aofwje/garogjao4a/eoan3on")
+        ls("/aofwje/garogjao4a/eoan3on", _ok_code=2)
+        ls("/aofwje/garogjao4a/eoan3on", _ok_code=[2])
     
     def test_quote_escaping(self):
-        raise NotImplementedError
+        from pbs import python
+        
+        py = create_tmp_test("""
+from optparse import OptionParser
+parser = OptionParser()
+options, args = parser.parse_args()
+print args
+""")
+        out = python(py.name, "one two three").strip()
+        self.assertEqual(out, "['one two three']")
+        
+        out = python(py.name, "one \"two three").strip()
+        self.assertEqual(out, "['one \"two three']")
+        
+        out = python(py.name, "one", "two three").strip()
+        self.assertEqual(out, "['one', 'two three']")
+        
+        out = python(py.name, "one", "two \"haha\" three").strip()
+        self.assertEqual(out, "['one', 'two \"haha\" three']")
+        
+        out = python(py.name, "one two's three").strip()
+        self.assertEqual(out, "[\"one two's three\"]")
+        
+        out = python(py.name, 'one two\'s three').strip()
+        self.assertEqual(out, "[\"one two's three\"]")
     
     def test_multiple_pipes(self):
         from pbs import tr, python
