@@ -27,7 +27,7 @@ import sys
 import traceback
 import os
 import re
-from glob import glob
+from glob import glob as original_glob
 import shlex
 from types import ModuleType
 from functools import partial
@@ -130,7 +130,8 @@ def resolve_program(program):
     return path
 
 
-
+def glob(arg):    
+    return original_glob(arg) or arg
 
 
 
@@ -391,10 +392,7 @@ class Command(object):
     def _format_arg(self, arg):
         if IS_PY3: arg = str(arg)
         else: arg = unicode(arg).encode("utf8")
-        arg = arg.replace('"', '\"')
-        arg = '"%s"' % arg
         return arg
-
 
     def _compile_args(self, args, kwargs):
         processed_args = []
@@ -402,6 +400,9 @@ class Command(object):
         # aggregate positional args
         for arg in args:
             if isinstance(arg, (list, tuple)):
+                if not arg:
+                    warnings.warn("Empty list passed as an argument to %r. \
+If you're using glob.glob(), please use pbs.glob() instead." % self.path, stacklevel=3)
                 for sub_arg in arg: processed_args.append(self._format_arg(sub_arg))
             else: processed_args.append(self._format_arg(arg))
 
@@ -410,38 +411,16 @@ class Command(object):
             # we're passing a short arg as a kwarg, example:
             # cut(d="\t")
             if len(k) == 1:
-                if v is True: arg = "-"+k
-                elif isinstance(v, (list, tuple)):
-                    arg = "-%s %s" % (k, self._format_arg(" ".join([unicode(subv) for subv in v])))
-                else: arg = "-%s %s" % (k, self._format_arg(v))
+                processed_args.append("-"+k)
+                if v is not True: processed_args.append(self._format_arg(v))
 
             # we're doing a long arg
             else:
                 k = k.replace("_", "-")
 
-                if v is True: arg = "--"+k
-                elif isinstance(v, (list, tuple)):
-                    arg = "--%s=%s" % (k, self._format_arg(" ".join([unicode(subv) for subv in v])))
-                else: arg = "--%s=%s" % (k, self._format_arg(v))
-            processed_args.append(arg)
+                if v is True: processed_args.append("--"+k)
+                else: processed_args.append("--%s=%s" % (k, self._format_arg(v)))
 
-        try: processed_args = shlex.split(" ".join(processed_args))
-        except ValueError as e:
-            if str(e) == "No closing quotation":
-                exc_msg = """No closing quotation.  If you're trying to escape \
-double quotes, please note that you need to escape the escape:
-
-    # incorrect
-    print pbs.echo('test print double quote: \"')
-    print pbs.echo('test print double quote: \\"')
-    print pbs.echo("test print double quote: \\"")
-    print pbs.echo("test print double quote: \\\\"")
-
-    # correct
-    print pbs.echo('test print double quote: \\\\"')
-    print pbs.echo("test print double quote: \\\\\\"")
-"""
-                raise ValueError(exc_msg)
         return processed_args
  
     
@@ -514,18 +493,6 @@ double quotes, please note that you need to escape the escape:
         # makes sure our arguments are broken up correctly
         split_args = self._partial_baked_args + processed_args
 
-        # we used to glob, but now we don't.  the reason being, escaping globs
-        # doesn't work.  also, adding a _noglob attribute doesn't allow the
-        # flexibility to glob some args and not others.  so we have to leave
-        # the globbing up to the user entirely
-        #=======================================================================
-        # # now glob-expand each arg and compose the final list
-        # final_args = []
-        # for arg in split_args:
-        #    expanded = glob(arg)
-        #    if expanded: final_args.extend(expanded)
-        #    else: final_args.append(arg)
-        #=======================================================================
         final_args = split_args
 
         cmd.extend(final_args)

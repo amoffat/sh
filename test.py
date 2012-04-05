@@ -57,6 +57,24 @@ print args[0]
         
         out = python(py.name, 3).strip()
         self.assertEqual(out, "3")
+        
+    def test_glob_warning(self):
+        from pbs import ls
+        from glob import glob
+        import warnings
+        
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            
+            ls(glob("ofjaoweijfaowe"))
+            
+            self.assertTrue(len(w) == 1)
+            self.assertTrue(issubclass(w[-1].category, UserWarning))
+            self.assertTrue("glob" in str(w[-1].message))
+        
+    def test_stdin_from_string(self):
+        from pbs import sed
+        self.assertEqual(sed(_in="test", e="s/test/lol/"), "lol")
     
     def test_list_arg(self):
         from pbs import python
