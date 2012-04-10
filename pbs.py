@@ -138,7 +138,9 @@ class RunningCommand(object):
         if self.call_args["with"]: return
 
         # run and block
-        if stdin: stdin = stdin.encode("utf8")
+        if stdin: 
+            if os.name == "nt": stdin = stdin.encode("mbcs")
+            else: stdin = stdin.encode("utf8")
         self._stdout, self._stderr = self.process.communicate(stdin)
         self._handle_exit_code(self.process.wait())
 
@@ -155,7 +157,9 @@ class RunningCommand(object):
             
     def __str__(self):
         if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode("utf8")
+        else: 
+            if os.name == "nt": return unicode(self).encode("mbcs")
+            else: return unicode(self).encode("utf8")
         
     def __unicode__(self):
         if self.process:
@@ -192,12 +196,14 @@ class RunningCommand(object):
     @property
     def stdout(self):
         if self.call_args["bg"]: self.wait()
-        return self._stdout.decode("utf8", "replace")
+        if os.name == "nt": return self._stdout.decode("mbcs", "replace")
+        else: return self._stdout.decode("utf8", "replace")
     
     @property
     def stderr(self):
         if self.call_args["bg"]: self.wait()
-        return self._stderr.decode("utf8", "replace")
+        if os.name == "nt": return self._stderr.decode("mbcs", "replace")
+        else: return self._stderr.decode("utf8", "replace")
 
     def wait(self):
         if self.process.returncode is not None: return
@@ -271,7 +277,9 @@ class Command(object):
 
     def _format_arg(self, arg):
         if IS_PY3: arg = str(arg)
-        else: arg = unicode(arg).encode("utf8")
+        else: 
+            if os.name == "nt": arg = unicode(arg).encode("mbcs")
+            else: arg = unicode(arg).encode("utf8")
         return arg
 
     def _compile_args(self, args, kwargs):
@@ -323,7 +331,9 @@ class Command(object):
        
     def __str__(self):
         if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode("utf-8")
+        else: 
+            if os.name == "nt": return unicode(self).encode("mbcs")
+            else: return unicode(self).encode("utf8")
 
     def __repr__(self):
         return str(self)
@@ -593,3 +603,5 @@ else:
     self = sys.modules[__name__]
     sys.modules[__name__] = SelfWrapper(self)
     
+
+# vim: ts=4 sws=4 sw=4: et sta
