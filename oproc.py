@@ -37,7 +37,7 @@ class OProc(object):
     registered_cleanup = False
 
     def __init__(self, cmd, stdin=None, stdout=None, stderr=None, bufsize=1,
-            persist=False, ibufsize=100000, pipe=STDOUT):
+            persist=False, ibufsize=100000, pipe=STDOUT, env=None):
         
         if not OProc.registered_cleanup:
             atexit.register(OProc._cleanup_procs)
@@ -85,8 +85,9 @@ class OProc(object):
             # don't inherit file descriptors
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
             os.closerange(3, max_fd)
-
-            os.execv(cmd[0], cmd)
+            
+            if env is None: os.execv(cmd[0], cmd)
+            else: os.execve(cmd[0], cmd, env)
 
             os._exit(255)
 
