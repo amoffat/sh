@@ -40,6 +40,7 @@ import signal
 import atexit
 import gc
 import errno
+import warnings
 
 try: from Queue import Queue, Empty
 except ImportError: from queue import Queue, Empty  # 3
@@ -189,14 +190,15 @@ class RunningCommand(object):
         
 
     def wait(self):
-        exit_status = self.process.wait()
-
-        if exit_status > 0: raise get_rc_exc(exit_status)(
-                " ".join(self.cmd),
-                self.process.stdout,
-                self.process.stderr
-            )        
+        self._handle_exit_code(self.process.wait())
         return self
+    
+    def _handle_exit_code(self, code):
+        if code not in self.call_args["ok_code"] and code >= 0: raise get_rc_exc(code)(
+            " ".join(self.cmd),
+            self.process.stdout,
+            self.process.stderr
+        )        
 
     @property
     def stdout(self):
@@ -283,28 +285,6 @@ class RunningCommand(object):
 
 
 
-
-class BakedCommand(object):
-    def __init__(self, cmd, attr):
-        self._cmd = cmd
-        self._attr = attr
-        self._partial = partial(cmd, attr)
-        
-    def __call__(self, *args, **kwargs):
-        return self._partial(*args, **kwargs)
-        
-    def __str__(self):
-        if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode("utf-8")
-
-    def __repr__(self):
-        return str(self)
-        
-    def __unicode__(self):
-        return "%s %s" % (self._cmd, self._attr)
-
-
-
 class Command(object):
     _prepend_stack = []
     
@@ -318,11 +298,10 @@ class Command(object):
         "err_to_out": None, # redirect STDERR to STDOUT
         "bufsize": 1,
         "env": None,
-        
-        # comment
         "piped": None,
         "for": None,
         "for_noblock": None,
+        "ok_code": 0,
     }
     
     # these are arguments that cannot be called together, because they wouldn't
@@ -349,20 +328,9 @@ class Command(object):
         # convenience
         getattr = partial(object.__getattribute__, self)
         
-        # the logic here is, if an attribute starts with an
-        # underscore, always try to find it, because it's very unlikely
-        # that a first command will start with an underscore, example:
-        # "git _command" will probably never exist.
-
-        # after that, we check to see if the attribute actually exists
-        # on the Command object, but only return that if we're not
-        # a baked object.
-        if name.startswith("_"): return getattr(name)
-        try: attr = getattr(name)
-        except AttributeError: return BakedCommand(self, name)
-
-        if self._partial: return BakedCommand(self, name)
-        return attr
+        if name.startswith("_"): return getattr(name)    
+        if name == "bake": return getattr("bake")         
+        return getattr("bake")(name)
 
     
     @staticmethod
@@ -429,9 +397,19 @@ If you're using glob.glob(), please use pbs.glob() instead." % self.path, stackl
         fn = Command(self._path)
         fn._partial = True
 
-        fn._partial_call_args, kwargs = self._extract_call_args(kwargs)
-        processed_args = self._compile_args(args, kwargs)
-        fn._partial_baked_args = processed_args
+        call_args, kwargs = self._extract_call_args(kwargs)
+        
+        pruned_call_args = call_args
+        for k,v in Command._call_args.items():
+            try:
+                if pruned_call_args[k] == v:
+                    del pruned_call_args[k]
+            except KeyError: continue
+        
+        fn._partial_call_args.update(self._partial_call_args)
+        fn._partial_call_args.update(pruned_call_args)
+        fn._partial_baked_args.extend(self._partial_baked_args)
+        fn._partial_baked_args.extend(self._compile_args(args, kwargs))
         return fn
        
     def __str__(self):
@@ -475,6 +453,10 @@ If you're using glob.glob(), please use pbs.glob() instead." % self.path, stackl
         call_args = Command._call_args.copy()
         call_args.update(tmp_call_args)
 
+
+        if not isinstance(call_args["ok_code"], (tuple, list)):    
+            call_args["ok_code"] = [call_args["ok_code"]]
+            
         
         # check if we're piping via composition
         stdin = call_args["in"]

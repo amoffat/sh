@@ -75,20 +75,6 @@ print args[0]
     def test_stdin_from_string(self):
         from pbs import sed
         self.assertEqual(sed(_in="test", e="s/test/lol/"), "lol")
-    
-    def test_list_arg(self):
-        from pbs import python
-        
-        py = create_tmp_test("""
-from optparse import OptionParser
-parser = OptionParser()
-parser.add_option("-l", dest="list_arg")
-options, args = parser.parse_args()
-print options.list_arg
-""")
-        
-        out = python(py.name, l=[1, 2, 3]).strip()
-        self.assertEqual(out, "1 2 3")
         
     def test_ok_code(self):
         from pbs import ls, ErrorReturnCode_2
