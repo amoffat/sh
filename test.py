@@ -356,6 +356,7 @@ print len(options.long_option.split(" "))
 
         self.assertEqual(iam1, iam2)
 
+
 @requires_nt
 class WindowsBasic(unittest.TestCase):
 
@@ -442,6 +443,16 @@ class WindowsBasic(unittest.TestCase):
         self.assertRaises(ErrorReturnCode_1, ls, "/aofwje/garogjao4a/eoan3on")
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=1)
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=[1])
+
+    def test_change_default_encoding(self):
+        import pbs
+
+        self.assertEqual(pbs.config["DEFAULT_ENCODING"], "mbcs")
+        pbs.set_default_encoding("utf8")
+
+        ret = pbs.echo(u"נסיון")
+
+        self.assertEqual(pbs.config["DEFAULT_ENCODING"], "utf8")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

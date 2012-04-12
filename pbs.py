@@ -43,7 +43,18 @@ if IS_PY3:
 else:
     pass
 
+config = {}
 
+config["DEFAULT_ENCODING"] = None
+if os.name == "nt": config["DEFAULT_ENCODING"] = "mbcs"
+if os.name == "posix": config["DEFAULT_ENCODING"] = "utf8"
+
+'''
+default encoding could be changed like this
+pbs.set_default_encoding("utf16")
+'''
+def set_default_encoding(new_encoding):
+    config["DEFAULT_ENCODING"] = new_encoding
 
 class ErrorReturnCode(Exception):
     truncate_cap = 200
@@ -139,8 +150,7 @@ class RunningCommand(object):
 
         # run and block
         if stdin: 
-            if os.name == "nt": stdin = stdin.encode("mbcs")
-            else: stdin = stdin.encode("utf8")
+            stdin.encode(config["DEFAULT_ENCODING"])
         self._stdout, self._stderr = self.process.communicate(stdin)
         self._handle_exit_code(self.process.wait())
 
@@ -158,8 +168,7 @@ class RunningCommand(object):
     def __str__(self):
         if IS_PY3: return self.__unicode__()
         else: 
-            if os.name == "nt": return unicode(self).encode("mbcs")
-            else: return unicode(self).encode("utf8")
+            return unicode(self).encode(config["DEFAULT_ENCODING"])
         
     def __unicode__(self):
         if self.process:
@@ -196,14 +205,12 @@ class RunningCommand(object):
     @property
     def stdout(self):
         if self.call_args["bg"]: self.wait()
-        if os.name == "nt": return self._stdout.decode("mbcs", "replace")
-        else: return self._stdout.decode("utf8", "replace")
+        return self._stdout.decode(config["DEFAULT_ENCODING"], "replace")
     
     @property
     def stderr(self):
         if self.call_args["bg"]: self.wait()
-        if os.name == "nt": return self._stderr.decode("mbcs", "replace")
-        else: return self._stderr.decode("utf8", "replace")
+        return self._stderr.decode(config["DEFAULT_ENCODING"], "replace")
 
     def wait(self):
         if self.process.returncode is not None: return
@@ -277,9 +284,8 @@ class Command(object):
 
     def _format_arg(self, arg):
         if IS_PY3: arg = str(arg)
-        else: 
-            if os.name == "nt": arg = unicode(arg).encode("mbcs")
-            else: arg = unicode(arg).encode("utf8")
+        else:
+            arg = unicode(arg).encode(config["DEFAULT_ENCODING"])
         return arg
 
     def _compile_args(self, args, kwargs):
@@ -332,8 +338,7 @@ class Command(object):
     def __str__(self):
         if IS_PY3: return self.__unicode__()
         else: 
-            if os.name == "nt": return unicode(self).encode("mbcs")
-            else: return unicode(self).encode("utf8")
+            return unicode(self).encode(config["DEFAULT_ENCODING"])
 
     def __repr__(self):
         return str(self)
@@ -466,6 +471,9 @@ class Environment(dict):
         self["Command"] = Command
         self["CommandNotFound"] = CommandNotFound
         self["ErrorReturnCode"] = ErrorReturnCode
+        self["config"] = config
+        self["set_default_encoding"] = set_default_encoding
+
         self["ARGV"] = sys.argv[1:]
         for i, arg in enumerate(sys.argv):
             self["ARG%d" % i] = arg
