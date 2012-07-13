@@ -229,6 +229,7 @@ class Command(object):
         "err_to_out": None, # redirect STDERR to STDOUT
         "in": None,
         "env": os.environ,
+        "cwd": None,
 
         # this is for commands that may have a different exit status than the
         # normal 0.  this can either be an integer or a list/tuple of ints
@@ -427,7 +428,7 @@ If you're using glob.glob(), please use pbs.glob() instead." % self.path, stackl
 
         # leave shell=False
         process = subp.Popen(cmd, shell=False, env=call_args["env"],
-            stdin=stdin, stdout=stdout, stderr=stderr)
+            cwd=call_args["cwd"], stdin=stdin, stdout=stdout, stderr=stderr)
 
         return RunningCommand(command_ran, process, call_args, actual_stdin)
 
