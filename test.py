@@ -378,6 +378,11 @@ print len(options.long_option.split())
         self.assertEqual(iam1, iam2)
 
 
+    def test_cwd(self):
+        from pbs import pwd
+        self.assertEqual(str(pwd(_cwd='/tmp')), '/tmp\n')
+        self.assertEqual(str(pwd(_cwd='/etc')), '/etc\n')
+
 
 
 if __name__ == "__main__":
