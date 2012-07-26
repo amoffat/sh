@@ -36,6 +36,7 @@ import warnings
 
 __version__ = "0.108"
 __project_url__ = "https://github.com/amoffat/pbs"
+INTERACTIVE_MODE = False
 
 IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
@@ -179,8 +180,12 @@ class RunningCommand(object):
         return getattr(unicode(self), p)
 
     def __repr__(self):
-        return "<RunningCommand %r, pid:%d, special_args:%r" % (
-            self.command_ran, self.process.pid, self.call_args)
+        print(INTERACTIVE_MODE)
+        if not INTERACTIVE_MODE:
+            return "<RunningCommand %r, pid:%d, special_args:%r" % (
+                self.command_ran, self.process.pid, self.call_args)
+        else:
+            return str(self)
 
     def __long__(self):
         return long(str(self).strip())
@@ -557,6 +562,7 @@ class SelfWrapper(ModuleType):
 
 # we're being run as a stand-alone script, fire up a REPL
 if __name__ == "__main__":
+    INTERACTIVE_MODE = True
     globs = globals()
     f_globals = {}
     for k in ["__builtins__", "__doc__", "__name__", "__package__"]:
