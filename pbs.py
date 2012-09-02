@@ -209,7 +209,7 @@ class RunningCommand(object):
 
     def _handle_exit_code(self, rc):
         if rc not in self.call_args["ok_code"]:
-            raise get_rc_exc(rc)(self.command_ran, self._stdout, self._stderr)
+            raise get_rc_exc(rc)(self.command_ran, self.stdout, self.stderr)
 
     def __len__(self):
         return len(str(self))
