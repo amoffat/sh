@@ -22,6 +22,7 @@ if sys.argv[1] == "test":
             print("Couldn't find %s, skipping" % py_version.capitalize())
     
     versions = ("2.6", "2.7", "3", "3.1", "3.2")
+    #versions = ("2.7",)
     
     for version in versions:
         run_test(version)

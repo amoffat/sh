@@ -16,6 +16,7 @@ import fcntl
 import struct
 import resource
 from collections import deque
+import logging
 
 from threading import Thread, Event
 try: from Queue import Queue, Empty
@@ -24,6 +25,8 @@ except ImportError: from queue import Queue, Empty  # 3
 
 IS_PY3 = sys.version_info[0] == 3
 
+if IS_PY3:
+    basestring = str
 
 
 # used in redirecting
@@ -38,6 +41,7 @@ class OProc(object):
 
     def __init__(self, cmd, stdin=None, stdout=None, stderr=None, bufsize=1,
             persist=False, ibufsize=100000, pipe=STDOUT, env=None):
+        
         
         if not OProc.registered_cleanup:
             atexit.register(OProc._cleanup_procs)
@@ -75,17 +79,22 @@ class OProc(object):
         except:
             if gc_was_enabled: gc.enable()
             raise
+        
+        self.log = logging.getLogger("process %r" % self)
 
         # child
         if self.pid == 0:
             os.dup2(slave_stdin, 0)
             
+            # we're not directing stderr to stdout?  then set slave_stderr to
+            # fd 2, the common stderr fd
             if stderr is not STDOUT: os.dup2(slave_stderr, 2)
             
             # don't inherit file descriptors
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
             os.closerange(3, max_fd)
             
+            # actually execute the process
             if env is None: os.execv(cmd[0], cmd)
             else: os.execve(cmd[0], cmd, env)
 
@@ -95,12 +104,14 @@ class OProc(object):
         else:
             if gc_was_enabled: gc.enable()
             
+            self.log.debug("started process")
             if not persist: OProc._procs_to_cleanup.append(self)
             self._stdout_fd = stdinout
 
             self._setwinsize(24, 80)
 
-            # turn off echoing
+            # turn off echoing.  if we don't do this, anything that we write
+            # to the process via stdin will be echoed in the stdout
             attr = termios.tcgetattr(self._stdin_fd)
             attr[3] = attr[3] & ~termios.ECHO
             termios.tcsetattr(self._stdin_fd, termios.TCSANOW, attr)
@@ -115,7 +126,7 @@ class OProc(object):
 
             stdin_stream = StreamWriter("stdin", self, self._stdin_fd, self.stdin)
                            
-            stdout_pipe = self._pipe_queue if pipe is STDOUT else None             
+            stdout_pipe = self._pipe_queue if pipe is STDOUT else None
             stdout_stream = StreamReader("stdout", self, self._stdout_fd, stdout, self._stdout,
                 bufsize, stdout_pipe)
                 
@@ -131,6 +142,8 @@ class OProc(object):
                 stdin_stream, stdout_stream, stderr_stream)
             
             
+    def __repr__(self):
+        return "<Process %d %r>" % (self.pid, self.cmd)        
             
 
     def _setwinsize(self, r, c):
@@ -180,7 +193,11 @@ class OProc(object):
                 else:
                     # flush out the output streams, but don't break now
                     # (break next) to allow select a chance to grab the drained
-                    # output
+                    # output.  we need to do this to handle the race condition
+                    # of the process writing output to stdout/stderr, then
+                    # quitting/dying.  there will still be output "in transit"
+                    # on the way to the pseudo-terminal.  we need to make sure
+                    # it gets there before we quit our io loop
                     break_next = True
                     for stream in readers:
                         termios.tcdrain(stream.stream)
@@ -200,13 +217,16 @@ class OProc(object):
     
     
     def send_signal(self, sig):
+        self.log.debug("sending signal %d", sig)
         try: os.kill(self.pid, sig)
         except OSError: pass
 
     def kill(self):
+        self.log.debug("killing")
         self.send_signal(signal.SIGKILL)
 
     def terminate(self):
+        self.log.debug("terminating")
         self.send_signal(signal.SIGTERM)
 
     @staticmethod
@@ -217,7 +237,9 @@ class OProc(object):
 
 
     def _handle_exitstatus(self, sts):
+        # if we exited from a signal, let our exit code reflect that
         if os.WIFSIGNALED(sts): return -os.WTERMSIG(sts)
+        # otherwise just give us a normal exit code
         elif os.WIFEXITED(sts): return os.WEXITSTATUS(sts)
         else: raise RuntimeError("Unknown child exit status!")
         
@@ -241,6 +263,8 @@ class OProc(object):
             return True
          
         try:
+            # WNOHANG is just that...we're calling waitpid without hanging...
+            # essentially polling the process
             pid, exit_code = os.waitpid(self.pid, os.WNOHANG)
             if pid == self.pid:
                 self.exit_code = self._handle_exitstatus(exit_code)
@@ -253,10 +277,16 @@ class OProc(object):
             
 
     def wait(self):
+        self.log.debug("acquiring wait lock to wait for completion")
         with self._wait_lock:
+            self.log.debug("got wait lock")
+            
             if self.exit_code is None:
+                self.log.debug("exit code not set, waiting on pid")
                 pid, exit_code = os.waitpid(self.pid, 0)
                 self.exit_code = self._handle_exitstatus(exit_code)
+            else:
+                self.log.debug("exit code already set, no need to wait")
             
             self._io_thread.join()
             
@@ -271,6 +301,10 @@ class DoneReadingStdin(Exception): pass
 class NoStdinData(Exception): pass
 
 
+
+# this guy is for reading from some input (the stream) and writing to our
+# opened process's stdin fd.  the stream can be a Queue, a callable, something
+# with the "read" method, a string, or an iterable
 class StreamWriter(object):
     def __init__(self, name, process, stream, stdin):
         self.name = name
@@ -278,24 +312,36 @@ class StreamWriter(object):
         self.stream = stream
         self.stdin = stdin
         
+        self.log = logging.getLogger(repr(self))
+        
         if isinstance(stdin, Queue):
+            log_msg = "queue"
             self.get_chunk = self.get_queue_chunk
             
         elif callable(stdin):
+            log_msg = "callable"
             self.get_chunk = self.get_callable_chunk
             
         elif hasattr(stdin, "read"):
+            log_msg = "file descriptor"
             self.get_chunk = self.get_file_chunk
             
         elif isinstance(stdin, basestring):
+            log_msg = "string"
             self.stdin = iter((c+"\n" for c in stdin.split("\n")))
             self.get_chunk = self.get_iter_chunk
             
         else:
+            log_msg = "general iterable"
             self.stdin = iter(stdin)
             self.get_chunk = self.get_iter_chunk
             
+        self.log.debug("parsed stdin as a %s (%r)", log_msg, stdin)
         
+            
+    def __repr__(self):
+        return "<StreamWriter %s for %r>" % (self.name, self.process)
+    
     def fileno(self):
         return self.stream
     
@@ -310,7 +356,9 @@ class StreamWriter(object):
         except: raise DoneReadingStdin
         
     def get_iter_chunk(self):
-        try: return self.stdin.next()
+        try:
+            if IS_PY3: return self.stdin.__next__()
+            else: return self.stdin.next()
         except StopIteration: raise DoneReadingStdin
         
     def get_file_chunk(self):
@@ -318,16 +366,34 @@ class StreamWriter(object):
         if not chunk: raise DoneReadingStdin
         else: return chunk
 
+
+    # the return value answers the questions "are we done writing forever?"
     def write(self):
         try: chunk = self.get_chunk()
         except DoneReadingStdin:
-            os.write(self.stream, chr(4)) # EOF
+            self.log.debug("done reading")
+            
+            # write the ctrl+d, which signals some processes that we've reached
+            # the EOF.  if we try to straight up close our self.stream fd,
+            # some programs will give us errno 5: input/output error.  i assume
+            # this is because they think we blind-sided them and closed their
+            # input fd without signalling an EOF first.  is there a better
+            # way to handle these cases?
+            os.write(self.stream, chr(4).encode())
             return True
         
-        except NoStdinData: return False
+        except NoStdinData:
+            self.log.debug("received no data")
+            return False
         
-        try: os.write(self.stream, chunk.encode())
-        except OSError: return True
+        self.log.debug("got stdin chunk size %d", len(chunk))
+        
+        if IS_PY3 and hasattr(chunk, "encode"): chunk = chunk.encode()
+        
+        try: os.write(self.stream, chunk)
+        except OSError:
+            self.log.debug("OSError writing stdin chunk")
+            return True
         
         
     def close(self):
@@ -346,13 +412,22 @@ class StreamReader(object):
         self._tmp_buffer = []
         self.pipe_queue = pipe_queue
 
+        self.log = logging.getLogger(repr(self))
+        
         # determine buffering
         self.line_buffered = False
         if bufsize == 1:
+            buffer_type = "line buffered"
             self.line_buffered = True
             self.bufsize = 1024
-        elif bufsize == 0: self.bufsize = 1 
-        else: self.bufsize = bufsize
+        elif bufsize == 0:
+            buffer_type = "unbuffered"
+            self.bufsize = 1 
+        else:
+            buffer_type = "%d buffering" % bufsize
+            self.bufsize = bufsize
+            
+        self.log.debug("buffering is " + buffer_type)
 
         self.handler = handler
         if callable(handler): self.handler_type = "fn"
@@ -375,13 +450,12 @@ class StreamReader(object):
             self.handler_args = ()
             if num_args == implied_arg + 2: self.handler_args = (self.process.stdin,)
             elif num_args == implied_arg + 3: self.handler_args = (self.process.stdin, self.process)
-            
 
     def fileno(self):
         return self.stream
             
     def __repr__(self):
-        return "<StreamReader %s>" % self.name
+        return "<StreamReader %s for %r>" % (self.name, self.process)
 
     def close(self):
         # write the last of any tmp buffer that might be leftover from a
@@ -395,15 +469,18 @@ class StreamReader(object):
         except OSError: pass
 
 
-    def write_chunk(self, chunk):
-        if IS_PY3: chunk = chunk.decode("utf8")
+    def write_chunk(self, chunk):        
         if self.handler_type == "fn" and not self.should_quit:
             self.should_quit = self.handler(chunk, *self.handler_args)
             
         elif self.handler_type == "fd":
-            self.handler.write(chunk)
+            self.handler.write(chunk.encode())
             
-        if self.pipe_queue: self.pipe_queue.put(chunk)        
+        # we put the chunk on the pipe queue as a string, not py3 bytes
+        # this is because it gets used directly by iterators over the Command
+        # object..and we want to iterate over strings, not bytes
+        if self.pipe_queue: self.pipe_queue.put(chunk)
+        
         self.buffer.append(chunk)
 
             
@@ -411,6 +488,8 @@ class StreamReader(object):
         try: chunk = os.read(self.stream, self.bufsize)
         except OSError as e: return True
         if not chunk: return True
+        
+        if IS_PY3: chunk = chunk.decode()
 
         if self.line_buffered:
             while True:

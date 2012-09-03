@@ -238,7 +238,7 @@ class RunningCommand(object):
                     raise StopIteration()
                 return chunk
             
-     # python 3
+    # python 3
     __next__ = next
 
     def __exit__(self, typ, value, traceback):
@@ -441,7 +441,7 @@ If you're using glob.glob(), please use pbs.glob() instead." % self.path, stackl
 
         cmd = []
 
-        # aggregate any with contexts
+        # aggregate any 'with' contexts
         for prepend in self._prepend_stack: cmd.extend(prepend)
 
         cmd.append(self._path)
@@ -469,7 +469,8 @@ If you're using glob.glob(), please use pbs.glob() instead." % self.path, stackl
                 if first_arg.call_args["bg"]: call_args["bg"] = True
                 stdin = first_arg.process._pipe_queue
                 
-            else: args.insert(0, first_arg)
+            else:
+                args.insert(0, first_arg)
             
         processed_args = self._compile_args(args, kwargs)
 
