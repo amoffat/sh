@@ -665,13 +665,14 @@ for i in xrange(5):
         def agg(line, stdin, process):
             line = line.strip()
             stdout.append(line)
-            if line == "0":
+            if line == "3":
                 process.terminate()
                 return True
         
         p = python(py.name, _out=agg)
         p.wait()
         
+        self.assertEqual(p.process.exit_code, -signal.SIGTERM)
         self.assertTrue("4" not in p)
         self.assertTrue("4" not in stdout)
         
@@ -679,6 +680,7 @@ for i in xrange(5):
         
     def test_stdout_callback_kill(self):
         from pbs import python
+        import signal
         
         py = create_tmp_test("""
 import sys
@@ -697,13 +699,14 @@ for i in xrange(5):
         def agg(line, stdin, process):
             line = line.strip()
             stdout.append(line)
-            if line == "0":
+            if line == "3":
                 process.kill()
                 return True
         
         p = python(py.name, _out=agg)
         p.wait()
         
+        self.assertEqual(p.process.exit_code, -signal.SIGKILL)
         self.assertTrue("4" not in p)
         self.assertTrue("4" not in stdout)
         
@@ -751,6 +754,11 @@ for i in xrange(42):
         out = []
         for line in python(py.name, _for="err"): out.append(line)
         self.assertTrue(len(out) == 42)
+        
+        # verify that nothing is going to stdout
+        out = []
+        for line in python(py.name, _for="out"): out.append(line)
+        self.assertTrue(len(out) == 0)
 
 
 
@@ -762,21 +770,19 @@ for i in xrange(42):
         py1 = create_tmp_test("""
 import sys
 import os
-from string import ascii_lowercase
 import time
 
 # unbuffered stdout
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-for letter in ascii_lowercase:
-    time.sleep(0.08)
+for letter in "andrew":
+    time.sleep(0.5)
     print letter
         """)
         
         py2 = create_tmp_test("""
 import sys
 import os
-from string import ascii_lowercase
 import time
 
 # unbuffered stdout
@@ -801,8 +807,8 @@ while True:
             if last_received: times.append(now - last_received)
             last_received = now
         
-        self.assertEqual(ascii_uppercase, letters)
-        self.assertTrue(all([t > .01 for t in times]))
+        self.assertEqual("ANDREW", letters)
+        self.assertTrue(all([t > .3 for t in times]))
         
         
     def test_generator_and_callback(self):

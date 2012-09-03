@@ -296,7 +296,10 @@ class Command(object):
         "out": None, # redirect STDOUT
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
+        
+        # 1 for line, 0 for unbuffered, any other number for that amount
         "bufsize": 1,
+        
         "env": None,
         "piped": None,
         "for": None,
@@ -305,7 +308,7 @@ class Command(object):
     }
     
     # these are arguments that cannot be called together, because they wouldn't
-    # make anys ense
+    # make any sense
     _incompatible_call_args = (
         ("fg", "bg", "Command can't be run in the foreground and background"),
         ("err", "err_to_out", "Stderr is already being redirected"),
