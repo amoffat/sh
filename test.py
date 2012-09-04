@@ -382,6 +382,10 @@ print len(options.long_option.split())
         self.assertEqual(str(pwd(_cwd='/tmp')), '/tmp\n')
         self.assertEqual(str(pwd(_cwd='/etc')), '/etc\n')
 
+    def test_tstderr_delta(self):
+        from pbs import ls, ErrorReturnCode, ErrorReturnCode_2
+        ErrorReturnCode.truncate_cap = 1
+        self.assertRaises(ErrorReturnCode_2, ls, '-z')
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
