@@ -26,6 +26,9 @@ def create_tmp_test(code):
     if IS_PY3: code = bytes(code, "UTF-8")
     py.write(code)
     py.flush()
+    # we don't explicitly close, because close will remove the file, and we
+    # don't want that until the test case is done.  so we let the gc close it
+    # when it goes out of scope
     return py
 
 
@@ -646,6 +649,7 @@ for i in xrange(5): print i
         
         
     def test_stdout_callback_terminate(self):
+        import signal
         from pbs import python
         
         py = create_tmp_test("""
@@ -836,6 +840,33 @@ for i in xrange(42):
         self.assertTrue(len(out) == 42)
         self.assertTrue(sum(stderr) == 1722)
 
+
+    def test_bg_to_int(self):
+        from pbs import echo
+        # bugs with background might cause the following error:
+        #   ValueError: invalid literal for int() with base 10: ''
+        self.assertEqual(int(echo("123", _bg=True)), 123)
+        
+        
+    def test_cwd(self):
+        from pbs import pwd
+        self.assertEqual(str(pwd(_cwd="/tmp")), "/tmp\n")
+        self.assertEqual(str(pwd(_cwd="/etc")), "/etc\n")
+        
+        
+    def test_huge_piped_data(self):
+        from pbs import tr
+        
+        stdin = tempfile.NamedTemporaryFile()
+        
+        data = "herpderp" * 1000 + "\n"
+        stdin.write(data.encode())
+        stdin.flush()
+        stdin.seek(0)
+        
+        out = tr("[:lower:]", "[:upper:]", _in=data)
+        self.assertEqual(len(out), len(data))
+        
 
 
 if __name__ == "__main__":

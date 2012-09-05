@@ -40,7 +40,7 @@ class OProc(object):
     registered_cleanup = False
 
     def __init__(self, cmd, stdin=None, stdout=None, stderr=None, bufsize=1,
-            persist=False, ibufsize=100000, pipe=STDOUT, env=None):
+            persist=False, ibufsize=100000, pipe=STDOUT, env=None, cwd=None):
         
         
         if not OProc.registered_cleanup:
@@ -72,23 +72,23 @@ class OProc(object):
         gc.disable()
 
         # only open a pty for stderr if we're not directing to stdout
-        if stderr is not STDOUT: self._stderr_fd, slave_stderr = pty.openpty()
-        self._stdin_fd, slave_stdin = pty.openpty()
+        if stderr is not STDOUT: self._stderr_fd, self._slave_stderr_fd = pty.openpty()
+        self._stdin_fd, self._slave_stdin_fd = pty.openpty()
         
         try: self.pid, stdinout = pty.fork()
         except:
             if gc_was_enabled: gc.enable()
             raise
         
-        self.log = logging.getLogger("process %r" % self)
 
         # child
         if self.pid == 0:
-            os.dup2(slave_stdin, 0)
+            if cwd: os.chdir(cwd)
+            os.dup2(self._slave_stdin_fd, 0)
             
-            # we're not directing stderr to stdout?  then set slave_stderr to
+            # we're not directing stderr to stdout?  then set self._slave_stderr_fd to
             # fd 2, the common stderr fd
-            if stderr is not STDOUT: os.dup2(slave_stderr, 2)
+            if stderr is not STDOUT: os.dup2(self._slave_stderr_fd, 2)
             
             # don't inherit file descriptors
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
@@ -104,22 +104,29 @@ class OProc(object):
         else:
             if gc_was_enabled: gc.enable()
             
+            self.log = logging.getLogger("process %r" % self)
+            
+            os.close(self._slave_stdin_fd)
+            if stderr is not STDOUT: os.close(self._slave_stderr_fd)
+            
             self.log.debug("started process")
             if not persist: OProc._procs_to_cleanup.append(self)
             self._stdout_fd = stdinout
 
             self._setwinsize(24, 80)
 
+            #tty.setraw(self._stdin_fd)
+            
             # turn off echoing.  if we don't do this, anything that we write
             # to the process via stdin will be echoed in the stdout
             attr = termios.tcgetattr(self._stdin_fd)
-            attr[3] = attr[3] & ~termios.ECHO
+            attr[3] |= ~(termios.ECHO)
             termios.tcsetattr(self._stdin_fd, termios.TCSANOW, attr)
 
 
             # set raw mode, so there isn't any weird translation of newlines
             # to \r\n and other oddities
-            tty.setraw(stdinout)
+            tty.setraw(self._stdout_fd)
             if stderr is not STDOUT: tty.setraw(self._stderr_fd)
 
 
@@ -170,37 +177,40 @@ class OProc(object):
     def io_thread(self, stdin, stdout, stderr):
         writers = [stdin]
         readers = []
+        errors = []
         
         # they might be None in the case that we're redirecting one to the other
-        if stdout is not None: readers.append(stdout)
-        if stderr is not None: readers.append(stderr)
-        
+        if stdout is not None:
+            readers.append(stdout)
+            errors.append(stdout)
+        if stderr is not None:
+            readers.append(stderr)
+            errors.append(stderr)
+            
         break_next = False
         
-        while True:
-            read, write, err = select.select(readers, writers, [], 0)
+        while readers:
+            read, write, err = select.select(readers, writers, errors, 0)
 
             for stream in read:
+                self.log.debug("%r ready to be read from", stream)
                 done = stream.read()
                 if done: readers.remove(stream)
                 
             for stream in write:
+                self.log.debug("%r ready for more input", stream)
                 done = stream.write()
                 if done: writers.remove(stream)
                 
-            if not read and not self.alive:
-                if break_next: break
-                else:
-                    # flush out the output streams, but don't break now
-                    # (break next) to allow select a chance to grab the drained
-                    # output.  we need to do this to handle the race condition
-                    # of the process writing output to stdout/stderr, then
-                    # quitting/dying.  there will still be output "in transit"
-                    # on the way to the pseudo-terminal.  we need to make sure
-                    # it gets there before we quit our io loop
-                    break_next = True
-                    for stream in readers:
-                        termios.tcdrain(stream.stream)
+            for stream in err:
+                pass
+            
+            import time
+            #time.sleep(0.0001)
+            #print self.alive
+
+            
+
                 
                 
         if stdout: stdout.close()
@@ -286,7 +296,7 @@ class OProc(object):
                 pid, exit_code = os.waitpid(self.pid, 0)
                 self.exit_code = self._handle_exitstatus(exit_code)
             else:
-                self.log.debug("exit code already set, no need to wait")
+                self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
             
             self._io_thread.join()
             
@@ -328,7 +338,9 @@ class StreamWriter(object):
             
         elif isinstance(stdin, basestring):
             log_msg = "string"
-            self.stdin = iter((c+"\n" for c in stdin.split("\n")))
+            #self.stdin = iter((c+"\n" for c in stdin.split("\n")))
+            stdin_bufsize = 1024
+            self.stdin = iter(stdin[i:i+stdin_bufsize] for i in range(0, len(stdin), stdin_bufsize))
             self.get_chunk = self.get_iter_chunk
             
         else:
@@ -336,7 +348,7 @@ class StreamWriter(object):
             self.stdin = iter(stdin)
             self.get_chunk = self.get_iter_chunk
             
-        self.log.debug("parsed stdin as a %s (%r)", log_msg, stdin)
+        self.log.debug("parsed stdin as a %s", log_msg)
         
             
     def __repr__(self):
@@ -372,25 +384,33 @@ class StreamWriter(object):
         try: chunk = self.get_chunk()
         except DoneReadingStdin:
             self.log.debug("done reading")
-            
             # write the ctrl+d, which signals some processes that we've reached
             # the EOF.  if we try to straight up close our self.stream fd,
             # some programs will give us errno 5: input/output error.  i assume
             # this is because they think we blind-sided them and closed their
             # input fd without signalling an EOF first.  is there a better
             # way to handle these cases?
-            os.write(self.stream, chr(4).encode())
+            if hasattr(termios, "VEOF"):
+                char = termios.tcgetattr(self.stream)[6][termios.VEOF]
+            else:
+                # platform does not define VEOF so assume CTRL-D
+                char = chr(4)
+             
+            os.write(self.stream, char.encode())
+            #os.close(self.stream)
             return True
         
         except NoStdinData:
             self.log.debug("received no data")
             return False
         
-        self.log.debug("got stdin chunk size %d", len(chunk))
+        self.log.debug("got chunk size %d", len(chunk))
         
         if IS_PY3 and hasattr(chunk, "encode"): chunk = chunk.encode()
         
-        try: os.write(self.stream, chunk)
+        self.log.debug("writing chunk to process")
+        try:
+            os.write(self.stream, chunk)
         except OSError:
             self.log.debug("OSError writing stdin chunk")
             return True
@@ -480,16 +500,20 @@ class StreamReader(object):
         # this is because it gets used directly by iterators over the Command
         # object..and we want to iterate over strings, not bytes
         if self.pipe_queue: self.pipe_queue.put(chunk)
-        
+
         self.buffer.append(chunk)
 
             
     def read(self):
         try: chunk = os.read(self.stream, self.bufsize)
-        except OSError as e: return True
+        except OSError as e:
+            self.log.debug("got errno %d, done reading", e.errno)
+            return True
         if not chunk: return True
         
         if IS_PY3: chunk = chunk.decode()
+        self.log.debug("got chunk size %d", len(chunk))
+        print repr(chunk)
 
         if self.line_buffered:
             while True:

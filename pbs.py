@@ -183,7 +183,8 @@ class RunningCommand(object):
         
         if spawn_process:
             self.process = oproc.OProc(cmd, stdin, stdout, stderr,
-                bufsize=call_args["bufsize"], pipe=pipe, env=self.call_args["env"])
+                bufsize=call_args["bufsize"], pipe=pipe, env=self.call_args["env"],
+                cwd=self.call_args["cwd"])
             
             if self.should_wait:
                 self.wait()
@@ -305,6 +306,7 @@ class Command(object):
         "for": None,
         "for_noblock": None,
         "ok_code": 0,
+        "cwd": None,
     }
     
     # these are arguments that cannot be called together, because they wouldn't
