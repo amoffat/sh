@@ -17,6 +17,7 @@ import struct
 import resource
 from collections import deque
 import logging
+import time
 
 from threading import Thread, Event
 try: from Queue import Queue, Empty
@@ -41,58 +42,51 @@ class OProc(object):
 
     def __init__(self, cmd, stdin=None, stdout=None, stderr=None, bufsize=1,
             persist=False, ibufsize=100000, pipe=STDOUT, env=None, cwd=None):
+
+        use_tty = True
+        self.use_tty = use_tty
+
+        if use_tty: self._slave_stdin_fd, self._stdin_fd = pty.openpty()
+        else: self._slave_stdin_fd, self._stdin_fd = os.pipe()
+        self._stdout_fd, self._slave_stdout_fd = pty.openpty()
         
-        
-        if not OProc.registered_cleanup:
-            atexit.register(OProc._cleanup_procs)
-            OProc.registered_cleanup = True
-
-
-        self.cmd = cmd
-        self.exit_code = None
-        self._done_callbacks = []
-        
-        self.stdin = stdin or Queue()
-        self._pipe_queue = Queue()
-
-        # this is used to prevent a race condition when we're waiting for
-        # a process to end, and the OProc's internal threads are also checking
-        # for the processes's end
-        self._wait_lock = threading.Lock()
-
-        # these are for aggregating the stdout and stderr.  we use a deque
-        # because we don't want to overflow
-        self._stdout = deque(maxlen=ibufsize)
-        self._stderr = deque(maxlen=ibufsize)
-
-
-        # Disable gc to avoid bug where gc -> file_dealloc ->
-        # write to stderr -> hang.  http://bugs.python.org/issue1336
-        gc_was_enabled = gc.isenabled()
-        gc.disable()
-
         # only open a pty for stderr if we're not directing to stdout
         if stderr is not STDOUT: self._stderr_fd, self._slave_stderr_fd = pty.openpty()
-        self._stdin_fd, self._slave_stdin_fd = pty.openpty()
         
-        try: self.pid, stdinout = pty.fork()
-        except:
-            if gc_was_enabled: gc.enable()
-            raise
+        self.pid = os.fork()
         
+#        print os.ttyname(self._slave_stdin_fd)
+#        print os.ttyname(self._stdin_fd)
+#        print os.ttyname(self._slave_stdout_fd)
+#        print os.ttyname(self._stdout_fd)
+#        print
 
         # child
         if self.pid == 0:
+            os.setsid()
+            
+            os.close(self._stdin_fd)
+            os.close(self._stdout_fd)
+            if stderr is not STDOUT: os.close(self._stderr_fd)
+            
             if cwd: os.chdir(cwd)
             os.dup2(self._slave_stdin_fd, 0)
+            os.dup2(self._slave_stdout_fd, 1)
             
             # we're not directing stderr to stdout?  then set self._slave_stderr_fd to
             # fd 2, the common stderr fd
-            if stderr is not STDOUT: os.dup2(self._slave_stderr_fd, 2)
+            if stderr is STDOUT: os.dup2(self._slave_stdout_fd, 2) 
+            else: os.dup2(self._slave_stderr_fd, 2)
             
             # don't inherit file descriptors
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
             os.closerange(3, max_fd)
+            
+            if use_tty:
+                tmp_fd = os.open(os.ttyname(1), os.O_WRONLY)
+                os.close(tmp_fd)
+
+            self._setwinsize(1, 24, 80)
             
             # actually execute the process
             if env is None: os.execv(cmd[0], cmd)
@@ -102,30 +96,53 @@ class OProc(object):
 
         # parent
         else:
-            if gc_was_enabled: gc.enable()
+            
+            if not OProc.registered_cleanup:
+                atexit.register(OProc._cleanup_procs)
+                OProc.registered_cleanup = True
+        
+        
+            self.cmd = cmd
+            self.exit_code = None
+            self._done_callbacks = []
+            
+            self.stdin = stdin or Queue()
+            self._pipe_queue = Queue()
+        
+            # this is used to prevent a race condition when we're waiting for
+            # a process to end, and the OProc's internal threads are also checking
+            # for the processes's end
+            self._wait_lock = threading.Lock()
+        
+            # these are for aggregating the stdout and stderr.  we use a deque
+            # because we don't want to overflow
+            self._stdout = deque(maxlen=ibufsize)
+            self._stderr = deque(maxlen=ibufsize)
+            
+            
+            self._setwinsize(self._stdin_fd, 24, 80)
+            
             
             self.log = logging.getLogger("process %r" % self)
             
             os.close(self._slave_stdin_fd)
+            os.close(self._slave_stdout_fd)
             if stderr is not STDOUT: os.close(self._slave_stderr_fd)
             
             self.log.debug("started process")
             if not persist: OProc._procs_to_cleanup.append(self)
-            self._stdout_fd = stdinout
 
-            self._setwinsize(24, 80)
 
-            #tty.setraw(self._stdin_fd)
-            
-            # turn off echoing.  if we don't do this, anything that we write
-            # to the process via stdin will be echoed in the stdout
+            #if use_tty: tty.setraw(self._stdin_fd)
             attr = termios.tcgetattr(self._stdin_fd)
-            attr[3] |= ~(termios.ECHO)
+            #attr[0] |= termios.IUTF8
+            #attr[3] |=  
             termios.tcsetattr(self._stdin_fd, termios.TCSANOW, attr)
 
 
             # set raw mode, so there isn't any weird translation of newlines
-            # to \r\n and other oddities
+            # to \r\n and other oddities.  we're not outputting to a terminal
+            # anyways
             tty.setraw(self._stdout_fd)
             if stderr is not STDOUT: tty.setraw(self._stderr_fd)
 
@@ -153,13 +170,13 @@ class OProc(object):
         return "<Process %d %r>" % (self.pid, self.cmd)        
             
 
-    def _setwinsize(self, r, c):
+    def _setwinsize(self, fd, r, c):
         TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
         if TIOCSWINSZ == 2148037735: # L is not required in Python >= 2.2.
             TIOCSWINSZ = -2146929561 # Same bits, but with sign.
 
         s = struct.pack('HHHH', r, c, 0, 0)
-        fcntl.ioctl(self._stdout_fd, TIOCSWINSZ, s)
+        fcntl.ioctl(fd, TIOCSWINSZ, s)
 
 
     @staticmethod
@@ -189,7 +206,7 @@ class OProc(object):
             
         break_next = False
         
-        while readers:
+        while readers or writers:
             read, write, err = select.select(readers, writers, errors, 0)
 
             for stream in read:
@@ -205,14 +222,6 @@ class OProc(object):
             for stream in err:
                 pass
             
-            import time
-            #time.sleep(0.0001)
-            #print self.alive
-
-            
-
-                
-                
         if stdout: stdout.close()
         if stderr: stderr.close()
 
@@ -390,14 +399,16 @@ class StreamWriter(object):
             # this is because they think we blind-sided them and closed their
             # input fd without signalling an EOF first.  is there a better
             # way to handle these cases?
-            if hasattr(termios, "VEOF"):
-                char = termios.tcgetattr(self.stream)[6][termios.VEOF]
-            else:
+            try: char = termios.tcgetattr(self.stream)[6][termios.VEOF]
+            except:
                 # platform does not define VEOF so assume CTRL-D
-                char = chr(4)
+                char = chr(4).encode()
+                
+            #time.sleep(10)
              
-            os.write(self.stream, char.encode())
-            #os.close(self.stream)
+            if self.process.use_tty:
+                os.write(self.stream, char)
+            else: os.close(self.stream)
             return True
         
         except NoStdinData:
@@ -513,7 +524,7 @@ class StreamReader(object):
         
         if IS_PY3: chunk = chunk.decode()
         self.log.debug("got chunk size %d", len(chunk))
-        print repr(chunk)
+        print(repr(chunk))
 
         if self.line_buffered:
             while True:

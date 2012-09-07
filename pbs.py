@@ -307,6 +307,10 @@ class Command(object):
         "for_noblock": None,
         "ok_code": 0,
         "cwd": None,
+        
+        # this is for programs that expect their input to be from a terminal.
+        # ssh is one of those programs
+        "tty_in": False,
     }
     
     # these are arguments that cannot be called together, because they wouldn't
