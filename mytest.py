@@ -13,12 +13,14 @@ logging.basicConfig(
 
 stdin = tempfile.NamedTemporaryFile()
 
-data = ",".join((str(num) for num in range(1, 100))) + "\n"
+data = ",".join((str(num) for num in range(1, 2500))) + "\n"
 stdin.write(data.encode())
 stdin.flush()
 stdin.seek(0)
 
-out = sh.tr("[:lower:]", "[:upper:]", _in=data)
+#out = sh.tr("[:lower:]", "[:upper:]", _in=data)
 #out = sh.cat(stdin.name)
 #out = sh.python("tr.py", _in=data)
-print(len(out), len(data))
+#print(len(out), len(data))
+
+print sh.echo("hi")

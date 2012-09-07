@@ -40,13 +40,12 @@ class OProc(object):
     _procs_to_cleanup = []
     registered_cleanup = False
 
-    def __init__(self, cmd, stdin=None, stdout=None, stderr=None, bufsize=1,
-            persist=False, ibufsize=100000, pipe=STDOUT, env=None, cwd=None):
+    def __init__(self, cmd, stdin, stdout, stderr, call_args,
+            persist=False, ibufsize=100000, pipe=STDOUT):
 
-        use_tty = True
-        self.use_tty = use_tty
+        self.call_args = call_args
 
-        if use_tty: self._slave_stdin_fd, self._stdin_fd = pty.openpty()
+        if self.call_args["tty_in"]: self._stdin_fd, self._slave_stdin_fd = os.openpty()
         else: self._slave_stdin_fd, self._stdin_fd = os.pipe()
         self._stdout_fd, self._slave_stdout_fd = pty.openpty()
         
@@ -54,22 +53,48 @@ class OProc(object):
         if stderr is not STDOUT: self._stderr_fd, self._slave_stderr_fd = pty.openpty()
         
         self.pid = os.fork()
-        
-#        print os.ttyname(self._slave_stdin_fd)
-#        print os.ttyname(self._stdin_fd)
-#        print os.ttyname(self._slave_stdout_fd)
-#        print os.ttyname(self._stdout_fd)
-#        print
+
 
         # child
-        if self.pid == 0:
-            os.setsid()
-            
+        if self.pid == 0:            
             os.close(self._stdin_fd)
             os.close(self._stdout_fd)
             if stderr is not STDOUT: os.close(self._stderr_fd)
             
-            if cwd: os.chdir(cwd)
+            # this controlling tty code was borrowed from pexpect.py
+            # good work, noah!
+            if self.call_args["tty_in"]:
+                child_tty = os.ttyname(self._slave_stdin_fd)
+
+                # disconnect from controlling tty if still connected.
+                fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY);
+                if fd >= 0: os.close(fd)
+        
+                os.setsid()
+        
+                # verify we are disconnected from controlling tty
+                try:
+                    fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY);
+                    if fd >= 0:
+                        os.close(fd)
+                        raise Exception("Error! We are not disconnected from a controlling tty.")
+                except:
+                    # good! we are disconnected from a controlling tty
+                    pass
+        
+                # verify we can open child pty
+                fd = os.open(child_tty, os.O_RDWR);
+                if fd < 0: raise Exception("Error! Could not open child pty, " + child_tty)
+                else: os.close(fd)
+        
+                # verify we now have a controlling tty
+                fd = os.open("/dev/tty", os.O_WRONLY)
+                if fd < 0: raise Exception("Error! Could not open controlling tty, /dev/tty")
+                else: os.close(fd)
+                
+                    
+                    
+            if self.call_args["cwd"]: os.chdir(self.call_args["cwd"])
             os.dup2(self._slave_stdin_fd, 0)
             os.dup2(self._slave_stdout_fd, 1)
             
@@ -81,16 +106,13 @@ class OProc(object):
             # don't inherit file descriptors
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
             os.closerange(3, max_fd)
-            
-            if use_tty:
-                tmp_fd = os.open(os.ttyname(1), os.O_WRONLY)
-                os.close(tmp_fd)
+                    
 
-            self._setwinsize(1, 24, 80)
+            self.setwinsize(1, 24, 80)
             
             # actually execute the process
-            if env is None: os.execv(cmd[0], cmd)
-            else: os.execve(cmd[0], cmd, env)
+            if self.call_args["env"] is None: os.execv(cmd[0], cmd)
+            else: os.execve(cmd[0], cmd, self.call_args["env"])
 
             os._exit(255)
 
@@ -120,7 +142,7 @@ class OProc(object):
             self._stderr = deque(maxlen=ibufsize)
             
             
-            self._setwinsize(self._stdin_fd, 24, 80)
+            if self.call_args["tty_in"]: self.setwinsize(self._stdin_fd, 24, 80)
             
             
             self.log = logging.getLogger("process %r" % self)
@@ -133,11 +155,10 @@ class OProc(object):
             if not persist: OProc._procs_to_cleanup.append(self)
 
 
-            #if use_tty: tty.setraw(self._stdin_fd)
-            attr = termios.tcgetattr(self._stdin_fd)
-            #attr[0] |= termios.IUTF8
-            #attr[3] |=  
-            termios.tcsetattr(self._stdin_fd, termios.TCSANOW, attr)
+            if self.call_args["tty_in"]:
+                attr = termios.tcgetattr(self._stdin_fd)
+                attr[3] &= ~termios.ECHO  
+                termios.tcsetattr(self._stdin_fd, termios.TCSANOW, attr)
 
 
             # set raw mode, so there isn't any weird translation of newlines
@@ -151,15 +172,15 @@ class OProc(object):
             stdin_stream = StreamWriter("stdin", self, self._stdin_fd, self.stdin)
                            
             stdout_pipe = self._pipe_queue if pipe is STDOUT else None
-            stdout_stream = StreamReader("stdout", self, self._stdout_fd, stdout, self._stdout,
-                bufsize, stdout_pipe)
+            stdout_stream = StreamReader("stdout", self, self._stdout_fd, stdout,
+                self._stdout, self.call_args["bufsize"], stdout_pipe)
                 
                 
             if stderr is STDOUT: stderr_stream = None 
             else:
                 stderr_pipe = self._pipe_queue if pipe is STDERR else None   
                 stderr_stream = StreamReader("stderr", self, self._stderr_fd, stderr,
-                    self._stderr, bufsize, stderr_pipe)
+                    self._stderr, self.call_args["bufsize"], stderr_pipe)
             
             # start the main io thread
             self._io_thread = self._start_thread(self.io_thread,
@@ -170,7 +191,9 @@ class OProc(object):
         return "<Process %d %r>" % (self.pid, self.cmd)        
             
 
-    def _setwinsize(self, fd, r, c):
+    # also borrowed from pexpect.py
+    @staticmethod
+    def setwinsize(fd, r, c):
         TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
         if TIOCSWINSZ == 2148037735: # L is not required in Python >= 2.2.
             TIOCSWINSZ = -2146929561 # Same bits, but with sign.
@@ -206,7 +229,7 @@ class OProc(object):
             
         break_next = False
         
-        while readers or writers:
+        while readers:
             read, write, err = select.select(readers, writers, errors, 0)
 
             for stream in read:
@@ -404,10 +427,7 @@ class StreamWriter(object):
                 # platform does not define VEOF so assume CTRL-D
                 char = chr(4).encode()
                 
-            #time.sleep(10)
-             
-            if self.process.use_tty:
-                os.write(self.stream, char)
+            if self.process.call_args["tty_in"]: os.write(self.stream, char)
             else: os.close(self.stream)
             return True
         
@@ -524,7 +544,6 @@ class StreamReader(object):
         
         if IS_PY3: chunk = chunk.decode()
         self.log.debug("got chunk size %d", len(chunk))
-        print(repr(chunk))
 
         if self.line_buffered:
             while True:
