@@ -866,7 +866,44 @@ for i in xrange(42):
         
         out = tr("[:lower:]", "[:upper:]", _in=data)
         self.assertEqual(len(out), len(data))
+
+
+    def test_tty_input(self):
+        from pbs import python
         
+        py = create_tmp_test("""
+import sys
+import os
+
+if os.isatty(sys.stdin.fileno()):
+    sys.stdout.write("password?\\n")
+    pw = sys.stdin.readline().strip()
+    sys.stdout.write("%s\\n" % ("*" * len(pw)))
+else:
+    sys.stdout.write("no tty attached!\\n")
+""")
+
+        test_pw = "test123"
+        expected_stars = "*" * len(test_pw)
+        d = {}
+
+        def password_enterer(line, stdin):
+            line = line.strip()
+            if not line: return
+
+            if line == "password?":
+                stdin.put(test_pw+"\n")
+
+            elif line.startswith("*"):
+                d["stars"] = line
+                return True
+
+        pw_stars = python(py.name, _tty_in=True, _out=password_enterer)
+        pw_stars.wait()
+        self.assertEqual(d["stars"], expected_stars)
+
+        response = python(py.name)
+        self.assertEqual(response, "no tty attached!\n")
 
 
 if __name__ == "__main__":
