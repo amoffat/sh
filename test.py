@@ -922,7 +922,16 @@ else:
         out = cStringIO()
         echo("-n", "testing 123", _out=out)
         self.assertEqual(out.getvalue().decode(), "testing 123")
+
+
+    def test_stringio_input(self):
+        raise NotImplementedError
         
+
+    def test_ibufsize(self):
+        raise NotImplementedError
+        
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
