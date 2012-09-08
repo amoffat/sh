@@ -183,8 +183,10 @@ class OProc(object):
                     self._stderr, self.call_args["bufsize"], stderr_pipe)
             
             # start the main io thread
-            self._io_thread = self._start_thread(self.io_thread,
-                stdin_stream, stdout_stream, stderr_stream)
+            #self._io_thread = self._start_thread(self.io_thread,
+                #stdin_stream, stdout_stream, stderr_stream)
+            self._input_thread = self._start_thread(self.input_thread, stdin_stream)
+            self._output_thread = self._start_thread(self.output_thread, stdout_stream, stderr_stream)
             
             
     def __repr__(self):
@@ -214,6 +216,43 @@ class OProc(object):
     def add_done_callback(self, cb):
         self._done_callbacks.append(cb)
 
+
+    def output_thread(self, stdout, stderr):
+        readers = []
+        errors = []
+
+        if stdout is not None:
+            readers.append(stdout)
+            errors.append(stdout)
+        if stderr is not None:
+            readers.append(stderr)
+            errors.append(stderr)
+
+
+        while readers:
+            outputs, inputs, err = select.select(readers, [], errors, 1)
+
+            # stdout and stderr
+            for stream in outputs:
+                self.log.debug("%r ready to be read from", stream)
+                done = stream.read()
+                if done: readers.remove(stream)
+                
+            for stream in err:
+                pass
+            
+        if stdout: stdout.close()
+        if stderr: stderr.close()
+
+
+
+    def input_thread(self, stdin):
+        done = False
+        while not done and self.alive:
+            self.log.debug("%r ready for more input", stdin)
+            done = stdin.write()
+
+
     def io_thread(self, stdin, stdout, stderr):
         writers = [stdin]
         readers = []
@@ -226,21 +265,22 @@ class OProc(object):
         if stderr is not None:
             readers.append(stderr)
             errors.append(stderr)
-            
-        break_next = False
-        
-        while readers:
-            read, write, err = select.select(readers, writers, errors, 0)
 
-            for stream in read:
-                self.log.debug("%r ready to be read from", stream)
-                done = stream.read()
-                if done: readers.remove(stream)
-                
-            for stream in write:
+            
+        while readers:
+            outputs, inputs, err = select.select(readers, writers, errors, 1)
+
+            # stdin
+            for stream in inputs:
                 self.log.debug("%r ready for more input", stream)
                 done = stream.write()
                 if done: writers.remove(stream)
+                
+            # stdout and stderr
+            for stream in outputs:
+                self.log.debug("%r ready to be read from", stream)
+                done = stream.read()
+                if done: readers.remove(stream)
                 
             for stream in err:
                 pass
@@ -330,7 +370,8 @@ class OProc(object):
             else:
                 self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
             
-            self._io_thread.join()
+            self._input_thread.join()
+            self._output_thread.join()
             
             for cb in self._done_callbacks: cb()
         
@@ -390,7 +431,7 @@ class StreamWriter(object):
         return self.stream
     
     def get_queue_chunk(self):
-        try: chunk = self.stdin.get_nowait()
+        try: chunk = self.stdin.get(True, 0.01)
         except Empty: raise NoStdinData
         if chunk is None: raise DoneReadingStdin
         return chunk
