@@ -917,9 +917,6 @@ class StreamWriter(object):
         elif hasattr(stdin, "read"):
             log_msg = "file descriptor"
             self.get_chunk = self.get_file_chunk
-
-        elif not IS_PY3 and isinstance(stdin, (_cStringIO_class, StringIO)):
-            pass
             
         elif isinstance(stdin, basestring):
             log_msg = "string"
@@ -969,19 +966,16 @@ class StreamWriter(object):
         try: chunk = self.get_chunk()
         except DoneReadingStdin:
             self.log.debug("done reading")
-            # write the ctrl+d, which signals some processes that we've reached
-            # the EOF.  if we try to straight up close our self.stream fd,
-            # some programs will give us errno 5: input/output error.  i assume
-            # this is because they think we blind-sided them and closed their
-            # input fd without signalling an EOF first.  is there a better
-            # way to handle these cases?
-            try: char = termios.tcgetattr(self.stream)[6][termios.VEOF]
-            except:
-                # platform does not define VEOF so assume CTRL-D
-                char = chr(4).encode()
                 
-            if self.process.call_args["tty_in"]: os.write(self.stream, char)
+            if self.process.call_args["tty_in"]:
+                # EOF time
+                try: char = termios.tcgetattr(self.stream)[6][termios.VEOF]
+                except: char = chr(4).encode()
+                os.write(self.stream, char)
+                
+            # pipe EOF, just close it
             else: os.close(self.stream)
+            
             return True
         
         except NoStdinData:
@@ -1036,8 +1030,9 @@ class StreamReader(object):
         self.handler = handler
         if callable(handler): self.handler_type = "fn"
         elif isinstance(handler, StringIO): self.handler_type = "stringio"
-        elif IS_PY3 and isinstance(handler, cStringIO): self.handler_type = "cstringio"
-        elif not IS_PY3 and isinstance(handler, _cStringIO_class): self.handler_type = "cstringio"
+        elif (IS_PY3 and isinstance(handler, cStringIO)) or \
+            (not IS_PY3 and isinstance(handler, _cStringIO_class)):
+            self.handler_type = "cstringio"
         elif hasattr(handler, "write"): self.handler_type = "fd"
         else: self.handler_type = None
         

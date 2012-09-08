@@ -925,7 +925,21 @@ else:
 
 
     def test_stringio_input(self):
-        raise NotImplementedError
+        from pbs import cat
+        
+        if IS_PY3:
+            from io import StringIO
+            from io import BytesIO as cStringIO
+        else:
+            from StringIO import StringIO
+            from cStringIO import StringIO as cStringIO
+            
+        input = StringIO()
+        input.write("herpderp")
+        input.seek(0)
+        
+        out = cat(_in=input)
+        self.assertEqual(out, "herpderp")
         
 
     def test_ibufsize(self):
