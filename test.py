@@ -906,6 +906,24 @@ else:
         self.assertEqual(response, "no tty attached!\n")
 
 
+    def test_stringio_output(self):
+        from pbs import echo
+        if IS_PY3:
+            from io import StringIO
+            from io import BytesIO as cStringIO
+        else:
+            from StringIO import StringIO
+            from cStringIO import StringIO as cStringIO
+
+        out = StringIO()
+        echo("-n", "testing 123", _out=out)
+        self.assertEqual(out.getvalue(), "testing 123")
+
+        out = cStringIO()
+        echo("-n", "testing 123", _out=out)
+        self.assertEqual(out.getvalue().decode(), "testing 123")
+        
+
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         unittest.main()

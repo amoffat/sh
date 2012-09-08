@@ -22,8 +22,9 @@
 
 
 
-import subprocess as subp
 import sys
+IS_PY3 = sys.version_info[0] == 3
+
 import traceback
 import os
 import re
@@ -32,6 +33,13 @@ import shlex
 from types import ModuleType
 from functools import partial
 import inspect
+
+if IS_PY3:
+    from io import StringIO
+    from io import BytesIO as cStringIO
+else:
+    from StringIO import StringIO
+    from cStringIO import StringIO as cStringIO, OutputType as _cStringIO_class
 
 
 import pty
@@ -51,7 +59,6 @@ import oproc
 __version__ = "0.82"
 __project_url__ = "https://github.com/amoffat/pbs"
 
-IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
     raw_input = input
     unicode = str
@@ -493,16 +500,17 @@ If you're using glob.glob(), please use pbs.glob() instead." % self.path, stackl
 
         # stdout redirection
         stdout = call_args["out"]
-        if stdout and not callable(stdout) and not hasattr(stdout, "write"):
+        if stdout and not callable(stdout) and not hasattr(stdout, "write") \
+            and not isinstance(stdout, (_cStringIO_class, StringIO)):
             stdout = file(str(stdout), "w")
         
 
         # stderr redirection
         stderr = call_args["err"]
-        if stderr and not callable(stderr) and not hasattr(stderr, "write"):
+        if stderr and not callable(stderr) and not hasattr(stderr, "write") \
+            and not isinstance(stderr, (_cStringIO_class, StringIO)):
             stderr = file(str(err), "w")
             
-        #if call_args["err_to_out"]: stderr = subp.STDOUT
 
         return RunningCommand(cmd, call_args, stdin, stdout, stderr)
 

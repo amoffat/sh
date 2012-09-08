@@ -1,6 +1,8 @@
+import sys
+IS_PY3 = sys.version_info[0] == 3
+
 import pty
 import os
-import sys
 import termios
 import signal
 import select
@@ -19,12 +21,18 @@ from collections import deque
 import logging
 import time
 
+if IS_PY3:
+    from io import StringIO
+    from io import BytesIO as cStringIO
+else:
+    from StringIO import StringIO
+    from cStringIO import StringIO as cStringIO, OutputType as _cStringIO_class
+
 from threading import Thread, Event
 try: from Queue import Queue, Empty
 except ImportError: from queue import Queue, Empty  # 3
 
 
-IS_PY3 = sys.version_info[0] == 3
 
 if IS_PY3:
     basestring = str
@@ -408,6 +416,9 @@ class StreamWriter(object):
         elif hasattr(stdin, "read"):
             log_msg = "file descriptor"
             self.get_chunk = self.get_file_chunk
+
+        elif not IS_PY3 and isinstance(stdin, (_cStringIO_class, StringIO)):
+            pass
             
         elif isinstance(stdin, basestring):
             log_msg = "string"
@@ -523,6 +534,9 @@ class StreamReader(object):
 
         self.handler = handler
         if callable(handler): self.handler_type = "fn"
+        elif isinstance(handler, StringIO): self.handler_type = "stringio"
+        elif IS_PY3 and isinstance(handler, cStringIO): self.handler_type = "cstringio"
+        elif not IS_PY3 and isinstance(handler, _cStringIO_class): self.handler_type = "cstringio"
         elif hasattr(handler, "write"): self.handler_type = "fd"
         else: self.handler_type = None
         
@@ -565,7 +579,10 @@ class StreamReader(object):
         if self.handler_type == "fn" and not self.should_quit:
             self.should_quit = self.handler(chunk, *self.handler_args)
             
-        elif self.handler_type == "fd":
+        elif self.handler_type == "stringio":
+            self.handler.write(chunk)
+
+        elif self.handler_type in ("cstringio", "fd"):
             self.handler.write(chunk.encode())
             
         # we put the chunk on the pipe queue as a string, not py3 bytes
