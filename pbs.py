@@ -331,8 +331,13 @@ class Command(object):
         # this is how big the output buffers will be for stdout and stderr.
         # this is essentially how much output they will store from the process.
         # we use a deque, so if it overflows past this amount, the first items
-        # get pushed off as each new item gets added
-        "internal_bufsize": 5 * 1024**2,
+        # get pushed off as each new item gets added.
+        # 
+        # NOTICE
+        # this is not a *BYTE* size, this is a *CHUNK* size...meaning, that if
+        # you're buffering out/err at 1024 bytes, the internal buffer size will
+        # be "internal_bufsize" CHUNKS of 1024 bytes
+        "internal_bufsize": 3 * 1024**2,
         
         "env": None,
         "piped": None,

@@ -948,6 +948,9 @@ else:
         output = cat(_in="a"*1000, _internal_bufsize=100, _out_bufsize=0)
         self.assertEqual(len(output), 100)
         
+        output = cat(_in="a"*1000, _internal_bufsize=50, _out_bufsize=2)
+        self.assertEqual(len(output), 100)
+        
 
 
 if __name__ == "__main__":
