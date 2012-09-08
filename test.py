@@ -543,7 +543,7 @@ for i in xrange(5): print "herpderp"
         stdout = []
         def agg(line): stdout.append(line)
         
-        p = python(py.name, _out=agg, _bufsize=1)
+        p = python(py.name, _out=agg, _out_bufsize=1)
         p.wait()
         
         self.assertTrue(len(stdout) == 5)
@@ -566,7 +566,7 @@ for i in xrange(5): print "herpderp"
         stdout = []
         def agg(char): stdout.append(char)
         
-        p = python(py.name, _out=agg, _bufsize=0)
+        p = python(py.name, _out=agg, _out_bufsize=0)
         p.wait()
         
         # + 5 newlines
@@ -589,7 +589,7 @@ for i in xrange(5): sys.stdout.write("herpderp")
         stdout = []
         def agg(chunk): stdout.append(chunk)
         
-        p = python(py.name, _out=agg, _bufsize=4)
+        p = python(py.name, _out=agg, _out_bufsize=4)
         p.wait()
 
         self.assertTrue(len(stdout) == (len("herp")/2 * 5))
@@ -942,8 +942,11 @@ else:
         self.assertEqual(out, "herpderp")
         
 
-    def test_ibufsize(self):
-        raise NotImplementedError
+    def test_internal_bufsize(self):
+        from pbs import cat
+        
+        output = cat(_in="a"*1000, _internal_bufsize=100, _out_bufsize=0)
+        self.assertEqual(len(output), 100)
         
 
 

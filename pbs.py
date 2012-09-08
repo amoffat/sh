@@ -322,8 +322,17 @@ class Command(object):
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
         
+        # stdin buffer size
         # 1 for line, 0 for unbuffered, any other number for that amount
-        "bufsize": 1,
+        "in_bufsize": 0,
+        # stdout buffer size, same values as above
+        "out_bufsize": 1,
+        
+        # this is how big the output buffers will be for stdout and stderr.
+        # this is essentially how much output they will store from the process.
+        # we use a deque, so if it overflows past this amount, the first items
+        # get pushed off as each new item gets added
+        "internal_bufsize": 5 * 1024**2,
         
         "env": None,
         "piped": None,
@@ -550,7 +559,7 @@ class OProc(object):
     registered_cleanup = False
 
     def __init__(self, cmd, stdin, stdout, stderr, call_args,
-            persist=False, ibufsize=100000, pipe=STDOUT):
+            persist=False, pipe=STDOUT):
 
         self.call_args = call_args
 
@@ -647,9 +656,8 @@ class OProc(object):
         
             # these are for aggregating the stdout and stderr.  we use a deque
             # because we don't want to overflow
-            self._stdout = deque(maxlen=ibufsize)
-            self._stderr = deque(maxlen=ibufsize)
-            
+            self._stdout = deque(maxlen=self.call_args["internal_bufsize"])
+            self._stderr = deque(maxlen=self.call_args["internal_bufsize"])
             
             if self.call_args["tty_in"]: self.setwinsize(self._stdin_fd, 24, 80)
             
@@ -678,18 +686,19 @@ class OProc(object):
 
 
 
-            stdin_stream = StreamWriter("stdin", self, self._stdin_fd, self.stdin)
+            stdin_stream = StreamWriter("stdin", self, self._stdin_fd, self.stdin,
+                self.call_args["in_bufsize"])
                            
             stdout_pipe = self._pipe_queue if pipe is STDOUT else None
             stdout_stream = StreamReader("stdout", self, self._stdout_fd, stdout,
-                self._stdout, self.call_args["bufsize"], stdout_pipe)
+                self._stdout, self.call_args["out_bufsize"], stdout_pipe)
                 
                 
             if stderr is STDOUT: stderr_stream = None 
             else:
                 stderr_pipe = self._pipe_queue if pipe is STDERR else None   
                 stderr_stream = StreamReader("stderr", self, self._stderr_fd, stderr,
-                    self._stderr, self.call_args["bufsize"], stderr_pipe)
+                    self._stderr, self.call_args["out_bufsize"], stderr_pipe)
             
             # start the main io thread
             #self._io_thread = self._start_thread(self.io_thread,
@@ -726,6 +735,14 @@ class OProc(object):
         self._done_callbacks.append(cb)
 
 
+    def input_thread(self, stdin):
+        done = False
+        while not done and self.alive:
+            self.log.debug("%r ready for more input", stdin)
+            done = stdin.write()
+        stdin.close()
+            
+            
     def output_thread(self, stdout, stderr):
         readers = []
         errors = []
@@ -752,51 +769,6 @@ class OProc(object):
             
         if stdout: stdout.close()
         if stderr: stderr.close()
-
-
-
-    def input_thread(self, stdin):
-        done = False
-        while not done and self.alive:
-            self.log.debug("%r ready for more input", stdin)
-            done = stdin.write()
-
-
-    def io_thread(self, stdin, stdout, stderr):
-        writers = [stdin]
-        readers = []
-        errors = []
-        
-        # they might be None in the case that we're redirecting one to the other
-        if stdout is not None:
-            readers.append(stdout)
-            errors.append(stdout)
-        if stderr is not None:
-            readers.append(stderr)
-            errors.append(stderr)
-
-            
-        while readers:
-            outputs, inputs, err = select.select(readers, writers, errors, 1)
-
-            # stdin
-            for stream in inputs:
-                self.log.debug("%r ready for more input", stream)
-                done = stream.write()
-                if done: writers.remove(stream)
-                
-            # stdout and stderr
-            for stream in outputs:
-                self.log.debug("%r ready to be read from", stream)
-                done = stream.read()
-                if done: readers.remove(stream)
-                
-            for stream in err:
-                pass
-            
-        if stdout: stdout.close()
-        if stderr: stderr.close()
-
 
     @property
     def stdout(self):
@@ -898,13 +870,22 @@ class NoStdinData(Exception): pass
 # opened process's stdin fd.  the stream can be a Queue, a callable, something
 # with the "read" method, a string, or an iterable
 class StreamWriter(object):
-    def __init__(self, name, process, stream, stdin):
+    def __init__(self, name, process, stream, stdin, bufsize):
         self.name = name
         self.process = process
         self.stream = stream
         self.stdin = stdin
         
         self.log = logging.getLogger(repr(self))
+        
+        
+        self.stream_bufferer = StreamBufferer(bufsize)
+        
+        # determine buffering for reading from the input we set for stdin
+        if bufsize == 1: self.bufsize = 1024
+        elif bufsize == 0: self.bufsize = 1
+        else: self.bufsize = bufsize
+            
         
         if isinstance(stdin, Queue):
             log_msg = "queue"
@@ -914,16 +895,20 @@ class StreamWriter(object):
             log_msg = "callable"
             self.get_chunk = self.get_callable_chunk
             
+        # also handles stringio
         elif hasattr(stdin, "read"):
             log_msg = "file descriptor"
             self.get_chunk = self.get_file_chunk
             
         elif isinstance(stdin, basestring):
             log_msg = "string"
-            #self.stdin = iter((c+"\n" for c in stdin.split("\n")))
-            stdin_bufsize = 1024
-            self.stdin = iter(stdin[i:i+stdin_bufsize] for i in range(0, len(stdin), stdin_bufsize))
-            self.get_chunk = self.get_iter_chunk
+            
+            if bufsize == 1:
+                # TODO, make the split() be a generator
+                self.stdin = iter((c+"\n" for c in stdin.split("\n")))
+            else:
+                self.stdin = iter(stdin[i:i+self.bufsize] for i in range(0, len(stdin), self.bufsize))
+                self.get_chunk = self.get_iter_chunk
             
         else:
             log_msg = "general iterable"
@@ -972,9 +957,6 @@ class StreamWriter(object):
                 try: char = termios.tcgetattr(self.stream)[6][termios.VEOF]
                 except: char = chr(4).encode()
                 os.write(self.stream, char)
-                
-            # pipe EOF, just close it
-            else: os.close(self.stream)
             
             return True
         
@@ -982,20 +964,25 @@ class StreamWriter(object):
             self.log.debug("received no data")
             return False
         
-        self.log.debug("got chunk size %d", len(chunk))
-        
-        if IS_PY3 and hasattr(chunk, "encode"): chunk = chunk.encode()
-        
-        self.log.debug("writing chunk to process")
-        try:
-            os.write(self.stream, chunk)
-        except OSError:
-            self.log.debug("OSError writing stdin chunk")
-            return True
+        for chunk in self.stream_bufferer.process(chunk):
+            self.log.debug("got chunk size %d", len(chunk))
+            
+            if IS_PY3 and hasattr(chunk, "encode"): chunk = chunk.encode()
+            
+            self.log.debug("writing chunk to process")
+            try:
+                os.write(self.stream, chunk)
+            except OSError:
+                self.log.debug("OSError writing stdin chunk")
+                return True
         
         
     def close(self):
-        try: os.close(self.stream)
+        chunk = self.stream_bufferer.flush()
+        try:
+            if chunk: os.write(self.stream, chunk.encode())
+            if not self.process.call_args["tty_in"]:
+                os.close(self.stream)
         except OSError: pass
         
 
@@ -1007,26 +994,20 @@ class StreamReader(object):
         self.process = process
         self.stream = stream
         self.buffer = buffer
-        self._tmp_buffer = []
         self.pipe_queue = pipe_queue
 
         self.log = logging.getLogger(repr(self))
         
+        self.stream_bufferer = StreamBufferer(bufsize)
+        
         # determine buffering
-        self.line_buffered = False
-        if bufsize == 1:
-            buffer_type = "line buffered"
-            self.line_buffered = True
-            self.bufsize = 1024
-        elif bufsize == 0:
-            buffer_type = "unbuffered"
-            self.bufsize = 1 
-        else:
-            buffer_type = "%d buffering" % bufsize
-            self.bufsize = bufsize
-            
-        self.log.debug("buffering is " + buffer_type)
-
+        if bufsize == 1: self.bufsize = 1024
+        elif bufsize == 0: self.bufsize = 1 
+        else: self.bufsize = bufsize
+        
+        
+        # here we're determining the handler type by doing some basic checks
+        # on the handler object
         self.handler = handler
         if callable(handler): self.handler_type = "fn"
         elif isinstance(handler, StringIO): self.handler_type = "stringio"
@@ -1035,6 +1016,7 @@ class StreamReader(object):
             self.handler_type = "cstringio"
         elif hasattr(handler, "write"): self.handler_type = "fd"
         else: self.handler_type = None
+        
         
         self.should_quit = False
         
@@ -1060,11 +1042,8 @@ class StreamReader(object):
         return "<StreamReader %s for %r>" % (self.name, self.process)
 
     def close(self):
-        # write the last of any tmp buffer that might be leftover from a
-        # line-buffered process ending before a newline has been reached
-        if self._tmp_buffer:
-            self.write_chunk("".join(self._tmp_buffer))
-            self._tmp_buffer = []
+        chunk = self.stream_bufferer.flush()
+        if chunk: self.write_chunk(chunk)
         
         if self.pipe_queue: self.pipe_queue.put(None)
         try: os.close(self.stream)
@@ -1078,6 +1057,7 @@ class StreamReader(object):
         elif self.handler_type == "stringio":
             self.handler.write(chunk)
 
+        # cstrings and fds require bytes, so we encode()
         elif self.handler_type in ("cstringio", "fd"):
             self.handler.write(chunk.encode())
             
@@ -1099,35 +1079,79 @@ class StreamReader(object):
         if IS_PY3: chunk = chunk.decode()
         self.log.debug("got chunk size %d", len(chunk))
 
-        if self.line_buffered:
+        
+        for chunk in self.stream_bufferer.process(chunk):
+            self.write_chunk(chunk)   
+    
+
+
+
+# this is used for feeding in chunks of stdout/stderr, and breaking it up into
+# chunks that will actually be put into the internal buffers.  for example, if
+# you have two processes, one being piped to the other, and you want that,
+# first process to feed lines of data (instead of the chunks however they
+# come in), OProc will use an instance of this class to chop up the data and
+# feed it as lines to be sent down the pipe
+class StreamBufferer(object):
+    def __init__(self, buffer_type=1):
+        # 0 for unbuffered, 1 for line, everything else for that amount
+        self.type = buffer_type
+        self.buffer = []
+        self.n_buffer_count = 0
+        
+        
+    def process(self, chunk):
+        
+        if self.type == 0:
+            return [chunk]
+        
+        elif self.type == 1:
+            total_to_write = []
             while True:
                 newline = chunk.find("\n")
                 if newline == -1: break
                 
                 chunk_to_write = chunk[:newline+1]
-                if self._tmp_buffer:
-                    chunk_to_write = "".join(self._tmp_buffer) + chunk_to_write
-                    self._tmp_buffer = []
+                if self.buffer:
+                    chunk_to_write = "".join(self.buffer) + chunk_to_write
+                    self.buffer = []
                 
                 chunk = chunk[newline+1:]
-                self.write_chunk(chunk_to_write)
+                total_to_write.append(chunk_to_write)
                      
-            if chunk: self._tmp_buffer.append(chunk)       
-                
-        # not line buffered
-        else: self.write_chunk(chunk)
+            if chunk: self.buffer.append(chunk)
+            return total_to_write
+            
+        else:
+            total_to_write = []
+            while True:
+                overage = self.n_buffer_count + len(chunk) - self.type
+                if overage >= 0:
+                    ret = "".join(self.buffer) + chunk
+                    chunk_to_write = ret[:self.type]
+                    chunk = ret[self.type:]
+                    total_to_write.append(chunk_to_write)
+                    self.buffer = []
+                    self.n_buffer_count = 0
+                else:
+                    self.buffer.append(chunk)
+                    self.n_buffer_count += len(chunk)
+                    break
+            return total_to_write
+            
+
+    def flush(self):
+        ret =  "".join(self.buffer)
+        self.buffer = []
+        return ret
+    
 
 
 
 
-
-
-
-
-# this class is used directly when we do a "from pbs import *".  it allows
-# lookups to names that aren't found in the global scope to be searched
-# for as a program.  for example, if "ls" isn't found in the program's
-# scope, we consider it a system program and try to find it.
+# this allows lookups to names that aren't found in the global scope to be
+# searched for as a program name.  for example, if "ls" isn't found in this
+# module's scope, we consider it a system program and try to find it.
 class Environment(dict):
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
@@ -1189,12 +1213,17 @@ Please import pbs or import programs individually.")
         # it must be a command then
         return Command._create(k)
     
+    
+    # methods that begin with "b_" are custom builtins and will override any
+    # program that exists in our path.  this is useful for things like
+    # common shell builtins that people are used to, but which aren't actually
+    # full-fledged system binaries
+    
     def b_cd(self, path):
         os.chdir(path)
         
     def b_which(self, program):
         return which(program)
-
 
 
 
