@@ -469,10 +469,10 @@ print(len(options.long_option.split()))
 
     def test_bake_args_come_first(self):
         from sh import ls
-        ls = ls.bake(full_time=True)
+        ls = ls.bake(h=True)
         
         ran = ls("-la").ran
-        ft = ran.index("full-time")
+        ft = ran.index("-h")
         self.assertTrue("-la" in ran[ft:]) 
 
     
