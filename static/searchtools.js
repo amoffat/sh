@@ -457,7 +457,7 @@ var Search = {
             displayNextItem();
           });
         } else if (DOCUMENTATION_OPTIONS.HAS_SOURCE) {
-          $.get(DOCUMENTATION_OPTIONS.URL_ROOT + '_sources/' +
+          $.get(DOCUMENTATION_OPTIONS.URL_ROOT + 'sources/' +
                 item[0] + '.txt', function(data) {
             if (data != '') {
               listItem.append($.makeSearchSummary(data, searchterms, hlterms));
