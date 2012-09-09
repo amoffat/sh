@@ -134,9 +134,6 @@ import sys
 import os
 import time
 
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-
 for l in "andrew":
     print(l)
     time.sleep(.2)
@@ -148,13 +145,16 @@ for l in "andrew":
                 self.stdout = []
                 self.last_received = None
         
-            def agg(self, line):            
+            def agg(self, line):
                 self.stdout.append(line.strip())
                 now = time.time()
                 if self.last_received: self.times.append(now - self.last_received)
                 self.last_received = now
         
         derp = Derp()
+    
+        # note that if we don't do _tty_out for the tr commands, they don't
+        # write 
         p = tr(
                tr(
                   tr(
@@ -337,7 +337,7 @@ print(len(options.long_option.split()))
         
     def test_incremental_composition(self):
         from sh import ls, wc
-        c1 = int(wc(ls("-A1"), l=True, _piped=True))
+        c1 = int(wc(ls("-A1", _piped=True), l=True).strip())
         c2 = len(os.listdir("."))
         self.assertEqual(c1, c2)
 
@@ -727,7 +727,7 @@ for i in range(5):
         
     def test_general_signal(self):
         import signal
-        from signal import SIGHUP
+        from signal import SIGINT
         
         py = create_tmp_test("""
 import sys
@@ -739,11 +739,12 @@ def sig_handler(sig, frame):
     print(10)
     exit(0)
     
-signal.signal(signal.SIGHUP, sig_handler)
+signal.signal(signal.SIGINT, sig_handler)
 
-for i in range(5): 
+for i in range(5):
     print(i)
-    time.sleep(.5)
+    sys.stdout.flush()
+    time.sleep(0.5)
 """)
         
         stdout = []
@@ -751,7 +752,7 @@ for i in range(5):
             line = line.strip()
             stdout.append(line)
             if line == "3":
-                process.signal(SIGHUP)
+                process.signal(SIGINT)
                 return True
         
         p = python(py.name, _out=agg)
@@ -767,13 +768,16 @@ for i in range(5):
         py = create_tmp_test("""
 import sys
 import os
+import time
 
 for i in range(42): 
     print(i)
+    sys.stdout.flush()
 """)
 
         out = []
-        for line in python(py.name, _iter=True): out.append(int(line.strip()))
+        for line in python(py.name, _iter=True):
+            out.append(int(line.strip()))
         self.assertTrue(len(out) == 42 and sum(out) == 861)
         
        
@@ -896,7 +900,7 @@ for i in range(42):
         
     def test_cwd(self):
         from sh import pwd
-        self.assertEqual(str(pwd(_cwd="/tmp")), "/tmp\n")
+        self.assertEqual(str(pwd(_cwd="/")), "/\n")
         self.assertEqual(str(pwd(_cwd="/etc")), "/etc\n")
         
         

@@ -248,6 +248,10 @@ class RunningCommand(object):
         self.wait()
         return self.process.exit_code
     
+    @property
+    def pid(self):
+        return self.process.pid
+    
     def __len__(self):
         return len(str(self))
     
@@ -362,6 +366,7 @@ class Command(object):
         # this is for programs that expect their input to be from a terminal.
         # ssh is one of those programs
         "tty_in": False,
+        "tty_out": True,
     }
     
     # these are arguments that cannot be called together, because they wouldn't
@@ -574,19 +579,25 @@ STDERR = -2
 
 class OProc(object):
     _procs_to_cleanup = []
-    registered_cleanup = False
+    _registered_cleanup = False
+    _default_window_size = (24, 80)
 
     def __init__(self, cmd, stdin, stdout, stderr, call_args,
             persist=False, pipe=STDOUT):
 
         self.call_args = call_args
 
-        if self.call_args["tty_in"]: self._stdin_fd, self._slave_stdin_fd = os.openpty()
+        if self.call_args["tty_in"]: self._stdin_fd, self._slave_stdin_fd = pty.openpty()
         else: self._slave_stdin_fd, self._stdin_fd = os.pipe()
-        self._stdout_fd, self._slave_stdout_fd = pty.openpty()
         
-        # only open a pty for stderr if we're not directing to stdout
-        if stderr is not STDOUT: self._stderr_fd, self._slave_stderr_fd = pty.openpty()
+        if self.call_args["tty_out"]:
+            self._stdout_fd, self._slave_stdout_fd = pty.openpty()
+            # only open a pty for stderr if we're not directing to stdout
+            if stderr is not STDOUT: self._stderr_fd, self._slave_stderr_fd = pty.openpty()
+        else:
+            self._stdout_fd, self._slave_stdout_fd = os.pipe()
+            if stderr is not STDOUT: self._stderr_fd, self._slave_stderr_fd = os.pipe()
+            
         
         self.pid = os.fork()
 
@@ -598,7 +609,6 @@ class OProc(object):
             if stderr is not STDOUT: os.close(self._stderr_fd)
             
             # this controlling tty code was borrowed from pexpect.py
-            # good work, noah!
             if self.call_args["tty_in"]:
                 child_tty = os.ttyname(self._slave_stdin_fd)
 
@@ -644,7 +654,9 @@ class OProc(object):
             os.closerange(3, max_fd)
                     
 
-            self.setwinsize(1, 24, 80)
+            if self.call_args["tty_out"]:
+                self.setwinsize(1)
+                self.setwinsize(2)
             
             # actually execute the process
             if self.call_args["env"] is None: os.execv(cmd[0], cmd)
@@ -655,9 +667,9 @@ class OProc(object):
         # parent
         else:
             
-            if not OProc.registered_cleanup:
+            if not OProc._registered_cleanup:
                 atexit.register(OProc._cleanup_procs)
-                OProc.registered_cleanup = True
+                OProc._registered_cleanup = True
         
         
             self.cmd = cmd
@@ -677,7 +689,7 @@ class OProc(object):
             self._stdout = deque(maxlen=self.call_args["internal_bufsize"])
             self._stderr = deque(maxlen=self.call_args["internal_bufsize"])
             
-            if self.call_args["tty_in"]: self.setwinsize(self._stdin_fd, 24, 80)
+            if self.call_args["tty_in"]: self.setwinsize(self._stdin_fd)
             
             
             self.log = logging.getLogger("process %r" % self)
@@ -696,11 +708,12 @@ class OProc(object):
                 termios.tcsetattr(self._stdin_fd, termios.TCSANOW, attr)
 
 
-            # set raw mode, so there isn't any weird translation of newlines
-            # to \r\n and other oddities.  we're not outputting to a terminal
-            # anyways
-            tty.setraw(self._stdout_fd)
-            if stderr is not STDOUT: tty.setraw(self._stderr_fd)
+            if self.call_args["tty_out"]:
+                # set raw mode, so there isn't any weird translation of newlines
+                # to \r\n and other oddities.  we're not outputting to a terminal
+                # anyways
+                tty.setraw(self._stdout_fd)
+                if stderr is not STDOUT: tty.setraw(self._stderr_fd)
 
 
 
@@ -731,12 +744,13 @@ class OProc(object):
 
     # also borrowed from pexpect.py
     @staticmethod
-    def setwinsize(fd, r, c):
+    def setwinsize(fd):
+        rows, cols = OProc._default_window_size
         TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
         if TIOCSWINSZ == 2148037735: # L is not required in Python >= 2.2.
             TIOCSWINSZ = -2146929561 # Same bits, but with sign.
 
-        s = struct.pack('HHHH', r, c, 0, 0)
+        s = struct.pack('HHHH', rows, cols, 0, 0)
         fcntl.ioctl(fd, TIOCSWINSZ, s)
 
 
@@ -1093,7 +1107,9 @@ class StreamReader(object):
         except OSError as e:
             self.log.debug("got errno %d, done reading", e.errno)
             return True
-        if not chunk: return True
+        if not chunk:
+            self.log.debug("got no chunk, done reading")
+            return True
         
         if IS_PY3: chunk = chunk.decode()
         self.log.debug("got chunk size %d", len(chunk))
