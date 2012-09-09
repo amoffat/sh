@@ -69,6 +69,10 @@ print(args[0])
         out = python(py.name, 3).strip()
         self.assertEqual(out, "3")
         
+    def test_exit_code(self):
+        from sh import ls
+        self.assertEqual(ls("/").exit_code, 0)
+        
     def test_glob_warning(self):
         from sh import ls
         from glob import glob

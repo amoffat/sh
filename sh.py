@@ -236,7 +236,10 @@ class RunningCommand(object):
         self.wait()
         return self.process.stderr
     
-
+    @property
+    def exit_code(self):
+        self.wait()
+        return self.process.exit_code
     
     def __len__(self):
         return len(str(self))
