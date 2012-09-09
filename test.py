@@ -4,11 +4,14 @@ import os
 import unittest
 import tempfile
 import sys
-
+import pbs
 
 IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
     unicode = str
+    python = pbs.Command(pbs.which("python%d.%d" % sys.version_info[:2]))
+else:
+    from pbs import python
 
 
 skipUnless = getattr(unittest, "skipUnless", None)
@@ -58,7 +61,7 @@ class Basic(unittest.TestCase):
 from optparse import OptionParser
 parser = OptionParser()
 options, args = parser.parse_args()
-print args[0]
+print(args[0])
 """)
         
         out = python(py.name, 3).strip()
@@ -96,7 +99,7 @@ print args[0]
 from optparse import OptionParser
 parser = OptionParser()
 options, args = parser.parse_args()
-print args
+print(args)
 """)
         out = python(py.name, "one two three").strip()
         self.assertEqual(out, "['one two three']")
@@ -129,7 +132,7 @@ import time
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for l in "andrew":
-    print l
+    print(l)
     time.sleep(.2)
 """)
         
@@ -217,14 +220,14 @@ for l in "andrew":
         
         py = create_tmp_test("""
 import os
-print os.environ["HERP"], len(os.environ)
+print(os.environ["HERP"] + " " + str(len(os.environ)))
 """)
         out = python(py.name, _env=env).strip()
         self.assertEqual(out, "DERP 1")
     
         py = create_tmp_test("""
 import pbs, os
-print pbs.HERP, len(os.environ)
+print(pbs.HERP + " " + str(len(os.environ)))
 """)
         out = python(py.name, _env=env).strip()
         self.assertEqual(out, "DERP 1")
@@ -278,7 +281,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-l", dest="long_option")
 options, args = parser.parse_args()
-print len(options.long_option.split())
+print(len(options.long_option.split()))
 """)
         num_args = int(python(py.name, l="one two three"))
         self.assertEqual(num_args, 3)
@@ -295,7 +298,7 @@ from optparse import OptionParser
 parser = OptionParser()
 parser.add_option("-l", "--long-option", dest="long_option")
 options, args = parser.parse_args()
-print len(options.long_option.split())
+print(len(options.long_option.split()))
 """)
         num_args = int(python(py.name, long_option="one two three"))
         self.assertEqual(num_args, 3)
@@ -484,7 +487,7 @@ import os
 # unbuffered stdout
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-for i in xrange(5): print i
+for i in range(5): print(i)
 """)
         stdout = []
         def agg(line):
@@ -509,8 +512,8 @@ import time
 # unbuffered stdout
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-for i in xrange(5):
-    print i
+for i in range(5):
+    print(i)
     time.sleep(.5)
 """)
         
@@ -537,7 +540,7 @@ import os
 # unbuffered stdout
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-for i in xrange(5): print "herpderp"
+for i in range(5): print("herpderp")
 """)
         
         stdout = []
@@ -560,7 +563,7 @@ import os
 # unbuffered stdout
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-for i in xrange(5): print "herpderp"
+for i in range(5): print("herpderp")
 """)
         
         stdout = []
@@ -583,7 +586,7 @@ import os
 # unbuffered stdout
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-for i in xrange(5): sys.stdout.write("herpderp")
+for i in range(5): sys.stdout.write("herpderp")
 """)
         
         stdout = []
@@ -606,9 +609,9 @@ import os
 # unbuffered stdout
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-for i in xrange(5): print i
+for i in range(5): print(i)
 derp = raw_input("herp? ")
-print derp
+print(derp)
 """)
         
         def agg(line, stdin):
@@ -631,7 +634,7 @@ import os
 # unbuffered stdout
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-for i in xrange(5): print i
+for i in range(5): print(i)
 """)
         
         stdout = []
@@ -660,8 +663,8 @@ import time
 # unbuffered stdout
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-for i in xrange(5): 
-    print i
+for i in range(5): 
+    print(i)
     time.sleep(.5)
 """)
         
@@ -694,8 +697,8 @@ import time
 # unbuffered stdout
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
-for i in xrange(5): 
-    print i
+for i in range(5): 
+    print(i)
     time.sleep(.5)
 """)
         
@@ -716,7 +719,6 @@ for i in xrange(5):
         
     def test_general_signal(self):
         import signal
-        from pbs import python
         from signal import SIGHUP
         
         py = create_tmp_test("""
@@ -726,13 +728,13 @@ import time
 import signal
 
 def sig_handler(sig, frame):
-    print 10
+    print(10)
     exit(0)
     
 signal.signal(signal.SIGHUP, sig_handler)
 
-for i in xrange(5): 
-    print i
+for i in range(5): 
+    print(i)
     time.sleep(.5)
 """)
         
@@ -758,8 +760,8 @@ for i in xrange(5):
 import sys
 import os
 
-for i in xrange(42): 
-    print i
+for i in range(42): 
+    print(i)
 """)
 
         out = []
@@ -787,7 +789,7 @@ import os
 # unbuffered stdout
 sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
-for i in xrange(42): 
+for i in range(42): 
     sys.stderr.write(str(i)+"\\n")
 """)
 
@@ -817,7 +819,7 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for letter in "andrew":
     time.sleep(0.5)
-    print letter
+    print(letter)
         """)
         
         py2 = create_tmp_test("""
@@ -831,7 +833,7 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 while True:
     line = sys.stdin.readline()
     if not line: break
-    print line.strip().upper()
+    print(line.strip().upper())
         """)
         
         
@@ -862,9 +864,9 @@ import os
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
-for i in xrange(42):
+for i in range(42):
     sys.stderr.write(str(i * 2)+"\\n") 
-    print i
+    print(i)
 """)
         
         stderr = []
