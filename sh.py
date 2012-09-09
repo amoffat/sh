@@ -73,8 +73,8 @@ import logging
 
 
 
-__version__ = "0.82"
-__project_url__ = "https://github.com/amoffat/pbs"
+__version__ = "1.0"
+__project_url__ = "https://github.com/amoffat/sh"
 
 if IS_PY3:
     raw_input = input
@@ -420,7 +420,7 @@ class Command(object):
             if isinstance(arg, (list, tuple)):
                 if not arg:
                     warnings.warn("Empty list passed as an argument to %r. \
-If you're using glob.glob(), please use pbs.glob() instead." % self.path, stacklevel=3)
+If you're using glob.glob(), please use sh.glob() instead." % self.path, stacklevel=3)
                 for sub_arg in arg: processed_args.append(self._format_arg(sub_arg))
             else: processed_args.append(self._format_arg(arg))
 
@@ -1185,8 +1185,8 @@ class Environment(dict):
         # import * from a repl.  so, raise an exception, since
         # that's really the only sensible thing to do
         if k == "__all__":
-            raise ImportError("Cannot import * from pbs. \
-Please import pbs or import programs individually.")
+            raise ImportError("Cannot import * from sh. \
+Please import sh or import programs individually.")
 
         # if we end with "_" just go ahead and skip searching
         # our namespace for python stuff.  this was mainly for the
@@ -1237,11 +1237,11 @@ Please import pbs or import programs individually.")
 
 
 def run_repl(env):
-    banner = "\n>> PBS v{version}\n>> https://github.com/amoffat/pbs\n"
+    banner = "\n>> sh v{version}\n>> https://github.com/amoffat/sh\n"
     
     print(banner.format(version=__version__))
     while True:
-        try: line = raw_input("pbs> ")
+        try: line = raw_input("sh> ")
         except (ValueError, EOFError): break
             
         try: exec(compile(line, "<dummy>", "single"), env, env)
@@ -1255,7 +1255,7 @@ def run_repl(env):
 
 
 # this is a thin wrapper around THIS module (we patch sys.modules[__name__]).
-# this is in the case that the user does a "from pbs import whatever"
+# this is in the case that the user does a "from sh import whatever"
 # in other words, they only want to import certain programs, not the whole
 # system PATH worth of commands.  in this case, we just proxy the
 # import lookup to our Environment class

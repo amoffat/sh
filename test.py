@@ -4,15 +4,17 @@ import os
 import unittest
 import tempfile
 import sys
-import pbs
+import sh
 
 IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
     unicode = str
-    python = pbs.Command(pbs.which("python%d.%d" % sys.version_info[:2]))
+    python = sh.Command(sh.which("python%d.%d" % sys.version_info[:2]))
 else:
-    from pbs import python
+    from sh import python
 
+
+THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 skipUnless = getattr(unittest, "skipUnless", None)
 if not skipUnless:
@@ -40,13 +42,13 @@ def create_tmp_test(code):
 class Basic(unittest.TestCase):
     
     def test_print_command(self):
-        from pbs import ls, which
+        from sh import ls, which
         actual_location = which("ls")
         out = str(ls)
         self.assertEqual(out, actual_location)
 
     def test_unicode_arg(self):
-        from pbs import echo
+        from sh import echo
         
         test = "漢字"
         if not IS_PY3: test = test.decode("utf8")
@@ -55,7 +57,7 @@ class Basic(unittest.TestCase):
         self.assertEqual(test, p)
     
     def test_number_arg(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 from optparse import OptionParser
@@ -68,7 +70,7 @@ print(args[0])
         self.assertEqual(out, "3")
         
     def test_glob_warning(self):
-        from pbs import ls
+        from sh import ls
         from glob import glob
         import warnings
         
@@ -82,18 +84,18 @@ print(args[0])
             self.assertTrue("glob" in str(w[-1].message))
         
     def test_stdin_from_string(self):
-        from pbs import sed
+        from sh import sed
         self.assertEqual(sed(_in="test", e="s/test/lol/").strip(), "lol")
         
     def test_ok_code(self):
-        from pbs import ls, ErrorReturnCode_2
+        from sh import ls, ErrorReturnCode_2
         
         self.assertRaises(ErrorReturnCode_2, ls, "/aofwje/garogjao4a/eoan3on")
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=2)
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=[2])
     
     def test_quote_escaping(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 from optparse import OptionParser
@@ -120,7 +122,7 @@ print(args)
         self.assertEqual(out, "[\"one two's three\"]")
     
     def test_multiple_pipes(self):
-        from pbs import tr, python
+        from sh import tr, python
         import time
         
         py = create_tmp_test("""
@@ -163,14 +165,14 @@ for l in "andrew":
         
         
     def test_manual_stdin_string(self):
-        from pbs import tr
+        from sh import tr
         
         out = tr("[:lower:]", "[:upper:]", _in="andrew").strip()
         self.assertEqual(out, "ANDREW")
         
         
     def test_manual_stdin_iterable(self):
-        from pbs import tr
+        from sh import tr
         
         test = ["testing\n", "herp\n", "derp\n"]
         out = tr("[:lower:]", "[:upper:]", _in=test)
@@ -180,7 +182,7 @@ for l in "andrew":
         
         
     def test_manual_stdin_file(self):
-        from pbs import tr
+        from sh import tr
         import tempfile
         
         test_string = "testing\nherp\nderp\n"
@@ -196,7 +198,7 @@ for l in "andrew":
         
     
     def test_manual_stdin_queue(self):
-        from pbs import tr
+        from sh import tr
         try: from Queue import Queue, Empty
         except ImportError: from queue import Queue, Empty
         
@@ -213,7 +215,7 @@ for l in "andrew":
     
     
     def test_environment(self):
-        from pbs import python
+        from sh import python
         import os
         
         env = {"HERP": "DERP"}
@@ -226,15 +228,17 @@ print(os.environ["HERP"] + " " + str(len(os.environ)))
         self.assertEqual(out, "DERP 1")
     
         py = create_tmp_test("""
-import pbs, os
-print(pbs.HERP + " " + str(len(os.environ)))
+import os, sys
+sys.path.insert(0, os.getcwd())
+import sh
+print(sh.HERP + " " + str(len(os.environ)))
 """)
-        out = python(py.name, _env=env).strip()
+        out = python(py.name, _env=env, _cwd=THIS_DIR).strip()
         self.assertEqual(out, "DERP 1")
         
     
     def test_which(self):
-        from pbs import which, ls
+        from sh import which, ls
         self.assertEqual(which("fjoawjefojawe"), None)
         self.assertEqual(which("ls"), str(ls))
         
@@ -245,36 +249,36 @@ print(pbs.HERP + " " + str(len(os.environ)))
     
     def test_no_arg(self):
         import pwd
-        from pbs import whoami
+        from sh import whoami
         u1 = whoami().strip()
         u2 = pwd.getpwuid(os.geteuid())[0]
         self.assertEqual(u1, u2)
 
     def test_incompatible_special_args(self):
-        from pbs import ls
+        from sh import ls
         self.assertRaises(TypeError, ls, _iter=True, _piped=True)
             
             
     def test_exception(self):
-        from pbs import ls, ErrorReturnCode_2
+        from sh import ls, ErrorReturnCode_2
         self.assertRaises(ErrorReturnCode_2, ls, "/aofwje/garogjao4a/eoan3on")
             
             
     def test_command_not_found(self):
-        from pbs import CommandNotFound
+        from sh import CommandNotFound
         
-        def do_import(): from pbs import aowjgoawjoeijaowjellll
+        def do_import(): from sh import aowjgoawjoeijaowjellll
         self.assertRaises(CommandNotFound, do_import)
             
             
     def test_command_wrapper_equivalence(self):
-        from pbs import Command, ls, which
+        from sh import Command, ls, which
         
         self.assertEqual(Command(which("ls")), ls) 
         
         
     def test_multiple_args_short_option(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 from optparse import OptionParser
@@ -291,7 +295,7 @@ print(len(options.long_option.split()))
         
         
     def test_multiple_args_long_option(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 from optparse import OptionParser
@@ -308,47 +312,47 @@ print(len(options.long_option.split()))
         
     
     def test_short_bool_option(self):
-        from pbs import id
+        from sh import id
         i1 = int(id(u=True))
         i2 = os.geteuid()
         self.assertEqual(i1, i2)
 
     
     def test_long_bool_option(self):
-        from pbs import id
+        from sh import id
         i1 = int(id(user=True, real=True))
         i2 = os.getuid()
         self.assertEqual(i1, i2)
 
     
     def test_composition(self):
-        from pbs import ls, wc
+        from sh import ls, wc
         c1 = int(wc(ls("-A1"), l=True))
         c2 = len(os.listdir("."))
         self.assertEqual(c1, c2)
         
     def test_incremental_composition(self):
-        from pbs import ls, wc
+        from sh import ls, wc
         c1 = int(wc(ls("-A1"), l=True, _piped=True))
         c2 = len(os.listdir("."))
         self.assertEqual(c1, c2)
 
     
     def test_short_option(self):
-        from pbs import sh
+        from sh import sh
         s1 = sh(c="echo test").strip()
         s2 = "test"
         self.assertEqual(s1, s2)
         
     
     def test_long_option(self):
-        from pbs import sed, echo
+        from sh import sed, echo
         out = sed(echo("test"), expression="s/test/lol/").strip()
         self.assertEqual(out, "lol")
         
     
     def test_command_wrapper(self):
-        from pbs import Command, which
+        from sh import Command, which
         
         ls = Command(which("ls"))
         wc = Command(which("wc"))
@@ -360,7 +364,7 @@ print(len(options.long_option.split()))
 
     
     def test_background(self):
-        from pbs import sleep
+        from sh import sleep
         import time
         
         start = time.time()
@@ -376,12 +380,12 @@ print(len(options.long_option.split()))
         
         
     def test_background_exception(self):
-        from pbs import ls, ErrorReturnCode_2
+        from sh import ls, ErrorReturnCode_2
         p = ls("/ofawjeofj", _bg=True) # should not raise
         self.assertRaises(ErrorReturnCode_2, p.wait) # should raise
     
     def test_with_context(self):
-        from pbs import time, ls
+        from sh import time, ls
         with time:
             out = ls().stderr
         self.assertTrue("pagefaults" in out)
@@ -389,7 +393,7 @@ print(len(options.long_option.split()))
 
     
     def test_with_context_args(self):
-        from pbs import time, ls
+        from sh import time, ls
         with time(verbose=True, _with=True):
             out = ls().stderr
         self.assertTrue("Voluntary context switches" in out)
@@ -397,7 +401,7 @@ print(len(options.long_option.split()))
 
     
     def test_err_to_out(self):
-        from pbs import time, ls
+        from sh import time, ls
         with time(_with=True):
             out = ls(_err_to_out=True)
 
@@ -407,7 +411,7 @@ print(len(options.long_option.split()))
     
     def test_out_redirection(self):
         import tempfile
-        from pbs import ls
+        from sh import ls
 
         file_obj = tempfile.TemporaryFile()
         out = ls(_out=file_obj)
@@ -424,7 +428,7 @@ print(len(options.long_option.split()))
     
     def test_err_redirection(self):
         import tempfile
-        from pbs import time, ls
+        from sh import time, ls
 
         file_obj = tempfile.TemporaryFile()
 
@@ -439,28 +443,28 @@ print(len(options.long_option.split()))
 
     
     def test_subcommand(self):
-        from pbs import time
+        from sh import time
 
         out = time.ls(_err_to_out=True)
         self.assertTrue("pagefaults" in out)
 
     
     def test_bake(self):
-        from pbs import time, ls
+        from sh import time, ls
         timed = time.bake("--verbose", _err_to_out=True)
         out = timed.ls()
         self.assertTrue("Voluntary context switches" in out)
         
         
     def test_multiple_bakes(self):
-        from pbs import time
+        from sh import time
         timed = time.bake("--verbose", _err_to_out=True)
         out = timed.bake("ls")()
         self.assertTrue("Voluntary context switches" in out)
 
 
     def test_bake_args_come_first(self):
-        from pbs import ls
+        from sh import ls
         ls = ls.bake(full_time=True)
         
         ran = ls("-la").ran
@@ -469,7 +473,7 @@ print(len(options.long_option.split()))
 
     
     def test_output_equivalence(self):
-        from pbs import whoami
+        from sh import whoami
 
         iam1 = whoami()
         iam2 = whoami()
@@ -478,7 +482,7 @@ print(len(options.long_option.split()))
 
 
     def test_stdout_callback(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 import sys
@@ -501,7 +505,7 @@ for i in range(5): print(i)
         
         
     def test_stdout_callback_no_wait(self):
-        from pbs import python
+        from sh import python
         import time
         
         py = create_tmp_test("""
@@ -531,7 +535,7 @@ for i in range(5):
         
         
     def test_stdout_callback_line_buffered(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 import sys
@@ -554,7 +558,7 @@ for i in range(5): print("herpderp")
         
         
     def test_stdout_callback_line_unbuffered(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 import sys
@@ -577,7 +581,7 @@ for i in range(5): print("herpderp")
         
         
     def test_stdout_callback_buffered(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 import sys
@@ -600,7 +604,7 @@ for i in range(5): sys.stdout.write("herpderp")
         
         
     def test_stdout_callback_with_input(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 import sys
@@ -625,7 +629,7 @@ print(derp)
         
         
     def test_stdout_callback_exit(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 import sys
@@ -653,7 +657,7 @@ for i in range(5): print(i)
         
     def test_stdout_callback_terminate(self):
         import signal
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 import sys
@@ -686,7 +690,7 @@ for i in range(5):
         
         
     def test_stdout_callback_kill(self):
-        from pbs import python
+        from sh import python
         import signal
         
         py = create_tmp_test("""
@@ -754,7 +758,7 @@ for i in range(5):
     
         
     def test_iter_generator(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 import sys
@@ -771,7 +775,7 @@ for i in range(42):
        
     def test_nonblocking_iter(self):
         import tempfile
-        from pbs import tail
+        from sh import tail
         from errno import EWOULDBLOCK
         
         tmp = tempfile.NamedTemporaryFile()
@@ -780,7 +784,7 @@ for i in range(42):
         
         
     def test_for_generator_to_err(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 import sys
@@ -805,7 +809,7 @@ for i in range(42):
 
 
     def test_piped_generator(self):
-        from pbs import python, tr
+        from sh import python, tr
         from string import ascii_uppercase
         import time
         
@@ -854,7 +858,7 @@ while True:
         
         
     def test_generator_and_callback(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 import sys
@@ -880,20 +884,20 @@ for i in range(42):
 
 
     def test_bg_to_int(self):
-        from pbs import echo
+        from sh import echo
         # bugs with background might cause the following error:
         #   ValueError: invalid literal for int() with base 10: ''
         self.assertEqual(int(echo("123", _bg=True)), 123)
         
         
     def test_cwd(self):
-        from pbs import pwd
+        from sh import pwd
         self.assertEqual(str(pwd(_cwd="/tmp")), "/tmp\n")
         self.assertEqual(str(pwd(_cwd="/etc")), "/etc\n")
         
         
     def test_huge_piped_data(self):
-        from pbs import tr
+        from sh import tr
         
         stdin = tempfile.NamedTemporaryFile()
         
@@ -907,7 +911,7 @@ for i in range(42):
 
 
     def test_tty_input(self):
-        from pbs import python
+        from sh import python
         
         py = create_tmp_test("""
 import sys
@@ -945,7 +949,7 @@ else:
 
 
     def test_stringio_output(self):
-        from pbs import echo
+        from sh import echo
         if IS_PY3:
             from io import StringIO
             from io import BytesIO as cStringIO
@@ -963,7 +967,7 @@ else:
 
 
     def test_stringio_input(self):
-        from pbs import cat
+        from sh import cat
         
         if IS_PY3:
             from io import StringIO
@@ -981,7 +985,7 @@ else:
         
 
     def test_internal_bufsize(self):
-        from pbs import cat
+        from sh import cat
         
         output = cat(_in="a"*1000, _internal_bufsize=100, _out_bufsize=0)
         self.assertEqual(len(output), 100)
