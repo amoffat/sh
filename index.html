@@ -1,0 +1,603 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>sh &mdash; sh 1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="sh 1.0 documentation" href="#" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="#">sh 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="sh">
+<h1>sh<a class="headerlink" href="#sh" title="Permalink to this headline">¶</a></h1>
+<p>sh is a full-fledged subprocess interface that allows you to call any program as
+if it were a function:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ifconfig</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ifconfig</span><span class="p">(</span><span class="s">&quot;wlan0&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<div class="highlight-python"><pre>wlan0   Link encap:Ethernet  HWaddr 00:00:00:00:00:00
+        inet addr:192.168.1.100  Bcast:192.168.1.255  Mask:255.255.255.0
+        inet6 addr: ffff::ffff:ffff:ffff:fff/64 Scope:Link
+        UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+        RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+        TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+        collisions:0 txqueuelen:1000
+        RX bytes:0 (0 GB)  TX bytes:0 (0 GB)</pre>
+</div>
+<p>More examples:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># checkout master branch</span>
+<span class="n">git</span><span class="p">(</span><span class="n">checkout</span><span class="o">=</span><span class="s">&quot;master&quot;</span><span class="p">)</span>
+
+<span class="c"># print(the contents of this directory</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;-l&quot;</span><span class="p">))</span>
+
+<span class="c"># get the longest line of this file</span>
+<span class="n">longest_line</span> <span class="o">=</span> <span class="n">wc</span><span class="p">(</span><span class="n">__file__</span><span class="p">,</span> <span class="s">&quot;-L&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that these aren&#8217;t Python functions, these are running the binary
+commands on your system dynamically by resolving your $PATH, much like Bash does.
+In this way, all the programs on your system are easily available to you
+from within Python.</p>
+<p>To install:</p>
+<div class="highlight-python"><pre>pip install sh</pre>
+</div>
+<p>Follow on Github: <a class="reference external" href="http://github.com/amoffat/sh">http://github.com/amoffat/sh</a></p>
+</div>
+<div class="section" id="basic-features">
+<h1>Basic Features<a class="headerlink" href="#basic-features" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="command-execution">
+<h2>Command execution<a class="headerlink" href="#command-execution" title="Permalink to this headline">¶</a></h2>
+<p>Commands are called just like functions.  They may be executed on the sh
+namespace, or imported directly from sh:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
+<span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/&quot;</span><span class="p">))</span>
+
+<span class="c"># same thing as above</span>
+<span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ls</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>For commands that have dashes in their names, for example <tt class="docutils literal"><span class="pre">/usr/bin/google-chrome</span></tt>,
+substitute the dash for an underscore:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">google_chrome</span><span class="p">(</span><span class="s">&quot;http://google.com&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>For commands with more exotic characters in their names, like <tt class="docutils literal"><span class="pre">.</span></tt>, you
+may use sh&#8217;s <tt class="docutils literal"><span class="pre">Command</span></tt> wrapper and pass in the absolute path of the
+executable:</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
+<span class="n">run</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s">&quot;/home/amoffat/run.sh&quot;</span><span class="p">)</span>
+<span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="keyword-arguments">
+<h2>Keyword arguments<a class="headerlink" href="#keyword-arguments" title="Permalink to this headline">¶</a></h2>
+<p>Commands support short-form <tt class="docutils literal"><span class="pre">-a</span></tt> and long-form <tt class="docutils literal"><span class="pre">--arg</span></tt> arguments as
+keyword arguments:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># resolves to &quot;curl http://duckduckgo.com/ -o page.html --silent&quot;</span>
+<span class="n">curl</span><span class="p">(</span><span class="s">&quot;http://duckduckgo.com/&quot;</span><span class="p">,</span> <span class="n">o</span><span class="o">=</span><span class="s">&quot;page.html&quot;</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c"># or if you prefer not to use keyword arguments, this does the same thing:</span>
+<span class="n">curl</span><span class="p">(</span><span class="s">&quot;http://duckduckgo.com/&quot;</span><span class="p">,</span> <span class="s">&quot;-o&quot;</span><span class="p">,</span> <span class="s">&quot;page.html&quot;</span><span class="p">,</span> <span class="s">&quot;--silent&quot;</span><span class="p">)</span>
+
+<span class="c"># resolves to &quot;adduser amoffat --system --shell=/bin/bash --no-create-home&quot;</span>
+<span class="n">adduser</span><span class="p">(</span><span class="s">&quot;amoffat&quot;</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="s">&quot;/bin/bash&quot;</span><span class="p">,</span> <span class="n">no_create_home</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c"># or</span>
+<span class="n">adduser</span><span class="p">(</span><span class="s">&quot;amoffat&quot;</span><span class="p">,</span> <span class="s">&quot;--system&quot;</span><span class="p">,</span> <span class="s">&quot;--shell&quot;</span><span class="p">,</span> <span class="s">&quot;/bin/bash&quot;</span><span class="p">,</span> <span class="s">&quot;--no-create-home&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="background-processes">
+<span id="background"></span><h2>Background processes<a class="headerlink" href="#background-processes" title="Permalink to this headline">¶</a></h2>
+<p>By default, each command runs and completes its process before returning.  If
+you have a long-running command, you can put it in the background with the
+<tt class="docutils literal"><span class="pre">_bg=True</span></tt> <a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword argument</em></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># blocks</span>
+<span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&quot;...3 seconds later&quot;</span><span class="p">)</span>
+
+<span class="c"># doesn&#39;t block</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&quot;prints immediately!&quot;</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&quot;...and 3 seconds later&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="piping">
+<h2>Piping<a class="headerlink" href="#piping" title="Permalink to this headline">¶</a></h2>
+<p>Bash style piping is performed using function composition.  Just pass
+one command as the input to another, and sh will create a pipe between the two:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># sort this directory by biggest file</span>
+<span class="k">print</span><span class="p">(</span><span class="n">sort</span><span class="p">(</span><span class="n">du</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s">&quot;*&quot;</span><span class="p">),</span> <span class="s">&quot;-sb&quot;</span><span class="p">),</span> <span class="s">&quot;-rn&quot;</span><span class="p">))</span>
+
+<span class="c"># print(the number of folders and files in /etc</span>
+<span class="k">print</span><span class="p">(</span><span class="n">wc</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/etc&quot;</span><span class="p">,</span> <span class="s">&quot;-1&quot;</span><span class="p">),</span> <span class="s">&quot;-l&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>By default, any command that is piping another command in waits for it to
+complete.  This behavior can be changed with the <tt class="docutils literal"><span class="pre">_piped</span></tt>
+<a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword argument</em></a> on the command being
+piped, which tells it not to complete before sending its data, but to send
+its data incrementally.  See <a class="reference internal" href="#advanced-piping"><em>Advanced piping</em></a> for examples of this.</p>
+</div>
+<div class="section" id="redirection">
+<span id="id1"></span><h2>Redirection<a class="headerlink" href="#redirection" title="Permalink to this headline">¶</a></h2>
+<p>sh can redirect the standard and error output streams of a process to a file
+or file-like object.  This is done with the special <tt class="docutils literal"><span class="pre">_out</span></tt> and <tt class="docutils literal"><span class="pre">_err</span></tt>
+<a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword argument</em></a>. You can pass a filename
+or a file object as the argument value.
+When the name of an already existing file is passed, the contents of the file
+will be overwritten:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ls</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="s">&quot;files.list&quot;</span><span class="p">)</span>
+<span class="n">ls</span><span class="p">(</span><span class="s">&quot;nonexistent&quot;</span><span class="p">,</span> <span class="n">_err</span><span class="o">=</span><span class="s">&quot;error.txt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also redirect to a function.  See <a class="reference internal" href="#callbacks"><em>STDOUT/ERR callbacks</em></a>.</p>
+</div>
+<div class="section" id="stdin-processing">
+<span id="stdin"></span><h2>STDIN Processing<a class="headerlink" href="#stdin-processing" title="Permalink to this headline">¶</a></h2>
+<p>STDIN is sent to a process directly by using a command&#8217;s <tt class="docutils literal"><span class="pre">_in</span></tt>
+<a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword argument</em></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">print</span><span class="p">(</span><span class="n">cat</span><span class="p">(</span><span class="n">_in</span><span class="o">=</span><span class="s">&quot;test&quot;</span><span class="p">))</span> <span class="c"># prints &quot;test&quot;</span>
+</pre></div>
+</div>
+<p>Any command that takes input from STDIN can be used this way:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">print</span><span class="p">(</span><span class="n">tr</span><span class="p">(</span><span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="s">&quot;sh is awesome&quot;</span><span class="p">))</span> <span class="c"># SH IS AWESOME</span>
+</pre></div>
+</div>
+<p>You&#8217;re also not limited to using just strings.  You may use a file object,
+a <a class="reference external" href="http://docs.python.org/library/queue.html#queue-objects">Queue</a>, or any iterable
+(list, set, dictionary, etc):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">stdin</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;sh&quot;</span><span class="p">,</span> <span class="s">&quot;is&quot;</span><span class="p">,</span> <span class="s">&quot;awesome&quot;</span><span class="p">]</span>
+<span class="n">out</span> <span class="o">=</span> <span class="n">tr</span><span class="p">(</span><span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="n">stdin</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="sub-commands">
+<h2>Sub-commands<a class="headerlink" href="#sub-commands" title="Permalink to this headline">¶</a></h2>
+<p>Many programs have their own command subsets, like git (branch, checkout),
+svn (update, status), and sudo (where any command following sudo is considered
+a sub-command).  sh handles subcommands through attribute access:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">git</span><span class="p">,</span> <span class="n">sudo</span>
+
+<span class="c"># resolves to &quot;git branch -v&quot;</span>
+<span class="k">print</span><span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">branch</span><span class="p">(</span><span class="s">&quot;-v&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">git</span><span class="p">(</span><span class="s">&quot;branch&quot;</span><span class="p">,</span> <span class="s">&quot;-v&quot;</span><span class="p">))</span> <span class="c"># the same command</span>
+
+<span class="c"># resolves to &quot;sudo /bin/ls /root&quot;</span>
+<span class="k">print</span><span class="p">(</span><span class="n">sudo</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/root&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">sudo</span><span class="p">(</span><span class="s">&quot;/bin/ls&quot;</span><span class="p">,</span> <span class="s">&quot;/root&quot;</span><span class="p">))</span> <span class="c"># the same command</span>
+</pre></div>
+</div>
+<p>This is syntax sugar that makes calling some programs look conceptually nicer.</p>
+</div>
+<div class="section" id="exit-codes">
+<span id="id2"></span><h2>Exit codes<a class="headerlink" href="#exit-codes" title="Permalink to this headline">¶</a></h2>
+<p>Normal processes exit with exit code 0.  This can be seen through a
+command&#8217;s <tt class="docutils literal"><span class="pre">exit_code</span></tt> property:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">output</span> <span class="o">=</span> <span class="n">ls</span><span class="p">(</span><span class="s">&quot;/&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">exit_code</span><span class="p">)</span> <span class="c"># should be 0</span>
+</pre></div>
+</div>
+<p>If a process ends with an error, and the exit code is not 0, an exception
+is generated dynamically.
+This lets you catch a specific return code, or catch all error return codes
+through the base class ErrorReturnCode:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">try</span><span class="p">:</span> <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/some/non-existant/folder&quot;</span><span class="p">))</span>
+<span class="k">except</span> <span class="n">ErrorReturnCode_2</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;folder doesn&#39;t exist!&quot;</span><span class="p">)</span>
+    <span class="n">create_the_folder</span><span class="p">()</span>
+<span class="k">except</span> <span class="n">ErrorReturnCode</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;unknown error&quot;</span><span class="p">)</span>
+    <span class="nb">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Some programs return strange error codes even though they succeed.  If you know
+which code a program might returns and you don&#8217;t want to deal with doing
+no-op exception handling, you can use the <tt class="docutils literal"><span class="pre">_ok_code</span></tt>
+<a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword argument</em></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">weird_program</span><span class="p">(</span><span class="n">_ok_code</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>This means that the command will not generate an exception if the process
+exits with 0, 3, or 5 exit code.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you use <tt class="docutils literal"><span class="pre">_exit_code</span></tt>, you must specify <strong>all</strong> the exit codes that are
+considered &#8220;ok&#8221;, like (typically) 0.</p>
+</div>
+</div>
+<div class="section" id="glob-expansion">
+<h2>Glob expansion<a class="headerlink" href="#glob-expansion" title="Permalink to this headline">¶</a></h2>
+<p>Glob expansion is not performed on your arguments, for example, this will
+not work:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;*.py&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You&#8217;ll get an error to the effect of <tt class="docutils literal"><span class="pre">cannot</span> <span class="pre">access</span> <span class="pre">'\*.py':</span> <span class="pre">No</span> <span class="pre">such</span> <span class="pre">file</span> <span class="pre">or</span> <span class="pre">directory</span></tt>.
+This is because the <tt class="docutils literal"><span class="pre">*.py</span></tt> needs to be glob expanded, not passed in literally:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&quot;*.py&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Don&#8217;t use Python&#8217;s <tt class="docutils literal"><span class="pre">glob.glob</span></tt> function, use <tt class="docutils literal"><span class="pre">sh.glob</span></tt>.  Python&#8217;s
+has edge cases that break with sh.</p>
+</div>
+</div>
+</div>
+<div class="section" id="advanced-features">
+<h1>Advanced Features<a class="headerlink" href="#advanced-features" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="baking">
+<h2>Baking<a class="headerlink" href="#baking" title="Permalink to this headline">¶</a></h2>
+<p>sh is capable of &#8220;baking&#8221; arguments into commands.  This is similar to the
+stdlib functools.partial wrapper.  Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ls</span>
+
+<span class="n">ls</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s">&quot;-la&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span> <span class="c"># &quot;/usr/bin/ls -la&quot;</span>
+
+<span class="c"># resolves to &quot;ls / -la&quot;</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>The idea here is that now every call to <tt class="docutils literal"><span class="pre">ls</span></tt> will have the &#8220;-la&#8221; arguments
+already specified.  This gets <em>really interesting</em> when you combine this with
+subcommand via attribute access:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
+
+<span class="c"># calling whoami on a server.  this is a lot to type out, especially if</span>
+<span class="c"># you wanted to call many commands (not just whoami) back to back on</span>
+<span class="c"># the same server</span>
+<span class="n">iam1</span> <span class="o">=</span> <span class="n">ssh</span><span class="p">(</span><span class="s">&quot;myserver.com&quot;</span><span class="p">,</span> <span class="s">&quot;-p 1393&quot;</span><span class="p">,</span> <span class="s">&quot;whoami&quot;</span><span class="p">)</span>
+
+<span class="c"># wouldn&#39;t it be nice to bake the common parameters into the ssh command?</span>
+<span class="n">myserver</span> <span class="o">=</span> <span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s">&quot;myserver.com&quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">1393</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">myserver</span><span class="p">)</span> <span class="c"># &quot;/usr/bin/ssh myserver.com -p 1393&quot;</span>
+
+<span class="c"># resolves to &quot;/usr/bin/ssh myserver.com -p 1393 whoami&quot;</span>
+<span class="n">iam2</span> <span class="o">=</span> <span class="n">myserver</span><span class="o">.</span><span class="n">whoami</span><span class="p">()</span>
+
+<span class="k">assert</span><span class="p">(</span><span class="n">iam1</span> <span class="o">==</span> <span class="n">iam2</span><span class="p">)</span> <span class="c"># True!</span>
+</pre></div>
+</div>
+<p>Now that the &#8220;myserver&#8221; callable represents a baked ssh command, you
+can call anything on the server easily:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># resolves to &quot;/usr/bin/ssh myserver.com -p 1393 tail /var/log/dumb_daemon.log -n 100&quot;</span>
+<span class="k">print</span><span class="p">(</span><span class="n">myserver</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="s">&quot;/var/log/dumb_daemon.log&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="with-contexts">
+<span id="id3"></span><h2>&#8216;With&#8217; contexts<a class="headerlink" href="#with-contexts" title="Permalink to this headline">¶</a></h2>
+<p>Commands can be run within a <tt class="docutils literal"><span class="pre">with</span></tt> context.  Popular commands using this
+might be <tt class="docutils literal"><span class="pre">sudo</span></tt> or <tt class="docutils literal"><span class="pre">fakeroot</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">sudo</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/root&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>If you need
+to run a command in a with context and pass in arguments, for example, specifying
+a -p prompt with sudo, you need to use the <tt class="docutils literal"><span class="pre">_with</span></tt> <a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword argument</em></a>.
+This let&#8217;s the command know that it&#8217;s being run from a with context so
+it can behave correctly:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">sudo</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="s">&quot;&gt;&quot;</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/root&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="iterating-over-output">
+<span id="iterable"></span><h2>Iterating over output<a class="headerlink" href="#iterating-over-output" title="Permalink to this headline">¶</a></h2>
+<p>You can iterate over long-running commands with the <tt class="docutils literal"><span class="pre">_iter</span></tt>
+<a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword argument</em></a>.  This creates an iterator
+(technically, a generator) that you can
+loop over:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
+
+<span class="c"># runs forever</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">(</span><span class="s">&quot;-f&quot;</span><span class="p">,</span> <span class="s">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>By default, <tt class="docutils literal"><span class="pre">_iter</span></tt> iterates over stdout, but you can change set this specifically
+by passing either &#8220;err&#8221; or &#8220;out&#8221; to _for (instead of True).  Also by default,
+output is line-buffered, but you can change this by changing <a class="reference internal" href="#buffer-sizes"><em>Buffer sizes</em></a></p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you need a non-blocking iterator, use <tt class="docutils literal"><span class="pre">_iter_noblock</span></tt>.  If the current
+iteration would block, <tt class="docutils literal"><span class="pre">errno.EWOULDBLOCK</span></tt> will be returned, otherwise
+you&#8217;ll receive a chunk of output, as normal.</p>
+</div>
+</div>
+<div class="section" id="stdout-err-callbacks">
+<span id="callbacks"></span><h2>STDOUT/ERR callbacks<a class="headerlink" href="#stdout-err-callbacks" title="Permalink to this headline">¶</a></h2>
+<p>sh can use callbacks to process output incrementally.  This is done much like
+redirection: by passing an argument to either the <tt class="docutils literal"><span class="pre">_out</span></tt> or <tt class="docutils literal"><span class="pre">_err</span></tt> (or both)
+<a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword arguments</em></a>, <strong>except this time, you pass
+a callable.</strong>  This callable
+will be called for each line (or chunk) of data that your command outputs:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
+
+<span class="k">def</span> <span class="nf">process_output</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s">&quot;-f&quot;</span><span class="p">,</span> <span class="s">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_output</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>To control whether the callback receives a line or a chunk, please see
+<a class="reference internal" href="#buffer-sizes"><em>Buffer sizes</em></a>.  To &#8220;quit&#8221; your callback, simply return True.  This
+tells the command not to call your callback anymore.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Returning True does not kill the process, it only keeps the callback from being
+called again.  See <a class="reference internal" href="#interactive-callbacks"><em>Interactive callbacks</em></a> for how to kill a process
+from a callback.</p>
+</div>
+</div>
+<div class="section" id="interactive-callbacks">
+<span id="id4"></span><h2>Interactive callbacks<a class="headerlink" href="#interactive-callbacks" title="Permalink to this headline">¶</a></h2>
+<p>Each command launched through sh has an internal STDIN
+<a class="reference external" href="http://docs.python.org/library/queue.html#queue-objects">Queue</a>
+that can be used from callbacks:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">interact</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s">&quot;What... is the air-speed velocity of an unladen swallow?&quot;</span><span class="p">:</span>
+        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s">&quot;What do you mean? An African or European swallow?&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">line</span> <span class="o">==</span> <span class="s">&quot;Huh? I... I don&#39;t know that....AAAAGHHHHHH&quot;</span><span class="p">:</span>
+        <span class="n">cross_bridge</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s">&quot;I don&#39;t know....AAGGHHHHH&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+<span class="n">sh</span><span class="o">.</span><span class="n">bridgekeeper</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="n">interact</span><span class="p">)</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>You can also kill or terminate your process (or send any signal, really) from
+your callback by adding a third argument to receive the process object:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">process_output</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">,</span> <span class="n">process</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s">&quot;ERROR&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+        <span class="n">process</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">True</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s">&quot;-f&quot;</span><span class="p">,</span> <span class="s">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_output</span><span class="p">)</span>
+<span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The above code will run, printing lines from <tt class="docutils literal"><span class="pre">some_log_file.log</span></tt> until the
+word &#8220;ERROR&#8221; appears in a line, at which point the tail process will be killed
+and the script will end.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You may also use <tt class="docutils literal"><span class="pre">.terminate()</span></tt> to send a SIGINT, or <tt class="docutils literal"><span class="pre">.signal(sig)</span></tt> to
+send a general <a class="reference external" href="http://docs.python.org/library/signal.html">signal</a>.</p>
+</div>
+</div>
+<div class="section" id="buffer-sizes">
+<span id="id6"></span><h2>Buffer sizes<a class="headerlink" href="#buffer-sizes" title="Permalink to this headline">¶</a></h2>
+<p>Buffer sizes are important to consider when you begin to use
+<a class="reference internal" href="#iterable"><em>iterators</em></a>,
+<a class="reference internal" href="#advanced-piping"><em>advanced piping</em></a>,
+or <a class="reference internal" href="#callbacks"><em>callbacks</em></a>.
+Buffer sizes control how STDIN is read and how STDOUT/ERR
+are written to.  Consider the following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="s">&quot;testing&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>STDIN is, by default, unbuffered, so the string &#8220;testing&#8221; is read character
+by character.  But the result is still &#8220;TESTING&#8221;, not &#8220;T&#8221;, &#8220;E&#8221;, &#8220;S&#8221;, &#8220;T&#8221;, &#8220;I&#8221;,
+&#8220;N&#8221;, &#8220;G&#8221;.  Why?  Because although STDIN is unbuffered, STDOUT is not.  STDIN
+is being read character by character, but all of those single characters are
+being aggregated to STDOUT, whose default buffering is line buffering.  Try
+this instead:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="s">&quot;testing&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Because now we set STDOUT to also be unbuffered with <tt class="docutils literal"><span class="pre">_out_bufsize=0</span></tt> the result is
+&#8220;T&#8221;, &#8220;E&#8221;, &#8220;S&#8221;, &#8220;T&#8221;, &#8220;I&#8221;, &#8220;N&#8221;, &#8220;G&#8221;, as expected.</p>
+<p>There are 2 bufsize <a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword arguments</em></a>:
+<tt class="docutils literal"><span class="pre">_in_bufsize</span></tt> and <tt class="docutils literal"><span class="pre">_out_bufsize</span></tt>.  They may be set to the following values:</p>
+<dl class="glossary docutils">
+<dt id="term-">0</dt>
+<dd>Unbuffered.  For STDIN, strings and file objects will be read character-by-character,
+while Queues, callables, and iterables will be read item by item.</dd>
+<dt id="term-1">1</dt>
+<dd>Line buffered.  For STDIN, data will be passed into the process line-by-line.
+For STDOUT/ERR, data will be output line-by-line.  If any data is remaining
+in the STDOUT or STDIN buffers after all the lines have been consumed, it
+is also consumed/flushed.</dd>
+<dt id="term-n">N</dt>
+<dd>Buffered by N characters.  For STDIN, data will be passed into the process
+&lt;=N characters at a time.  For STDOUT/ERR, data will be output &lt;=N characters
+at a time.  If any data is remaining
+in the STDOUT or STDIN buffers after all the lines have been consumed, it
+is also consumed/flushed.</dd>
+</dl>
+</div>
+<div class="section" id="advanced-piping">
+<span id="id7"></span><h2>Advanced piping<a class="headerlink" href="#advanced-piping" title="Permalink to this headline">¶</a></h2>
+<p>By default, all piped commands execute sequentially.  What this means is that the
+inner command executes first, then sends its data to the outer command:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">print</span><span class="p">(</span><span class="n">wc</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/etc&quot;</span><span class="p">,</span> <span class="s">&quot;-1&quot;</span><span class="p">),</span> <span class="s">&quot;-l&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In the above example, <tt class="docutils literal"><span class="pre">ls</span></tt> executes, gathers its output, then sends that output
+to <tt class="docutils literal"><span class="pre">wc</span></tt>.  This is fine for simple commands, but for commands where you need
+parallelism, this isn&#8217;t good enough.  Take the following example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="n">tail</span><span class="p">(</span><span class="s">&quot;-f&quot;</span><span class="p">,</span> <span class="s">&quot;test.log&quot;</span><span class="p">),</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>This won&#8217;t work</strong> because the <tt class="docutils literal"><span class="pre">tail</span> <span class="pre">-f</span></tt> command never finishes.  What you
+need is for <tt class="docutils literal"><span class="pre">tail</span></tt> to send its output to <tt class="docutils literal"><span class="pre">tr</span></tt> as it receives it.  This is where
+the <tt class="docutils literal"><span class="pre">_piped</span></tt> <a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword argument</em></a> comes in handy:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="n">tail</span><span class="p">(</span><span class="s">&quot;-f&quot;</span><span class="p">,</span> <span class="s">&quot;test.log&quot;</span><span class="p">,</span> <span class="n">_piped</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This works by telling <tt class="docutils literal"><span class="pre">tail</span> <span class="pre">-f</span></tt> that it is being used in a pipeline, and that
+it should send its output line-by-line to <tt class="docutils literal"><span class="pre">tr</span></tt>.  By default, <tt class="docutils literal"><span class="pre">_piped</span></tt> sends
+stdout, but you can easily make it send stderr instead by using <tt class="docutils literal"><span class="pre">_piped=&quot;err&quot;</span></tt></p>
+</div>
+<div class="section" id="environments">
+<span id="id8"></span><h2>Environments<a class="headerlink" href="#environments" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword argument</em></a> <tt class="docutils literal"><span class="pre">_env</span></tt> allows you
+to pass a dictionary of environement variables and their corresponding values:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">google_chrome</span><span class="p">(</span><span class="n">_env</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;SOCKS_SERVER&quot;</span><span class="p">:</span> <span class="s">&quot;localhost:1234&quot;</span><span class="p">})</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p><tt class="docutils literal"><span class="pre">_env</span></tt> replaces your process&#8217;s environment completely.  Only the key-value
+pairs in <tt class="docutils literal"><span class="pre">_env</span></tt> will be used for its environment.  If you want to add new
+environment variables for a process <em>in addition to</em> your existing environment,
+try something like this:</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sh</span>
+
+<span class="n">new_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">new_env</span><span class="p">[</span><span class="s">&quot;SOCKS_SERVER&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;localhost:1234&quot;</span>
+
+<span class="n">sh</span><span class="o">.</span><span class="n">google_chrome</span><span class="p">(</span><span class="n">_env</span><span class="o">=</span><span class="n">new_env</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="ttys">
+<h2>TTYs<a class="headerlink" href="#ttys" title="Permalink to this headline">¶</a></h2>
+<p>By default, sh does not attach a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal#Applications">TTY</a>
+to STDIN, instead it uses pipes.  However,
+some programs behave differently depending on if a TTY is attached to STDIN.
+If you need to attach a TTY,
+use the <a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword argument</em></a>
+<tt class="docutils literal"><span class="pre">_tty_in</span></tt>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">sh</a></li>
+<li><a class="reference internal" href="#basic-features">Basic Features</a><ul>
+<li><a class="reference internal" href="#command-execution">Command execution</a></li>
+<li><a class="reference internal" href="#keyword-arguments">Keyword arguments</a></li>
+<li><a class="reference internal" href="#background-processes">Background processes</a></li>
+<li><a class="reference internal" href="#piping">Piping</a></li>
+<li><a class="reference internal" href="#redirection">Redirection</a></li>
+<li><a class="reference internal" href="#stdin-processing">STDIN Processing</a></li>
+<li><a class="reference internal" href="#sub-commands">Sub-commands</a></li>
+<li><a class="reference internal" href="#exit-codes">Exit codes</a></li>
+<li><a class="reference internal" href="#glob-expansion">Glob expansion</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#advanced-features">Advanced Features</a><ul>
+<li><a class="reference internal" href="#baking">Baking</a></li>
+<li><a class="reference internal" href="#with-contexts">&#8216;With&#8217; contexts</a></li>
+<li><a class="reference internal" href="#iterating-over-output">Iterating over output</a></li>
+<li><a class="reference internal" href="#stdout-err-callbacks">STDOUT/ERR callbacks</a></li>
+<li><a class="reference internal" href="#interactive-callbacks">Interactive callbacks</a></li>
+<li><a class="reference internal" href="#buffer-sizes">Buffer sizes</a></li>
+<li><a class="reference internal" href="#advanced-piping">Advanced piping</a></li>
+<li><a class="reference internal" href="#environments">Environments</a></li>
+<li><a class="reference internal" href="#ttys">TTYs</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/index.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="#">sh 1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Andrew Moffat.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
