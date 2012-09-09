@@ -184,7 +184,7 @@ class RunningCommand(object):
         if callable(call_args["out"]) or callable(call_args["err"]):
             self.should_wait = False
             
-        if call_args["piped"] or call_args["for"] or call_args["for_noblock"]:
+        if call_args["piped"] or call_args["iter"] or call_args["iter_noblock"]:
             self.should_wait = False
             
         # we're running in the background, return self and let us lazily
@@ -199,11 +199,11 @@ class RunningCommand(object):
         # TODO, make pipe None by default and limit the size of the Queue
         # in oproc.OProc
         pipe = STDOUT
-        if call_args["for"] == "out" or call_args["for"] is True: pipe = STDOUT
-        elif call_args["for"] == "err": pipe = STDERR
+        if call_args["iter"] == "out" or call_args["iter"] is True: pipe = STDOUT
+        elif call_args["iter"] == "err": pipe = STDERR
         
-        if call_args["for_noblock"] == "out" or call_args["for_noblock"] is True: pipe = STDOUT
-        elif call_args["for_noblock"] == "err": pipe = STDERR
+        if call_args["iter_noblock"] == "out" or call_args["iter_noblock"] is True: pipe = STDOUT
+        elif call_args["iter_noblock"] == "err": pipe = STDERR
         
         
         if spawn_process:
@@ -256,7 +256,7 @@ class RunningCommand(object):
         while True:
             try: chunk = self.process._pipe_queue.get(False, .001)
             except Empty:
-                if self.call_args["for_noblock"]: return errno.EWOULDBLOCK
+                if self.call_args["iter_noblock"]: return errno.EWOULDBLOCK
             else:
                 if chunk is None:
                     self.wait()
@@ -288,8 +288,8 @@ class RunningCommand(object):
         return item in str(self)
 
     def __getattr__(self, p):
-        # let these three attributes pass through to the Popen object
-        if p in ("send_signal", "terminate", "kill"):
+        # let these three attributes pass through to the OProc object
+        if p in ("signal", "terminate", "kill"):
             if self.process: return getattr(self.process, p)
             else: raise AttributeError
         return getattr(unicode(self), p)
@@ -314,7 +314,9 @@ class Command(object):
     _prepend_stack = []
     
     _call_args = {
-        "fg": False, # run command in foreground
+        # currently unsupported
+        #"fg": False, # run command in foreground
+        
         "bg": False, # run command in background
         "with": False, # prepend the command to every command after it
         "in": None,
@@ -341,8 +343,8 @@ class Command(object):
         
         "env": None,
         "piped": None,
-        "for": None,
-        "for_noblock": None,
+        "iter": None,
+        "iter_noblock": None,
         "ok_code": 0,
         "cwd": None,
         
@@ -354,9 +356,9 @@ class Command(object):
     # these are arguments that cannot be called together, because they wouldn't
     # make any sense
     _incompatible_call_args = (
-        ("fg", "bg", "Command can't be run in the foreground and background"),
+        #("fg", "bg", "Command can't be run in the foreground and background"),
         ("err", "err_to_out", "Stderr is already being redirected"),
-        ("piped", "for", "You cannot iterate when this command is being piped"),
+        ("piped", "iter", "You cannot iterate when this command is being piped"),
     )
 
     @classmethod
@@ -784,18 +786,18 @@ class OProc(object):
         return "".join(self._stderr)
     
     
-    def send_signal(self, sig):
+    def signal(self, sig):
         self.log.debug("sending signal %d", sig)
         try: os.kill(self.pid, sig)
         except OSError: pass
 
     def kill(self):
         self.log.debug("killing")
-        self.send_signal(signal.SIGKILL)
+        self.signal(signal.SIGKILL)
 
     def terminate(self):
         self.log.debug("terminating")
-        self.send_signal(signal.SIGTERM)
+        self.signal(signal.SIGTERM)
 
     @staticmethod
     def _cleanup_procs():
@@ -913,7 +915,7 @@ class StreamWriter(object):
                 self.stdin = iter((c+"\n" for c in stdin.split("\n")))
             else:
                 self.stdin = iter(stdin[i:i+self.bufsize] for i in range(0, len(stdin), self.bufsize))
-                self.get_chunk = self.get_iter_chunk
+            self.get_chunk = self.get_iter_chunk
             
         else:
             log_msg = "general iterable"
@@ -946,7 +948,8 @@ class StreamWriter(object):
         except StopIteration: raise DoneReadingStdin
         
     def get_file_chunk(self):
-        chunk = self.stdin.readline()
+        if self.stream_bufferer.type == 1: chunk = self.stdin.readline()
+        else: chunk = self.stdin.read(self.bufsize)
         if not chunk: raise DoneReadingStdin
         else: return chunk
 

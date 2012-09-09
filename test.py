@@ -249,7 +249,7 @@ print pbs.HERP, len(os.environ)
 
     def test_incompatible_special_args(self):
         from pbs import ls
-        self.assertRaises(TypeError, ls, _fg=True, _bg=True)
+        self.assertRaises(TypeError, ls, _iter=True, _piped=True)
             
             
     def test_exception(self):
@@ -714,8 +714,44 @@ for i in xrange(5):
         self.assertTrue("4" not in p)
         self.assertTrue("4" not in stdout)
         
+    def test_general_signal(self):
+        import signal
+        from pbs import python
+        from signal import SIGHUP
         
-    def test_for_generator(self):
+        py = create_tmp_test("""
+import sys
+import os
+import time
+import signal
+
+def sig_handler(sig, frame):
+    print 10
+    exit(0)
+    
+signal.signal(signal.SIGHUP, sig_handler)
+
+for i in xrange(5): 
+    print i
+    time.sleep(.5)
+""")
+        
+        stdout = []
+        def agg(line, stdin, process):
+            line = line.strip()
+            stdout.append(line)
+            if line == "3":
+                process.signal(SIGHUP)
+                return True
+        
+        p = python(py.name, _out=agg)
+        p.wait()
+        
+        self.assertEqual(p.process.exit_code, 0)
+        self.assertEqual(p, "0\n1\n2\n3\n10\n")
+    
+        
+    def test_iter_generator(self):
         from pbs import python
         
         py = create_tmp_test("""
@@ -727,17 +763,17 @@ for i in xrange(42):
 """)
 
         out = []
-        for line in python(py.name, _for=True): out.append(int(line.strip()))
+        for line in python(py.name, _iter=True): out.append(int(line.strip()))
         self.assertTrue(len(out) == 42 and sum(out) == 861)
         
        
-    def test_nonblocking_for(self):
+    def test_nonblocking_iter(self):
         import tempfile
         from pbs import tail
         from errno import EWOULDBLOCK
         
         tmp = tempfile.NamedTemporaryFile()
-        for line in tail("-f", tmp.name, _for_noblock=True): break
+        for line in tail("-f", tmp.name, _iter_noblock=True): break
         self.assertEqual(line, EWOULDBLOCK)
         
         
@@ -756,12 +792,12 @@ for i in xrange(42):
 """)
 
         out = []
-        for line in python(py.name, _for="err"): out.append(line)
+        for line in python(py.name, _iter="err"): out.append(line)
         self.assertTrue(len(out) == 42)
         
         # verify that nothing is going to stdout
         out = []
-        for line in python(py.name, _for="out"): out.append(line)
+        for line in python(py.name, _iter="out"): out.append(line)
         self.assertTrue(len(out) == 0)
 
 
@@ -803,7 +839,7 @@ while True:
         last_received = None
         
         letters = ""
-        for line in python(python(py1.name, _piped="out"), py2.name, _for=True):
+        for line in python(python(py1.name, _piped="out"), py2.name, _iter=True):
             if not letters: start = time.time()
             letters += line.strip()
             
@@ -835,7 +871,7 @@ for i in xrange(42):
         def agg(line): stderr.append(int(line.strip()))
 
         out = []
-        for line in python(py.name, _for=True, _err=agg): out.append(line)
+        for line in python(py.name, _iter=True, _err=agg): out.append(line)
         
         self.assertTrue(len(out) == 42)
         self.assertTrue(sum(stderr) == 1722)
@@ -950,6 +986,8 @@ else:
         
         output = cat(_in="a"*1000, _internal_bufsize=50, _out_bufsize=2)
         self.assertEqual(len(output), 100)
+        
+        
         
 
 
