@@ -156,6 +156,13 @@ def resolve_program(program):
     return path
 
 
+# we add this thin wrapper to glob.glob because of a specific edge case where
+# glob does not expand to anything.  for example, if you try to do
+# glob.glob("*.py") and there are no *.py files in the directory, glob.glob
+# returns an empty list.  this empty list gets passed to the command, and
+# then the command fails with a misleading error message.  this thin wrapper
+# ensures that if there is no expansion, we pass in the original argument,
+# so that when the command fails, the error message is clearer
 def glob(arg):    
     return original_glob(arg) or arg
 
