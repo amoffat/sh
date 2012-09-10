@@ -574,6 +574,17 @@ STDERR = -2
 
 
 
+def setraw(fd, when=tty.TCSAFLUSH):
+    """Put terminal into a raw mode."""
+    mode = tty.tcgetattr(fd)
+    mode[tty.IFLAG] = mode[tty.IFLAG] & ~(tty.BRKINT | tty.ICRNL | tty.INPCK | tty.ISTRIP | tty.IXON)
+    mode[tty.OFLAG] = mode[tty.OFLAG] & ~(tty.OPOST)
+    mode[tty.CFLAG] = mode[tty.CFLAG] & ~(tty.CSIZE | tty.PARENB)
+    mode[tty.CFLAG] = mode[tty.CFLAG] | tty.CS8
+    mode[tty.LFLAG] = mode[tty.LFLAG] & ~(tty.ECHO | tty.ICANON | tty.IEXTEN | tty.ISIG)
+    mode[tty.CC][tty.VMIN] = 1
+    mode[tty.CC][tty.VTIME] = 0
+    tty.tcsetattr(fd, when, mode)
 
 
 
@@ -609,8 +620,9 @@ class OProc(object):
             if stderr is not STDOUT: os.close(self._stderr_fd)
             
             # this controlling tty code was borrowed from pexpect.py
-            if self.call_args["tty_in"]:
-                child_tty = os.ttyname(self._slave_stdin_fd)
+            if self.call_args["tty_in"] or self.call_args["tty_out"]:
+                if self.call_args["tty_in"]: child_tty = os.ttyname(self._slave_stdin_fd)
+                else: child_tty = os.ttyname(self._slave_stdout_fd)
 
                 # disconnect from controlling tty if still connected.
                 fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY);
@@ -712,8 +724,9 @@ class OProc(object):
                 # set raw mode, so there isn't any weird translation of newlines
                 # to \r\n and other oddities.  we're not outputting to a terminal
                 # anyways
-                tty.setraw(self._stdout_fd)
-                if stderr is not STDOUT: tty.setraw(self._stderr_fd)
+                setraw(self._stdout_fd)
+                if stderr is not STDOUT: setraw(self._stderr_fd)
+                #pass
 
 
 

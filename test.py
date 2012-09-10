@@ -927,6 +927,7 @@ import os
 
 if os.isatty(sys.stdin.fileno()):
     sys.stdout.write("password?\\n")
+    sys.stdout.flush()
     pw = sys.stdin.readline().strip()
     sys.stdout.write("%s\\n" % ("*" * len(pw)))
 else:
