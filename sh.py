@@ -638,7 +638,7 @@ class OProc(object):
                 tmp_fd = os.open(os.ttyname(0), os.O_RDWR)
                 os.close(tmp_fd)
             elif self.call_args["tty_out"]:
-                tmp_fd = os.open(os.ttyname(0), os.O_RDWR)
+                tmp_fd = os.open(os.ttyname(1), os.O_RDWR)
                 os.close(tmp_fd)                    
                     
 
