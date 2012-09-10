@@ -601,6 +601,8 @@ class OProc(object):
 
         # child
         if self.pid == 0:
+            os.setsid()
+            
             if self.call_args["tty_out"]:
                 # set raw mode, so there isn't any weird translation of newlines
                 # to \r\n and other oddities.  we're not outputting to a terminal
@@ -615,39 +617,7 @@ class OProc(object):
                 
             os.close(self._stdin_fd)
             os.close(self._stdout_fd)
-            if stderr is not STDOUT: os.close(self._stderr_fd)
-            
-            # this controlling tty code was borrowed from pexpect.py
-            if self.call_args["tty_in"] or self.call_args["tty_out"]:
-                if self.call_args["tty_in"]: child_tty = os.ttyname(self._slave_stdin_fd)
-                else: child_tty = os.ttyname(self._slave_stdout_fd)
-
-                # disconnect from controlling tty if still connected.
-                fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY);
-                if fd >= 0: os.close(fd)
-        
-                os.setsid()
-        
-                # verify we are disconnected from controlling tty
-                try:
-                    fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY);
-                    if fd >= 0:
-                        os.close(fd)
-                        raise Exception("Error! We are not disconnected from a controlling tty.")
-                except:
-                    # good! we are disconnected from a controlling tty
-                    pass
-        
-                # verify we can open child pty
-                fd = os.open(child_tty, os.O_RDWR);
-                if fd < 0: raise Exception("Error! Could not open child pty, " + child_tty)
-                else: os.close(fd)
-        
-                # verify we now have a controlling tty
-                fd = os.open("/dev/tty", os.O_WRONLY)
-                if fd < 0: raise Exception("Error! Could not open controlling tty, /dev/tty")
-                else: os.close(fd)
-                
+            if stderr is not STDOUT: os.close(self._stderr_fd)                
                     
                     
             if self.call_args["cwd"]: os.chdir(self.call_args["cwd"])
@@ -662,6 +632,14 @@ class OProc(object):
             # don't inherit file descriptors
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
             os.closerange(3, max_fd)
+                    
+
+            if self.call_args["tty_in"]:
+                tmp_fd = os.open(os.ttyname(0), os.O_RDWR)
+                os.close(tmp_fd)
+            elif self.call_args["tty_out"]:
+                tmp_fd = os.open(os.ttyname(0), os.O_RDWR)
+                os.close(tmp_fd)                    
                     
 
             if self.call_args["tty_out"]:
