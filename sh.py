@@ -574,20 +574,6 @@ STDERR = -2
 
 
 
-def setraw(fd, when=tty.TCSAFLUSH):
-    """Put terminal into a raw mode."""
-    mode = tty.tcgetattr(fd)
-    mode[tty.IFLAG] = mode[tty.IFLAG] & ~(tty.BRKINT | tty.ICRNL | tty.INPCK | tty.ISTRIP | tty.IXON)
-    mode[tty.OFLAG] = mode[tty.OFLAG] & ~(tty.OPOST)
-    mode[tty.CFLAG] = mode[tty.CFLAG] & ~(tty.CSIZE | tty.PARENB)
-    mode[tty.CFLAG] = mode[tty.CFLAG] | tty.CS8
-    mode[tty.LFLAG] = mode[tty.LFLAG] & ~(tty.ECHO | tty.ICANON | tty.IEXTEN | tty.ISIG)
-    mode[tty.CC][tty.VMIN] = 1
-    mode[tty.CC][tty.VTIME] = 0
-    tty.tcsetattr(fd, when, mode)
-
-
-
 class OProc(object):
     _procs_to_cleanup = []
     _registered_cleanup = False
@@ -614,7 +600,19 @@ class OProc(object):
 
 
         # child
-        if self.pid == 0:            
+        if self.pid == 0:
+            if self.call_args["tty_out"]:
+                # set raw mode, so there isn't any weird translation of newlines
+                # to \r\n and other oddities.  we're not outputting to a terminal
+                # anyways
+                #
+                # we HAVE to do this here, and not in the parent thread, because
+                # we have to guarantee that this is set before the child process
+                # is run, and we can't do it twice.
+                tty.setraw(self._stdout_fd)
+                if stderr is not STDOUT: tty.setraw(self._stderr_fd)
+                
+                
             os.close(self._stdin_fd)
             os.close(self._stdout_fd)
             if stderr is not STDOUT: os.close(self._stderr_fd)
@@ -718,15 +716,6 @@ class OProc(object):
                 attr = termios.tcgetattr(self._stdin_fd)
                 attr[3] &= ~termios.ECHO  
                 termios.tcsetattr(self._stdin_fd, termios.TCSANOW, attr)
-
-
-            if self.call_args["tty_out"]:
-                # set raw mode, so there isn't any weird translation of newlines
-                # to \r\n and other oddities.  we're not outputting to a terminal
-                # anyways
-                setraw(self._stdout_fd)
-                if stderr is not STDOUT: setraw(self._stderr_fd)
-                #pass
 
 
 
