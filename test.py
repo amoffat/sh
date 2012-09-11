@@ -899,6 +899,7 @@ for i in range(42):
 
     def test_bg_to_int(self):
         from sh import echo
+        from os.path import realpath
         # bugs with background might cause the following error:
         #   ValueError: invalid literal for int() with base 10: ''
         self.assertEqual(int(echo("123", _bg=True)), 123)
@@ -906,8 +907,8 @@ for i in range(42):
         
     def test_cwd(self):
         from sh import pwd
-        self.assertEqual(str(pwd(_cwd="/")), "/\n")
-        self.assertEqual(str(pwd(_cwd="/etc")), "/etc\n")
+        self.assertEqual(str(pwd(_cwd="/tmp")), realpath("/tmp")+"\n")
+        self.assertEqual(str(pwd(_cwd="/etc")), realpath("/etc")+"\n")
         
         
     def test_huge_piped_data(self):
