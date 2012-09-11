@@ -276,8 +276,11 @@ print(sh.HERP + " " + str(len(os.environ)))
             
             
     def test_exception(self):
-        from sh import ls, ErrorReturnCode_2
-        self.assertRaises(ErrorReturnCode_2, ls, "/aofwje/garogjao4a/eoan3on")
+        from sh import ls, ErrorReturnCode_1, ErrorReturnCode_2
+        
+        exc_to_test = ErrorReturnCode_2
+        if IS_OSX: exc_to_test = ErrorReturnCode_1
+        self.assertRaises(exc_to_test, ls, "/aofwje/garogjao4a/eoan3on")
             
             
     def test_command_not_found(self):
