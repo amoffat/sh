@@ -33,6 +33,9 @@ import shlex
 from types import ModuleType
 from functools import partial
 import inspect
+import time
+import platform
+
 
 if IS_PY3:
     from io import StringIO
@@ -42,6 +45,8 @@ else:
     from StringIO import StringIO
     from cStringIO import StringIO as cStringIO, OutputType as _cStringIO_class
     from Queue import Queue, Empty
+    
+IS_OSX = platform.system() == "Darwin"
 
 
 import errno
@@ -601,6 +606,12 @@ class OProc(object):
 
         # child
         if self.pid == 0:
+            # this piece of ugliness is due to a bug where we can lose output
+            # if we do os.close(self._slave_stdout_fd) in the parent after
+            # the child starts writing.
+            # see http://bugs.python.org/issue15898
+            if IS_OSX and IS_PY3: time.sleep(0.01)
+            
             os.setsid()
             
             if self.call_args["tty_out"]:
