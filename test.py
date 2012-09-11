@@ -474,7 +474,7 @@ import os
 import subprocess
 
 print("wat")
-subprocess.Popen(sys.argv[1:], shell=False)
+subprocess.Popen(sys.argv[1:], shell=False).wait()
 """)
 
         cmd1 = python.bake(py.name)
