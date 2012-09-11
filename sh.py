@@ -499,7 +499,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
         return self._path + baked_args
 
     def __enter__(self):
-        Command._prepend_stack.append([self._path])
+        self(_with=True)
 
     def __exit__(self, typ, value, traceback):
         Command._prepend_stack.pop()

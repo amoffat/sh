@@ -406,12 +406,25 @@ print(len(options.long_option.split()))
         if IS_OSX: exc_to_test = ErrorReturnCode_1
         self.assertRaises(exc_to_test, p.wait) # should raise
     
-    def test_with_context(self):
-        from sh import time, ls
-        with time:
-            out = ls().stderr
-        self.assertTrue("pagefaults" in out)
 
+    def test_with_context(self):
+        from sh import python, whoami
+        import getpass
+        
+        py = create_tmp_test("""
+import sys
+import os
+import subprocess
+
+print("with_context")
+subprocess.Popen(sys.argv[1:], shell=False).wait()
+""")
+
+        cmd1 = python.bake(py.name, _with=True)
+        with cmd1:
+            out = whoami()
+        self.assertTrue("with_context" in out)
+        self.assertTrue(getpass.getuser() in out)
 
     
     def test_with_context_args(self):
@@ -473,13 +486,13 @@ import sys
 import os
 import subprocess
 
-print("wat")
+print("subcommand")
 subprocess.Popen(sys.argv[1:], shell=False).wait()
 """)
 
         cmd1 = python.bake(py.name)
         out = cmd1.whoami()
-        self.assertTrue("wat" in out)
+        self.assertTrue("subcommand" in out)
         self.assertTrue(getpass.getuser() in out)
         
         
