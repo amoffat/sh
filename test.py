@@ -396,9 +396,12 @@ print(len(options.long_option.split()))
         
         
     def test_background_exception(self):
-        from sh import ls, ErrorReturnCode_2
+        from sh import ls, ErrorReturnCode_1, ErrorReturnCode_2
         p = ls("/ofawjeofj", _bg=True) # should not raise
-        self.assertRaises(ErrorReturnCode_2, p.wait) # should raise
+        
+        exc_to_test = ErrorReturnCode_2
+        if IS_OSX: exc_to_test = ErrorReturnCode_1
+        self.assertRaises(exc_to_test, p.wait) # should raise
     
     def test_with_context(self):
         from sh import time, ls
