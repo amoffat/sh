@@ -94,11 +94,17 @@ print(args[0])
         self.assertEqual(sed(_in="test", e="s/test/lol/").strip(), "lol")
         
     def test_ok_code(self):
-        from sh import ls, ErrorReturnCode_2
+        from sh import ls, ErrorReturnCode_1, ErrorReturnCode_2
         
-        self.assertRaises(ErrorReturnCode_2, ls, "/aofwje/garogjao4a/eoan3on")
-        ls("/aofwje/garogjao4a/eoan3on", _ok_code=2)
-        ls("/aofwje/garogjao4a/eoan3on", _ok_code=[2])
+        exc_to_test = ErrorReturnCode_2
+        code_to_pass = 2
+        if IS_OSX:
+            exc_to_test = ErrorReturnCode_1
+            code_to_pass = 1
+        self.assertRaises(exc_to_test, ls, "/aofwje/garogjao4a/eoan3on")
+        
+        ls("/aofwje/garogjao4a/eoan3on", _ok_code=code_to_pass)
+        ls("/aofwje/garogjao4a/eoan3on", _ok_code=[code_to_pass])
     
     def test_quote_escaping(self):
         from sh import python
