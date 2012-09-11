@@ -464,18 +464,23 @@ print(len(options.long_option.split()))
         self.assertTrue(len(actual_out) != 0)
 
     
-    def test_subcommand(self):
-        from sh import time
+    def test_subcommand_and_bake(self):
+        from sh import python, ls
+        import getpass
+        
+        py = create_tmp_test("""
+import sys
+import os
+import subprocess
 
-        out = time.ls(_err_to_out=True)
-        self.assertTrue("pagefaults" in out)
+print("wat")
+subprocess.Popen(sys.argv[1:], shell=False)
+""")
 
-    
-    def test_bake(self):
-        from sh import time, ls
-        timed = time.bake("--verbose", _err_to_out=True)
-        out = timed.ls()
-        self.assertTrue("Voluntary context switches" in out)
+        cmd1 = python.bake(py.name)
+        out = cmd1.whoami()
+        self.assertTrue("wat" in out)
+        self.assertTrue(getpass.getuser() in out)
         
         
     def test_multiple_bakes(self):
