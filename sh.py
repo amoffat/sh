@@ -645,12 +645,13 @@ class OProc(object):
             os.closerange(3, max_fd)
                     
 
+            # set our controlling terminal
             if self.call_args["tty_in"]:
                 tmp_fd = os.open(os.ttyname(0), os.O_RDWR)
                 os.close(tmp_fd)
             elif self.call_args["tty_out"]:
                 tmp_fd = os.open(os.ttyname(1), os.O_RDWR)
-                os.close(tmp_fd)                    
+                os.close(tmp_fd)
                     
 
             if self.call_args["tty_out"]:
@@ -665,6 +666,9 @@ class OProc(object):
 
         # parent
         else:
+            self.controlling_tty = None
+            if self.call_args["tty_in"]: self.controlling_tty = self._stdin_fd
+            elif self.call_args["tty_out"]: self.controlling_tty = self._stdout_fd
             
             if not OProc._registered_cleanup:
                 atexit.register(OProc._cleanup_procs)
@@ -722,9 +726,7 @@ class OProc(object):
                 stderr_stream = StreamReader("stderr", self, self._stderr_fd, stderr,
                     self._stderr, self.call_args["out_bufsize"], stderr_pipe)
             
-            # start the main io thread
-            #self._io_thread = self._start_thread(self.io_thread,
-                #stdin_stream, stdout_stream, stderr_stream)
+            # start the main io threads
             self._input_thread = self._start_thread(self.input_thread, stdin_stream)
             self._output_thread = self._start_thread(self.output_thread, stdout_stream, stderr_stream)
             
@@ -763,6 +765,7 @@ class OProc(object):
         while not done and self.alive:
             self.log.debug("%r ready for more input", stdin)
             done = stdin.write()
+
         stdin.close()
             
             
@@ -789,9 +792,24 @@ class OProc(object):
                 
             for stream in err:
                 pass
-            
+
+
+        # this is here because stdout may be the controlling TTY, and
+        # we can't close it until the process has ended, otherwise the
+        # child will get SIGHUP.  typically, if we've broken out of
+        # the above loop, and we're here, the process is just about to
+        # end, so it's probably ok to aggressively poll self.alive
+        #
+        # the other option to this would be to do the CTTY close from
+        # the method that does the actual os.waitpid() call, but the
+        # problem with that is that the above loop might still be
+        # running, and closing the fd will cause some operation to
+        # fail.  this is less complex than wrapping all the ops
+        # in the above loop with out-of-band fd-close exceptions
+        while self.alive: _time.sleep(0.001)
         if stdout: stdout.close()
         if stderr: stderr.close()
+
 
     @property
     def stdout(self):
@@ -822,13 +840,13 @@ class OProc(object):
             proc.wait()
 
 
-    def _handle_exitstatus(self, sts):
+    def _handle_exit_code(self, exit_code):
         # if we exited from a signal, let our exit code reflect that
-        if os.WIFSIGNALED(sts): return -os.WTERMSIG(sts)
+        if os.WIFSIGNALED(exit_code): return -os.WTERMSIG(exit_code)
         # otherwise just give us a normal exit code
-        elif os.WIFEXITED(sts): return os.WEXITSTATUS(sts)
+        elif os.WIFEXITED(exit_code): return os.WEXITSTATUS(exit_code)
         else: raise RuntimeError("Unknown child exit status!")
-        
+
     @property
     def alive(self):
         if self.exit_code is not None: return False
@@ -853,7 +871,7 @@ class OProc(object):
             # essentially polling the process
             pid, exit_code = os.waitpid(self.pid, os.WNOHANG)
             if pid == self.pid:
-                self.exit_code = self._handle_exitstatus(exit_code)
+                self.exit_code = self._handle_exit_code(exit_code)
                 return False
              
         # no child process   
@@ -870,7 +888,7 @@ class OProc(object):
             if self.exit_code is None:
                 self.log.debug("exit code not set, waiting on pid")
                 pid, exit_code = os.waitpid(self.pid, 0)
-                self.exit_code = self._handle_exitstatus(exit_code)
+                self.exit_code = self._handle_exit_code(exit_code)
             else:
                 self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
             
