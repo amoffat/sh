@@ -1,4 +1,0 @@
-.. tutorial:
-
-Tutorial
-========

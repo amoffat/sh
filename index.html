@@ -25,7 +25,8 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="sh 1.0 documentation" href="#" /> 
+    <link rel="top" title="sh 1.0 documentation" href="#" />
+    <link rel="next" title="Tutorial 1: Responding to process output in real-time" href="tutorials/1-real_time_output.html" /> 
   </head>
   <body>
     <div class="related">
@@ -34,6 +35,9 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="tutorials/1-real_time_output.html" title="Tutorial 1: Responding to process output in real-time"
+             accesskey="N">next</a> |</li>
         <li><a href="#">sh 1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
@@ -45,8 +49,9 @@
             
   <div class="section" id="sh">
 <h1>sh<a class="headerlink" href="#sh" title="Permalink to this headline">¶</a></h1>
-<p>sh is a full-fledged subprocess interface that allows you to call any program as
-if it were a function:</p>
+<p>sh (previously <a class="reference external" href="http://pypi.python.org/pypi/pbs">pbs</a>) is a full-fledged
+subprocess interface for Python that
+allows you to call any program as if it were a function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ifconfig</span>
 <span class="k">print</span><span class="p">(</span><span class="n">ifconfig</span><span class="p">(</span><span class="s">&quot;wlan0&quot;</span><span class="p">))</span>
 </pre></div>
@@ -79,7 +84,17 @@ from within Python.</p>
 <p>To install:</p>
 <div class="highlight-python"><pre>pip install sh</pre>
 </div>
-<p>Follow on Github: <a class="reference external" href="http://github.com/amoffat/sh">http://github.com/amoffat/sh</a></p>
+<p>Follow it on Github: <a class="reference external" href="http://github.com/amoffat/sh">http://github.com/amoffat/sh</a></p>
+<dl class="docutils">
+<dt>Tutorials:</dt>
+<dd><div class="toctree-wrapper first last compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/1-real_time_output.html">Tutorial 1: Responding to process output in real-time</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/2-interacting_with_processes.html">Tutorial 2: Interacting with processes</a></li>
+</ul>
+</div>
+</dd>
+</dl>
 </div>
 <div class="section" id="basic-features">
 <h1>Basic Features<a class="headerlink" href="#basic-features" title="Permalink to this headline">¶</a></h1>
@@ -383,6 +398,12 @@ tells the command not to call your callback anymore.</p>
 called again.  See <a class="reference internal" href="#interactive-callbacks"><em>Interactive callbacks</em></a> for how to kill a process
 from a callback.</p>
 </div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><tt class="docutils literal"><span class="pre">_out</span></tt> and <tt class="docutils literal"><span class="pre">_err</span></tt> don&#8217;t have to specify callables.  It can be a file-like
+object, a Queue, a StringIO instance, or a filename.  See <a class="reference internal" href="#redirection"><em>Redirection</em></a>
+for examples.</p>
+</div>
 </div>
 <div class="section" id="interactive-callbacks">
 <span id="id4"></span><h2>Interactive callbacks<a class="headerlink" href="#interactive-callbacks" title="Permalink to this headline">¶</a></h2>
@@ -537,7 +558,9 @@ use the <a class="reference internal" href="special_arguments.html#special-argum
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">sh</a></li>
+<li><a class="reference internal" href="#">sh</a><ul>
+</ul>
+</li>
 <li><a class="reference internal" href="#basic-features">Basic Features</a><ul>
 <li><a class="reference internal" href="#command-execution">Command execution</a></li>
 <li><a class="reference internal" href="#keyword-arguments">Keyword arguments</a></li>
@@ -564,6 +587,9 @@ use the <a class="reference internal" href="special_arguments.html#special-argum
 </li>
 </ul>
 
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tutorials/1-real_time_output.html"
+                        title="next chapter">Tutorial 1: Responding to process output in real-time</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="sources/index.txt"
@@ -592,6 +618,9 @@ use the <a class="reference internal" href="special_arguments.html#special-argum
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
+        <li class="right" >
+          <a href="tutorials/1-real_time_output.html" title="Tutorial 1: Responding to process output in real-time"
+             >next</a> |</li>
         <li><a href="#">sh 1.0 documentation</a> &raquo;</li> 
       </ul>
     </div>

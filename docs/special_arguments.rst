@@ -66,8 +66,16 @@ every command, but some may not be used together.
 		A string that sets the current working directory of the process.
 		
 	_tty_in
-		Creates a `TTY <http://en.wikipedia.org/wiki/Pseudo_terminal#Applications>`_
-		for STDIN.  This is necessary for commands that require STDIN to be a TTY.
+		If ``True``, sh creates a `TTY <http://en.wikipedia.org/wiki/Pseudo_terminal#Applications>`_
+		for STDIN, otherwise use a `pipe <http://docs.python.org/library/os.html#os.pipe>`_.
+		This is necessary for commands that require STDIN to be a TTY.
+		By default, STDIN is a `pipe <http://docs.python.org/library/os.html#os.pipe>`_.
+		
+	_tty_out
+		If ``True``, sh creates a `TTY <http://en.wikipedia.org/wiki/Pseudo_terminal#Applications>`_
+		for STDOUT, otherwise use a `pipe <http://docs.python.org/library/os.html#os.pipe>`_.
+		This is necessary for commands that require STDOUT to be a TTY.
+		By default, STDOUT and STDERR are TTYs.
 		
 	_in_bufsize
 		The STDIN buffer size.  0 for unbuffered (the default), 1 for line

@@ -1,8 +1,9 @@
 sh
 ==
 
-sh is a full-fledged subprocess interface that allows you to call any program as
-if it were a function::
+sh (previously `pbs <http://pypi.python.org/pypi/pbs>`_) is a full-fledged
+subprocess interface for Python that
+allows you to call any program as if it were a function::
 
 	from sh import ifconfig
 	print(ifconfig("wlan0"))
@@ -39,8 +40,15 @@ To install::
 
     pip install sh
     
-Follow on Github: http://github.com/amoffat/sh
+Follow it on Github: http://github.com/amoffat/sh
 
+Tutorials:
+	.. toctree::
+		:glob:
+		:maxdepth: 1
+	   
+		/tutorials/*
+   
 
 Basic Features
 ==============
@@ -375,6 +383,12 @@ tells the command not to call your callback anymore.
 	Returning True does not kill the process, it only keeps the callback from being
 	called again.  See :ref:`interactive_callbacks` for how to kill a process
 	from a callback.
+	
+.. note::
+	
+	``_out`` and ``_err`` don't have to specify callables.  It can be a file-like
+	object, a Queue, a StringIO instance, or a filename.  See :ref:`redirection`
+	for examples.
 
 
 .. _interactive_callbacks:
