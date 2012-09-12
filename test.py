@@ -369,12 +369,20 @@ print(options.long_option)
         s1 = sh(c="echo test").strip()
         s2 = "test"
         self.assertEqual(s1, s2)
-        
-    
+
+
     def test_long_option(self):
-        from sh import sed, echo
-        out = sed(echo("test"), expression="s/test/lol/").strip()
-        self.assertEqual(out, "lol")
+        from sh import python
+        
+        py = create_tmp_test("""
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("-l", "--long-option", action="store", default="", dest="long_option")
+options, args = parser.parse_args()
+print(options.long_option.upper())
+""")
+        self.assertTrue(python(py.name, long_option="testing").strip() == "TESTING")
+        self.assertTrue(python(py.name).strip() == "")
         
     
     def test_command_wrapper(self):
