@@ -512,10 +512,18 @@ subprocess.Popen(sys.argv[1:], shell=False).wait()
         
         
     def test_multiple_bakes(self):
-        from sh import time
-        timed = time.bake("--verbose", _err_to_out=True)
-        out = timed.bake("ls")()
-        self.assertTrue("Voluntary context switches" in out)
+        from sh import python, whoami
+        import getpass
+        
+        py = create_tmp_test("""
+import sys
+import subprocess
+subprocess.Popen(sys.argv[1:], shell=False).wait()
+""")
+
+        out = python.bake(py.name).bake("whoami")()
+        self.assertTrue(getpass.getuser() == out.strip())
+        
 
 
     def test_bake_args_come_first(self):
