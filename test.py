@@ -443,10 +443,30 @@ subprocess.Popen(sys.argv[1:], shell=False).wait()
 
     
     def test_with_context_args(self):
-        from sh import time, ls
-        with time(verbose=True, _with=True):
-            out = ls().stderr
-        self.assertTrue("Voluntary context switches" in out)
+        from sh import python, whoami
+        import getpass
+
+        py = create_tmp_test("""
+import sys
+import os
+import subprocess
+from optparse import OptionParser
+
+parser = OptionParser()
+parser.add_option("-o", "--opt", action="store_true", default=False, dest="opt")
+options, args = parser.parse_args()
+
+if options.opt:
+    subprocess.Popen(args[0], shell=False).wait()
+""")
+        with python(py.name, opt=True, _with=True):
+            out = whoami()
+        self.assertTrue(getpass.getuser() == out.strip())
+        
+        
+        with python(py.name, _with=True):
+            out = whoami()    
+        self.assertTrue(out == "")
 
 
     
