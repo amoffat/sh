@@ -471,11 +471,21 @@ if options.opt:
 
     
     def test_err_to_out(self):
-        from sh import time, ls
-        with time(_with=True):
-            out = ls(_err_to_out=True)
+        from sh import python
+        
+        py = create_tmp_test("""
+import sys
+import os
 
-        self.assertTrue("pagefaults" in out)
+# unbuffered
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
+
+sys.stdout.write("stdout")
+sys.stderr.write("stderr")
+""")
+        stdout = python(py.name, _err_to_out=True)
+        self.assertTrue(stdout == "stdoutstderr")
 
 
     
