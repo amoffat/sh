@@ -498,18 +498,29 @@ if options.opt:
     
     def test_err_redirection(self):
         import tempfile
-        from sh import time, ls
+        from sh import python
 
         file_obj = tempfile.TemporaryFile()
 
-        with time(_with=True):
-            out = ls(_err=file_obj)
+        py = create_tmp_test("""
+import sys
+import os
+
+# unbuffered
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
+
+sys.stdout.write("stdout")
+sys.stderr.write("stderr")
+""")
+        stdout = python(py.name, _err=file_obj)
         
         file_obj.seek(0)
-        actual_out = file_obj.read()
+        stderr = file_obj.read().decode()
         file_obj.close()
 
-        self.assertTrue(len(actual_out) != 0)
+        self.assertTrue(stdout == "stdout")
+        self.assertTrue(stderr == "stderr")
 
     
     def test_subcommand_and_bake(self):
