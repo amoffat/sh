@@ -338,10 +338,17 @@ print(len(options.long_option.split()))
 
     
     def test_long_bool_option(self):
-        from sh import id
-        i1 = int(id(user=True, real=True))
-        i2 = os.getuid()
-        self.assertEqual(i1, i2)
+        from sh import python
+        
+        py = create_tmp_test("""
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("-l", "--long-option", action="store_true", default=False, dest="long_option")
+options, args = parser.parse_args()
+print(options.long_option)
+""")
+        self.assertTrue(python(py.name, long_option=True).strip() == "True")
+        self.assertTrue(python(py.name).strip() == "False")
 
     
     def test_composition(self):
