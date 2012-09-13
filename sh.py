@@ -589,16 +589,38 @@ class OProc(object):
 
         self.call_args = call_args
 
-        if self.call_args["tty_in"]: self._stdin_fd, self._slave_stdin_fd = pty.openpty()
-        else: self._slave_stdin_fd, self._stdin_fd = os.pipe()
+        self._single_tty = self.call_args["tty_in"] and self.call_args["tty_out"]
+
+        # this logic is a little convoluted, but basically this top-level
+        # if/else is for consolidating input and output TTYs into a single
+        # TTY.  this is the only way some secure programs like ssh will
+        # output correctly (is if stdout and stdin are both the same TTY)
+        if self._single_tty:
+            self._stdin_fd, self._slave_stdin_fd = pty.openpty()
+            
+            self._stdout_fd = self._stdin_fd
+            self._slave_stdout_fd = self._slave_stdin_fd
+            
+            self._stderr_fd = self._stdin_fd
+            self._slave_stderr_fd = self._slave_stdin_fd
         
-        if self.call_args["tty_out"]:
-            self._stdout_fd, self._slave_stdout_fd = pty.openpty()
-            # only open a pty for stderr if we're not directing to stdout
-            if stderr is not STDOUT: self._stderr_fd, self._slave_stderr_fd = pty.openpty()
+        # do not consolidate stdin and stdout
         else:
-            self._stdout_fd, self._slave_stdout_fd = os.pipe()
-            if stderr is not STDOUT: self._stderr_fd, self._slave_stderr_fd = os.pipe()
+            if self.call_args["tty_in"]:
+                self._slave_stdin_fd, self._stdin_fd = pty.openpty()
+            else:
+                self._slave_stdin_fd, self._stdin_fd = os.pipe()
+            
+            # tty_out is usually the default
+            if self.call_args["tty_out"]:
+                self._stdout_fd, self._slave_stdout_fd = pty.openpty()
+                # only open a pty for stderr if we're not directing to stdout
+                if stderr is not STDOUT:
+                    self._stderr_fd, self._slave_stderr_fd = pty.openpty()
+            else:
+                self._stdout_fd, self._slave_stdout_fd = os.pipe()
+                if stderr is not STDOUT:
+                    self._stderr_fd, self._slave_stderr_fd = os.pipe()
             
         
         self.pid = os.fork()
@@ -627,8 +649,9 @@ class OProc(object):
                 
                 
             os.close(self._stdin_fd)
-            os.close(self._stdout_fd)
-            if stderr is not STDOUT: os.close(self._stderr_fd)                
+            if not self._single_tty:
+                os.close(self._stdout_fd)
+                if stderr is not STDOUT: os.close(self._stderr_fd)                
                     
                     
             if self.call_args["cwd"]: os.chdir(self.call_args["cwd"])
@@ -663,10 +686,6 @@ class OProc(object):
 
         # parent
         else:
-            self.controlling_tty = None
-            if self.call_args["tty_in"]: self.controlling_tty = self._stdin_fd
-            elif self.call_args["tty_out"]: self.controlling_tty = self._stdout_fd
-            
             if not OProc._registered_cleanup:
                 atexit.register(OProc._cleanup_procs)
                 OProc._registered_cleanup = True
@@ -695,8 +714,9 @@ class OProc(object):
             self.log = logging.getLogger("process %r" % self)
             
             os.close(self._slave_stdin_fd)
-            os.close(self._slave_stdout_fd)
-            if stderr is not STDOUT: os.close(self._slave_stderr_fd)
+            if not self._single_tty:
+                os.close(self._slave_stdout_fd)
+                if stderr is not STDOUT: os.close(self._slave_stderr_fd)
             
             self.log.debug("started process")
             if not persist: OProc._procs_to_cleanup.append(self)
@@ -717,7 +737,7 @@ class OProc(object):
                 self._stdout, self.call_args["out_bufsize"], stdout_pipe)
                 
                 
-            if stderr is STDOUT: stderr_stream = None 
+            if stderr is STDOUT or self._single_tty: stderr_stream = None 
             else:
                 stderr_pipe = self._pipe_queue if pipe is STDERR else None   
                 stderr_stream = StreamReader("stderr", self, self._stderr_fd, stderr,
@@ -1004,7 +1024,7 @@ class StreamWriter(object):
             return False
         
         for chunk in self.stream_bufferer.process(chunk):
-            self.log.debug("got chunk size %d", len(chunk))
+            self.log.debug("got chunk size %d: %r", len(chunk), chunk[:30])
             
             if IS_PY3 and hasattr(chunk, "encode"): chunk = chunk.encode()
             
@@ -1017,10 +1037,13 @@ class StreamWriter(object):
         
         
     def close(self):
+        self.log.info("closing, but flushing first")
         chunk = self.stream_bufferer.flush()
+        self.log.info("got chunk size %d to flush: %r", len(chunk), chunk[:30])
         try:
             if chunk: os.write(self.stream, chunk.encode())
             if not self.process.call_args["tty_in"]:
+                self.log.info("we used a TTY, so closing the stream")
                 os.close(self.stream)
         except OSError: pass
         
@@ -1129,7 +1152,7 @@ class StreamReader(object):
             return True
         
         if IS_PY3: chunk = chunk.decode()
-        self.log.debug("got chunk size %d", len(chunk))
+        self.log.debug("got chunk size %d: %r", len(chunk), chunk[:30])
 
         
         for chunk in self.stream_bufferer.process(chunk):

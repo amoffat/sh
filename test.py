@@ -161,8 +161,6 @@ for l in "andrew":
         
         derp = Derp()
     
-        # note that if we don't do _tty_out for the tr commands, they don't
-        # write 
         p = tr(
                tr(
                   tr(
@@ -1010,13 +1008,13 @@ for i in range(42):
         
         stdin = tempfile.NamedTemporaryFile()
         
-        data = "herpderp" * 1000 + "\n"
+        data = "herpderp" * 4000 + "\n"
         stdin.write(data.encode())
         stdin.flush()
         stdin.seek(0)
         
-        out = tr("[:lower:]", "[:upper:]", _in=data)
-        self.assertEqual(len(out), len(data))
+        out = tr(tr("[:lower:]", "[:upper:]", _in=data), "[:upper:]", "[:lower:]")
+        self.assertTrue(out == data)
 
 
     def test_tty_input(self):
@@ -1031,8 +1029,10 @@ if os.isatty(sys.stdin.fileno()):
     sys.stdout.flush()
     pw = sys.stdin.readline().strip()
     sys.stdout.write("%s\\n" % ("*" * len(pw)))
+    sys.stdout.flush()
 else:
     sys.stdout.write("no tty attached!\\n")
+    sys.stdout.flush()
 """)
 
         test_pw = "test123"
