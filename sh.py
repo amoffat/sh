@@ -1069,7 +1069,13 @@ class StreamReader(object):
             implied_arg = 0
             if inspect.ismethod(handler): implied_arg = 1
             
-            num_args = len(inspect.getargspec(handler).args)
+            if hasattr(handler, "__call__"):
+                implied_arg = 1
+                num_args = len(inspect.getargspec(handler.__call__).args)
+            else:
+                num_args = len(inspect.getargspec(handler).args)
+                
+                
             self.handler_args = ()
             if num_args == implied_arg + 2: self.handler_args = (self.process.stdin,)
             elif num_args == implied_arg + 3: self.handler_args = (self.process.stdin, self.process)
