@@ -1067,13 +1067,18 @@ class StreamReader(object):
         # back, and will realize that they can pass a callback of more args
         if self.handler_type == "fn":
             implied_arg = 0
-            if inspect.ismethod(handler): implied_arg = 1
-            
-            if hasattr(handler, "__call__"):
+            if inspect.ismethod(handler):
                 implied_arg = 1
-                num_args = len(inspect.getargspec(handler.__call__).args)
-            else:
                 num_args = len(inspect.getargspec(handler).args)
+            
+            else:
+                if inspect.isfunction(handler):
+                    num_args = len(inspect.getargspec(handler).args)
+                    
+                # is an object instance with __call__ method
+                else:
+                    implied_arg = 1
+                    num_args = len(inspect.getargspec(handler.__call__).args)
                 
                 
             self.handler_args = ()
