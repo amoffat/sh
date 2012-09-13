@@ -646,10 +646,7 @@ class OProc(object):
                     
 
             # set our controlling terminal
-            if self.call_args["tty_in"]:
-                tmp_fd = os.open(os.ttyname(0), os.O_RDWR)
-                os.close(tmp_fd)
-            elif self.call_args["tty_out"]:
+            if self.call_args["tty_out"]:
                 tmp_fd = os.open(os.ttyname(1), os.O_RDWR)
                 os.close(tmp_fd)
                     
