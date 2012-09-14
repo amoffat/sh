@@ -59,17 +59,17 @@ class ErrorReturnCode(Exception):
             tstdout = self.stdout[:self.truncate_cap]
             out_delta = len(self.stdout) - len(tstdout)
             if out_delta:
-                tstdout += "... (%d more, please see e.stdout)" % out_delta
+                tstdout += ("... (%d more, please see e.stdout)" % out_delta).encode()
 
         if self.stderr is None: tstderr = "<redirected>"
         else:
             tstderr = self.stderr[:self.truncate_cap]
             err_delta = len(self.stderr) - len(tstderr)
             if err_delta:
-                tstderr += "... (%d more, please see e.stderr)" % err_delta
+                tstderr += ("... (%d more, please see e.stderr)" % err_delta).encode()
 
         msg = "\n\nRan: %r\n\nSTDOUT:\n\n  %s\n\nSTDERR:\n\n  %s" %\
-            (full_cmd, tstdout, tstderr)
+            (full_cmd, tstdout.decode(), tstderr.decode())
         super(ErrorReturnCode, self).__init__(msg)
 
 class CommandNotFound(Exception): pass
