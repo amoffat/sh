@@ -28,7 +28,7 @@ __project_url__ = "https://github.com/amoffat/sh"
 
 import platform
 
-if "win" in platform.system().lower():
+if "windows" in platform.system().lower():
     raise ImportError("sh 1.0 is currently only supported on linux and osx. \
 please install sh 0.108 for windows support.")
 
