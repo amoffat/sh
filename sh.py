@@ -239,6 +239,7 @@ class RunningCommand(object):
 
     def wait(self):
         self._handle_exit_code(self.process.wait())
+        return self
     
     # here we determine if we had an exception, or an error code that we weren't
     # expecting to see.  if we did, we create and raise an exception
