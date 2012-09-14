@@ -499,7 +499,7 @@ import os
 sys.stdout.write("stdout")
 sys.stderr.write("stderr")
 """)
-        stdout = python(py.name, _err=file_obj, u=True)
+        stdout = python(py.name, _err=file_obj, u=True).wait()
         
         file_obj.seek(0)
         stderr = file_obj.read().decode()
