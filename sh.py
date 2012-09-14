@@ -30,7 +30,7 @@ import platform
 
 if "windows" in platform.system().lower():
     raise ImportError("sh 1.0 is currently only supported on linux and osx. \
-please install sh 0.108 for windows support.")
+please install pbs 0.109 (http://pypi.python.org/pypi/pbs) for windows support.")
 
 
 
