@@ -625,13 +625,17 @@ class OProc(object):
             # tty_out is usually the default
             if self.call_args["tty_out"]:
                 self._stdout_fd, self._slave_stdout_fd = pty.openpty()
-                # only open a pty for stderr if we're not directing to stdout
-                if stderr is not STDOUT:
-                    self._stderr_fd, self._slave_stderr_fd = pty.openpty()
             else:
                 self._stdout_fd, self._slave_stdout_fd = os.pipe()
-                if stderr is not STDOUT:
-                    self._stderr_fd, self._slave_stderr_fd = os.pipe()
+                
+            # unless STDERR is going to STDOUT, it ALWAYS needs to be a pipe,
+            # and never a PTY.  the reason for this is not totally clear to me,
+            # but it has to do with the fact that if STDERR isn't set as the
+            # CTTY (because STDOUT is), the STDERR buffer won't always flush
+            # by the time the process exits, and the data will be lost.
+            # i've only seen this on OSX.
+            if stderr is not STDOUT:
+                self._stderr_fd, self._slave_stderr_fd = os.pipe()
             
         
         self.pid = os.fork()
@@ -656,7 +660,6 @@ class OProc(object):
                 # we have to guarantee that this is set before the child process
                 # is run, and we can't do it twice.
                 tty.setraw(self._stdout_fd)
-                if stderr is not STDOUT: tty.setraw(self._stderr_fd)
                 
                 
             os.close(self._stdin_fd)
@@ -687,7 +690,6 @@ class OProc(object):
 
             if self.call_args["tty_out"]:
                 self.setwinsize(1)
-                self.setwinsize(2)
             
             # actually execute the process
             if self.call_args["env"] is None: os.execv(cmd[0], cmd)
