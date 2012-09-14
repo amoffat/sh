@@ -1,17 +1,16 @@
-sh is a complete subprocess module rewrite that maps your system programs to
-Python functions dynamically.  sh helps you write shell scripts in
-Python by giving you the good features of Bash (easy command calling, easy
-piping) with all the power and flexibility of Python.
+sh (previously (pbs)[http://pypi.python.org/pypi/pbs]) is a full-fledged
+subprocess interface for Python 2.6 - 3.2
+that allows you to call any program as if it were a function:
 
 ```python
 from pbs import ifconfig
 print ifconfig("eth0")
 ```
 
-PBS is not a collection of system commands implemented in Python.
+sh is not a collection of system commands implemented in Python.
 
-# Getting
+# Installation
 
-    $> pip install pbs
+    $> pip install sh
 
 # Complete documentation @ http://amoffat.github.com/sh
