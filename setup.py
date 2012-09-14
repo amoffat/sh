@@ -2,31 +2,9 @@ from __future__ import print_function
 import os
 import sys
 import sh
-import subprocess
 
 try: from distutils.core import setup
 except ImportError: from setuptools import setup
-
-
-if sys.argv[1] == "test":
-    def run_test(version):
-        py_version = "python%s" % version
-        py_bin = sh.which(py_version)
-        
-        if py_bin:
-            print("Testing %s" % py_version.capitalize())
-            
-            p = subprocess.Popen([py_bin, "test.py"] + sys.argv[2:])
-            p.wait()
-        else:
-            print("Couldn't find %s, skipping" % py_version.capitalize())
-    
-    versions = ("2.6", "2.7", "3.1", "3.2")
-    
-    for version in versions:
-        run_test(version)
-        
-    exit(0)
 
 
 setup(
