@@ -1,3 +1,18 @@
+PBS has now become sh.
+======================
+
+PBS will no longer be supported.  Please upgrade here:
+
+http://pypi.python.org/pypi/sh
+
+And migrate your existin code with:
+
+```python
+import sh as pbs
+```
+
+* * *
+
 PBS is a unique subprocess wrapper that maps your system programs to
 Python functions dynamically.  PBS helps you write shell scripts in
 Python by giving you the good features of Bash (easy command calling, easy
