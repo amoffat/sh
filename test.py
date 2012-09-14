@@ -59,8 +59,6 @@ class Basic(unittest.TestCase):
         self.assertEqual(test, p)
     
     def test_number_arg(self):
-        from sh import python
-        
         py = create_tmp_test("""
 from optparse import OptionParser
 parser = OptionParser()
@@ -107,8 +105,6 @@ print(args[0])
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=[code_to_pass])
     
     def test_quote_escaping(self):
-        from sh import python
-        
         py = create_tmp_test("""
 from optparse import OptionParser
 parser = OptionParser()
@@ -225,7 +221,6 @@ for l in "andrew":
     
     
     def test_environment(self):
-        from sh import python
         import os
         
         env = {"HERP": "DERP"}
@@ -295,8 +290,6 @@ print(sh.HERP + " " + str(len(os.environ)))
         
         
     def test_multiple_args_short_option(self):
-        from sh import python
-        
         py = create_tmp_test("""
 from optparse import OptionParser
 parser = OptionParser()
@@ -312,8 +305,6 @@ print(len(options.long_option.split()))
         
         
     def test_multiple_args_long_option(self):
-        from sh import python
-        
         py = create_tmp_test("""
 from optparse import OptionParser
 parser = OptionParser()
@@ -336,8 +327,6 @@ print(len(options.long_option.split()))
 
     
     def test_long_bool_option(self):
-        from sh import python
-        
         py = create_tmp_test("""
 from optparse import OptionParser
 parser = OptionParser()
@@ -370,8 +359,6 @@ print(options.long_option)
 
 
     def test_long_option(self):
-        from sh import python
-        
         py = create_tmp_test("""
 from optparse import OptionParser
 parser = OptionParser()
@@ -421,7 +408,7 @@ print(options.long_option.upper())
     
 
     def test_with_context(self):
-        from sh import python, whoami
+        from sh import whoami
         import getpass
         
         py = create_tmp_test("""
@@ -441,7 +428,7 @@ subprocess.Popen(sys.argv[1:], shell=False).wait()
 
     
     def test_with_context_args(self):
-        from sh import python, whoami
+        from sh import whoami
         import getpass
 
         py = create_tmp_test("""
@@ -469,18 +456,14 @@ if options.opt:
 
     
     def test_err_to_out(self):
-        from sh import python
-        
         py = create_tmp_test("""
 import sys
 import os
 
-# unbuffered
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
-
 sys.stdout.write("stdout")
+sys.stdout.flush()
 sys.stderr.write("stderr")
+sys.stderr.flush()
 """)
         stdout = python(py.name, _err_to_out=True)
         self.assertTrue(stdout == "stdoutstderr")
@@ -506,7 +489,6 @@ sys.stderr.write("stderr")
     
     def test_err_redirection(self):
         import tempfile
-        from sh import python
 
         file_obj = tempfile.TemporaryFile()
 
@@ -514,14 +496,10 @@ sys.stderr.write("stderr")
 import sys
 import os
 
-# unbuffered
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
-
 sys.stdout.write("stdout")
 sys.stderr.write("stderr")
 """)
-        stdout = python(py.name, _err=file_obj)
+        stdout = python(py.name, _err=file_obj, u=True)
         
         file_obj.seek(0)
         stderr = file_obj.read().decode()
@@ -532,7 +510,7 @@ sys.stderr.write("stderr")
 
     
     def test_subcommand_and_bake(self):
-        from sh import python, ls
+        from sh import ls
         import getpass
         
         py = create_tmp_test("""
@@ -551,7 +529,7 @@ subprocess.Popen(sys.argv[1:], shell=False).wait()
         
         
     def test_multiple_bakes(self):
-        from sh import python, whoami
+        from sh import whoami
         import getpass
         
         py = create_tmp_test("""
@@ -584,14 +562,9 @@ subprocess.Popen(sys.argv[1:], shell=False).wait()
 
 
     def test_stdout_callback(self):
-        from sh import python
-        
         py = create_tmp_test("""
 import sys
 import os
-
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in range(5): print(i)
 """)
@@ -599,7 +572,7 @@ for i in range(5): print(i)
         def agg(line):
             stdout.append(line)
         
-        p = python(py.name, _out=agg)
+        p = python(py.name, _out=agg, u=True)
         p.wait()
         
         self.assertTrue(len(stdout) == 5)
@@ -607,16 +580,12 @@ for i in range(5): print(i)
         
         
     def test_stdout_callback_no_wait(self):
-        from sh import python
         import time
         
         py = create_tmp_test("""
 import sys
 import os
 import time
-
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in range(5):
     print(i)
@@ -626,7 +595,7 @@ for i in range(5):
         stdout = []
         def agg(line): stdout.append(line)
         
-        p = python(py.name, _out=agg)
+        p = python(py.name, _out=agg, u=True)
         
         # we give a little pause to make sure that the NamedTemporaryFile
         # exists when the python process actually starts
@@ -637,14 +606,9 @@ for i in range(5):
         
         
     def test_stdout_callback_line_buffered(self):
-        from sh import python
-        
         py = create_tmp_test("""
 import sys
 import os
-
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in range(5): print("herpderp")
 """)
@@ -652,7 +616,7 @@ for i in range(5): print("herpderp")
         stdout = []
         def agg(line): stdout.append(line)
         
-        p = python(py.name, _out=agg, _out_bufsize=1)
+        p = python(py.name, _out=agg, _out_bufsize=1, u=True)
         p.wait()
         
         self.assertTrue(len(stdout) == 5)
@@ -660,14 +624,9 @@ for i in range(5): print("herpderp")
         
         
     def test_stdout_callback_line_unbuffered(self):
-        from sh import python
-        
         py = create_tmp_test("""
 import sys
 import os
-
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in range(5): print("herpderp")
 """)
@@ -675,7 +634,7 @@ for i in range(5): print("herpderp")
         stdout = []
         def agg(char): stdout.append(char)
         
-        p = python(py.name, _out=agg, _out_bufsize=0)
+        p = python(py.name, _out=agg, _out_bufsize=0, u=True)
         p.wait()
         
         # + 5 newlines
@@ -683,14 +642,9 @@ for i in range(5): print("herpderp")
         
         
     def test_stdout_callback_buffered(self):
-        from sh import python
-        
         py = create_tmp_test("""
 import sys
 import os
-
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in range(5): sys.stdout.write("herpderp")
 """)
@@ -698,7 +652,7 @@ for i in range(5): sys.stdout.write("herpderp")
         stdout = []
         def agg(chunk): stdout.append(chunk)
         
-        p = python(py.name, _out=agg, _out_bufsize=4)
+        p = python(py.name, _out=agg, _out_bufsize=4, u=True)
         p.wait()
 
         self.assertTrue(len(stdout) == (len("herp")/2 * 5))
@@ -706,16 +660,13 @@ for i in range(5): sys.stdout.write("herpderp")
         
         
     def test_stdout_callback_with_input(self):
-        from sh import python
-        
         py = create_tmp_test("""
 import sys
 import os
+IS_PY3 = sys.version_info[0] == 3
+if IS_PY3: raw_input = input
 
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-
-for i in range(5): print(i)
+for i in range(5): print(str(i))
 derp = raw_input("herp? ")
 print(derp)
 """)
@@ -723,7 +674,7 @@ print(derp)
         def agg(line, stdin):
             if line.strip() == "4": stdin.put("derp\n")
         
-        p = python(py.name, _out=agg)
+        p = python(py.name, _out=agg, u=True)
         p.wait()
         
         self.assertTrue("derp" in p)
@@ -731,14 +682,9 @@ print(derp)
         
         
     def test_stdout_callback_exit(self):
-        from sh import python
-        
         py = create_tmp_test("""
 import sys
 import os
-
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in range(5): print(i)
 """)
@@ -749,7 +695,7 @@ for i in range(5): print(i)
             stdout.append(line)
             if line == "2": return True
         
-        p = python(py.name, _out=agg)
+        p = python(py.name, _out=agg, u=True)
         p.wait()
         
         self.assertTrue("4" in p)
@@ -759,15 +705,10 @@ for i in range(5): print(i)
         
     def test_stdout_callback_terminate(self):
         import signal
-        from sh import python
-        
         py = create_tmp_test("""
 import sys
 import os
 import time
-
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in range(5): 
     print(i)
@@ -782,7 +723,7 @@ for i in range(5):
                 process.terminate()
                 return True
         
-        p = python(py.name, _out=agg)
+        p = python(py.name, _out=agg, u=True)
         p.wait()
         
         self.assertEqual(p.process.exit_code, -signal.SIGTERM)
@@ -792,16 +733,12 @@ for i in range(5):
         
         
     def test_stdout_callback_kill(self):
-        from sh import python
         import signal
         
         py = create_tmp_test("""
 import sys
 import os
 import time
-
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for i in range(5): 
     print(i)
@@ -816,7 +753,7 @@ for i in range(5):
                 process.kill()
                 return True
         
-        p = python(py.name, _out=agg)
+        p = python(py.name, _out=agg, u=True)
         p.wait()
         
         self.assertEqual(p.process.exit_code, -signal.SIGKILL)
@@ -861,8 +798,6 @@ for i in range(5):
     
         
     def test_iter_generator(self):
-        from sh import python
-        
         py = create_tmp_test("""
 import sys
 import os
@@ -890,32 +825,27 @@ for i in range(42):
         
         
     def test_for_generator_to_err(self):
-        from sh import python
-        
         py = create_tmp_test("""
 import sys
 import os
-
-# unbuffered stdout
-sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
 for i in range(42): 
     sys.stderr.write(str(i)+"\\n")
 """)
 
         out = []
-        for line in python(py.name, _iter="err"): out.append(line)
+        for line in python(py.name, _iter="err", u=True): out.append(line)
         self.assertTrue(len(out) == 42)
         
         # verify that nothing is going to stdout
         out = []
-        for line in python(py.name, _iter="out"): out.append(line)
+        for line in python(py.name, _iter="out", u=True): out.append(line)
         self.assertTrue(len(out) == 0)
 
 
 
     def test_piped_generator(self):
-        from sh import python, tr
+        from sh import tr
         from string import ascii_uppercase
         import time
         
@@ -923,9 +853,6 @@ for i in range(42):
 import sys
 import os
 import time
-
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 for letter in "andrew":
     time.sleep(0.5)
@@ -936,9 +863,6 @@ for letter in "andrew":
 import sys
 import os
 import time
-
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 while True:
     line = sys.stdin.readline()
@@ -951,7 +875,7 @@ while True:
         last_received = None
         
         letters = ""
-        for line in python(python(py1.name, _piped="out"), py2.name, _iter=True):
+        for line in python(python(py1.name, _piped="out", u=True), py2.name, _iter=True, u=True):
             if not letters: start = time.time()
             letters += line.strip()
             
@@ -964,15 +888,9 @@ while True:
         
         
     def test_generator_and_callback(self):
-        from sh import python
-        
         py = create_tmp_test("""
 import sys
 import os
-
-# unbuffered stdout
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
-sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 0)
 
 for i in range(42):
     sys.stderr.write(str(i * 2)+"\\n") 
@@ -983,7 +901,7 @@ for i in range(42):
         def agg(line): stderr.append(int(line.strip()))
 
         out = []
-        for line in python(py.name, _iter=True, _err=agg): out.append(line)
+        for line in python(py.name, _iter=True, _err=agg, u=True): out.append(line)
         
         self.assertTrue(len(out) == 42)
         self.assertTrue(sum(stderr) == 1722)
@@ -1018,8 +936,6 @@ for i in range(42):
 
 
     def test_tty_input(self):
-        from sh import python
-        
         py = create_tmp_test("""
 import sys
 import os

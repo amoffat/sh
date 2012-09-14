@@ -21,6 +21,18 @@
 #===============================================================================
 
 
+__version__ = "1.0"
+__project_url__ = "https://github.com/amoffat/sh"
+
+
+
+import platform
+
+if "win" in platform.system().lower():
+    raise ImportError("sh 1.0 is currently only supported on linux and osx. \
+please install sh 0.108 for windows support.")
+
+
 
 import sys
 IS_PY3 = sys.version_info[0] == 3
@@ -34,7 +46,6 @@ from types import ModuleType
 from functools import partial
 import inspect
 import time as _time
-import platform
 
 
 if IS_PY3:
@@ -47,6 +58,7 @@ else:
     from Queue import Queue, Empty
     
 IS_OSX = platform.system() == "Darwin"
+THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 import errno
@@ -78,8 +90,6 @@ import logging
 
 
 
-__version__ = "1.0"
-__project_url__ = "https://github.com/amoffat/sh"
 
 if IS_PY3:
     raw_input = input
@@ -142,6 +152,7 @@ def which(program):
     if fpath:
         if is_exe(program): return program
     else:
+        if "PATH" not in os.environ: return None
         for path in os.environ["PATH"].split(os.pathsep):
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):
@@ -516,7 +527,6 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
 
         cmd.append(self._path)
         
-
         # here we extract the special kwargs and override any
         # special kwargs from the possibly baked command
         tmp_call_args, kwargs = self._extract_call_args(kwargs, self._partial_call_args)
@@ -1345,14 +1355,37 @@ class SelfWrapper(ModuleType):
 
 
 
-# we're being run as a stand-alone script, fire up a REPL
+# we're being run as a stand-alone script
 if __name__ == "__main__":
-    globs = globals()
-    f_globals = {}
-    for k in ["__builtins__", "__doc__", "__name__", "__package__"]:
-        f_globals[k] = globs[k]
-    env = Environment(f_globals)
-    run_repl(env)
+    try: arg = sys.argv.pop(1)
+    except: arg = None
+
+    if arg == "test":
+        import subprocess
+
+        def run_test(version):
+            py_version = "python%s" % version
+            py_bin = which(py_version)
+
+            if py_bin:
+                print("Testing %s" % py_version.capitalize())
+                
+                p = subprocess.Popen([py_bin, os.path.join(THIS_DIR, "test.py")]
+                    + sys.argv[1:])
+                p.wait()
+            else:
+                print("Couldn't find %s, skipping" % py_version.capitalize())
+
+        versions = ("2.6", "2.7", "3.1", "3.2")
+        for version in versions: run_test(version)
+
+    else:
+        globs = globals()
+        f_globals = {}
+        for k in ["__builtins__", "__doc__", "__name__", "__package__"]:
+            f_globals[k] = globs[k]
+        env = Environment(f_globals)
+        run_repl(env)
     
 # we're being imported from somewhere
 else:
