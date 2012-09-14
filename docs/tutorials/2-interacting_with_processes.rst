@@ -1,30 +1,20 @@
-Tutorial 2: Interacting with processes
-======================================
+.. _tutorial2:
 
-Many programs require some form of input.  This input can be in the form of
-commandline arguments or STDIN.  Some programs require this input at their
-launch, others require it during the lifetime of the process.  Let's start
-with the former::
+Tutorial 2: Entering an SSH password
+====================================
 
-	from sh import sed
-	
-	data = "one two three"
-	fixed = sed(e="s/you're code/your code/", _in=data)
-	
-``sed`` is a program that can take input in the form of a file or piped from
-STDIN.  Here, we choose to use STDIN by using the ``_in``
-:ref:`special keyword argument <special_arguments>`.
-
-Now let's try a more complicated example.  Using subprocesses to interact with
+Using `subprocesses <http://docs.python.org/library/subprocess.html>`_ to
+interact with
 SSH is notoriously difficult.  It is recommended that you just ``ssh-copy-id``
 to copy your public key to the server so you don't need to enter your password,
 but for the purposes of this demonstration, we try to enter a password.
 
 To interact with a process, we need to assign a callback to STDOUT.  See
-Tutorial 1 for in-depth explanation of callbacks.  Unlike tutorial 1, this callback
-will take 2 arguments instead of 1.  #1 is the STDOUT chunk,
-and #2 will be a STDIN object that we can ``.put()`` chunks on (because it's
-just a Queue).
+:ref:`tutorial1` for in-depth explanation of callbacks.  Unlike Tutorial 1,
+this callback
+will take 2 arguments: the STDOUT chunk and
+and a STDIN `Queue <http://docs.python.org/library/queue.html#queue-objects>`_
+object that we will ``.put()`` input on to send back to the process.
 
 Here's our first attempt::
 
@@ -41,16 +31,18 @@ Here's our first attempt::
 	
 If you run this (substituting an IP that you can SSH to), you'll notice that
 nothing is printed.  The problem has to do with STDOUT buffering.  By default,
-STDOUT is line-buffered, which means that you will only receive output when
+sh line-buffers STDOUT, which means that ``ssh_interact`` will only receive output when
 sh encounters a newline in the output.  This is a problem because the password
-prompt has no newline:
+prompt has no newline::
 
 	amoffat@10.10.10.100's password:
 	
-Because a newline is never encountered, nothing is printed.  So we need to change
+Because a newline is never encountered, nothing is sent to ``ssh_interact``.
+So we need to change
 the STDOUT buffering.  We do this with the ``_out_bufsize``
 :ref:`special keyword argument <special_arguments>`.  We'll set it to 0 for
-unbuffered output, so we'll receive each character as the process writes it::
+unbuffered output, so we'll receive each character as the process writes it
+(also see :ref:`buffer_sizes`)::
 
 	from sh import ssh
 	
@@ -103,19 +95,22 @@ like this::
 This is because the chunks of STDOUT our callback is receiving are unbuffered,
 and are therefore individual characters, instead of entire lines.  What we need
 to do now is aggregate this character-by-character data into something more
-meaningful for us to test on.  It would make more sense to encapsulate the
-variable we use into some kind of closure or class, but to keep it simple,
+meaningful for us to test if the pattern ``password:`` has been sent, signifying
+that SSH is ready for input.
+It would make sense to encapsulate the
+variable we'll use for aggregating into some kind of closure or class, but to keep it simple,
 we'll just use a global::
 
 	from sh import ssh
 	import os, sys
 	
 	# open stdout in unbuffered mode
-	sys.stdout = os.fdopen(sys.stdout.fileno(), "w", 0)
+	sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
 	
 	aggregated = ""
 	def ssh_interact(char, stdin):
-	    sys.stdout.write(char)
+	    global aggregated
+	    sys.stdout.write(char.encode())
 	    aggregated += char
 	    if aggregated.endswith("password: "):
 	        stdin.put("correcthorsebatterystaple")
@@ -132,21 +127,21 @@ You'll also notice that the example still doesn't work.  There are two problems:
 The first is that your password must end with a newline, as if you had typed
 it and hit the return key.  This is because SSH has no idea how long your
 password is, and is line-buffering STDIN.  The second problem lies
-deeper in SSH.  Long story short, SSH needs a TTY attached
+deeper in SSH.  Long story short, SSH needs a :ref:`TTY <ttys>` attached
 to its STDIN in order to work properly.  This "tricks" SSH into believing that
 it is interacting with a real user in a real terminal session.
-To enable TTY, we can add the ``_tty_in`` special keyword argument::
+To enable TTY, we can add the ``_tty_in`` :ref:`special keyword argument <special_arguments>`::
 
 	from sh import ssh
 	import os, sys
 	
 	# open stdout in unbuffered mode
-	sys.stdout = os.fdopen(sys.stdout.fileno(), "w", 0)
+	sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
 	
 	aggregated = ""
 	def ssh_interact(char, stdin):
 	    global aggregated
-	    sys.stdout.write(char)
+	    sys.stdout.write(char.encode())
 	    aggregated += char
 	    if aggregated.endswith("password: "):
 	        stdin.put("correcthorsebatterystaple\n")
@@ -154,7 +149,7 @@ To enable TTY, we can add the ``_tty_in`` special keyword argument::
 	p = ssh("10.10.10.100", _out=ssh_interact, _out_bufsize=0, _tty_in=True)
 	p.wait()
 	
-Voilà::
+Voilà our remote login script works!::
 
 	amoffat@10.10.10.100's password: 
 	Linux 10.10.10.100 testhost #1 SMP Tue Jun 21 10:29:24 EDT 2011 i686 GNU/Linux
@@ -175,4 +170,54 @@ Voilà::
 	amoffat@10.10.10.100:~$ 
 	
 	
+How you should REALLY be using SSH
+----------------------------------
+
+Many people want to learn how to enter an SSH password by script because they
+want to execute remote commands on a server.  Instead of trying to log in
+through SSH and then sending terminal input of the command to run, let's see
+how we can do it another way.
+
+First, open a terminal and run ``ssh-copy-id yourservername``.  You'll be asked
+to enter your password for the server.  After entering your password, you'll
+be able to SSH into the server without needing a password again.  This
+simplifies things greatly for sh.
+
+The second thing we want to do is use SSH's ability to pass a command to run
+to the server you're SSHing to.  Here's how you can run ``ifconfig`` on a server
+without having to use that server's shell::
+
+	ssh amoffat@10.10.10.100 ifconfig`` 
+	
+Translating this to sh, it becomes::
+
+	import sh
+	
+	print(sh.ssh("amoffat@10.10.10.100", "ifconfig"))
+	
+However there is more room for improvement.  We can take advantage of sh's
+:ref:`baking` to bind our server username/ip to a command object::
+
+	import sh
+	
+	my_server = sh.ssh.bake("amoffat@10.10.10.100")
+	print(my_server("ifconfig"))
+	print(my_server("whoami"))
+	
+Now we have a reusable command object that we can use to call remote commands.
+But there is room for one more improvement.  We can also use sh's
+:ref:`subcommands` feature which expands attribute access into command
+arguments::
+
+	import sh
+	
+	my_server = sh.ssh.bake("amoffat@10.10.10.100")
+	print(my_server.ifconfig())
+	print(my_server.whoami())
+	
+The above example is the same as passing in the arguments explicitly, but it
+looks syntactically cleaner.
+	
+	
+.. include:: /learn_more.rst
 	

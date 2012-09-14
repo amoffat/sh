@@ -26,7 +26,7 @@
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
     <link rel="top" title="sh 1.0 documentation" href="#" />
-    <link rel="next" title="Tutorial 1: Responding to process output in real-time" href="tutorials/1-real_time_output.html" /> 
+    <link rel="next" title="Tutorial 1: Tailing a real-time log file" href="tutorials/1-real_time_output.html" /> 
   </head>
   <body>
     <div class="related">
@@ -36,7 +36,7 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="tutorials/1-real_time_output.html" title="Tutorial 1: Responding to process output in real-time"
+          <a href="tutorials/1-real_time_output.html" title="Tutorial 1: Tailing a real-time log file"
              accesskey="N">next</a> |</li>
         <li><a href="#">sh 1.0 documentation</a> &raquo;</li> 
       </ul>
@@ -85,16 +85,17 @@ from within Python.</p>
 <div class="highlight-python"><pre>pip install sh</pre>
 </div>
 <p>Follow it on Github: <a class="reference external" href="http://github.com/amoffat/sh">http://github.com/amoffat/sh</a></p>
-<dl class="docutils">
-<dt>Tutorials:</dt>
-<dd><div class="toctree-wrapper first last compound">
+</div>
+<div class="section" id="tutorials">
+<h1>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/1-real_time_output.html">Tutorial 1: Responding to process output in real-time</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/2-interacting_with_processes.html">Tutorial 2: Interacting with processes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/1-real_time_output.html">Tutorial 1: Tailing a real-time log file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/2-interacting_with_processes.html">Tutorial 2: Entering an SSH password</a></li>
 </ul>
 </div>
-</dd>
-</dl>
+</div></blockquote>
 </div>
 <div class="section" id="basic-features">
 <h1>Basic Features<a class="headerlink" href="#basic-features" title="Permalink to this headline">¶</a></h1>
@@ -214,7 +215,7 @@ a <a class="reference external" href="http://docs.python.org/library/queue.html#
 </div>
 </div>
 <div class="section" id="sub-commands">
-<h2>Sub-commands<a class="headerlink" href="#sub-commands" title="Permalink to this headline">¶</a></h2>
+<span id="subcommands"></span><h2>Sub-commands<a class="headerlink" href="#sub-commands" title="Permalink to this headline">¶</a></h2>
 <p>Many programs have their own command subsets, like git (branch, checkout),
 svn (update, status), and sudo (where any command following sudo is considered
 a sub-command).  sh handles subcommands through attribute access:</p>
@@ -292,7 +293,7 @@ has edge cases that break with sh.</p>
 <div class="section" id="advanced-features">
 <h1>Advanced Features<a class="headerlink" href="#advanced-features" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="baking">
-<h2>Baking<a class="headerlink" href="#baking" title="Permalink to this headline">¶</a></h2>
+<span id="id3"></span><h2>Baking<a class="headerlink" href="#baking" title="Permalink to this headline">¶</a></h2>
 <p>sh is capable of &#8220;baking&#8221; arguments into commands.  This is similar to the
 stdlib functools.partial wrapper.  Example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ls</span>
@@ -333,7 +334,7 @@ can call anything on the server easily:</p>
 </div>
 </div>
 <div class="section" id="with-contexts">
-<span id="id3"></span><h2>&#8216;With&#8217; contexts<a class="headerlink" href="#with-contexts" title="Permalink to this headline">¶</a></h2>
+<span id="id4"></span><h2>&#8216;With&#8217; contexts<a class="headerlink" href="#with-contexts" title="Permalink to this headline">¶</a></h2>
 <p>Commands can be run within a <tt class="docutils literal"><span class="pre">with</span></tt> context.  Popular commands using this
 might be <tt class="docutils literal"><span class="pre">sudo</span></tt> or <tt class="docutils literal"><span class="pre">fakeroot</span></tt>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">sudo</span><span class="p">:</span>
@@ -406,7 +407,7 @@ for examples.</p>
 </div>
 </div>
 <div class="section" id="interactive-callbacks">
-<span id="id4"></span><h2>Interactive callbacks<a class="headerlink" href="#interactive-callbacks" title="Permalink to this headline">¶</a></h2>
+<span id="id5"></span><h2>Interactive callbacks<a class="headerlink" href="#interactive-callbacks" title="Permalink to this headline">¶</a></h2>
 <p>Each command launched through sh has an internal STDIN
 <a class="reference external" href="http://docs.python.org/library/queue.html#queue-objects">Queue</a>
 that can be used from callbacks:</p>
@@ -447,11 +448,12 @@ send a general <a class="reference external" href="http://docs.python.org/librar
 </div>
 </div>
 <div class="section" id="buffer-sizes">
-<span id="id6"></span><h2>Buffer sizes<a class="headerlink" href="#buffer-sizes" title="Permalink to this headline">¶</a></h2>
+<span id="id7"></span><h2>Buffer sizes<a class="headerlink" href="#buffer-sizes" title="Permalink to this headline">¶</a></h2>
 <p>Buffer sizes are important to consider when you begin to use
 <a class="reference internal" href="#iterable"><em>iterators</em></a>,
 <a class="reference internal" href="#advanced-piping"><em>advanced piping</em></a>,
-or <a class="reference internal" href="#callbacks"><em>callbacks</em></a>.
+or <a class="reference internal" href="#callbacks"><em>callbacks</em></a>.  <a class="reference internal" href="tutorials/2-interacting_with_processes.html#tutorial2"><em>Tutorial 2: Entering an SSH password</em></a> has a good example of why
+different buffering modes are needed.
 Buffer sizes control how STDIN is read and how STDOUT/ERR
 are written to.  Consider the following:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="s">&quot;testing&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
@@ -490,7 +492,7 @@ is also consumed/flushed.</dd>
 </dl>
 </div>
 <div class="section" id="advanced-piping">
-<span id="id7"></span><h2>Advanced piping<a class="headerlink" href="#advanced-piping" title="Permalink to this headline">¶</a></h2>
+<span id="id8"></span><h2>Advanced piping<a class="headerlink" href="#advanced-piping" title="Permalink to this headline">¶</a></h2>
 <p>By default, all piped commands execute sequentially.  What this means is that the
 inner command executes first, then sends its data to the outer command:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">print</span><span class="p">(</span><span class="n">wc</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/etc&quot;</span><span class="p">,</span> <span class="s">&quot;-1&quot;</span><span class="p">),</span> <span class="s">&quot;-l&quot;</span><span class="p">))</span>
@@ -515,7 +517,7 @@ it should send its output line-by-line to <tt class="docutils literal"><span cla
 stdout, but you can easily make it send stderr instead by using <tt class="docutils literal"><span class="pre">_piped=&quot;err&quot;</span></tt></p>
 </div>
 <div class="section" id="environments">
-<span id="id8"></span><h2>Environments<a class="headerlink" href="#environments" title="Permalink to this headline">¶</a></h2>
+<span id="id9"></span><h2>Environments<a class="headerlink" href="#environments" title="Permalink to this headline">¶</a></h2>
 <p>The <a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword argument</em></a> <tt class="docutils literal"><span class="pre">_env</span></tt> allows you
 to pass a dictionary of environement variables and their corresponding values:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
@@ -540,7 +542,7 @@ try something like this:</p>
 </div>
 </div>
 <div class="section" id="ttys">
-<h2>TTYs<a class="headerlink" href="#ttys" title="Permalink to this headline">¶</a></h2>
+<span id="id10"></span><h2>TTYs<a class="headerlink" href="#ttys" title="Permalink to this headline">¶</a></h2>
 <p>By default, sh does not attach a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal#Applications">TTY</a>
 to STDIN, instead it uses pipes.  However,
 some programs behave differently depending on if a TTY is attached to STDIN.
@@ -558,7 +560,8 @@ use the <a class="reference internal" href="special_arguments.html#special-argum
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">sh</a><ul>
+<li><a class="reference internal" href="#">sh</a></li>
+<li><a class="reference internal" href="#tutorials">Tutorials</a><ul>
 </ul>
 </li>
 <li><a class="reference internal" href="#basic-features">Basic Features</a><ul>
@@ -589,7 +592,7 @@ use the <a class="reference internal" href="special_arguments.html#special-argum
 
   <h4>Next topic</h4>
   <p class="topless"><a href="tutorials/1-real_time_output.html"
-                        title="next chapter">Tutorial 1: Responding to process output in real-time</a></p>
+                        title="next chapter">Tutorial 1: Tailing a real-time log file</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="sources/index.txt"
@@ -619,7 +622,7 @@ use the <a class="reference internal" href="special_arguments.html#special-argum
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="tutorials/1-real_time_output.html" title="Tutorial 1: Responding to process output in real-time"
+          <a href="tutorials/1-real_time_output.html" title="Tutorial 1: Tailing a real-time log file"
              >next</a> |</li>
         <li><a href="#">sh 1.0 documentation</a> &raquo;</li> 
       </ul>

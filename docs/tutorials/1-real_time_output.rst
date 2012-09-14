@@ -1,5 +1,7 @@
-Tutorial 1: Responding to process output in real-time
-=====================================================
+.. _tutorial1:
+
+Tutorial 1: Tailing a real-time log file
+========================================
 
 sh has the ability to respond to subprocesses in an event-driven fashion.
 A typical example of where this would be useful is tailing a log file for

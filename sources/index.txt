@@ -42,7 +42,9 @@ To install::
     
 Follow it on Github: http://github.com/amoffat/sh
 
-Tutorials:
+Tutorials
+=========
+
 	.. toctree::
 		:glob:
 		:maxdepth: 1
@@ -180,6 +182,7 @@ a `Queue <http://docs.python.org/library/queue.html#queue-objects>`_, or any ite
 	stdin = ["sh", "is", "awesome"]
 	out = tr("[:lower:]", "[:upper:]", _in=stdin)
 
+.. _subcommands:
 	
 Sub-commands
 ------------
@@ -265,6 +268,8 @@ This is because the ``*.py`` needs to be glob expanded, not passed in literally:
 
 Advanced Features
 =================
+
+.. _baking:
 
 Baking
 ------
@@ -443,7 +448,8 @@ Buffer sizes
 Buffer sizes are important to consider when you begin to use
 :ref:`iterators <iterable>`,
 :ref:`advanced piping <advanced_piping>`,
-or :ref:`callbacks <callbacks>`.
+or :ref:`callbacks <callbacks>`.  :ref:`tutorial2` has a good example of why
+different buffering modes are needed.
 Buffer sizes control how STDIN is read and how STDOUT/ERR
 are written to.  Consider the following::
 
@@ -540,7 +546,9 @@ to pass a dictionary of environement variables and their corresponding values::
 		
 		sh.google_chrome(_env=new_env)
 
-		
+
+.. _ttys:
+
 TTYs
 ----
 
