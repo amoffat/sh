@@ -54,7 +54,7 @@ if IS_PY3:
     from queue import Queue, Empty
 else:
     from StringIO import StringIO
-    from cStringIO import StringIO as cStringIO, OutputType as _cStringIO_class
+    from cStringIO import OutputType as cStringIO
     from Queue import Queue, Empty
     
 IS_OSX = platform.system() == "Darwin"
@@ -563,19 +563,21 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
         cmd.extend(final_args)
 
 
-
         # stdout redirection
         stdout = call_args["out"]
-        if stdout and not callable(stdout) and not hasattr(stdout, "write") \
-            and not isinstance(stdout, (_cStringIO_class, StringIO)):
-            stdout = file(str(stdout), "w")
+        if stdout \
+            and not callable(stdout) \
+            and not hasattr(stdout, "write") \
+            and not isinstance(stdout, (cStringIO, StringIO)):
+            
+            stdout = open(str(stdout), "wb")
         
 
         # stderr redirection
         stderr = call_args["err"]
         if stderr and not callable(stderr) and not hasattr(stderr, "write") \
-            and not isinstance(stderr, (_cStringIO_class, StringIO)):
-            stderr = file(str(err), "w")
+            and not isinstance(stderr, (cStringIO, StringIO)):
+            stderr = open(str(err), "wb")
             
 
         return RunningCommand(cmd, call_args, stdin, stdout, stderr)
@@ -1086,8 +1088,7 @@ class StreamReader(object):
         self.handler = handler
         if callable(handler): self.handler_type = "fn"
         elif isinstance(handler, StringIO): self.handler_type = "stringio"
-        elif (IS_PY3 and isinstance(handler, cStringIO)) or \
-            (not IS_PY3 and isinstance(handler, _cStringIO_class)):
+        elif isinstance(handler, cStringIO):
             self.handler_type = "cstringio"
         elif hasattr(handler, "write"): self.handler_type = "fd"
         else: self.handler_type = None
