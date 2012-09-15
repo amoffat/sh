@@ -304,13 +304,11 @@ class RunningCommand(object):
    
     def __str__(self):
         if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode("utf8")
+        else: return unicode(self).encode(self.call_args["encoding"])
         
     def __unicode__(self):
         if self.process: 
-            if self.stdout:
-                if IS_PY3: return self.stdout
-                return self.stdout.decode("utf8")
+            if self.stdout: return self.stdout.decode(self.call_args["encoding"])
             else: return ""
 
     def __eq__(self, other):
@@ -384,6 +382,8 @@ class Command(object):
         # ssh is one of those programs
         "tty_in": False,
         "tty_out": True,
+        
+        "encoding": "utf8",
     }
     
     # these are arguments that cannot be called together, because they wouldn't
@@ -496,7 +496,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
        
     def __str__(self):
         if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode("utf-8")
+        else: return unicode(self).encode("utf8")
         
     def __eq__(self, other):
         try: return str(self) == str(other)
@@ -591,7 +591,8 @@ STDERR = -2
 
 
 
-
+# Process open = Popen
+# Open Process = OProc
 class OProc(object):
     _procs_to_cleanup = []
     _registered_cleanup = False
@@ -845,11 +846,11 @@ class OProc(object):
 
     @property
     def stdout(self):
-        return "".join(self._stdout)
+        return "".encode(self.call_args["encoding"]).join(self._stdout)
     
     @property
     def stderr(self):
-        return "".join(self._stderr)
+        return "".encode(self.call_args["encoding"]).join(self._stderr)
     
     
     def signal(self, sig):
@@ -952,7 +953,8 @@ class StreamWriter(object):
         self.log = logging.getLogger(repr(self))
         
         
-        self.stream_bufferer = StreamBufferer(bufsize)
+        self.stream_bufferer = StreamBufferer(self.process.call_args["encoding"],
+            bufsize)
         
         # determine buffering for reading from the input we set for stdin
         if bufsize == 1: self.bufsize = 1024
@@ -1038,10 +1040,11 @@ class StreamWriter(object):
             self.log.debug("received no data")
             return False
         
+        if hasattr(chunk, "encode"):
+            chunk = chunk.encode(self.process.call_args["encoding"])
+        
         for chunk in self.stream_bufferer.process(chunk):
             self.log.debug("got chunk size %d: %r", len(chunk), chunk[:30])
-            
-            if IS_PY3 and hasattr(chunk, "encode"): chunk = chunk.encode()
             
             self.log.debug("writing chunk to process")
             try:
@@ -1056,7 +1059,7 @@ class StreamWriter(object):
         chunk = self.stream_bufferer.flush()
         self.log.info("got chunk size %d to flush: %r", len(chunk), chunk[:30])
         try:
-            if chunk: os.write(self.stream, chunk.encode())
+            if chunk: os.write(self.stream, chunk)
             if not self.process.call_args["tty_in"]:
                 self.log.info("we used a TTY, so closing the stream")
                 os.close(self.stream)
@@ -1075,7 +1078,8 @@ class StreamReader(object):
 
         self.log = logging.getLogger(repr(self))
         
-        self.stream_bufferer = StreamBufferer(bufsize)
+        self.stream_bufferer = StreamBufferer(self.process.call_args["encoding"],
+            bufsize)
         
         # determine buffering
         if bufsize == 1: self.bufsize = 1024
@@ -1137,26 +1141,26 @@ class StreamReader(object):
         except OSError: pass
 
 
-    def write_chunk(self, chunk):        
+    def write_chunk(self, chunk):
+        # in PY3, the chunk coming in will be bytes, so keep that in mind
+        
         if self.handler_type == "fn" and not self.should_quit:
             self.should_quit = self.handler(chunk, *self.handler_args)
             
         elif self.handler_type == "stringio":
-            self.handler.write(chunk)
+            self.handler.write(chunk.decode(self.process.call_args["encoding"]))
 
-        # cstrings and fds require bytes, so we encode()
         elif self.handler_type in ("cstringio", "fd"):
-            self.handler.write(chunk.encode())
+            self.handler.write(chunk)
             
-        # we put the chunk on the pipe queue as a string, not py3 bytes
-        # this is because it gets used directly by iterators over the Command
-        # object..and we want to iterate over strings, not bytes
-        if self.pipe_queue: self.pipe_queue.put(chunk)
 
+        if self.pipe_queue: self.pipe_queue.put(chunk)
         self.buffer.append(chunk)
 
             
     def read(self):
+        # if we're PY3, we're reading bytes, otherwise we're reading
+        # str
         try: chunk = os.read(self.stream, self.bufsize)
         except OSError as e:
             self.log.debug("got errno %d, done reading", e.errno)
@@ -1164,10 +1168,8 @@ class StreamReader(object):
         if not chunk:
             self.log.debug("got no chunk, done reading")
             return True
-        
-        if IS_PY3: chunk = chunk.decode()
+                
         self.log.debug("got chunk size %d: %r", len(chunk), chunk[:30])
-
         
         for chunk in self.stream_bufferer.process(chunk):
             self.write_chunk(chunk)   
@@ -1182,20 +1184,47 @@ class StreamReader(object):
 # come in), OProc will use an instance of this class to chop up the data and
 # feed it as lines to be sent down the pipe
 class StreamBufferer(object):
-    def __init__(self, buffer_type=1):
+    def __init__(self, encoding="utf8", buffer_type=1):
         # 0 for unbuffered, 1 for line, everything else for that amount
         self.type = buffer_type
         self.buffer = []
         self.n_buffer_count = 0
+        self.encoding = encoding
         
+        # this is for if we change buffering types.  if we change from line
+        # buffered to unbuffered, its very possible that our self.buffer list
+        # has data that was being saved up (while we searched for a newline).
+        # we need to use that up, so we don't lose it
+        self._use_up_buffer_first = False
+        
+    def change_buffering(self, new_type):
+        if new_type == 0: self._use_up_buffer_first = True
+        self.type = new_type
         
     def process(self, chunk):
+        # MAKE SURE THAT THE INPUT IS PY3 BYTES
         
+        # we've encountered binary, permanently switch to N size buffering
+        # since matching on newline doesn't make sense anymore
+        if self.type == 1:
+            try: chunk.decode(self.encoding)
+            except: self.change_buffering(1024)
+            
+        # unbuffered
         if self.type == 0:
+            if self._use_up_buffer_first:
+                self._use_up_buffer_first = False
+                to_write = self.buffer
+                self.buffer = []
+                to_write.append(chunk)
+                return to_write
+            
             return [chunk]
         
+        # line buffered
         elif self.type == 1:
             total_to_write = []
+            chunk = chunk.decode(self.encoding)
             while True:
                 newline = chunk.find("\n")
                 if newline == -1: break
@@ -1204,19 +1233,23 @@ class StreamBufferer(object):
                 if self.buffer:
                     chunk_to_write = "".join(self.buffer) + chunk_to_write
                     self.buffer = []
+                    self.n_buffer_count = 0
                 
                 chunk = chunk[newline+1:]
-                total_to_write.append(chunk_to_write)
+                total_to_write.append(chunk_to_write.encode(self.encoding))
                      
-            if chunk: self.buffer.append(chunk)
+            if chunk:
+                self.buffer.append(chunk)
+                self.n_buffer_count += len(chunk)
             return total_to_write
-            
+          
+        # N size buffered  
         else:
             total_to_write = []
             while True:
                 overage = self.n_buffer_count + len(chunk) - self.type
                 if overage >= 0:
-                    ret = "".join(self.buffer) + chunk
+                    ret = "".encode(self.encoding).join(self.buffer) + chunk
                     chunk_to_write = ret[:self.type]
                     chunk = ret[self.type:]
                     total_to_write.append(chunk_to_write)
@@ -1230,7 +1263,8 @@ class StreamBufferer(object):
             
 
     def flush(self):
-        ret =  "".join(self.buffer)
+        if self.type == 1: ret = "".join(self.buffer).encode(self.encoding)
+        else: ret = "".encode(self.encoding).join(self.buffer)
         self.buffer = []
         return ret
     

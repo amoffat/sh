@@ -70,8 +70,9 @@ print(args[0])
         self.assertEqual(out, "3")
         
     def test_exit_code(self):
-        from sh import ls
+        from sh import ls, ErrorReturnCode
         self.assertEqual(ls("/").exit_code, 0)
+        self.assertRaises(ErrorReturnCode, ls, "/aofwje/garogjao4a/eoan3on")
         
     def test_glob_warning(self):
         from sh import ls
@@ -150,7 +151,7 @@ for l in "andrew":
                 self.last_received = None
         
             def agg(self, line):
-                self.stdout.append(line.strip())
+                self.stdout.append(line.strip().decode())
                 now = time.time()
                 if self.last_received: self.times.append(now - self.last_received)
                 self.last_received = now
@@ -673,7 +674,7 @@ print(derp)
 """)
         
         def agg(line, stdin):
-            if line.strip() == "4": stdin.put("derp\n")
+            if line.strip().decode() == "4": stdin.put("derp\n")
         
         p = python(py.name, _out=agg, u=True)
         p.wait()
@@ -718,7 +719,7 @@ for i in range(5):
         
         stdout = []
         def agg(line, stdin, process):
-            line = line.strip()
+            line = line.strip().decode()
             stdout.append(line)
             if line == "3":
                 process.terminate()
@@ -748,7 +749,7 @@ for i in range(5):
         
         stdout = []
         def agg(line, stdin, process):
-            line = line.strip()
+            line = line.strip().decode()
             stdout.append(line)
             if line == "3":
                 process.kill()
@@ -785,7 +786,7 @@ for i in range(5):
         
         stdout = []
         def agg(line, stdin, process):
-            line = line.strip()
+            line = line.strip().decode()
             stdout.append(line)
             if line == "3":
                 process.signal(SIGINT)
@@ -878,7 +879,7 @@ while True:
         letters = ""
         for line in python(python(py1.name, _piped="out", u=True), py2.name, _iter=True, u=True):
             if not letters: start = time.time()
-            letters += line.strip()
+            letters += line.strip().decode()
             
             now = time.time()
             if last_received: times.append(now - last_received)
@@ -957,7 +958,7 @@ else:
         d = {}
 
         def password_enterer(line, stdin):
-            line = line.strip()
+            line = line.strip().decode()
             if not line: return
 
             if line == "password?":
