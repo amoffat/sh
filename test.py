@@ -1143,9 +1143,17 @@ sys.stdout.flush()
         self.assertTrue(out.stdout == b'testingagain\n\xec;\xedr\xdbF\x92\xf9\x8d\xa7\x98\x02/\x15\xd2K\xc3\x94d\xc9')
         
         
-        
     def test_failure_with_large_output(self):
-        raise NotImplementedError
+        """ designed to trigger the "... (%d more, please see e.stdout)" output
+        of the ErrorReturnCode class """
+        
+        from sh import ErrorReturnCode_1
+        
+        py = create_tmp_test("""
+print("andrewmoffat" * 1000)
+exit(1)
+""")
+        self.assertRaises(ErrorReturnCode_1, python, py.name)
         
 
 if __name__ == "__main__":
