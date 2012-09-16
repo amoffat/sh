@@ -1169,7 +1169,7 @@ class StreamReader(object):
         if chunk: self.write_chunk(chunk)
         
         if self.handler_type == "fd" and hasattr(self.handler, "close"):
-            self.handler.close()
+            self.handler.flush()
         
         if self.pipe_queue: self.pipe_queue.put(None)
         try: os.close(self.stream)
