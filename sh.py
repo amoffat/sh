@@ -1293,7 +1293,15 @@ class StreamBufferer(object):
                     
                     chunk_to_write = chunk[:newline+1]
                     if self.buffer:
-                        chunk_to_write = "".join(self.buffer) + chunk_to_write
+                        # this is ugly, but it's designed to take the existing
+                        # bytes buffer, join it together, tack on our latest
+                        # chunk, then convert the whole thing to a string.
+                        # it's necessary, i'm sure.  read the whole block to
+                        # see why.
+                        chunk_to_write = "".encode(self.encoding).join(self.buffer) \
+                            + chunk_to_write.encode(self.encoding)
+                        chunk_to_write = chunk_to_write.decode(self.encoding)
+                        
                         self.buffer = []
                         self.n_buffer_count = 0
                     
@@ -1301,7 +1309,7 @@ class StreamBufferer(object):
                     total_to_write.append(chunk_to_write.encode(self.encoding))
                          
                 if chunk:
-                    self.buffer.append(chunk)
+                    self.buffer.append(chunk.encode(self.encoding))
                     self.n_buffer_count += len(chunk)
                 return total_to_write
               
@@ -1332,8 +1340,7 @@ class StreamBufferer(object):
         self._buffering_lock.acquire()
         self.log.debug("got buffering lock for flushing buffer")
         try:
-            if self.type == 1: ret = "".join(self.buffer).encode(self.encoding)
-            else: ret = "".encode(self.encoding).join(self.buffer)
+            ret = "".encode(self.encoding).join(self.buffer)
             self.buffer = []
             return ret
         finally:
