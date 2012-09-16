@@ -320,7 +320,7 @@ class RunningCommand(object):
    
     def __str__(self):
         if IS_PY3: return self.__unicode__()
-        else: return unicode(self).decode(self.call_args["encoding"])
+        else: return unicode(self).encode(self.call_args["encoding"])
         
     def __unicode__(self):
         if self.process: 
