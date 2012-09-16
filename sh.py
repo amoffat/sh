@@ -1047,6 +1047,9 @@ class StreamWriter(object):
 
     # the return value answers the questions "are we done writing forever?"
     def write(self):
+        # get_chunk may sometimes return bytes, and sometimes returns trings
+        # because of the nature of the different types of STDIN objects we
+        # support
         try: chunk = self.get_chunk()
         except DoneReadingStdin:
             self.log.debug("done reading")
@@ -1063,7 +1066,8 @@ class StreamWriter(object):
             self.log.debug("received no data")
             return False
         
-        if hasattr(chunk, "encode"):
+        # if we're not bytes, make us bytes
+        if IS_PY3 and hasattr(chunk, "encode"):
             chunk = chunk.encode(self.process.call_args["encoding"])
         
         for chunk in self.stream_bufferer.process(chunk):
