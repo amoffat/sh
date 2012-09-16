@@ -304,12 +304,12 @@ class RunningCommand(object):
    
     def __str__(self):
         if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode(self.call_args["encoding"])
+        else: return unicode(self).decode(self.call_args["encoding"])
         
     def __unicode__(self):
         if self.process: 
             if self.stdout: return self.stdout.decode(self.call_args["encoding"])
-            else: return ""
+        return ""
 
     def __eq__(self, other):
         return unicode(self) == unicode(other)
@@ -325,7 +325,11 @@ class RunningCommand(object):
         return getattr(unicode(self), p)
      
     def __repr__(self):
-        return str(self)
+        try: return str(self)
+        except UnicodeDecodeError:
+            if self.process: 
+                if self.stdout: return repr(self.stdout)
+            return repr("")
 
     def __long__(self):
         return long(str(self).strip())
@@ -1242,8 +1246,9 @@ class StreamBufferer(object):
         self.log.debug("acquiring buffering lock for changing buffering")
         self._buffering_lock.acquire()
         self.log.debug("got buffering lock for changing buffering")
-        try:
+        try:                
             if new_type == 0: self._use_up_buffer_first = True
+                
             self.type = new_type
         finally:
             self._buffering_lock.release()
