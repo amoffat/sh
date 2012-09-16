@@ -1117,10 +1117,7 @@ sys.stdout.write(sys.stdin.read())
         self.assertEqual(out.stdout, binary)
         
         
-    def test_auto_change_buffering(self):
-        #import logging
-        #logging.basicConfig(level=logging.DEBUG)
-        
+    def test_auto_change_buffering(self):        
         binary = b'\xec;\xedr\xdbF\x92\xf9\x8d\xa7\x98\x02/\x15\xd2K\xc3\x94d\xc9'
         py1 = create_tmp_test("""
 import sys
