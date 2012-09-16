@@ -1224,17 +1224,21 @@ class StreamBufferer(object):
         # types from a different thread.  for example, if we have a stdout
         # callback, we might use it to change the way stdin buffers.  so we
         # lock
-        self._buffering_lock = threading.Lock()
+        self._buffering_lock = threading.RLock()
+        self.log = logging.getLogger("stream_bufferer")
         
         
     def change_buffering(self, new_type):
         # TODO, when we stop supporting 2.6, make this a with context
+        self.log.debug("acquiring buffering lock for changing buffering")
         self._buffering_lock.acquire()
+        self.log.debug("got buffering lock for changing buffering")
         try:
             if new_type == 0: self._use_up_buffer_first = True
             self.type = new_type
         finally:
             self._buffering_lock.release()
+            self.log.debug("released buffering lock for changing buffering")
             
         
     def process(self, chunk):
@@ -1242,7 +1246,9 @@ class StreamBufferer(object):
         # THE OUTPUT IS ALWAYS PY3 BYTES
         
         # TODO, when we stop supporting 2.6, make this a with context
+        self.log.debug("acquiring buffering lock to process chunk")
         self._buffering_lock.acquire()
+        self.log.debug("got buffering lock to process chunk")
         try:
             # we've encountered binary, permanently switch to N size buffering
             # since matching on newline doesn't make sense anymore
@@ -1302,11 +1308,13 @@ class StreamBufferer(object):
                 return total_to_write
         finally:
             self._buffering_lock.release()
+            self.log.debug("released buffering lock for processing chunk")
             
 
     def flush(self):
-        # TODO, when we stop supporting 2.6, make this a with context
+        self.log.debug("acquiring buffering lock for flushing buffer")
         self._buffering_lock.acquire()
+        self.log.debug("got buffering lock for flushing buffer")
         try:
             if self.type == 1: ret = "".join(self.buffer).encode(self.encoding)
             else: ret = "".encode(self.encoding).join(self.buffer)
@@ -1314,6 +1322,7 @@ class StreamBufferer(object):
             return ret
         finally:
             self._buffering_lock.release()
+            self.log.debug("released buffering lock for flushing buffer")
     
 
 
