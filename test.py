@@ -1022,6 +1022,58 @@ else:
         self.assertEqual(len(output), 100)
         
         
+    def test_change_stdout_buffering(self):
+        py = create_tmp_test("""
+import sys
+import os
+
+# this proves that we won't get the output into our callback until we send
+# a newline
+sys.stdout.write("switch ")
+sys.stdout.flush()
+sys.stdout.write("buffering\\n")
+sys.stdout.flush()
+
+sys.stdin.read(1)
+sys.stdout.write("unbuffered")
+sys.stdout.flush()
+
+# this is to keep the output from being flushed by the process ending, which
+# would ruin our test.  we want to make sure we get the string "unbuffered"
+# before the process ends, without writing a newline
+sys.stdin.read(1)
+""")
+
+        d = {"success": False}
+        def interact(line, stdin, process):
+            line = line.strip().decode()
+            if not line: return
+
+            if line == "switch buffering":
+                process.out_bufsize(0)
+                stdin.put("a")
+                
+            elif line == "unbuffered":
+                stdin.put("b")
+                d["success"] = True
+                return True
+
+        # start with line buffered stdout
+        pw_stars = python(py.name, _out=interact, _out_bufsize=1, u=True)
+        pw_stars.wait()
+        
+        self.assertTrue(d["success"])        
+        
+        
+    
+    def test_encoding(self):
+        return
+        raise NotImplementedError("what's the best way to test a different \
+'_encoding' special keyword argument?")
+        
+        
+    def test_timeout(self):
+        raise NotImplementedError
         
 
 

@@ -359,6 +359,7 @@ class Command(object):
         "in_bufsize": 0,
         # stdout buffer size, same values as above
         "out_bufsize": 1,
+        "err_bufsize": 1,
         
         # this is how big the output buffers will be for stdout and stderr.
         # this is essentially how much output they will store from the process.
@@ -745,23 +746,30 @@ class OProc(object):
 
 
 
-            stdin_stream = StreamWriter("stdin", self, self._stdin_fd, self.stdin,
-                self.call_args["in_bufsize"])
+            # this represents the connection from a Queue object (or whatever
+            # we're using to feed STDIN) to the process's STDIN fd
+            self._stdin_stream = StreamWriter("stdin", self, self._stdin_fd,
+                self.stdin, self.call_args["in_bufsize"])
                            
             stdout_pipe = self._pipe_queue if pipe is STDOUT else None
-            stdout_stream = StreamReader("stdout", self, self._stdout_fd, stdout,
+            
+            # this represents the connection from a process's STDOUT fd to
+            # wherever it has to go, sometimes a pipe Queue (that we will use
+            # to pipe data to other processes), and also an internal deque
+            # that we use to aggregate all the output
+            self._stdout_stream = StreamReader("stdout", self, self._stdout_fd, stdout,
                 self._stdout, self.call_args["out_bufsize"], stdout_pipe)
                 
                 
-            if stderr is STDOUT or self._single_tty: stderr_stream = None 
+            if stderr is STDOUT or self._single_tty: self._stderr_stream = None 
             else:
                 stderr_pipe = self._pipe_queue if pipe is STDERR else None   
-                stderr_stream = StreamReader("stderr", self, self._stderr_fd, stderr,
-                    self._stderr, self.call_args["out_bufsize"], stderr_pipe)
+                self._stderr_stream = StreamReader("stderr", self, self._stderr_fd, stderr,
+                    self._stderr, self.call_args["err_bufsize"], stderr_pipe)
             
             # start the main io threads
-            self._input_thread = self._start_thread(self.input_thread, stdin_stream)
-            self._output_thread = self._start_thread(self.output_thread, stdout_stream, stderr_stream)
+            self._input_thread = self._start_thread(self.input_thread, self._stdin_stream)
+            self._output_thread = self._start_thread(self.output_thread, self._stdout_stream, self._stderr_stream)
             
             
     def __repr__(self):
@@ -785,12 +793,17 @@ class OProc(object):
         thrd = threading.Thread(target=fn, args=args)
         thrd.daemon = True
         thrd.start()
-        return thrd            
+        return thrd
+    
+    def in_bufsize(self, buf):
+        self._stdin_stream.stream_bufferer.change_buffering(buf)
                 
-                
-        
-    def add_done_callback(self, cb):
-        self._done_callbacks.append(cb)
+    def out_bufsize(self, buf):
+        self._stdout_stream.stream_bufferer.change_buffering(buf)
+    
+    def err_bufsize(self, buf):
+        if self._stderr_stream:
+            self._stderr_stream.stream_bufferer.change_buffering(buf)
 
 
     def input_thread(self, stdin):
@@ -1197,76 +1210,100 @@ class StreamBufferer(object):
         # we need to use that up, so we don't lose it
         self._use_up_buffer_first = False
         
+        # the buffering lock is used because we might chance the buffering
+        # types from a different thread.  for example, if we have a stdout
+        # callback, we might use it to change the way stdin buffers.  so we
+        # lock
+        self._buffering_lock = threading.Lock()
+        
+        
     def change_buffering(self, new_type):
-        if new_type == 0: self._use_up_buffer_first = True
-        self.type = new_type
+        # TODO, when we stop supporting 2.6, make this a with context
+        self._buffering_lock.acquire()
+        try:
+            if new_type == 0: self._use_up_buffer_first = True
+            self.type = new_type
+        finally:
+            self._buffering_lock.release()
+            
         
     def process(self, chunk):
         # MAKE SURE THAT THE INPUT IS PY3 BYTES
+        # THE OUTPUT IS ALWAYS PY3 BYTES
         
-        # we've encountered binary, permanently switch to N size buffering
-        # since matching on newline doesn't make sense anymore
-        if self.type == 1:
-            try: chunk.decode(self.encoding)
-            except: self.change_buffering(1024)
-            
-        # unbuffered
-        if self.type == 0:
-            if self._use_up_buffer_first:
-                self._use_up_buffer_first = False
-                to_write = self.buffer
-                self.buffer = []
-                to_write.append(chunk)
-                return to_write
-            
-            return [chunk]
-        
-        # line buffered
-        elif self.type == 1:
-            total_to_write = []
-            chunk = chunk.decode(self.encoding)
-            while True:
-                newline = chunk.find("\n")
-                if newline == -1: break
+        # TODO, when we stop supporting 2.6, make this a with context
+        self._buffering_lock.acquire()
+        try:
+            # we've encountered binary, permanently switch to N size buffering
+            # since matching on newline doesn't make sense anymore
+            if self.type == 1:
+                try: chunk.decode(self.encoding)
+                except: self.change_buffering(1024)
                 
-                chunk_to_write = chunk[:newline+1]
-                if self.buffer:
-                    chunk_to_write = "".join(self.buffer) + chunk_to_write
+            # unbuffered
+            if self.type == 0:
+                if self._use_up_buffer_first:
+                    self._use_up_buffer_first = False
+                    to_write = self.buffer
                     self.buffer = []
-                    self.n_buffer_count = 0
+                    to_write.append(chunk)
+                    return to_write
                 
-                chunk = chunk[newline+1:]
-                total_to_write.append(chunk_to_write.encode(self.encoding))
-                     
-            if chunk:
-                self.buffer.append(chunk)
-                self.n_buffer_count += len(chunk)
-            return total_to_write
-          
-        # N size buffered  
-        else:
-            total_to_write = []
-            while True:
-                overage = self.n_buffer_count + len(chunk) - self.type
-                if overage >= 0:
-                    ret = "".encode(self.encoding).join(self.buffer) + chunk
-                    chunk_to_write = ret[:self.type]
-                    chunk = ret[self.type:]
-                    total_to_write.append(chunk_to_write)
-                    self.buffer = []
-                    self.n_buffer_count = 0
-                else:
+                return [chunk]
+            
+            # line buffered
+            elif self.type == 1:
+                total_to_write = []
+                chunk = chunk.decode(self.encoding)
+                while True:
+                    newline = chunk.find("\n")
+                    if newline == -1: break
+                    
+                    chunk_to_write = chunk[:newline+1]
+                    if self.buffer:
+                        chunk_to_write = "".join(self.buffer) + chunk_to_write
+                        self.buffer = []
+                        self.n_buffer_count = 0
+                    
+                    chunk = chunk[newline+1:]
+                    total_to_write.append(chunk_to_write.encode(self.encoding))
+                         
+                if chunk:
                     self.buffer.append(chunk)
                     self.n_buffer_count += len(chunk)
-                    break
-            return total_to_write
+                return total_to_write
+              
+            # N size buffered  
+            else:
+                total_to_write = []
+                while True:
+                    overage = self.n_buffer_count + len(chunk) - self.type
+                    if overage >= 0:
+                        ret = "".encode(self.encoding).join(self.buffer) + chunk
+                        chunk_to_write = ret[:self.type]
+                        chunk = ret[self.type:]
+                        total_to_write.append(chunk_to_write)
+                        self.buffer = []
+                        self.n_buffer_count = 0
+                    else:
+                        self.buffer.append(chunk)
+                        self.n_buffer_count += len(chunk)
+                        break
+                return total_to_write
+        finally:
+            self._buffering_lock.release()
             
 
     def flush(self):
-        if self.type == 1: ret = "".join(self.buffer).encode(self.encoding)
-        else: ret = "".encode(self.encoding).join(self.buffer)
-        self.buffer = []
-        return ret
+        # TODO, when we stop supporting 2.6, make this a with context
+        self._buffering_lock.acquire()
+        try:
+            if self.type == 1: ret = "".join(self.buffer).encode(self.encoding)
+            else: ret = "".encode(self.encoding).join(self.buffer)
+            self.buffer = []
+            return ret
+        finally:
+            self._buffering_lock.release()
     
 
 
