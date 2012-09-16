@@ -1093,6 +1093,31 @@ sys.stdin.read(1)
         elapsed = time() - started
         self.assertTrue(abs(elapsed - timeout) < 0.1)
         
+        
+    def test_binary_pipe(self):
+        py1 = create_tmp_test("""
+import sys
+import os
+
+sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
+sys.stdout.write(b"\\x01\\x02\\x03")
+""")
+        
+        py2 = create_tmp_test("""
+import sys
+import os
+
+sys.stdin = os.fdopen(sys.stdin.fileno(), "rb", 0)
+sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
+sys.stdout.write(sys.stdin.read())
+""")
+        out = python(python(py1.name), py2.name)
+        self.assertEqual(out.stdout, b"\x01\x02\x03")
+        
+        
+    def test_failure_with_large_output(self):
+        raise NotImplementedError
+        
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
