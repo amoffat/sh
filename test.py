@@ -1073,9 +1073,26 @@ sys.stdin.read(1)
         
         
     def test_timeout(self):
-        raise NotImplementedError
+        from sh import sleep
+        from time import time
         
-
+        # check that a normal sleep is more or less how long the whole process
+        # takes
+        sleep_for = 3
+        started = time()
+        sh.sleep(sleep_for).wait()
+        elapsed = time() - started
+        
+        self.assertTrue(abs(elapsed - sleep_for) < 0.1)
+        
+        # now make sure that killing early makes the process take less time
+        sleep_for = 3
+        timeout = 1
+        started = time()
+        sh.sleep(sleep_for, _timeout=timeout).wait()
+        elapsed = time() - started
+        self.assertTrue(abs(elapsed - timeout) < 0.1)
+        
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

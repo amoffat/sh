@@ -385,6 +385,9 @@ class Command(object):
         "tty_out": True,
         
         "encoding": "utf8",
+        
+        # how long the process should run before it is auto-killed
+        "timeout": 0,
     }
     
     # these are arguments that cannot be called together, because they wouldn't
@@ -708,6 +711,7 @@ class OProc(object):
                 OProc._registered_cleanup = True
         
         
+            self.started = _time.time()
             self.cmd = cmd
             self.exit_code = None
             self._done_callbacks = []
@@ -826,9 +830,8 @@ class OProc(object):
             readers.append(stderr)
             errors.append(stderr)
 
-
         while readers:
-            outputs, inputs, err = select.select(readers, [], errors, 1)
+            outputs, inputs, err = select.select(readers, [], errors, 0.1)
 
             # stdout and stderr
             for stream in outputs:
@@ -838,6 +841,13 @@ class OProc(object):
                 
             for stream in err:
                 pass
+            
+            # test if the process has been running too long
+            if self.call_args["timeout"]:
+                now = _time.time()
+                if now - self.started > self.call_args["timeout"]:
+                    self.log.debug("we've been running too long")
+                    self.kill()
 
 
         # this is here because stdout may be the controlling TTY, and
