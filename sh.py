@@ -1082,13 +1082,13 @@ class StreamWriter(object):
         
         
     def close(self):
-        self.log.info("closing, but flushing first")
+        self.log.debug("closing, but flushing first")
         chunk = self.stream_bufferer.flush()
-        self.log.info("got chunk size %d to flush: %r", len(chunk), chunk[:30])
+        self.log.debug("got chunk size %d to flush: %r", len(chunk), chunk[:30])
         try:
             if chunk: os.write(self.stream, chunk)
             if not self.process.call_args["tty_in"]:
-                self.log.info("we used a TTY, so closing the stream")
+                self.log.debug("we used a TTY, so closing the stream")
                 os.close(self.stream)
         except OSError: pass
         
@@ -1161,7 +1161,11 @@ class StreamReader(object):
 
     def close(self):
         chunk = self.stream_bufferer.flush()
+        self.log.debug("got chunk size %d to flush: %r", len(chunk), chunk[:30])
         if chunk: self.write_chunk(chunk)
+        
+        if self.handler_type == "fd" and hasattr(self.handler, "close"):
+            self.handler.close()
         
         if self.pipe_queue: self.pipe_queue.put(None)
         try: os.close(self.stream)
@@ -1181,7 +1185,9 @@ class StreamReader(object):
             self.handler.write(chunk)
             
 
-        if self.pipe_queue: self.pipe_queue.put(chunk)
+        if self.pipe_queue:
+            self.log.debug("putting chunk onto pipe: %r", chunk[:30])
+            self.pipe_queue.put(chunk)
         self.buffer.append(chunk)
 
             
@@ -1197,7 +1203,6 @@ class StreamReader(object):
             return True
                 
         self.log.debug("got chunk size %d: %r", len(chunk), chunk[:30])
-        
         for chunk in self.stream_bufferer.process(chunk):
             self.write_chunk(chunk)   
     
@@ -1250,15 +1255,17 @@ class StreamBufferer(object):
         # THE OUTPUT IS ALWAYS PY3 BYTES
         
         # TODO, when we stop supporting 2.6, make this a with context
-        self.log.debug("acquiring buffering lock to process chunk")
+        self.log.debug("acquiring buffering lock to process chunk (buffering: %d)", self.type)
         self._buffering_lock.acquire()
-        self.log.debug("got buffering lock to process chunk")
+        self.log.debug("got buffering lock to process chunk (buffering: %d)", self.type)
         try:
             # we've encountered binary, permanently switch to N size buffering
             # since matching on newline doesn't make sense anymore
             if self.type == 1:
                 try: chunk.decode(self.encoding)
-                except: self.change_buffering(1024)
+                except:
+                    self.log.debug("detected binary data, changing buffering")
+                    self.change_buffering(1024)
                 
             # unbuffered
             if self.type == 0:
@@ -1312,7 +1319,7 @@ class StreamBufferer(object):
                 return total_to_write
         finally:
             self._buffering_lock.release()
-            self.log.debug("released buffering lock for processing chunk")
+            self.log.debug("released buffering lock for processing chunk (buffering: %d)", self.type)
             
 
     def flush(self):
