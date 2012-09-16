@@ -1140,10 +1140,9 @@ sys.stdout.flush()
         self.assertTrue(out.stdout == b'testingagain\n\xec;\xedr\xdbF\x92\xf9\x8d\xa7\x98\x02/\x15\xd2K\xc3\x94d\xc9')
         
         
+    # designed to trigger the "... (%d more, please see e.stdout)" output
+    # of the ErrorReturnCode class
     def test_failure_with_large_output(self):
-        """ designed to trigger the "... (%d more, please see e.stdout)" output
-        of the ErrorReturnCode class """
-        
         from sh import ErrorReturnCode_1
         
         py = create_tmp_test("""
