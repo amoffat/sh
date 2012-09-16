@@ -70,8 +70,9 @@ print(args[0])
         self.assertEqual(out, "3")
         
     def test_exit_code(self):
-        from sh import ls
+        from sh import ls, ErrorReturnCode
         self.assertEqual(ls("/").exit_code, 0)
+        self.assertRaises(ErrorReturnCode, ls, "/aofwje/garogjao4a/eoan3on")
         
     def test_glob_warning(self):
         from sh import ls
@@ -150,7 +151,7 @@ for l in "andrew":
                 self.last_received = None
         
             def agg(self, line):
-                self.stdout.append(line.strip())
+                self.stdout.append(line.strip().decode())
                 now = time.time()
                 if self.last_received: self.times.append(now - self.last_received)
                 self.last_received = now
@@ -673,7 +674,7 @@ print(derp)
 """)
         
         def agg(line, stdin):
-            if line.strip() == "4": stdin.put("derp\n")
+            if line.strip().decode() == "4": stdin.put("derp\n")
         
         p = python(py.name, _out=agg, u=True)
         p.wait()
@@ -718,7 +719,7 @@ for i in range(5):
         
         stdout = []
         def agg(line, stdin, process):
-            line = line.strip()
+            line = line.strip().decode()
             stdout.append(line)
             if line == "3":
                 process.terminate()
@@ -748,7 +749,7 @@ for i in range(5):
         
         stdout = []
         def agg(line, stdin, process):
-            line = line.strip()
+            line = line.strip().decode()
             stdout.append(line)
             if line == "3":
                 process.kill()
@@ -785,7 +786,7 @@ for i in range(5):
         
         stdout = []
         def agg(line, stdin, process):
-            line = line.strip()
+            line = line.strip().decode()
             stdout.append(line)
             if line == "3":
                 process.signal(SIGINT)
@@ -878,7 +879,7 @@ while True:
         letters = ""
         for line in python(python(py1.name, _piped="out", u=True), py2.name, _iter=True, u=True):
             if not letters: start = time.time()
-            letters += line.strip()
+            letters += line.strip().decode()
             
             now = time.time()
             if last_received: times.append(now - last_received)
@@ -957,7 +958,7 @@ else:
         d = {}
 
         def password_enterer(line, stdin):
-            line = line.strip()
+            line = line.strip().decode()
             if not line: return
 
             if line == "password?":
@@ -1021,8 +1022,135 @@ else:
         self.assertEqual(len(output), 100)
         
         
-        
+    def test_change_stdout_buffering(self):
+        py = create_tmp_test("""
+import sys
+import os
 
+# this proves that we won't get the output into our callback until we send
+# a newline
+sys.stdout.write("switch ")
+sys.stdout.flush()
+sys.stdout.write("buffering\\n")
+sys.stdout.flush()
+
+sys.stdin.read(1)
+sys.stdout.write("unbuffered")
+sys.stdout.flush()
+
+# this is to keep the output from being flushed by the process ending, which
+# would ruin our test.  we want to make sure we get the string "unbuffered"
+# before the process ends, without writing a newline
+sys.stdin.read(1)
+""")
+
+        d = {"success": False}
+        def interact(line, stdin, process):
+            line = line.strip().decode()
+            if not line: return
+
+            if line == "switch buffering":
+                process.out_bufsize(0)
+                stdin.put("a")
+                
+            elif line == "unbuffered":
+                stdin.put("b")
+                d["success"] = True
+                return True
+
+        # start with line buffered stdout
+        pw_stars = python(py.name, _out=interact, _out_bufsize=1, u=True)
+        pw_stars.wait()
+        
+        self.assertTrue(d["success"])        
+        
+        
+    
+    def test_encoding(self):
+        return
+        raise NotImplementedError("what's the best way to test a different \
+'_encoding' special keyword argument?")
+        
+        
+    def test_timeout(self):
+        from sh import sleep
+        from time import time
+        
+        # check that a normal sleep is more or less how long the whole process
+        # takes
+        sleep_for = 3
+        started = time()
+        sh.sleep(sleep_for).wait()
+        elapsed = time() - started
+        
+        self.assertTrue(abs(elapsed - sleep_for) < 0.1)
+        
+        # now make sure that killing early makes the process take less time
+        sleep_for = 3
+        timeout = 1
+        started = time()
+        sh.sleep(sleep_for, _timeout=timeout).wait()
+        elapsed = time() - started
+        self.assertTrue(abs(elapsed - timeout) < 0.1)
+        
+        
+    def test_binary_pipe(self):
+        binary = b'\xec;\xedr\xdbF\x92\xf9\x8d\xa7\x98\x02/\x15\xd2K\xc3\x94d\xc9'
+        
+        py1 = create_tmp_test("""
+import sys
+import os
+
+sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
+sys.stdout.write(%r)
+""" % binary)
+        
+        py2 = create_tmp_test("""
+import sys
+import os
+
+sys.stdin = os.fdopen(sys.stdin.fileno(), "rb", 0)
+sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
+sys.stdout.write(sys.stdin.read())
+""")
+        out = python(python(py1.name), py2.name)
+        self.assertEqual(out.stdout, binary)
+        
+        
+    def test_auto_change_buffering(self):        
+        binary = b'\xec;\xedr\xdbF\x92\xf9\x8d\xa7\x98\x02/\x15\xd2K\xc3\x94d\xc9'
+        py1 = create_tmp_test("""
+import sys
+import os
+import time
+
+sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
+sys.stdout.write(b"testing")
+sys.stdout.flush()
+# to ensure that sh's select loop picks up the write before we write again
+time.sleep(0.5)
+sys.stdout.write(b"again\\n")
+sys.stdout.flush()
+time.sleep(0.5)
+sys.stdout.write(%r)
+sys.stdout.flush()
+""" % binary)
+
+        out = python(py1.name, _out_bufsize=1)
+        self.assertTrue(out.stdout == b'testingagain\n\xec;\xedr\xdbF\x92\xf9\x8d\xa7\x98\x02/\x15\xd2K\xc3\x94d\xc9')
+        
+        
+    # designed to trigger the "... (%d more, please see e.stdout)" output
+    # of the ErrorReturnCode class
+    def test_failure_with_large_output(self):
+        from sh import ErrorReturnCode_1
+        
+        py = create_tmp_test("""
+print("andrewmoffat" * 1000)
+exit(1)
+""")
+        self.assertRaises(ErrorReturnCode_1, python, py.name)
+        
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
