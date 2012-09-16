@@ -309,7 +309,8 @@ class RunningCommand(object):
                 if chunk is None:
                     self.wait()
                     raise StopIteration()
-                return chunk
+                try: return chunk.decode(self.call_args["encoding"])
+                except UnicodeDecodeError: return chunk
             
     # python 3
     __next__ = next
@@ -1196,7 +1197,11 @@ class StreamReader(object):
         # in PY3, the chunk coming in will be bytes, so keep that in mind
         
         if self.handler_type == "fn" and not self.should_quit:
-            self.should_quit = self.handler(chunk, *self.handler_args)
+            # try to use the encoding first, if that doesn't work, send
+            # the bytes
+            try: to_handler = chunk.decode(self.process.call_args["encoding"])
+            except UnicodeDecodeError: to_handler = chunk
+            self.should_quit = self.handler(to_handler, *self.handler_args)
             
         elif self.handler_type == "stringio":
             self.handler.write(chunk.decode(self.process.call_args["encoding"]))
