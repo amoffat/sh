@@ -92,3 +92,10 @@ every command, but some may not be used together.
 		For example, if this value is 100, and STDOUT is line buffered, you will
 		be able to retrieve 100 lines from STDOUT.  If STDOUT is unbuffered, you
 		will be able to retrieve only 100 characters.
+		
+	_timeout
+		How much time we should give the process to complete.  If the process
+		does not finish within the timeout, it will be sent SIGKILL.
+		
+	_encoding
+		The character encoding of the process's STDOUT.  By default, this is "utf8".
