@@ -151,7 +151,7 @@ for l in "andrew":
                 self.last_received = None
         
             def agg(self, line):
-                self.stdout.append(line.strip().decode())
+                self.stdout.append(line.strip())
                 now = time.time()
                 if self.last_received: self.times.append(now - self.last_received)
                 self.last_received = now
@@ -674,7 +674,7 @@ print(derp)
 """)
         
         def agg(line, stdin):
-            if line.strip().decode() == "4": stdin.put("derp\n")
+            if line.strip() == "4": stdin.put("derp\n")
         
         p = python(py.name, _out=agg, u=True)
         p.wait()
@@ -719,7 +719,7 @@ for i in range(5):
         
         stdout = []
         def agg(line, stdin, process):
-            line = line.strip().decode()
+            line = line.strip()
             stdout.append(line)
             if line == "3":
                 process.terminate()
@@ -749,7 +749,7 @@ for i in range(5):
         
         stdout = []
         def agg(line, stdin, process):
-            line = line.strip().decode()
+            line = line.strip()
             stdout.append(line)
             if line == "3":
                 process.kill()
@@ -786,7 +786,7 @@ for i in range(5):
         
         stdout = []
         def agg(line, stdin, process):
-            line = line.strip().decode()
+            line = line.strip()
             stdout.append(line)
             if line == "3":
                 process.signal(SIGINT)
@@ -879,7 +879,7 @@ while True:
         letters = ""
         for line in python(python(py1.name, _piped="out", u=True), py2.name, _iter=True, u=True):
             if not letters: start = time.time()
-            letters += line.strip().decode()
+            letters += line.strip()
             
             now = time.time()
             if last_received: times.append(now - last_received)
@@ -958,7 +958,7 @@ else:
         d = {}
 
         def password_enterer(line, stdin):
-            line = line.strip().decode()
+            line = line.strip()
             if not line: return
 
             if line == "password?":
@@ -1046,7 +1046,7 @@ sys.stdin.read(1)
 
         d = {"success": False}
         def interact(line, stdin, process):
-            line = line.strip().decode()
+            line = line.strip()
             if not line: return
 
             if line == "switch buffering":
