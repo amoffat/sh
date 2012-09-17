@@ -201,7 +201,7 @@ def glob(arg):
 
 class RunningCommand(object):
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
-        
+        self.log = logging.getLogger("command %r call_args %r" % (cmd, call_args))
         self.call_args = call_args
         self.cmd = cmd
         self.ran = " ".join(cmd)
@@ -244,6 +244,7 @@ class RunningCommand(object):
         
         
         if spawn_process:
+            if logging_enabled: self.log.debug("starting process")
             self.process = OProc(cmd, stdin, stdout, stderr, 
                 self.call_args, pipe=pipe)
             
