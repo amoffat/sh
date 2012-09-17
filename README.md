@@ -3,7 +3,7 @@ subprocess interface for Python 2.6 - 3.2
 that allows you to call any program as if it were a function:
 
 ```python
-from pbs import ifconfig
+from sh import ifconfig
 print ifconfig("eth0")
 ```
 
