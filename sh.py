@@ -64,8 +64,6 @@ THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 import errno
 import warnings
 
-
-from threading import Thread, Event
 import pty
 import termios
 import signal
