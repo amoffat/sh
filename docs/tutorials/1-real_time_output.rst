@@ -24,7 +24,7 @@ coworker if their C code emits a warning::
 
 	from sh import gcc, git
 	
-	for line in gcc("-o", "awesome_binary", "awesome_source.c"):
+	for line in gcc("-o", "awesome_binary", "awesome_source.c", _iter=True):
 	    if "warning" in line:
 	        # parse out the relevant info
 	        filename, line, char, message = line.split(":", 3)
