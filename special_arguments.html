@@ -116,6 +116,11 @@ represents the <em>number of bufsize chunks</em> not the total number of bytes.
 For example, if this value is 100, and STDOUT is line buffered, you will
 be able to retrieve 100 lines from STDOUT.  If STDOUT is unbuffered, you
 will be able to retrieve only 100 characters.</dd>
+<dt id="term-timeout">_timeout</dt>
+<dd>How much time we should give the process to complete.  If the process
+does not finish within the timeout, it will be sent SIGKILL.</dd>
+<dt id="term-encoding">_encoding</dt>
+<dd>The character encoding of the process&#8217;s STDOUT.  By default, this is &#8220;utf8&#8221;.</dd>
 </dl>
 </div>
 
