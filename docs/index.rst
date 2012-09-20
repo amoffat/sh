@@ -74,11 +74,13 @@ substitute the dash for an underscore::
 	import sh
 	sh.google_chrome("http://google.com")
 	
+	
 .. note::
 
-	For commands with more exotic characters in their names, like ``.``, you
-	may use sh's ``Command`` wrapper and pass in the absolute path of the
-	executable::
+    For commands with more exotic characters in their names, like ``.``, or
+    if you just don't like the "magic"-ness of dynamic lookups, you
+    may use sh's ``Command`` wrapper and pass in the absolute path of the
+    executable::
 	
 		import sh
 		run = sh.Command("/home/amoffat/run.sh")
