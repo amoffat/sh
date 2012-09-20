@@ -1,4 +1,4 @@
-sh 1.02
+sh 1.03
 =======
 
 sh (previously `pbs <http://pypi.python.org/pypi/pbs>`_) is a full-fledged
