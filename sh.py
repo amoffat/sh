@@ -21,7 +21,7 @@
 #===============================================================================
 
 
-__version__ = "1.02"
+__version__ = "1.03"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
@@ -41,7 +41,6 @@ import traceback
 import os
 import re
 from glob import glob as original_glob
-import shlex
 from types import ModuleType
 from functools import partial
 import inspect
@@ -64,17 +63,13 @@ THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 import errno
 import warnings
 
-
-from threading import Thread, Event
 import pty
 import termios
 import signal
 import select
 import atexit
-import gc
 import threading
 import tty
-import pickle
 import fcntl
 import struct
 import resource
@@ -203,7 +198,7 @@ def glob(arg):
 
 class RunningCommand(object):
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
-        
+        self.log = logging.getLogger("command %r call_args %r" % (cmd, call_args))
         self.call_args = call_args
         self.cmd = cmd
         self.ran = " ".join(cmd)
@@ -217,7 +212,7 @@ class RunningCommand(object):
         # to every command in the context
         if call_args["with"]:
             spawn_process = False
-            Command._prepend_stack.append(cmd)
+            Command._prepend_stack.append(self)
             
 
         if callable(call_args["out"]) or callable(call_args["err"]):
@@ -246,6 +241,7 @@ class RunningCommand(object):
         
         
         if spawn_process:
+            if logging_enabled: self.log.debug("starting process")
             self.process = OProc(cmd, stdin, stdout, stderr, 
                 self.call_args, pipe=pipe)
             
@@ -549,16 +545,22 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
         cmd = []
 
         # aggregate any 'with' contexts
-        for prepend in self._prepend_stack: cmd.extend(prepend)
+        call_args = Command._call_args.copy()
+        for prepend in self._prepend_stack:
+            # don't pass the 'with' call arg
+            pcall_args = prepend.call_args.copy()
+            try: del pcall_args["with"]
+            except: pass
+            
+            call_args.update(pcall_args)
+            cmd.extend(prepend.cmd)
 
         cmd.append(self._path)
         
         # here we extract the special kwargs and override any
         # special kwargs from the possibly baked command
         tmp_call_args, kwargs = self._extract_call_args(kwargs, self._partial_call_args)
-        call_args = Command._call_args.copy()
         call_args.update(tmp_call_args)
-
 
         if not isinstance(call_args["ok_code"], (tuple, list)):    
             call_args["ok_code"] = [call_args["ok_code"]]
