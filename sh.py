@@ -602,7 +602,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
         stderr = call_args["err"]
         if stderr and not callable(stderr) and not hasattr(stderr, "write") \
             and not isinstance(stderr, (cStringIO, StringIO)):
-            stderr = open(str(err), "wb")
+            stderr = open(str(stderr), "wb")
             
 
         return RunningCommand(cmd, call_args, stdin, stdout, stderr)
