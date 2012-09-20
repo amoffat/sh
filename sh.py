@@ -1449,12 +1449,6 @@ Please import sh or import programs individually.")
         
     def b_which(self, program):
         return which(program)
-    
-    def b_sudo(self, *args, **kwargs):
-        password = args[0]
-        sudo = Command(which("sudo"))
-        return sudo(*args[1:], p="", _in=password+"\n", _tty_in=True, **kwargs)
-    
 
 
 
