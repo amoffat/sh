@@ -41,7 +41,6 @@ import traceback
 import os
 import re
 from glob import glob as original_glob
-import shlex
 from types import ModuleType
 from functools import partial
 import inspect
@@ -69,10 +68,8 @@ import termios
 import signal
 import select
 import atexit
-import gc
 import threading
 import tty
-import pickle
 import fcntl
 import struct
 import resource
