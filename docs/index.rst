@@ -203,8 +203,12 @@ a sub-command).  sh handles subcommands through attribute access::
 	print(sudo.ls("/root"))
 	print(sudo("/bin/ls", "/root")) # the same command
 	
-This is syntax sugar that makes calling some programs look conceptually nicer.
+Sub-commands are mainly syntax sugar that makes calling some programs look conceptually nicer.
 
+.. note::
+
+    If you use sudo, the user executing the script must have the NOPASSWD option
+    set for whatever command that user is running, otherwise ``sudo`` will hang.
 
 .. _exit_codes:
 
@@ -332,9 +336,13 @@ a -p prompt with sudo, you need to use the ``_with`` :ref:`special keyword argum
 This let's the command know that it's being run from a with context so
 it can behave correctly::
 
-	with sudo(p=">", _with=True):
+	with sudo(k=True, _with=True):
 	    print(ls("/root"))
 	    
+.. note::
+
+    If you use sudo, the user executing the script must have the NOPASSWD option
+    set for whatever command that user is running, otherwise ``sudo`` will hang.
 
 .. _iterable:
 	    
