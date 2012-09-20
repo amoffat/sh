@@ -247,7 +247,7 @@ exits with 0, 3, or 5 exit code.
 
 .. note::
 
-	If you use ``_exit_code``, you must specify **all** the exit codes that are
+	If you use ``_ok_code``, you must specify **all** the exit codes that are
 	considered "ok", like (typically) 0.
 	
 	
