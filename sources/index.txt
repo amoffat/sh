@@ -1,4 +1,4 @@
-sh 1.02
+sh 1.03
 =======
 
 sh (previously `pbs <http://pypi.python.org/pypi/pbs>`_) is a full-fledged
@@ -74,11 +74,13 @@ substitute the dash for an underscore::
 	import sh
 	sh.google_chrome("http://google.com")
 	
+	
 .. note::
 
-	For commands with more exotic characters in their names, like ``.``, you
-	may use sh's ``Command`` wrapper and pass in the absolute path of the
-	executable::
+    For commands with more exotic characters in their names, like ``.``, or
+    if you just don't like the "magic"-ness of dynamic lookups, you
+    may use sh's ``Command`` wrapper and pass in the absolute path of the
+    executable::
 	
 		import sh
 		run = sh.Command("/home/amoffat/run.sh")
@@ -201,8 +203,12 @@ a sub-command).  sh handles subcommands through attribute access::
 	print(sudo.ls("/root"))
 	print(sudo("/bin/ls", "/root")) # the same command
 	
-This is syntax sugar that makes calling some programs look conceptually nicer.
+Sub-commands are mainly syntax sugar that makes calling some programs look conceptually nicer.
 
+.. note::
+
+    If you use sudo, the user executing the script must have the NOPASSWD option
+    set for whatever command that user is running, otherwise ``sudo`` will hang.
 
 .. _exit_codes:
 
@@ -241,7 +247,7 @@ exits with 0, 3, or 5 exit code.
 
 .. note::
 
-	If you use ``_exit_code``, you must specify **all** the exit codes that are
+	If you use ``_ok_code``, you must specify **all** the exit codes that are
 	considered "ok", like (typically) 0.
 	
 	
@@ -330,9 +336,13 @@ a -p prompt with sudo, you need to use the ``_with`` :ref:`special keyword argum
 This let's the command know that it's being run from a with context so
 it can behave correctly::
 
-	with sudo(p=">", _with=True):
+	with sudo(k=True, _with=True):
 	    print(ls("/root"))
 	    
+.. note::
+
+    If you use sudo, the user executing the script must have the NOPASSWD option
+    set for whatever command that user is running, otherwise ``sudo`` will hang.
 
 .. _iterable:
 	    
