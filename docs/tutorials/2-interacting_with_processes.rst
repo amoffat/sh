@@ -187,7 +187,7 @@ The second thing we want to do is use SSH's ability to pass a command to run
 to the server you're SSHing to.  Here's how you can run ``ifconfig`` on a server
 without having to use that server's shell::
 
-	ssh amoffat@10.10.10.100 ifconfig`` 
+	ssh amoffat@10.10.10.100 ifconfig 
 	
 Translating this to sh, it becomes::
 
