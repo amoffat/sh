@@ -511,7 +511,23 @@ sys.stderr.write("stderr")
         self.assertTrue(stdout == "stdout")
         self.assertTrue(stderr == "stderr")
 
-    
+    def test_err_redirection_actual_file(self):
+      import tempfile
+      file_obj = tempfile.NamedTemporaryFile()
+      py = create_tmp_test("""
+import sys
+import os
+
+sys.stdout.write("stdout")
+sys.stderr.write("stderr")
+""")
+      stdout = python(py.name, _err=file_obj.name, u=True).wait()
+      file_obj.seek(0)
+      stderr = file_obj.read().decode()
+      file_obj.close()
+      self.assertTrue(stdout == "stdout")
+      self.assertTrue(stderr == "stderr")
+
     def test_subcommand_and_bake(self):
         from sh import ls
         import getpass
