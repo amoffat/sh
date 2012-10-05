@@ -46,6 +46,9 @@ from functools import partial
 import inspect
 import time as _time
 
+from locale import getpreferredencoding
+ENCODING = getpreferredencoding()
+
 
 if IS_PY3:
     from io import StringIO
@@ -134,7 +137,7 @@ class ErrorReturnCode(Exception):
                 tstderr += ("... (%d more, please see e.stderr)" % err_delta).encode()
 
         msg = "\n\n  RAN: %r\n\n  STDOUT:\n%s\n\n  STDERR:\n%s" %\
-            (full_cmd, tstdout.decode(), tstderr.decode())
+            (full_cmd, tstdout.decode(ENCODING), tstderr.decode(ENCODING))
         super(ErrorReturnCode, self).__init__(msg)
 
 class CommandNotFound(Exception): pass
