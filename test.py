@@ -1167,6 +1167,11 @@ exit(1)
 """)
         self.assertRaises(ErrorReturnCode_1, python, py.name)
         
+    # designed to check if the ErrorReturnCode constructor does not raise
+    # an UnicodeDecodeError
+    def test_non_ascii_error(self):
+        from sh import ls, ErrorReturnCode
+        self.assertRaises(ErrorReturnCode, ls, u'/á')
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
