@@ -421,8 +421,8 @@ class Command(object):
         if not path: raise CommandNotFound(program)
         return cls(path)
     
-    def __init__(self, path):            
-        self._path = path
+    def __init__(self, path):
+        self._path = which(path)
         self._partial = False
         self._partial_baked_args = []
         self._partial_call_args = {}
