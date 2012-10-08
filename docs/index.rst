@@ -288,7 +288,7 @@ stdlib functools.partial wrapper.  Example::
 	ls = ls.bake("-la")
 	print(ls) # "/usr/bin/ls -la"
 	
-	# resolves to "ls / -la"
+	# resolves to "ls -la /"
 	print(ls("/"))
 
 The idea here is that now every call to ``ls`` will have the "-la" arguments
