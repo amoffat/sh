@@ -21,7 +21,7 @@
 #===============================================================================
 
 
-__version__ = "1.03"
+__version__ = "1.04"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
@@ -45,6 +45,9 @@ from types import ModuleType
 from functools import partial
 import inspect
 import time as _time
+
+from locale import getpreferredencoding
+DEFAULT_ENCODING = getpreferredencoding()
 
 
 if IS_PY3:
@@ -134,7 +137,7 @@ class ErrorReturnCode(Exception):
                 tstderr += ("... (%d more, please see e.stderr)" % err_delta).encode()
 
         msg = "\n\n  RAN: %r\n\n  STDOUT:\n%s\n\n  STDERR:\n%s" %\
-            (full_cmd, tstdout.decode(), tstderr.decode())
+            (full_cmd, tstdout.decode(DEFAULT_ENCODING), tstderr.decode(DEFAULT_ENCODING))
         super(ErrorReturnCode, self).__init__(msg)
 
 class CommandNotFound(Exception): pass
@@ -401,7 +404,7 @@ class Command(object):
         "tty_in": False,
         "tty_out": True,
         
-        "encoding": "utf8",
+        "encoding": DEFAULT_ENCODING,
         
         # how long the process should run before it is auto-killed
         "timeout": 0,
@@ -421,8 +424,8 @@ class Command(object):
         if not path: raise CommandNotFound(program)
         return cls(path)
     
-    def __init__(self, path):            
-        self._path = path
+    def __init__(self, path):
+        self._path = which(path)
         self._partial = False
         self._partial_baked_args = []
         self._partial_call_args = {}
@@ -463,7 +466,7 @@ class Command(object):
 
     def _format_arg(self, arg):
         if IS_PY3: arg = str(arg)
-        else: arg = unicode(arg).encode("utf8")
+        else: arg = unicode(arg).encode(DEFAULT_ENCODING)
         return arg
 
     def _compile_args(self, args, kwargs):
@@ -517,7 +520,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
        
     def __str__(self):
         if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode("utf8")
+        else: return unicode(self).encode(DEFAULT_ENCODING)
         
     def __eq__(self, other):
         try: return str(self) == str(other)
@@ -1243,7 +1246,7 @@ class StreamReader(object):
 # come in), OProc will use an instance of this class to chop up the data and
 # feed it as lines to be sent down the pipe
 class StreamBufferer(object):
-    def __init__(self, encoding="utf8", buffer_type=1):
+    def __init__(self, encoding=DEFAULT_ENCODING, buffer_type=1):
         # 0 for unbuffered, 1 for line, everything else for that amount
         self.type = buffer_type
         self.buffer = []
