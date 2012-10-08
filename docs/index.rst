@@ -1,5 +1,5 @@
-sh 1.03
-=======
+sh |version|
+============
 
 sh (previously `pbs <http://pypi.python.org/pypi/pbs>`_) is a full-fledged
 subprocess interface for Python that
