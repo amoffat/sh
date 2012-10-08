@@ -1171,7 +1171,12 @@ exit(1)
     # an UnicodeDecodeError
     def test_non_ascii_error(self):
         from sh import ls, ErrorReturnCode
-        self.assertRaises(ErrorReturnCode, ls, u'/á')
+        
+        test = "/á"
+        if not IS_PY3: test = test.decode("utf8")
+        
+        self.assertRaises(ErrorReturnCode, ls, test)
+        
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
