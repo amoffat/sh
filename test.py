@@ -321,10 +321,16 @@ print(len(options.long_option.split()))
 
 
     def test_short_bool_option(self):
-        from sh import id
-        i1 = int(id(u=True))
-        i2 = os.geteuid()
-        self.assertEqual(i1, i2)
+        py = create_tmp_test("""
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("-s", action="store_true", default=False, dest="short_option")
+options, args = parser.parse_args()
+print(options.short_option)
+""")
+        self.assertTrue(python(py.name, s=True).strip() == "True")
+        self.assertTrue(python(py.name, s=False).strip() == "False")
+        self.assertTrue(python(py.name).strip() == "False")
 
 
     def test_long_bool_option(self):
