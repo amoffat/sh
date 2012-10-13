@@ -486,14 +486,16 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
             # we're passing a short arg as a kwarg, example:
             # cut(d="\t")
             if len(k) == 1:
-                processed_args.append("-"+k)
-                if v is not True: processed_args.append(self._format_arg(v))
+                if v is not False:
+                    processed_args.append("-"+k)
+                    if v is not True: processed_args.append(self._format_arg(v))
 
             # we're doing a long arg
             else:
                 k = k.replace("_", "-")
 
                 if v is True: processed_args.append("--"+k)
+                elif v is False: pass
                 else: processed_args.append("--%s=%s" % (k, self._format_arg(v)))
 
         return processed_args
