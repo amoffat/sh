@@ -234,6 +234,14 @@ through the base class ErrorReturnCode::
 	    print("unknown error")
 	    exit(1)
 	    
+.. note::
+	
+	Signals **will not** raise an ErrorReturnCode.  The command will return
+	as if it succeeded, but its ``exit_code`` property will be set to
+	-signal_num.  So, for example, if a command is killed with a SIGHUP, its
+	return code will be -1.
+	
+	    
 Some programs return strange error codes even though they succeed.  If you know
 which code a program might returns and you don't want to deal with doing 
 no-op exception handling, you can use the ``_ok_code``

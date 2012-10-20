@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>sh 1.04 &mdash; sh 1.04 documentation</title>
+    <title>sh 1.05 &mdash; sh 1.05 documentation</title>
     
     <link rel="stylesheet" href="static/default.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '1.04',
+        VERSION:     '1.05',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="sh 1.04 documentation" href="#" />
+    <link rel="top" title="sh 1.05 documentation" href="#" />
     <link rel="next" title="Tutorial 1: Tailing a real-time log file" href="tutorials/1-real_time_output.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
         <li class="right" >
           <a href="tutorials/1-real_time_output.html" title="Tutorial 1: Tailing a real-time log file"
              accesskey="N">next</a> |</li>
-        <li><a href="#">sh 1.04 documentation</a> &raquo;</li> 
+        <li><a href="#">sh 1.05 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -48,7 +48,7 @@
           <div class="body">
             
   <div class="section" id="sh-version">
-<h1>sh 1.04<a class="headerlink" href="#sh-version" title="Permalink to this headline">¶</a></h1>
+<h1>sh 1.05<a class="headerlink" href="#sh-version" title="Permalink to this headline">¶</a></h1>
 <p>sh (previously <a class="reference external" href="http://pypi.python.org/pypi/pbs">pbs</a>) is a full-fledged
 subprocess interface for Python that
 allows you to call any program as if it were a function:</p>
@@ -258,6 +258,13 @@ through the base class ErrorReturnCode:</p>
     <span class="k">print</span><span class="p">(</span><span class="s">&quot;unknown error&quot;</span><span class="p">)</span>
     <span class="nb">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Signals <strong>will not</strong> raise an ErrorReturnCode.  The command will return
+as if it succeeded, but its <tt class="docutils literal"><span class="pre">exit_code</span></tt> property will be set to
+-signal_num.  So, for example, if a command is killed with a SIGHUP, its
+return code will be -1.</p>
 </div>
 <p>Some programs return strange error codes even though they succeed.  If you know
 which code a program might returns and you don&#8217;t want to deal with doing
@@ -571,7 +578,7 @@ use the <a class="reference internal" href="special_arguments.html#special-argum
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">sh 1.04</a></li>
+<li><a class="reference internal" href="#">sh 1.05</a></li>
 <li><a class="reference internal" href="#tutorials">Tutorials</a><ul>
 </ul>
 </li>
@@ -635,7 +642,7 @@ use the <a class="reference internal" href="special_arguments.html#special-argum
         <li class="right" >
           <a href="tutorials/1-real_time_output.html" title="Tutorial 1: Tailing a real-time log file"
              >next</a> |</li>
-        <li><a href="#">sh 1.04 documentation</a> &raquo;</li> 
+        <li><a href="#">sh 1.05 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
