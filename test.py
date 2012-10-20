@@ -228,8 +228,11 @@ for l in "andrew":
 
         py = create_tmp_test("""
 import os
-try: del os.environ["__CF_USER_TEXT_ENCODING"] # osx adds this
-except: pass
+
+osx_cruft = ["__CF_USER_TEXT_ENCODING", "__PYVENV_LAUNCHER__"]
+for key in osx_cruft:
+    try: del os.environ[key]
+    except: pass
 print(os.environ["HERP"] + " " + str(len(os.environ)))
 """)
         out = python(py.name, _env=env).strip()
@@ -239,8 +242,10 @@ print(os.environ["HERP"] + " " + str(len(os.environ)))
 import os, sys
 sys.path.insert(0, os.getcwd())
 import sh
-try: del os.environ["__CF_USER_TEXT_ENCODING"] # osx adds this
-except: pass
+osx_cruft = ["__CF_USER_TEXT_ENCODING", "__PYVENV_LAUNCHER__"]
+for key in osx_cruft:
+    try: del os.environ[key]
+    except: pass
 print(sh.HERP + " " + str(len(os.environ)))
 """)
         out = python(py.name, _env=env, _cwd=THIS_DIR).strip()
