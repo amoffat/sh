@@ -228,8 +228,11 @@ for l in "andrew":
 
         py = create_tmp_test("""
 import os
-try: del os.environ["__CF_USER_TEXT_ENCODING"] # osx adds this
-except: pass
+
+osx_cruft = ["__CF_USER_TEXT_ENCODING", "__PYVENV_LAUNCHER__"]
+for key in osx_cruft:
+    try: del os.environ[key]
+    except: pass
 print(os.environ["HERP"] + " " + str(len(os.environ)))
 """)
         out = python(py.name, _env=env).strip()
@@ -239,8 +242,10 @@ print(os.environ["HERP"] + " " + str(len(os.environ)))
 import os, sys
 sys.path.insert(0, os.getcwd())
 import sh
-try: del os.environ["__CF_USER_TEXT_ENCODING"] # osx adds this
-except: pass
+osx_cruft = ["__CF_USER_TEXT_ENCODING", "__PYVENV_LAUNCHER__"]
+for key in osx_cruft:
+    try: del os.environ[key]
+    except: pass
 print(sh.HERP + " " + str(len(os.environ)))
 """)
         out = python(py.name, _env=env, _cwd=THIS_DIR).strip()
@@ -321,10 +326,16 @@ print(len(options.long_option.split()))
 
 
     def test_short_bool_option(self):
-        from sh import id
-        i1 = int(id(u=True))
-        i2 = os.geteuid()
-        self.assertEqual(i1, i2)
+        py = create_tmp_test("""
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("-s", action="store_true", default=False, dest="short_option")
+options, args = parser.parse_args()
+print(options.short_option)
+""")
+        self.assertTrue(python(py.name, s=True).strip() == "True")
+        self.assertTrue(python(py.name, s=False).strip() == "False")
+        self.assertTrue(python(py.name).strip() == "False")
 
 
     def test_long_bool_option(self):
