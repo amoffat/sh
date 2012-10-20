@@ -1487,8 +1487,9 @@ class SelfWrapper(ModuleType):
         # but it seems to be the only way to make reload() behave
         # nicely.  if i make these attributes dynamic lookups in
         # __getattr__, reload sometimes chokes in weird ways...
-        for attr in ["__builtins__", "__doc__", "__name__", "__package__"]:
-            setattr(self, attr, getattr(self_module, attr))
+        for attr in ["__builtins__", "__doc__", "__name__", "__package__",
+            "__path__"]:
+            setattr(self, attr, getattr(self_module, attr, None))
 
         self.self_module = self_module
         self.env = Environment(globals())
@@ -1521,7 +1522,7 @@ if __name__ == "__main__":
             else:
                 print("Couldn't find %s, skipping" % py_version.capitalize())
 
-        versions = ("2.6", "2.7", "3.1", "3.2")
+        versions = ("2.6", "2.7", "3.1", "3.2", "3.3")
         for version in versions: run_test(version)
 
     else:
