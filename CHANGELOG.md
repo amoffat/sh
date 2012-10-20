@@ -2,6 +2,10 @@
 
 ## 1.05 - 10/20/12
 
+*   Changing status from alpha to beta.
+
+*   Python 3.3 officially supported.
+
 *   Documentation fix.  The section on exceptions now references the fact
     that signals do not raise an exception, even for signals that might seem
     like they should, e.g. segfault.
