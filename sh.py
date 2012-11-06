@@ -1383,18 +1383,21 @@ class StreamBufferer(object):
 # this allows lookups to names that aren't found in the global scope to be
 # searched for as a program name.  for example, if "ls" isn't found in this
 # module's scope, we consider it a system program and try to find it.
+#
+# we use a dict instead of just a regular object as the base class because
+# the exec() statement used in this file requires the "globals" argument to
+# be a dictionary
 class Environment(dict):
-    def __init__(self, *args, **kwargs):
-        dict.__init__(self, *args, **kwargs)
-        
-        self["Command"] = Command
-        self["CommandNotFound"] = CommandNotFound
-        self["ErrorReturnCode"] = ErrorReturnCode
+    def __init__(self, globs):
+        self.globs = globs
         
     def __setitem__(self, k, v):
-        dict.__setitem__(self, k, v)
+        self.globs[k] = v
+    
+    def __getitem__(self, k):
+        try: return self.globs[k]
+        except KeyError: pass
         
-    def __missing__(self, k):
         # the only way we'd get to here is if we've tried to
         # import * from a repl.  so, raise an exception, since
         # that's really the only sensible thing to do
@@ -1487,8 +1490,13 @@ class SelfWrapper(ModuleType):
         self.__path__ = []
         self.self_module = self_module
         self.env = Environment(globals())
+        
+    def __setattr__(self, name, value):
+        if hasattr(self, "env"): self.env[name] = value
+        ModuleType.__setattr__(self, name, value)
     
     def __getattr__(self, name):
+        if name == "env": raise AttributeError
         return self.env[name]
 
 
@@ -1520,11 +1528,7 @@ if __name__ == "__main__":
         for version in versions: run_test(version)
 
     else:
-        globs = globals()
-        f_globals = {}
-        for k in ["__builtins__", "__doc__", "__name__", "__package__"]:
-            f_globals[k] = globs[k]
-        env = Environment(f_globals)
+        env = Environment(globals())
         run_repl(env)
     
 # we're being imported from somewhere
