@@ -1390,9 +1390,6 @@ class Environment(dict):
         self["Command"] = Command
         self["CommandNotFound"] = CommandNotFound
         self["ErrorReturnCode"] = ErrorReturnCode
-        self["ARGV"] = sys.argv[1:]
-        for i, arg in enumerate(sys.argv):
-            self["ARG%d" % i] = arg
         
         # this needs to be last
         self["env"] = os.environ
