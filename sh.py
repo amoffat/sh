@@ -1391,14 +1391,8 @@ class Environment(dict):
         self["CommandNotFound"] = CommandNotFound
         self["ErrorReturnCode"] = ErrorReturnCode
         
-        # this needs to be last
-        self["env"] = os.environ
-        
     def __setitem__(self, k, v):
-        # are we altering an environment variable?
-        if "env" in self and k in self["env"]: self["env"][k] = v
-        # no?  just setting a regular name
-        else: dict.__setitem__(self, k, v)
+        dict.__setitem__(self, k, v)
         
     def __missing__(self, k):
         # the only way we'd get to here is if we've tried to
