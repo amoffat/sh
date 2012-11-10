@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.06 - 11/10/12
+
+*   Removed old undocumented cruft of ARG1..ARGN and ARGV.
+
+*   Bugfix where `logging_enabled` could not be set from the importing module.
+
+*   Disabled garbage collection before fork to prevent garbage collection in
+	child process.
+	
+*   Major bugfix where cyclical references were preventing process objects
+	(and their associated stdout/stderr buffers) from being garbage collected.
+	
+*   Bugfix in RunningCommand and OProc loggers, which could get really huge if
+    a command was called that had a large number of arguments.
+
+
 ## 1.05 - 10/20/12
 
 *   Changing status from alpha to beta.

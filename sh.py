@@ -21,7 +21,7 @@
 #===============================================================================
 
 
-__version__ = "1.05"
+__version__ = "1.06"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
@@ -70,6 +70,7 @@ import warnings
 import pty
 import termios
 import signal
+import gc
 import select
 import atexit
 import threading
@@ -79,6 +80,7 @@ import struct
 import resource
 from collections import deque
 import logging
+import weakref
 
 
 # this is ugly, but we've added a module-level logging kill switch.  the reason
@@ -202,7 +204,14 @@ def glob(arg):
 
 class RunningCommand(object):
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
-        self.log = logging.getLogger("command %r call_args %r" % (cmd, call_args))
+        truncate = 20
+        if len(cmd) > truncate:
+            logger_str = "command %r...(%d more) call_args %r" % \
+                (cmd[:truncate], len(cmd) - truncate, call_args)
+        else:
+            logger_str = "command %r call_args %r" % (cmd, call_args)
+        
+        self.log = logging.getLogger(logger_str)
         self.call_args = call_args
         self.cmd = cmd
         self.ran = " ".join(cmd)
@@ -627,7 +636,7 @@ STDERR = -2
 # Process open = Popen
 # Open Process = OProc
 class OProc(object):
-    _procs_to_cleanup = []
+    _procs_to_cleanup = set()
     _registered_cleanup = False
     _default_window_size = (24, 80)
 
@@ -673,7 +682,8 @@ class OProc(object):
             if stderr is not STDOUT:
                 self._stderr_fd, self._slave_stderr_fd = os.pipe()
             
-        
+        gc_enabled = gc.isenabled()
+        if gc_enabled: gc.disable()
         self.pid = os.fork()
 
 
@@ -735,6 +745,8 @@ class OProc(object):
 
         # parent
         else:
+            if gc_enabled: gc.enable()
+            
             if not OProc._registered_cleanup:
                 atexit.register(OProc._cleanup_procs)
                 OProc._registered_cleanup = True
@@ -743,7 +755,6 @@ class OProc(object):
             self.started = _time.time()
             self.cmd = cmd
             self.exit_code = None
-            self._done_callbacks = []
             
             self.stdin = stdin or Queue()
             self._pipe_queue = Queue()
@@ -769,15 +780,13 @@ class OProc(object):
                 if stderr is not STDOUT: os.close(self._slave_stderr_fd)
             
             if logging_enabled: self.log.debug("started process")
-            if not persist: OProc._procs_to_cleanup.append(self)
+            if not persist: OProc._procs_to_cleanup.add(self)
 
 
             if self.call_args["tty_in"]:
                 attr = termios.tcgetattr(self._stdin_fd)
                 attr[3] &= ~termios.ECHO  
                 termios.tcsetattr(self._stdin_fd, termios.TCSANOW, attr)
-
-
 
             # this represents the connection from a Queue object (or whatever
             # we're using to feed STDIN) to the process's STDIN fd
@@ -806,7 +815,7 @@ class OProc(object):
             
             
     def __repr__(self):
-        return "<Process %d %r>" % (self.pid, self.cmd)        
+        return "<Process %d %r>" % (self.pid, self.cmd[:500])        
             
 
     # also borrowed from pexpect.py
@@ -922,7 +931,6 @@ class OProc(object):
     def _cleanup_procs():
         for proc in OProc._procs_to_cleanup:
             proc.kill()
-            proc.wait()
 
 
     def _handle_exit_code(self, exit_code):
@@ -980,8 +988,8 @@ class OProc(object):
             self._input_thread.join()
             self._output_thread.join()
             
-            for cb in self._done_callbacks: cb()
-        
+            OProc._procs_to_cleanup.discard(self)
+            
             return self.exit_code
 
 
@@ -998,14 +1006,14 @@ class NoStdinData(Exception): pass
 class StreamWriter(object):
     def __init__(self, name, process, stream, stdin, bufsize):
         self.name = name
-        self.process = process
+        self.process = weakref.ref(process)
         self.stream = stream
         self.stdin = stdin
         
         self.log = logging.getLogger(repr(self))
         
         
-        self.stream_bufferer = StreamBufferer(self.process.call_args["encoding"],
+        self.stream_bufferer = StreamBufferer(self.process().call_args["encoding"],
             bufsize)
         
         # determine buffering for reading from the input we set for stdin
@@ -1046,7 +1054,7 @@ class StreamWriter(object):
         
             
     def __repr__(self):
-        return "<StreamWriter %s for %r>" % (self.name, self.process)
+        return "<StreamWriter %s for %r>" % (self.name, self.process())
     
     def fileno(self):
         return self.stream
@@ -1083,7 +1091,7 @@ class StreamWriter(object):
         except DoneReadingStdin:
             if logging_enabled: self.log.debug("done reading")
                 
-            if self.process.call_args["tty_in"]:
+            if self.process().call_args["tty_in"]:
                 # EOF time
                 try: char = termios.tcgetattr(self.stream)[6][termios.VEOF]
                 except: char = chr(4).encode()
@@ -1097,7 +1105,7 @@ class StreamWriter(object):
         
         # if we're not bytes, make us bytes
         if IS_PY3 and hasattr(chunk, "encode"):
-            chunk = chunk.encode(self.process.call_args["encoding"])
+            chunk = chunk.encode(self.process().call_args["encoding"])
         
         for chunk in self.stream_bufferer.process(chunk):
             if logging_enabled: self.log.debug("got chunk size %d: %r", len(chunk), chunk[:30])
@@ -1116,7 +1124,7 @@ class StreamWriter(object):
         if logging_enabled: self.log.debug("got chunk size %d to flush: %r", len(chunk), chunk[:30])
         try:
             if chunk: os.write(self.stream, chunk)
-            if not self.process.call_args["tty_in"]:
+            if not self.process().call_args["tty_in"]:
                 if logging_enabled: self.log.debug("we used a TTY, so closing the stream")
                 os.close(self.stream)
         except OSError: pass
@@ -1124,17 +1132,18 @@ class StreamWriter(object):
 
 
 class StreamReader(object):
-
     def __init__(self, name, process, stream, handler, buffer, bufsize, pipe_queue=None):
         self.name = name
-        self.process = process
+        self.process = weakref.ref(process)
         self.stream = stream
         self.buffer = buffer
-        self.pipe_queue = pipe_queue
+        
+        self.pipe_queue = None
+        if pipe_queue: self.pipe_queue = weakref.ref(pipe_queue)
 
         self.log = logging.getLogger(repr(self))
         
-        self.stream_bufferer = StreamBufferer(self.process.call_args["encoding"],
+        self.stream_bufferer = StreamBufferer(self.process().call_args["encoding"],
             bufsize)
         
         # determine buffering
@@ -1179,24 +1188,28 @@ class StreamReader(object):
                 
                 
             self.handler_args = ()
-            if num_args == implied_arg + 2: self.handler_args = (self.process.stdin,)
-            elif num_args == implied_arg + 3: self.handler_args = (self.process.stdin, self.process)
+            if num_args == implied_arg + 2:
+                self.handler_args = (self.process().stdin,)
+            elif num_args == implied_arg + 3:
+                self.handler_args = (self.process().stdin, self.process())
+                
 
     def fileno(self):
         return self.stream
             
     def __repr__(self):
-        return "<StreamReader %s for %r>" % (self.name, self.process)
+        return "<StreamReader %s for %r>" % (self.name, self.process())
 
     def close(self):
         chunk = self.stream_bufferer.flush()
-        if logging_enabled: self.log.debug("got chunk size %d to flush: %r", len(chunk), chunk[:30])
+        if logging_enabled: self.log.debug("got chunk size %d to flush: %r",
+            len(chunk), chunk[:30])
         if chunk: self.write_chunk(chunk)
         
         if self.handler_type == "fd" and hasattr(self.handler, "close"):
             self.handler.flush()
         
-        if self.pipe_queue: self.pipe_queue.put(None)
+        if self.pipe_queue: self.pipe_queue().put(None)
         try: os.close(self.stream)
         except OSError: pass
 
@@ -1207,12 +1220,12 @@ class StreamReader(object):
         if self.handler_type == "fn" and not self.should_quit:
             # try to use the encoding first, if that doesn't work, send
             # the bytes
-            try: to_handler = chunk.decode(self.process.call_args["encoding"])
+            try: to_handler = chunk.decode(self.process().call_args["encoding"])
             except UnicodeDecodeError: to_handler = chunk
             self.should_quit = self.handler(to_handler, *self.handler_args)
             
         elif self.handler_type == "stringio":
-            self.handler.write(chunk.decode(self.process.call_args["encoding"]))
+            self.handler.write(chunk.decode(self.process().call_args["encoding"]))
 
         elif self.handler_type in ("cstringio", "fd"):
             self.handler.write(chunk)
@@ -1220,7 +1233,7 @@ class StreamReader(object):
 
         if self.pipe_queue:
             if logging_enabled: self.log.debug("putting chunk onto pipe: %r", chunk[:30])
-            self.pipe_queue.put(chunk)
+            self.pipe_queue().put(chunk)
         self.buffer.append(chunk)
 
             
@@ -1383,27 +1396,21 @@ class StreamBufferer(object):
 # this allows lookups to names that aren't found in the global scope to be
 # searched for as a program name.  for example, if "ls" isn't found in this
 # module's scope, we consider it a system program and try to find it.
+#
+# we use a dict instead of just a regular object as the base class because
+# the exec() statement used in this file requires the "globals" argument to
+# be a dictionary
 class Environment(dict):
-    def __init__(self, *args, **kwargs):
-        dict.__init__(self, *args, **kwargs)
-        
-        self["Command"] = Command
-        self["CommandNotFound"] = CommandNotFound
-        self["ErrorReturnCode"] = ErrorReturnCode
-        self["ARGV"] = sys.argv[1:]
-        for i, arg in enumerate(sys.argv):
-            self["ARG%d" % i] = arg
-        
-        # this needs to be last
-        self["env"] = os.environ
+    def __init__(self, globs):
+        self.globs = globs
         
     def __setitem__(self, k, v):
-        # are we altering an environment variable?
-        if "env" in self and k in self["env"]: self["env"][k] = v
-        # no?  just setting a regular name
-        else: dict.__setitem__(self, k, v)
+        self.globs[k] = v
+    
+    def __getitem__(self, k):
+        try: return self.globs[k]
+        except KeyError: pass
         
-    def __missing__(self, k):
         # the only way we'd get to here is if we've tried to
         # import * from a repl.  so, raise an exception, since
         # that's really the only sensible thing to do
@@ -1496,8 +1503,13 @@ class SelfWrapper(ModuleType):
         self.__path__ = []
         self.self_module = self_module
         self.env = Environment(globals())
+        
+    def __setattr__(self, name, value):
+        if hasattr(self, "env"): self.env[name] = value
+        ModuleType.__setattr__(self, name, value)
     
     def __getattr__(self, name):
+        if name == "env": raise AttributeError
         return self.env[name]
 
 
@@ -1529,11 +1541,7 @@ if __name__ == "__main__":
         for version in versions: run_test(version)
 
     else:
-        globs = globals()
-        f_globals = {}
-        for k in ["__builtins__", "__doc__", "__name__", "__package__"]:
-            f_globals[k] = globs[k]
-        env = Environment(f_globals)
+        env = Environment(globals())
         run_repl(env)
     
 # we're being imported from somewhere
