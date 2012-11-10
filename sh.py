@@ -204,7 +204,14 @@ def glob(arg):
 
 class RunningCommand(object):
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
-        self.log = logging.getLogger("command %r call_args %r" % (cmd, call_args))
+        truncate = 20
+        if len(cmd) > truncate:
+            logger_str = "command %r...(%d more) call_args %r" % \
+                (cmd[:truncate], len(cmd) - truncate, call_args)
+        else:
+            logger_str = "command %r call_args %r" % (cmd, call_args)
+        
+        self.log = logging.getLogger(logger_str)
         self.call_args = call_args
         self.cmd = cmd
         self.ran = " ".join(cmd)
