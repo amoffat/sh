@@ -815,7 +815,7 @@ class OProc(object):
             
             
     def __repr__(self):
-        return "<Process %d %r>" % (self.pid, self.cmd)        
+        return "<Process %d %r>" % (self.pid, self.cmd[:500])        
             
 
     # also borrowed from pexpect.py
