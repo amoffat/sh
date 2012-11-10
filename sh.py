@@ -748,7 +748,6 @@ class OProc(object):
             self.started = _time.time()
             self.cmd = cmd
             self.exit_code = None
-            self._done_callbacks = []
             
             self.stdin = stdin or Queue()
             self._pipe_queue = Queue()
@@ -781,8 +780,6 @@ class OProc(object):
                 attr = termios.tcgetattr(self._stdin_fd)
                 attr[3] &= ~termios.ECHO  
                 termios.tcsetattr(self._stdin_fd, termios.TCSANOW, attr)
-
-
 
             # this represents the connection from a Queue object (or whatever
             # we're using to feed STDIN) to the process's STDIN fd
@@ -985,8 +982,6 @@ class OProc(object):
             self._input_thread.join()
             self._output_thread.join()
             
-            for cb in self._done_callbacks: cb()
-        
             return self.exit_code
 
 
