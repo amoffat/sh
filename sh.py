@@ -70,6 +70,7 @@ import warnings
 import pty
 import termios
 import signal
+import gc
 import select
 import atexit
 import threading
@@ -673,7 +674,8 @@ class OProc(object):
             if stderr is not STDOUT:
                 self._stderr_fd, self._slave_stderr_fd = os.pipe()
             
-        
+        gc_enabled = gc.isenabled()
+        if gc_enabled: gc.disable()
         self.pid = os.fork()
 
 
@@ -735,6 +737,8 @@ class OProc(object):
 
         # parent
         else:
+            if gc_enabled: gc.enable()
+            
             if not OProc._registered_cleanup:
                 atexit.register(OProc._cleanup_procs)
                 OProc._registered_cleanup = True
