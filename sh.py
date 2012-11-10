@@ -629,7 +629,7 @@ STDERR = -2
 # Process open = Popen
 # Open Process = OProc
 class OProc(object):
-    _procs_to_cleanup = []
+    _procs_to_cleanup = set()
     _registered_cleanup = False
     _default_window_size = (24, 80)
 
@@ -773,7 +773,7 @@ class OProc(object):
                 if stderr is not STDOUT: os.close(self._slave_stderr_fd)
             
             if logging_enabled: self.log.debug("started process")
-            if not persist: OProc._procs_to_cleanup.append(self)
+            if not persist: OProc._procs_to_cleanup.add(self)
 
 
             if self.call_args["tty_in"]:
@@ -924,7 +924,6 @@ class OProc(object):
     def _cleanup_procs():
         for proc in OProc._procs_to_cleanup:
             proc.kill()
-            proc.wait()
 
 
     def _handle_exit_code(self, exit_code):
@@ -981,6 +980,8 @@ class OProc(object):
             
             self._input_thread.join()
             self._output_thread.join()
+            
+            OProc._procs_to_cleanup.discard(self)
             
             return self.exit_code
 
