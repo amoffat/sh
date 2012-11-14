@@ -418,6 +418,14 @@ class Command(object):
         
         # how long the process should run before it is auto-killed
         "timeout": 0,
+        
+        # these control whether or not stdout/err will get aggregated together
+        # as the process runs.  this has memory usage implications, so sometimes
+        # with long-running processes with a lot of data, it makes sense to
+        # set these to true
+        "no_out": False,
+        "no_err": False,
+        "no_pipe": False
     }
     
     # these are arguments that cannot be called together, because they wouldn't
@@ -793,21 +801,29 @@ class OProc(object):
             self._stdin_stream = StreamWriter("stdin", self, self._stdin_fd,
                 self.stdin, self.call_args["in_bufsize"])
                            
-            stdout_pipe = self._pipe_queue if pipe is STDOUT else None
+                        
+            stdout_pipe = None   
+            if pipe is STDOUT and not self.call_args["no_pipe"]:
+                stdout_pipe =  self._pipe_queue
             
             # this represents the connection from a process's STDOUT fd to
             # wherever it has to go, sometimes a pipe Queue (that we will use
             # to pipe data to other processes), and also an internal deque
             # that we use to aggregate all the output
             self._stdout_stream = StreamReader("stdout", self, self._stdout_fd, stdout,
-                self._stdout, self.call_args["out_bufsize"], stdout_pipe)
+                self._stdout, self.call_args["out_bufsize"], stdout_pipe,
+                save_data=not self.call_args["no_out"])
                 
                 
             if stderr is STDOUT or self._single_tty: self._stderr_stream = None 
             else:
-                stderr_pipe = self._pipe_queue if pipe is STDERR else None   
+                stderr_pipe = None
+                if pipe is STDERR and not self.call_args["no_pipe"]:
+                    stderr_pipe =  self._pipe_queue
+                       
                 self._stderr_stream = StreamReader("stderr", self, self._stderr_fd, stderr,
-                    self._stderr, self.call_args["err_bufsize"], stderr_pipe)
+                    self._stderr, self.call_args["err_bufsize"], stderr_pipe,
+                    save_data=not self.call_args["no_err"])
             
             # start the main io threads
             self._input_thread = self._start_thread(self.input_thread, self._stdin_stream)
@@ -1132,11 +1148,13 @@ class StreamWriter(object):
 
 
 class StreamReader(object):
-    def __init__(self, name, process, stream, handler, buffer, bufsize, pipe_queue=None):
+    def __init__(self, name, process, stream, handler, buffer, bufsize,
+            pipe_queue=None, save_data=True):
         self.name = name
         self.process = weakref.ref(process)
         self.stream = stream
         self.buffer = buffer
+        self.save_data = save_data
         
         self.pipe_queue = None
         if pipe_queue: self.pipe_queue = weakref.ref(pipe_queue)
@@ -1234,7 +1252,8 @@ class StreamReader(object):
         if self.pipe_queue:
             if logging_enabled: self.log.debug("putting chunk onto pipe: %r", chunk[:30])
             self.pipe_queue().put(chunk)
-        self.buffer.append(chunk)
+            
+        if self.save_data: self.buffer.append(chunk)
 
             
     def read(self):

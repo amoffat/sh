@@ -1188,6 +1188,46 @@ exit(1)
         
         self.assertRaises(ErrorReturnCode, ls, test)
         
+        
+    def test_no_out(self):        
+        py = create_tmp_test("""
+import sys
+sys.stdout.write("stdout")
+sys.stderr.write("stderr")
+""")
+        p = python(py.name, _no_out=True)
+        self.assertEqual(p.stdout, b"")
+        self.assertEqual(p.stderr, b"stderr")
+        
+        p = python(py.name)
+        self.assertEqual(p.stdout, b"stdout")
+        self.assertEqual(p.stderr, b"stderr")
+        
+        
+    def test_no_err(self):        
+        py = create_tmp_test("""
+import sys
+sys.stdout.write("stdout")
+sys.stderr.write("stderr")
+""")
+        p = python(py.name, _no_err=True)
+        self.assertEqual(p.stderr, b"")
+        self.assertEqual(p.stdout, b"stdout")
+        
+        p = python(py.name)
+        self.assertEqual(p.stderr, b"stderr")
+        self.assertEqual(p.stdout, b"stdout")
+        
+        
+    def test_no_pipe(self):
+        from sh import ls
+        
+        p = ls()
+        self.assertFalse(p.process._pipe_queue.empty())
+        
+        p = ls(_no_pipe=True)
+        self.assertTrue(p.process._pipe_queue.empty())
+        
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

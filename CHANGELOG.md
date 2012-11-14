@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.07 -
+
+*   Added `_no_out`, `_no_err`, and `_no_pipe` special keyword arguments.  These
+	are used for long-running processes with lots of output.
+	
+
 ## 1.06 - 11/10/12
 
 *   Removed old undocumented cruft of ARG1..ARGN and ARGV.
