@@ -1209,7 +1209,7 @@ class StreamReader(object):
             if num_args == implied_arg + 2:
                 self.handler_args = (self.process().stdin,)
             elif num_args == implied_arg + 3:
-                self.handler_args = (self.process().stdin, self.process())
+                self.handler_args = (self.process().stdin, self.process)
                 
 
     def fileno(self):
@@ -1240,7 +1240,18 @@ class StreamReader(object):
             # the bytes
             try: to_handler = chunk.decode(self.process().call_args["encoding"])
             except UnicodeDecodeError: to_handler = chunk
-            self.should_quit = self.handler(to_handler, *self.handler_args)
+            
+            # this is really ugly, but we can't store self.process as one of
+            # the handler args in self.handler_args, the reason being is that
+            # it would create cyclic references, and prevent objects from
+            # being garbage collected.  so we're determining if this handler
+            # even requires self.process (by the argument count), and if it
+            # does, resolving the weakref to a hard reference and passing
+            # that into the handler
+            handler_args = self.handler_args
+            if len(self.handler_args) == 2:
+                handler_args = (self.handler_args[0], self.process())
+            self.should_quit = self.handler(to_handler, *handler_args)
             
         elif self.handler_type == "stringio":
             self.handler.write(chunk.decode(self.process().call_args["encoding"]))
