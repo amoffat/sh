@@ -2,6 +2,8 @@
 
 ## 1.07 - 11/21/12
 
+*   Bugfix for PyDev when `locale.getpreferredencoding()` is empty.
+
 *   Fixes for IPython3 that involve `sh.<tab>` and `sh?`
 
 *   Added `_tee` special keyword argument to force stdout/stderr to store

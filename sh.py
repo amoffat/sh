@@ -48,7 +48,7 @@ import inspect
 import time as _time
 
 from locale import getpreferredencoding
-DEFAULT_ENCODING = getpreferredencoding()
+DEFAULT_ENCODING = getpreferredencoding() or "utf-8"
 
 
 if IS_PY3:
