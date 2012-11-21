@@ -99,3 +99,38 @@ every command, but some may not be used together.
 		
 	_encoding
 		The character encoding of the process's STDOUT.  By default, this is "utf8".
+			
+	_decode_errors
+		.. versionadded:: 1.07
+		This is how Python should handle decoding errors of the process's output.
+		By default, this is "strict", but you can use any value that's valid
+		to a string's ``.decode()`` method, such as "ignore".
+		
+	_no_out
+		.. versionadded:: 1.07
+		Disables STDOUT being internally stored.  This is useful for commands
+		that produce huge amounts of output that you don't need, that would
+		otherwise be hogging memory if stored internally by sh.
+		
+	_no_err
+		.. versionadded:: 1.07
+		Disables STDERR being internally stored.  This is useful for commands
+		that produce huge amounts of output that you don't need, that would
+		otherwise be hogging memory if stored internally by sh.
+		
+	_no_pipe
+		.. versionadded:: 1.07
+		Similar to ``_no_out``, this explicitly tells the sh command that it
+		will never be used for piping its output into another command, so it
+		should not fill its internal pipe buffer with the process's output.
+		This is also useful for conserving memory.
+		
+	_tee
+		.. versionadded:: 1.07
+		As of 1.07, any time redirection is used, either for stdout or stderr,
+		the respective internal buffers are not filled.  For example, if you're
+		downloading a file and using a callback on stdout, the internal stdout
+		buffer, nor the pipe buffer be filled with data from stdout.  This
+		option forces those buffers to be filled anyways, in effect "tee-ing"
+		the output into two places (the callback/redirect handler, and the
+		internal buffers).
