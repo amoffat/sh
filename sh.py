@@ -121,7 +121,11 @@ class ErrorReturnCode(Exception):
             (full_cmd, tstdout.decode(DEFAULT_ENCODING), tstderr.decode(DEFAULT_ENCODING))
         super(ErrorReturnCode, self).__init__(msg)
 
-class CommandNotFound(Exception): pass
+
+# we subclass AttributeError because:
+# https://github.com/ipython/ipython/issues/2577
+# https://github.com/amoffat/sh/issues/97#issuecomment-10610629
+class CommandNotFound(AttributeError): pass
 
 rc_exc_regex = re.compile("ErrorReturnCode_(\d+)")
 rc_exc_cache = {}
@@ -1489,6 +1493,12 @@ Please import sh or import programs individually.")
             try: return getattr(self["__builtins__"], k)
             except AttributeError: pass
         elif not k.startswith("_"): k = k.rstrip("_")
+        
+        
+        # https://github.com/ipython/ipython/issues/2577
+        # https://github.com/amoffat/sh/issues/97#issuecomment-10610629
+        if k.startswith("__") and k.endswith("__"):
+            raise AttributeError
         
         # how about an environment variable?
         try: return os.environ[k]
