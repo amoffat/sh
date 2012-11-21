@@ -430,7 +430,13 @@ class Command(object):
         # set these to true
         "no_out": False,
         "no_err": False,
-        "no_pipe": False
+        "no_pipe": False,
+        
+        # if any redirection is used for stdout or stderr, internal buffering
+        # of that data is not stored.  this forces it to be stored, as if
+        # the output is being T'd to both the redirected destination and our
+        # internal buffers
+        "tee": None,
     }
     
     # these are arguments that cannot be called together, because they wouldn't
@@ -809,15 +815,17 @@ class OProc(object):
                         
             stdout_pipe = None   
             if pipe is STDOUT and not self.call_args["no_pipe"]:
-                stdout_pipe =  self._pipe_queue
+                stdout_pipe = self._pipe_queue
             
             # this represents the connection from a process's STDOUT fd to
             # wherever it has to go, sometimes a pipe Queue (that we will use
             # to pipe data to other processes), and also an internal deque
             # that we use to aggregate all the output
+            save_stdout = not self.call_args["no_out"] and \
+                (self.call_args["tee"] in (True, "out") or stdout is None)
             self._stdout_stream = StreamReader("stdout", self, self._stdout_fd, stdout,
                 self._stdout, self.call_args["out_bufsize"], stdout_pipe,
-                save_data=not self.call_args["no_out"])
+                save_data=save_stdout)
                 
                 
             if stderr is STDOUT or self._single_tty: self._stderr_stream = None 
@@ -826,9 +834,11 @@ class OProc(object):
                 if pipe is STDERR and not self.call_args["no_pipe"]:
                     stderr_pipe =  self._pipe_queue
                        
+                save_stderr = not self.call_args["no_err"] and \
+                    (self.call_args["tee"] in ("err",) or stderr is None)
                 self._stderr_stream = StreamReader("stderr", self, self._stderr_fd, stderr,
                     self._stderr, self.call_args["err_bufsize"], stderr_pipe,
-                    save_data=not self.call_args["no_err"])
+                    save_data=save_stderr)
             
             # start the main io threads
             self._input_thread = self._start_thread(self.input_thread, self._stdin_stream)
@@ -1234,7 +1244,7 @@ class StreamReader(object):
         if self.handler_type == "fd" and hasattr(self.handler, "close"):
             self.handler.flush()
         
-        if self.pipe_queue: self.pipe_queue().put(None)
+        if self.pipe_queue and self.save_data: self.pipe_queue().put(None)
         try: os.close(self.stream)
         except OSError: pass
 
@@ -1261,17 +1271,18 @@ class StreamReader(object):
             self.should_quit = self.handler(to_handler, *handler_args)
             
         elif self.handler_type == "stringio":
-            self.handler.write(chunk.decode(self.process().call_args["encoding"]))
+            self.handler.write(chunk.decode(self.encoding, self.decode_errors))
 
         elif self.handler_type in ("cstringio", "fd"):
             self.handler.write(chunk)
             
 
-        if self.pipe_queue:
-            self.log.debug("putting chunk onto pipe: %r", chunk[:30])
-            self.pipe_queue().put(chunk)
+        if self.save_data:
+            self.buffer.append(chunk)
             
-        if self.save_data: self.buffer.append(chunk)
+            if self.pipe_queue:
+                self.log.debug("putting chunk onto pipe: %r", chunk[:30])
+                self.pipe_queue().put(chunk)
 
             
     def read(self):
