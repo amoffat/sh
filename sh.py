@@ -21,7 +21,7 @@
 #===============================================================================
 
 
-__version__ = "1.06"
+__version__ = "1.07"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
@@ -48,7 +48,7 @@ import inspect
 import time as _time
 
 from locale import getpreferredencoding
-DEFAULT_ENCODING = getpreferredencoding()
+DEFAULT_ENCODING = getpreferredencoding() or "utf-8"
 
 
 if IS_PY3:
@@ -83,29 +83,7 @@ import logging
 import weakref
 
 
-# this is ugly, but we've added a module-level logging kill switch.  the reason
-# for it (vs letting the user disable/enable logging through the logging
-# module's facilities) is because to enable/disable logging using logging
-# facilities, modules need to have their loggers (retrieved with
-# logging.getLogger()) named using dot notation.  so for example:
-#
-# log = logging.getLogger("sh.process")
-#
-# we don't do that though, because we cram a lot of info into the logger name
-# for example, a logger name may be
-# "<Process 1373 ['/usr/bin/python3.2', '/tmp/tmp2c18zp']>"
-# because of this, a user can't disable our loggers (because we lack dot
-# notation), and I won't add dot notation because I can't include all the
-# data i need in my logger name.  so this is really a shortcoming of the
-# logging module.  
 logging_enabled = False
-
-
-
-
-
-
-
 
 
 if IS_PY3:
@@ -143,7 +121,11 @@ class ErrorReturnCode(Exception):
             (full_cmd, tstdout.decode(DEFAULT_ENCODING), tstderr.decode(DEFAULT_ENCODING))
         super(ErrorReturnCode, self).__init__(msg)
 
-class CommandNotFound(Exception): pass
+
+# we subclass AttributeError because:
+# https://github.com/ipython/ipython/issues/2577
+# https://github.com/amoffat/sh/issues/97#issuecomment-10610629
+class CommandNotFound(AttributeError): pass
 
 rc_exc_regex = re.compile("ErrorReturnCode_(\d+)")
 rc_exc_cache = {}
@@ -201,6 +183,30 @@ def glob(arg):
 
 
 
+class Logger(object):
+    def __init__(self, name, context=None):
+        self.name = name
+        self.context = "%s"
+        if context: self.context = "%s: %%s" % context
+        self.log = logging.getLogger(name)
+    
+    def info(self, msg, *args):
+        if not logging_enabled: return
+        self.log.info(self.context, msg % args)
+        
+    def debug(self, msg, *args):
+        if not logging_enabled: return
+        self.log.debug(self.context, msg % args)
+        
+    def error(self, msg, *args):
+        if not logging_enabled: return
+        self.log.error(self.context, msg % args)
+        
+    def exception(self, msg, *args):
+        if not logging_enabled: return
+        self.log.exception(self.context, msg % args)
+
+
 
 class RunningCommand(object):
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
@@ -211,7 +217,7 @@ class RunningCommand(object):
         else:
             logger_str = "command %r call_args %r" % (cmd, call_args)
         
-        self.log = logging.getLogger(logger_str)
+        self.log = Logger("command", logger_str)
         self.call_args = call_args
         self.cmd = cmd
         self.ran = " ".join(cmd)
@@ -254,7 +260,7 @@ class RunningCommand(object):
         
         
         if spawn_process:
-            if logging_enabled: self.log.debug("starting process")
+            self.log.debug("starting process")
             self.process = OProc(cmd, stdin, stdout, stderr, 
                 self.call_args, pipe=pipe)
             
@@ -318,7 +324,8 @@ class RunningCommand(object):
                 if chunk is None:
                     self.wait()
                     raise StopIteration()
-                try: return chunk.decode(self.call_args["encoding"])
+                try: return chunk.decode(self.call_args["encoding"],
+                    self.call_args["decode_errors"])
                 except UnicodeDecodeError: return chunk
             
     # python 3
@@ -333,8 +340,9 @@ class RunningCommand(object):
         else: return unicode(self).encode(self.call_args["encoding"])
         
     def __unicode__(self):
-        if self.process: 
-            if self.stdout: return self.stdout.decode(self.call_args["encoding"])
+        if self.process and self.stdout:
+            return self.stdout.decode(self.call_args["encoding"],
+                self.call_args["decode_errors"])
         return ""
 
     def __eq__(self, other):
@@ -415,9 +423,24 @@ class Command(object):
         "tty_out": True,
         
         "encoding": DEFAULT_ENCODING,
+        "decode_errors": "strict",
         
         # how long the process should run before it is auto-killed
         "timeout": 0,
+        
+        # these control whether or not stdout/err will get aggregated together
+        # as the process runs.  this has memory usage implications, so sometimes
+        # with long-running processes with a lot of data, it makes sense to
+        # set these to true
+        "no_out": False,
+        "no_err": False,
+        "no_pipe": False,
+        
+        # if any redirection is used for stdout or stderr, internal buffering
+        # of that data is not stored.  this forces it to be stored, as if
+        # the output is being T'd to both the redirected destination and our
+        # internal buffers
+        "tee": None,
     }
     
     # these are arguments that cannot be called together, because they wouldn't
@@ -772,14 +795,14 @@ class OProc(object):
             if self.call_args["tty_in"]: self.setwinsize(self._stdin_fd)
             
             
-            self.log = logging.getLogger("process %r" % self)
+            self.log = Logger("process", repr(self))
             
             os.close(self._slave_stdin_fd)
             if not self._single_tty:
                 os.close(self._slave_stdout_fd)
                 if stderr is not STDOUT: os.close(self._slave_stderr_fd)
             
-            if logging_enabled: self.log.debug("started process")
+            self.log.debug("started process")
             if not persist: OProc._procs_to_cleanup.add(self)
 
 
@@ -793,21 +816,33 @@ class OProc(object):
             self._stdin_stream = StreamWriter("stdin", self, self._stdin_fd,
                 self.stdin, self.call_args["in_bufsize"])
                            
-            stdout_pipe = self._pipe_queue if pipe is STDOUT else None
+                        
+            stdout_pipe = None   
+            if pipe is STDOUT and not self.call_args["no_pipe"]:
+                stdout_pipe = self._pipe_queue
             
             # this represents the connection from a process's STDOUT fd to
             # wherever it has to go, sometimes a pipe Queue (that we will use
             # to pipe data to other processes), and also an internal deque
             # that we use to aggregate all the output
+            save_stdout = not self.call_args["no_out"] and \
+                (self.call_args["tee"] in (True, "out") or stdout is None)
             self._stdout_stream = StreamReader("stdout", self, self._stdout_fd, stdout,
-                self._stdout, self.call_args["out_bufsize"], stdout_pipe)
+                self._stdout, self.call_args["out_bufsize"], stdout_pipe,
+                save_data=save_stdout)
                 
                 
             if stderr is STDOUT or self._single_tty: self._stderr_stream = None 
             else:
-                stderr_pipe = self._pipe_queue if pipe is STDERR else None   
+                stderr_pipe = None
+                if pipe is STDERR and not self.call_args["no_pipe"]:
+                    stderr_pipe =  self._pipe_queue
+                       
+                save_stderr = not self.call_args["no_err"] and \
+                    (self.call_args["tee"] in ("err",) or stderr is None)
                 self._stderr_stream = StreamReader("stderr", self, self._stderr_fd, stderr,
-                    self._stderr, self.call_args["err_bufsize"], stderr_pipe)
+                    self._stderr, self.call_args["err_bufsize"], stderr_pipe,
+                    save_data=save_stderr)
             
             # start the main io threads
             self._input_thread = self._start_thread(self.input_thread, self._stdin_stream)
@@ -851,7 +886,7 @@ class OProc(object):
     def input_thread(self, stdin):
         done = False
         while not done and self.alive:
-            if logging_enabled: self.log.debug("%r ready for more input", stdin)
+            self.log.debug("%r ready for more input", stdin)
             done = stdin.write()
 
         stdin.close()
@@ -873,7 +908,7 @@ class OProc(object):
 
             # stdout and stderr
             for stream in outputs:
-                if logging_enabled: self.log.debug("%r ready to be read from", stream)
+                self.log.debug("%r ready to be read from", stream)
                 done = stream.read()
                 if done: readers.remove(stream)
                 
@@ -884,7 +919,7 @@ class OProc(object):
             if self.call_args["timeout"]:
                 now = _time.time()
                 if now - self.started > self.call_args["timeout"]:
-                    if logging_enabled: self.log.debug("we've been running too long")
+                    self.log.debug("we've been running too long")
                     self.kill()
 
 
@@ -915,16 +950,16 @@ class OProc(object):
     
     
     def signal(self, sig):
-        if logging_enabled: self.log.debug("sending signal %d", sig)
+        self.log.debug("sending signal %d", sig)
         try: os.kill(self.pid, sig)
         except OSError: pass
 
     def kill(self):
-        if logging_enabled: self.log.debug("killing")
+        self.log.debug("killing")
         self.signal(signal.SIGKILL)
 
     def terminate(self):
-        if logging_enabled: self.log.debug("terminating")
+        self.log.debug("terminating")
         self.signal(signal.SIGTERM)
 
     @staticmethod
@@ -974,16 +1009,16 @@ class OProc(object):
             
 
     def wait(self):
-        if logging_enabled: self.log.debug("acquiring wait lock to wait for completion")
+        self.log.debug("acquiring wait lock to wait for completion")
         with self._wait_lock:
-            if logging_enabled: self.log.debug("got wait lock")
+            self.log.debug("got wait lock")
             
             if self.exit_code is None:
-                if logging_enabled: self.log.debug("exit code not set, waiting on pid")
+                self.log.debug("exit code not set, waiting on pid")
                 pid, exit_code = os.waitpid(self.pid, 0)
                 self.exit_code = self._handle_exit_code(exit_code)
             else:
-                if logging_enabled: self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
+                self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
             
             self._input_thread.join()
             self._output_thread.join()
@@ -1010,7 +1045,7 @@ class StreamWriter(object):
         self.stream = stream
         self.stdin = stdin
         
-        self.log = logging.getLogger(repr(self))
+        self.log = Logger("streamwriter", repr(self))
         
         
         self.stream_bufferer = StreamBufferer(self.process().call_args["encoding"],
@@ -1050,7 +1085,7 @@ class StreamWriter(object):
             self.stdin = iter(stdin)
             self.get_chunk = self.get_iter_chunk
             
-        if logging_enabled: self.log.debug("parsed stdin as a %s", log_msg)
+        self.log.debug("parsed stdin as a %s", log_msg)
         
             
     def __repr__(self):
@@ -1089,7 +1124,7 @@ class StreamWriter(object):
         # support
         try: chunk = self.get_chunk()
         except DoneReadingStdin:
-            if logging_enabled: self.log.debug("done reading")
+            self.log.debug("done reading")
                 
             if self.process().call_args["tty_in"]:
                 # EOF time
@@ -1100,7 +1135,7 @@ class StreamWriter(object):
             return True
         
         except NoStdinData:
-            if logging_enabled: self.log.debug("received no data")
+            self.log.debug("received no data")
             return False
         
         # if we're not bytes, make us bytes
@@ -1108,43 +1143,47 @@ class StreamWriter(object):
             chunk = chunk.encode(self.process().call_args["encoding"])
         
         for chunk in self.stream_bufferer.process(chunk):
-            if logging_enabled: self.log.debug("got chunk size %d: %r", len(chunk), chunk[:30])
+            self.log.debug("got chunk size %d: %r", len(chunk), chunk[:30])
             
-            if logging_enabled: self.log.debug("writing chunk to process")
+            self.log.debug("writing chunk to process")
             try:
                 os.write(self.stream, chunk)
             except OSError:
-                if logging_enabled: self.log.debug("OSError writing stdin chunk")
+                self.log.debug("OSError writing stdin chunk")
                 return True
         
         
     def close(self):
-        if logging_enabled: self.log.debug("closing, but flushing first")
+        self.log.debug("closing, but flushing first")
         chunk = self.stream_bufferer.flush()
-        if logging_enabled: self.log.debug("got chunk size %d to flush: %r", len(chunk), chunk[:30])
+        self.log.debug("got chunk size %d to flush: %r", len(chunk), chunk[:30])
         try:
             if chunk: os.write(self.stream, chunk)
             if not self.process().call_args["tty_in"]:
-                if logging_enabled: self.log.debug("we used a TTY, so closing the stream")
+                self.log.debug("we used a TTY, so closing the stream")
                 os.close(self.stream)
         except OSError: pass
         
 
 
 class StreamReader(object):
-    def __init__(self, name, process, stream, handler, buffer, bufsize, pipe_queue=None):
+    def __init__(self, name, process, stream, handler, buffer, bufsize,
+            pipe_queue=None, save_data=True):
         self.name = name
         self.process = weakref.ref(process)
         self.stream = stream
         self.buffer = buffer
+        self.save_data = save_data
+        self.encoding = process.call_args["encoding"]
+        self.decode_errors = process.call_args["decode_errors"]
         
         self.pipe_queue = None
         if pipe_queue: self.pipe_queue = weakref.ref(pipe_queue)
 
-        self.log = logging.getLogger(repr(self))
+        self.log = Logger("streamreader", repr(self))
         
-        self.stream_bufferer = StreamBufferer(self.process().call_args["encoding"],
-            bufsize)
+        self.stream_bufferer = StreamBufferer(self.encoding, bufsize,
+            self.decode_errors)
         
         # determine buffering
         if bufsize == 1: self.bufsize = 1024
@@ -1191,7 +1230,7 @@ class StreamReader(object):
             if num_args == implied_arg + 2:
                 self.handler_args = (self.process().stdin,)
             elif num_args == implied_arg + 3:
-                self.handler_args = (self.process().stdin, self.process())
+                self.handler_args = (self.process().stdin, self.process)
                 
 
     def fileno(self):
@@ -1202,14 +1241,14 @@ class StreamReader(object):
 
     def close(self):
         chunk = self.stream_bufferer.flush()
-        if logging_enabled: self.log.debug("got chunk size %d to flush: %r",
+        self.log.debug("got chunk size %d to flush: %r",
             len(chunk), chunk[:30])
         if chunk: self.write_chunk(chunk)
         
         if self.handler_type == "fd" and hasattr(self.handler, "close"):
             self.handler.flush()
         
-        if self.pipe_queue: self.pipe_queue().put(None)
+        if self.pipe_queue and self.save_data: self.pipe_queue().put(None)
         try: os.close(self.stream)
         except OSError: pass
 
@@ -1219,22 +1258,35 @@ class StreamReader(object):
         
         if self.handler_type == "fn" and not self.should_quit:
             # try to use the encoding first, if that doesn't work, send
-            # the bytes
-            try: to_handler = chunk.decode(self.process().call_args["encoding"])
+            # the bytes, because it might be binary
+            try: to_handler = chunk.decode(self.encoding, self.decode_errors)
             except UnicodeDecodeError: to_handler = chunk
-            self.should_quit = self.handler(to_handler, *self.handler_args)
+            
+            # this is really ugly, but we can't store self.process as one of
+            # the handler args in self.handler_args, the reason being is that
+            # it would create cyclic references, and prevent objects from
+            # being garbage collected.  so we're determining if this handler
+            # even requires self.process (by the argument count), and if it
+            # does, resolving the weakref to a hard reference and passing
+            # that into the handler
+            handler_args = self.handler_args
+            if len(self.handler_args) == 2:
+                handler_args = (self.handler_args[0], self.process())
+            self.should_quit = self.handler(to_handler, *handler_args)
             
         elif self.handler_type == "stringio":
-            self.handler.write(chunk.decode(self.process().call_args["encoding"]))
+            self.handler.write(chunk.decode(self.encoding, self.decode_errors))
 
         elif self.handler_type in ("cstringio", "fd"):
             self.handler.write(chunk)
             
 
-        if self.pipe_queue:
-            if logging_enabled: self.log.debug("putting chunk onto pipe: %r", chunk[:30])
-            self.pipe_queue().put(chunk)
-        self.buffer.append(chunk)
+        if self.save_data:
+            self.buffer.append(chunk)
+            
+            if self.pipe_queue:
+                self.log.debug("putting chunk onto pipe: %r", chunk[:30])
+                self.pipe_queue().put(chunk)
 
             
     def read(self):
@@ -1242,13 +1294,13 @@ class StreamReader(object):
         # str
         try: chunk = os.read(self.stream, self.bufsize)
         except OSError as e:
-            if logging_enabled: self.log.debug("got errno %d, done reading", e.errno)
+            self.log.debug("got errno %d, done reading", e.errno)
             return True
         if not chunk:
-            if logging_enabled: self.log.debug("got no chunk, done reading")
+            self.log.debug("got no chunk, done reading")
             return True
                 
-        if logging_enabled: self.log.debug("got chunk size %d: %r", len(chunk), chunk[:30])
+        self.log.debug("got chunk size %d: %r", len(chunk), chunk[:30])
         for chunk in self.stream_bufferer.process(chunk):
             self.write_chunk(chunk)   
     
@@ -1262,12 +1314,14 @@ class StreamReader(object):
 # come in), OProc will use an instance of this class to chop up the data and
 # feed it as lines to be sent down the pipe
 class StreamBufferer(object):
-    def __init__(self, encoding=DEFAULT_ENCODING, buffer_type=1):
+    def __init__(self, encoding=DEFAULT_ENCODING, buffer_type=1,
+            decode_errors="strict"):
         # 0 for unbuffered, 1 for line, everything else for that amount
         self.type = buffer_type
         self.buffer = []
         self.n_buffer_count = 0
         self.encoding = encoding
+        self.decode_errors = decode_errors
         
         # this is for if we change buffering types.  if we change from line
         # buffered to unbuffered, its very possible that our self.buffer list
@@ -1280,21 +1334,21 @@ class StreamBufferer(object):
         # callback, we might use it to change the way stdin buffers.  so we
         # lock
         self._buffering_lock = threading.RLock()
-        self.log = logging.getLogger("stream_bufferer")
+        self.log = Logger("stream_bufferer")
         
         
     def change_buffering(self, new_type):
         # TODO, when we stop supporting 2.6, make this a with context
-        if logging_enabled: self.log.debug("acquiring buffering lock for changing buffering")
+        self.log.debug("acquiring buffering lock for changing buffering")
         self._buffering_lock.acquire()
-        if logging_enabled: self.log.debug("got buffering lock for changing buffering")
+        self.log.debug("got buffering lock for changing buffering")
         try:                
             if new_type == 0: self._use_up_buffer_first = True
                 
             self.type = new_type
         finally:
             self._buffering_lock.release()
-            if logging_enabled: self.log.debug("released buffering lock for changing buffering")
+            self.log.debug("released buffering lock for changing buffering")
             
         
     def process(self, chunk):
@@ -1302,16 +1356,16 @@ class StreamBufferer(object):
         # THE OUTPUT IS ALWAYS PY3 BYTES
         
         # TODO, when we stop supporting 2.6, make this a with context
-        if logging_enabled: self.log.debug("acquiring buffering lock to process chunk (buffering: %d)", self.type)
+        self.log.debug("acquiring buffering lock to process chunk (buffering: %d)", self.type)
         self._buffering_lock.acquire()
-        if logging_enabled: self.log.debug("got buffering lock to process chunk (buffering: %d)", self.type)
+        self.log.debug("got buffering lock to process chunk (buffering: %d)", self.type)
         try:
             # we've encountered binary, permanently switch to N size buffering
             # since matching on newline doesn't make sense anymore
             if self.type == 1:
-                try: chunk.decode(self.encoding)
+                try: chunk.decode(self.encoding, self.decode_errors)
                 except:
-                    if logging_enabled: self.log.debug("detected binary data, changing buffering")
+                    self.log.debug("detected binary data, changing buffering")
                     self.change_buffering(1024)
                 
             # unbuffered
@@ -1328,7 +1382,7 @@ class StreamBufferer(object):
             # line buffered
             elif self.type == 1:
                 total_to_write = []
-                chunk = chunk.decode(self.encoding)
+                chunk = chunk.decode(self.encoding, self.decode_errors)
                 while True:
                     newline = chunk.find("\n")
                     if newline == -1: break
@@ -1374,20 +1428,20 @@ class StreamBufferer(object):
                 return total_to_write
         finally:
             self._buffering_lock.release()
-            if logging_enabled: self.log.debug("released buffering lock for processing chunk (buffering: %d)", self.type)
+            self.log.debug("released buffering lock for processing chunk (buffering: %d)", self.type)
             
 
     def flush(self):
-        if logging_enabled: self.log.debug("acquiring buffering lock for flushing buffer")
+        self.log.debug("acquiring buffering lock for flushing buffer")
         self._buffering_lock.acquire()
-        if logging_enabled: self.log.debug("got buffering lock for flushing buffer")
+        self.log.debug("got buffering lock for flushing buffer")
         try:
             ret = "".encode(self.encoding).join(self.buffer)
             self.buffer = []
             return ret
         finally:
             self._buffering_lock.release()
-            if logging_enabled: self.log.debug("released buffering lock for flushing buffer")
+            self.log.debug("released buffering lock for flushing buffer")
     
 
 
@@ -1431,14 +1485,16 @@ Please import sh or import programs individually.")
                 m = rc_exc_regex.match(k)
                 if m: return get_rc_exc(int(m.group(1)))
                 
-            # are we naming a commandline argument?
-            if k.startswith("ARG"):
-                return None
-                
             # is it a builtin?
             try: return getattr(self["__builtins__"], k)
             except AttributeError: pass
         elif not k.startswith("_"): k = k.rstrip("_")
+        
+        
+        # https://github.com/ipython/ipython/issues/2577
+        # https://github.com/amoffat/sh/issues/97#issuecomment-10610629
+        if k.startswith("__") and k.endswith("__"):
+            raise AttributeError
         
         # how about an environment variable?
         try: return os.environ[k]

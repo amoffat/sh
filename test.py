@@ -286,6 +286,11 @@ print(sh.HERP + " " + str(len(os.environ)))
         from sh import CommandNotFound
         
         def do_import(): from sh import aowjgoawjoeijaowjellll
+        self.assertRaises(ImportError, do_import)
+        
+        def do_import():
+            import sh
+            sh.awoefaowejfw
         self.assertRaises(CommandNotFound, do_import)
 
 
@@ -486,13 +491,33 @@ sys.stderr.flush()
 
     def test_out_redirection(self):
         import tempfile
-        from sh import ls
+
+        py = create_tmp_test("""
+import sys
+import os
+
+sys.stdout.write("stdout")
+sys.stderr.write("stderr")
+""")
 
         file_obj = tempfile.TemporaryFile()
-        out = ls(_out=file_obj)
+        out = python(py.name, _out=file_obj)
+        
+        self.assertTrue(len(out) == 0)
+
+        file_obj.seek(0)
+        actual_out = file_obj.read()
+        file_obj.close()
+
+        self.assertTrue(len(actual_out) != 0)
+        
+        
+        # test with tee
+        file_obj = tempfile.TemporaryFile()
+        out = python(py.name, _out=file_obj, _tee=True)
         
         self.assertTrue(len(out) != 0)
-
+        
         file_obj.seek(0)
         actual_out = file_obj.read()
         file_obj.close()
@@ -504,8 +529,6 @@ sys.stderr.flush()
     def test_err_redirection(self):
         import tempfile
 
-        file_obj = tempfile.TemporaryFile()
-
         py = create_tmp_test("""
 import sys
 import os
@@ -513,14 +536,30 @@ import os
 sys.stdout.write("stdout")
 sys.stderr.write("stderr")
 """)
-        stdout = python(py.name, _err=file_obj, u=True).wait()
+        file_obj = tempfile.TemporaryFile()
+        p = python(py.name, _err=file_obj)
         
         file_obj.seek(0)
         stderr = file_obj.read().decode()
         file_obj.close()
 
-        self.assertTrue(stdout == "stdout")
+        self.assertTrue(p.stdout == b"stdout")
         self.assertTrue(stderr == "stderr")
+        self.assertTrue(len(p.stderr) == 0)
+        
+        # now with tee
+        file_obj = tempfile.TemporaryFile()
+        p = python(py.name, _err=file_obj, _tee="err")
+        
+        file_obj.seek(0)
+        stderr = file_obj.read().decode()
+        file_obj.close()
+
+        self.assertTrue(p.stdout == b"stdout")
+        self.assertTrue(stderr == "stderr")
+        self.assertTrue(len(p.stderr) != 0)
+        
+        
 
     def test_err_redirection_actual_file(self):
       import tempfile
@@ -703,7 +742,7 @@ print(derp)
         def agg(line, stdin):
             if line.strip() == "4": stdin.put("derp\n")
         
-        p = python(py.name, _out=agg, u=True)
+        p = python(py.name, _out=agg, u=True, _tee=True)
         p.wait()
         
         self.assertTrue("derp" in p)
@@ -724,7 +763,7 @@ for i in range(5): print(i)
             stdout.append(line)
             if line == "2": return True
         
-        p = python(py.name, _out=agg, u=True)
+        p = python(py.name, _out=agg, u=True, _tee=True)
         p.wait()
         
         self.assertTrue("4" in p)
@@ -819,7 +858,7 @@ for i in range(5):
                 process.signal(SIGINT)
                 return True
         
-        p = python(py.name, _out=agg)
+        p = python(py.name, _out=agg, _tee=True)
         p.wait()
         
         self.assertEqual(p.process.exit_code, 0)
@@ -1187,6 +1226,82 @@ exit(1)
         if not IS_PY3: test = test.decode("utf8")
         
         self.assertRaises(ErrorReturnCode, ls, test)
+        
+        
+    def test_no_out(self):        
+        py = create_tmp_test("""
+import sys
+sys.stdout.write("stdout")
+sys.stderr.write("stderr")
+""")
+        p = python(py.name, _no_out=True)
+        self.assertEqual(p.stdout, b"")
+        self.assertEqual(p.stderr, b"stderr")
+        self.assertTrue(p.process._pipe_queue.empty())
+        
+        def callback(line): pass
+        p = python(py.name, _out=callback)
+        self.assertEqual(p.stdout, b"")
+        self.assertEqual(p.stderr, b"stderr")
+        self.assertTrue(p.process._pipe_queue.empty())
+        
+        p = python(py.name)
+        self.assertEqual(p.stdout, b"stdout")
+        self.assertEqual(p.stderr, b"stderr")
+        self.assertFalse(p.process._pipe_queue.empty())
+        
+        
+    def test_no_err(self):
+        py = create_tmp_test("""
+import sys
+sys.stdout.write("stdout")
+sys.stderr.write("stderr")
+""")
+        p = python(py.name, _no_err=True)
+        self.assertEqual(p.stderr, b"")
+        self.assertEqual(p.stdout, b"stdout")
+        self.assertFalse(p.process._pipe_queue.empty())
+        
+        def callback(line): pass
+        p = python(py.name, _err=callback)
+        self.assertEqual(p.stderr, b"")
+        self.assertEqual(p.stdout, b"stdout")
+        self.assertFalse(p.process._pipe_queue.empty())
+        
+        p = python(py.name)
+        self.assertEqual(p.stderr, b"stderr")
+        self.assertEqual(p.stdout, b"stdout")
+        self.assertFalse(p.process._pipe_queue.empty())
+        
+        
+    def test_no_pipe(self):
+        from sh import ls
+        
+        p = ls()
+        self.assertFalse(p.process._pipe_queue.empty())
+        
+        def callback(line): pass
+        p = ls(_out=callback)
+        self.assertTrue(p.process._pipe_queue.empty())
+        
+        p = ls(_no_pipe=True)
+        self.assertTrue(p.process._pipe_queue.empty())
+        
+        
+    def test_decode_error_handling(self):
+        from functools import partial
+        
+        py = create_tmp_test("""
+# -*- coding: utf8 -*-
+import sys
+sys.stdout.write("te漢字st")
+""")
+        fn = partial(python, py.name, _encoding="ascii")
+        def s(fn): str(fn())
+        self.assertRaises(UnicodeDecodeError, s, fn)
+        
+        p = python(py.name, _encoding="ascii", _decode_errors="ignore")
+        self.assertEqual(p, "test")
         
 
 if __name__ == "__main__":
