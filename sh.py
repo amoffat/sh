@@ -1485,10 +1485,6 @@ Please import sh or import programs individually.")
                 m = rc_exc_regex.match(k)
                 if m: return get_rc_exc(int(m.group(1)))
                 
-            # are we naming a commandline argument?
-            if k.startswith("ARG"):
-                return None
-                
             # is it a builtin?
             try: return getattr(self["__builtins__"], k)
             except AttributeError: pass
