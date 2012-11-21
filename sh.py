@@ -320,8 +320,9 @@ class RunningCommand(object):
                 if chunk is None:
                     self.wait()
                     raise StopIteration()
-                return chunk.decode(self.call_args["encoding"],
+                try: return chunk.decode(self.call_args["encoding"],
                     self.call_args["decode_errors"])
+                except UnicodeDecodeError: return chunk
             
     # python 3
     __next__ = next
@@ -1243,8 +1244,9 @@ class StreamReader(object):
         
         if self.handler_type == "fn" and not self.should_quit:
             # try to use the encoding first, if that doesn't work, send
-            # the bytes
-            to_handler = chunk.decode(self.encoding, self.decode_errors)
+            # the bytes, because it might be binary
+            try: to_handler = chunk.decode(self.encoding, self.decode_errors)
+            except UnicodeDecodeError: to_handler = chunk
             
             # this is really ugly, but we can't store self.process as one of
             # the handler args in self.handler_args, the reason being is that
