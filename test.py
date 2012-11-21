@@ -1228,6 +1228,23 @@ sys.stderr.write("stderr")
         p = ls(_no_pipe=True)
         self.assertTrue(p.process._pipe_queue.empty())
         
+        
+        
+    def test_decode_error_handling(self):
+        from functools import partial
+        
+        py = create_tmp_test("""
+# -*- coding: utf8 -*-
+import sys
+sys.stdout.write("te漢字st")
+""")
+        fn = partial(python, py.name, _encoding="ascii")
+        def s(fn): str(fn())
+        self.assertRaises(UnicodeDecodeError, s, fn)
+        
+        p = python(py.name, _encoding="ascii", _decode_errors="ignore")
+        self.assertEqual(p, "test")
+        
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

@@ -320,8 +320,8 @@ class RunningCommand(object):
                 if chunk is None:
                     self.wait()
                     raise StopIteration()
-                try: return chunk.decode(self.call_args["encoding"])
-                except UnicodeDecodeError: return chunk
+                return chunk.decode(self.call_args["encoding"],
+                    self.call_args["decode_errors"])
             
     # python 3
     __next__ = next
@@ -335,8 +335,9 @@ class RunningCommand(object):
         else: return unicode(self).encode(self.call_args["encoding"])
         
     def __unicode__(self):
-        if self.process: 
-            if self.stdout: return self.stdout.decode(self.call_args["encoding"])
+        if self.process and self.stdout:
+            return self.stdout.decode(self.call_args["encoding"],
+                self.call_args["decode_errors"])
         return ""
 
     def __eq__(self, other):
@@ -417,6 +418,7 @@ class Command(object):
         "tty_out": True,
         
         "encoding": DEFAULT_ENCODING,
+        "decode_errors": "strict",
         
         # how long the process should run before it is auto-killed
         "timeout": 0,
@@ -1157,14 +1159,16 @@ class StreamReader(object):
         self.stream = stream
         self.buffer = buffer
         self.save_data = save_data
+        self.encoding = process.call_args["encoding"]
+        self.decode_errors = process.call_args["decode_errors"]
         
         self.pipe_queue = None
         if pipe_queue: self.pipe_queue = weakref.ref(pipe_queue)
 
         self.log = Logger("streamreader", repr(self))
         
-        self.stream_bufferer = StreamBufferer(self.process().call_args["encoding"],
-            bufsize)
+        self.stream_bufferer = StreamBufferer(self.encoding, bufsize,
+            self.decode_errors)
         
         # determine buffering
         if bufsize == 1: self.bufsize = 1024
@@ -1240,8 +1244,7 @@ class StreamReader(object):
         if self.handler_type == "fn" and not self.should_quit:
             # try to use the encoding first, if that doesn't work, send
             # the bytes
-            try: to_handler = chunk.decode(self.process().call_args["encoding"])
-            except UnicodeDecodeError: to_handler = chunk
+            to_handler = chunk.decode(self.encoding, self.decode_errors)
             
             # this is really ugly, but we can't store self.process as one of
             # the handler args in self.handler_args, the reason being is that
@@ -1294,12 +1297,14 @@ class StreamReader(object):
 # come in), OProc will use an instance of this class to chop up the data and
 # feed it as lines to be sent down the pipe
 class StreamBufferer(object):
-    def __init__(self, encoding=DEFAULT_ENCODING, buffer_type=1):
+    def __init__(self, encoding=DEFAULT_ENCODING, buffer_type=1,
+            decode_errors="strict"):
         # 0 for unbuffered, 1 for line, everything else for that amount
         self.type = buffer_type
         self.buffer = []
         self.n_buffer_count = 0
         self.encoding = encoding
+        self.decode_errors = decode_errors
         
         # this is for if we change buffering types.  if we change from line
         # buffered to unbuffered, its very possible that our self.buffer list
@@ -1341,7 +1346,7 @@ class StreamBufferer(object):
             # we've encountered binary, permanently switch to N size buffering
             # since matching on newline doesn't make sense anymore
             if self.type == 1:
-                try: chunk.decode(self.encoding)
+                try: chunk.decode(self.encoding, self.decode_errors)
                 except:
                     self.log.debug("detected binary data, changing buffering")
                     self.change_buffering(1024)
@@ -1360,7 +1365,7 @@ class StreamBufferer(object):
             # line buffered
             elif self.type == 1:
                 total_to_write = []
-                chunk = chunk.decode(self.encoding)
+                chunk = chunk.decode(self.encoding, self.decode_errors)
                 while True:
                     newline = chunk.find("\n")
                     if newline == -1: break
