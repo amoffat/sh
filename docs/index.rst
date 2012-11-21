@@ -22,7 +22,7 @@ Output::
 More examples::
 
 	# checkout master branch
-	git(checkout="master")
+	git.checkout("master")
 	
 	# print(the contents of this directory 
 	print(ls("-l"))
