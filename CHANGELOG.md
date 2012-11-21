@@ -1,9 +1,21 @@
 # Changelog
 
-## 1.07 -
+## 1.07 - 11/21/12
+
+*   Fixes for IPython3 that involve `sh.<tab>` and `sh?`
+
+*   Added `_tee` special keyword argument to force stdout/stderr to store
+	internally and make available for piping data that is being redirected.
+
+*   Added `_decode_errors` to be passed to all stdout/stderr decoding of a
+    process.
 
 *   Added `_no_out`, `_no_err`, and `_no_pipe` special keyword arguments.  These
 	are used for long-running processes with lots of output.
+	
+*   Changed custom loggers that were created for each process to fixed loggers,
+    so there are no longer logger references laying around in the logging
+    module after the process ends and it garbage collected.
 	
 
 ## 1.06 - 11/10/12
