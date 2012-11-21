@@ -122,13 +122,26 @@ does not finish within the timeout, it will be sent SIGKILL.</dd>
 <dt id="term-encoding">_encoding</dt>
 <dd>The character encoding of the process&#8217;s STDOUT.  By default, this is &#8220;utf8&#8221;.</dd>
 <dt id="term-decode-errors">_decode_errors</dt>
-<dd>This is how Python should handle decoding errors of the process&#8217;s output.
+<dd><p class="first versionadded">
+<span class="versionmodified">New in version 1.07.</span></p>
+<p class="last">This is how Python should handle decoding errors of the process&#8217;s output.
 By default, this is &#8220;strict&#8221;, but you can use any value that&#8217;s valid
-to a string&#8217;s <tt class="docutils literal"><span class="pre">.decode()</span></tt> method, such as &#8220;ignore&#8221;.</dd>
+to a string&#8217;s <tt class="docutils literal"><span class="pre">.decode()</span></tt> method, such as &#8220;ignore&#8221;.</p>
+</dd>
 <dt id="term-no-out">_no_out</dt>
-<dd>Disables output being internally stored.  This is useful for commands
+<dd><p class="first versionadded">
+<span class="versionmodified">New in version 1.07.</span></p>
+<p class="last">Disables STDOUT being internally stored.  This is useful for commands
 that produce huge amounts of output that you don&#8217;t need, that would
-otherwise be hogging memory if stored internally by sh.</dd>
+otherwise be hogging memory if stored internally by sh.</p>
+</dd>
+<dt id="term-no-err">_no_err</dt>
+<dd><p class="first versionadded">
+<span class="versionmodified">New in version 1.07.</span></p>
+<p class="last">Disables STDERR being internally stored.  This is useful for commands
+that produce huge amounts of output that you don&#8217;t need, that would
+otherwise be hogging memory if stored internally by sh.</p>
+</dd>
 <dt id="term-no-pipe">_no_pipe</dt>
 <dd><p class="first versionadded">
 <span class="versionmodified">New in version 1.07.</span></p>

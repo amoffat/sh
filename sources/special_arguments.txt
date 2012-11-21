@@ -101,12 +101,20 @@ every command, but some may not be used together.
 		The character encoding of the process's STDOUT.  By default, this is "utf8".
 			
 	_decode_errors
+		.. versionadded:: 1.07
 		This is how Python should handle decoding errors of the process's output.
 		By default, this is "strict", but you can use any value that's valid
 		to a string's ``.decode()`` method, such as "ignore".
 		
 	_no_out
-		Disables output being internally stored.  This is useful for commands
+		.. versionadded:: 1.07
+		Disables STDOUT being internally stored.  This is useful for commands
+		that produce huge amounts of output that you don't need, that would
+		otherwise be hogging memory if stored internally by sh.
+		
+	_no_err
+		.. versionadded:: 1.07
+		Disables STDERR being internally stored.  This is useful for commands
 		that produce huge amounts of output that you don't need, that would
 		otherwise be hogging memory if stored internally by sh.
 		
