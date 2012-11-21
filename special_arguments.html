@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Special keyword arguments &mdash; sh 1.05 documentation</title>
+    <title>Special keyword arguments &mdash; sh 1.07 documentation</title>
     
     <link rel="stylesheet" href="static/default.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '1.05',
+        VERSION:     '1.07',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="sh 1.05 documentation" href="index.html" /> 
+    <link rel="top" title="sh 1.07 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -34,7 +34,7 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li><a href="index.html">sh 1.05 documentation</a> &raquo;</li> 
+        <li><a href="index.html">sh 1.07 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -121,6 +121,33 @@ will be able to retrieve only 100 characters.</dd>
 does not finish within the timeout, it will be sent SIGKILL.</dd>
 <dt id="term-encoding">_encoding</dt>
 <dd>The character encoding of the process&#8217;s STDOUT.  By default, this is &#8220;utf8&#8221;.</dd>
+<dt id="term-decode-errors">_decode_errors</dt>
+<dd>This is how Python should handle decoding errors of the process&#8217;s output.
+By default, this is &#8220;strict&#8221;, but you can use any value that&#8217;s valid
+to a string&#8217;s <tt class="docutils literal"><span class="pre">.decode()</span></tt> method, such as &#8220;ignore&#8221;.</dd>
+<dt id="term-no-out">_no_out</dt>
+<dd>Disables output being internally stored.  This is useful for commands
+that produce huge amounts of output that you don&#8217;t need, that would
+otherwise be hogging memory if stored internally by sh.</dd>
+<dt id="term-no-pipe">_no_pipe</dt>
+<dd><p class="first versionadded">
+<span class="versionmodified">New in version 1.07.</span></p>
+<p class="last">Similar to <tt class="docutils literal"><span class="pre">_no_out</span></tt>, this explicitly tells the sh command that it
+will never be used for piping its output into another command, so it
+should not fill its internal pipe buffer with the process&#8217;s output.
+This is also useful for conserving memory.</p>
+</dd>
+<dt id="term-tee">_tee</dt>
+<dd><p class="first versionadded">
+<span class="versionmodified">New in version 1.07.</span></p>
+<p class="last">As of 1.07, any time redirection is used, either for stdout or stderr,
+the respective internal buffers are not filled.  For example, if you&#8217;re
+downloading a file and using a callback on stdout, the internal stdout
+buffer, nor the pipe buffer be filled with data from stdout.  This
+option forces those buffers to be filled anyways, in effect &#8220;tee-ing&#8221;
+the output into two places (the callback/redirect handler, and the
+internal buffers).</p>
+</dd>
 </dl>
 </div>
 
@@ -158,7 +185,7 @@ does not finish within the timeout, it will be sent SIGKILL.</dd>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li><a href="index.html">sh 1.05 documentation</a> &raquo;</li> 
+        <li><a href="index.html">sh 1.07 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
