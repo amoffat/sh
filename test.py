@@ -286,6 +286,11 @@ print(sh.HERP + " " + str(len(os.environ)))
         from sh import CommandNotFound
         
         def do_import(): from sh import aowjgoawjoeijaowjellll
+        self.assertRaises(ImportError, do_import)
+        
+        def do_import():
+            import sh
+            sh.awoefaowejfw
         self.assertRaises(CommandNotFound, do_import)
 
 
