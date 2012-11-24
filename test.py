@@ -974,7 +974,22 @@ for i in range(42):
         self.assertTrue(len(out) == 42)
         self.assertTrue(sum(stderr) == 1722)
 
+    def test_convert_underscores(self):
+        from sh import python
+        py = create_tmp_test("""
+import sys
+import os
 
+print sys.argv[1]
+""")
+        converted = str(python(py.name, test_arg="Test", 
+                               _convert_underscore=True)).strip()
+        kept = str(python(py.name, test_arg="Test", 
+                          _convert_underscore=False)).strip()
+        self.assertTrue(converted.split("=")[0] == "--test-arg")
+        self.assertTrue(kept.split("=")[0] == "--test_arg")
+
+        
     def test_bg_to_int(self):
         from sh import echo
         # bugs with background might cause the following error:
