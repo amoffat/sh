@@ -502,6 +502,30 @@ class Command(object):
         else: arg = unicode(arg).encode(DEFAULT_ENCODING)
         return arg
 
+        
+    def _aggregate_keywords(self, keywords, convert=True):
+        processed = []
+        for k, v in keywords.items():
+            # we're passing a short arg as a kwarg, example:
+            # cut(d="\t")
+            if len(k) == 1:
+                if v is not False:
+                    processed.append("-" + k)
+                    if v is not True:
+                        processed.append(self._format_arg(v))
+            # we're doing a long arg
+            else:
+                if convert:
+                    k = k.replace("_", "-")
+                if v is True:
+                    processed.append("--" + k)
+                elif v is False:
+                    pass
+                else:
+                    processed.append("--%s=%s" % (k, self._format_arg(v)))
+        return processed
+                    
+        
     def _compile_args(self, args, kwargs):
         processed_args = []
                 
@@ -512,24 +536,14 @@ class Command(object):
                     warnings.warn("Empty list passed as an argument to %r. \
 If you're using glob.glob(), please use sh.glob() instead." % self.path, stacklevel=3)
                 for sub_arg in arg: processed_args.append(self._format_arg(sub_arg))
-            else: processed_args.append(self._format_arg(arg))
+            elif isinstance(arg, dict):
+                processed_args += self._aggregate_keywords(arg, convert=False)
+            else: 
+                processed_args.append(self._format_arg(arg))
+            
 
         # aggregate the keyword arguments
-        for k,v in kwargs.items():
-            # we're passing a short arg as a kwarg, example:
-            # cut(d="\t")
-            if len(k) == 1:
-                if v is not False:
-                    processed_args.append("-"+k)
-                    if v is not True: processed_args.append(self._format_arg(v))
-
-            # we're doing a long arg
-            else:
-                k = k.replace("_", "-")
-
-                if v is True: processed_args.append("--"+k)
-                elif v is False: pass
-                else: processed_args.append("--%s=%s" % (k, self._format_arg(v)))
+        processed_args += self._aggregate_keywords(kwargs)
 
         return processed_args
  
