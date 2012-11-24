@@ -176,8 +176,7 @@ for l in "andrew":
         
         out = tr("[:lower:]", "[:upper:]", _in="andrew").strip()
         self.assertEqual(out, "ANDREW")
-        
-        
+
     def test_manual_stdin_iterable(self):
         from sh import tr
         
@@ -387,7 +386,20 @@ print(options.long_option.upper())
 """)
         self.assertTrue(python(py.name, long_option="testing").strip() == "TESTING")
         self.assertTrue(python(py.name).strip() == "")
-        
+
+    def test_dict_option(self):
+        py = create_tmp_test("""
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("-l", "--long_option", action="store", default="", dest="long_option")
+options, args = parser.parse_args()
+print(options.long_option.upper())
+""")
+        self.assertTrue(python(py.name, 
+                               {"long_option": "testing"}).strip() == "TESTING")
+        self.assertTrue(python(py.name,
+                               {"l": "testing"}).strip() == "TESTING")
+
     
     def test_command_wrapper(self):
         from sh import Command, which
