@@ -424,6 +424,10 @@ class Command(object):
         
         "encoding": DEFAULT_ENCODING,
         "decode_errors": "strict",
+
+        # toggle converting underscore to dash on or off
+        "convert_underscore": True,
+    
         
         # how long the process should run before it is auto-killed
         "timeout": 0,
@@ -462,6 +466,7 @@ class Command(object):
         self._partial = False
         self._partial_baked_args = []
         self._partial_call_args = {}
+        self._convert_underscore = True
         
     def __getattribute__(self, name):
         # convenience
@@ -525,7 +530,8 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
 
             # we're doing a long arg
             else:
-                k = k.replace("_", "-")
+                if self._convert_underscore:
+                    k = k.replace("_", "-")
 
                 if v is True: processed_args.append("--"+k)
                 elif v is False: pass
@@ -599,6 +605,8 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
         # special kwargs from the possibly baked command
         tmp_call_args, kwargs = self._extract_call_args(kwargs, self._partial_call_args)
         call_args.update(tmp_call_args)
+
+        self._convert_underscore = call_args["convert_underscore"]
 
         if not isinstance(call_args["ok_code"], (tuple, list)):    
             call_args["ok_code"] = [call_args["ok_code"]]
