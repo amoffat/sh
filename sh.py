@@ -466,9 +466,11 @@ class Command(object):
     def __getattribute__(self, name):
         # convenience
         getattr = partial(object.__getattribute__, self)
-        
-        if name.startswith("_"): return getattr(name)    
-        if name == "bake": return getattr("bake")         
+
+        if name.startswith("_"): return getattr(name)
+        if name == "bake": return getattr("bake")
+        if name.endswith("_"):
+            name = name[:-1]
         return getattr("bake")(name)
 
     
