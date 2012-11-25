@@ -1302,7 +1302,20 @@ sys.stdout.write("te漢字st")
         
         p = python(py.name, _encoding="ascii", _decode_errors="ignore")
         self.assertEqual(p, "test")
-        
+
+
+    def test_shared_secial_args(self):
+        import sh
+        from StringIO import StringIO
+        out1 = sh.ls('.')
+        out2 = StringIO()
+        sh_new = sh(_out=out2)
+        sh_new.ls('.')
+        self.assertEqual(out1, out2.getvalue())
+        out2.close()
+
+
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
