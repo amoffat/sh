@@ -452,17 +452,21 @@ class Command(object):
     )
 
     @classmethod
-    def _create(cls, program):
+    def _create(cls, program, **default_kwargs):
         path = resolve_program(program)
         if not path: raise CommandNotFound(program)
-        return cls(path)
-    
+        cmd = cls(path)
+        cmd._partial_call_args, ignored_kwargs = cmd._extract_call_args(default_kwargs)
+        if ignored_kwargs:
+            TypeError("Invalid special arguments %r" % (ignored_kwargs.keys()))
+        return cmd
+
     def __init__(self, path):
         self._path = which(path)
         self._partial = False
         self._partial_baked_args = []
         self._partial_call_args = {}
-        
+
     def __getattribute__(self, name):
         # convenience
         getattr = partial(object.__getattribute__, self)
@@ -1455,9 +1459,10 @@ class StreamBufferer(object):
 # the exec() statement used in this file requires the "globals" argument to
 # be a dictionary
 class Environment(dict):
-    def __init__(self, globs):
+    def __init__(self, globs, **kwargs):
         self.globs = globs
-        
+        self.kwargs = kwargs
+
     def __setitem__(self, k, v):
         self.globs[k] = v
     
@@ -1505,7 +1510,7 @@ Please import sh or import programs individually.")
         if builtin: return builtin
         
         # it must be a command then
-        return Command._create(k)
+        return Command._create(k, **self.kwargs)
     
     
     # methods that begin with "b_" are custom builtins and will override any
@@ -1546,7 +1551,7 @@ def run_repl(env):
 # system PATH worth of commands.  in this case, we just proxy the
 # import lookup to our Environment class
 class SelfWrapper(ModuleType):
-    def __init__(self, self_module):
+    def __init__(self, self_module, **kwargs):
         # this is super ugly to have to copy attributes like this,
         # but it seems to be the only way to make reload() behave
         # nicely.  if i make these attributes dynamic lookups in
@@ -1558,7 +1563,7 @@ class SelfWrapper(ModuleType):
         # if we set this to None.  and 3.3 needs a value for __path__
         self.__path__ = []
         self.self_module = self_module
-        self.env = Environment(globals())
+        self.env = Environment(globals(), **kwargs)
         
     def __setattr__(self, name, value):
         if hasattr(self, "env"): self.env[name] = value
@@ -1568,6 +1573,11 @@ class SelfWrapper(ModuleType):
         if name == "env": raise AttributeError
         return self.env[name]
 
+    def __call__(self, **kwargs):
+        # accept special keywords argument to define
+        # defaults for all operations that will be
+        # processed with given by return SelfWrapper
+        return SelfWrapper(self.self_module, **kwargs)
 
 
 
