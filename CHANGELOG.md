@@ -1,5 +1,12 @@
 # Changelog
 
+
+## 1.08 -
+
+*   Commands can now be passed a dictionary of args, and the keys will be
+    interpretted "raw", with no underscore-to-hyphen conversion
+
+
 ## 1.07 - 11/21/12
 
 *   Bugfix for PyDev when `locale.getpreferredencoding()` is empty.
