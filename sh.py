@@ -469,8 +469,8 @@ class Command(object):
 
         if name.startswith("_"): return getattr(name)
         if name == "bake": return getattr("bake")
-        if name.endswith("_"):
-            name = name[:-1]
+        if name.endswith("_"): name = name[:-1]
+        
         return getattr("bake")(name)
 
     
