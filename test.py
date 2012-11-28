@@ -387,18 +387,25 @@ print(options.long_option.upper())
         self.assertTrue(python(py.name, long_option="testing").strip() == "TESTING")
         self.assertTrue(python(py.name).strip() == "")
 
-    def test_dict_option(self):
+    def test_raw_args(self):
         py = create_tmp_test("""
 from optparse import OptionParser
 parser = OptionParser()
-parser.add_option("-l", "--long_option", action="store", default="", dest="long_option")
+parser.add_option("--long_option", action="store", default=None,
+    dest="long_option1")
+parser.add_option("--long-option", action="store", default=None,
+    dest="long_option2")
 options, args = parser.parse_args()
-print(options.long_option.upper())
+
+if options.long_option1:
+    print(options.long_option1.upper())
+else:
+    print(options.long_option2.upper())
 """)
-        self.assertTrue(python(py.name, 
-                               {"long_option": "testing"}).strip() == "TESTING")
-        self.assertTrue(python(py.name,
-                               {"l": "testing"}).strip() == "TESTING")
+        self.assertEqual(python(py.name, 
+            {"long_option": "underscore"}).strip(), "UNDERSCORE")
+        
+        self.assertEqual(python(py.name, long_option="hyphen").strip(), "HYPHEN")
 
     
     def test_command_wrapper(self):
