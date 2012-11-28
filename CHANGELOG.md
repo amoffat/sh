@@ -5,6 +5,9 @@
 
 *   Commands can now be passed a dictionary of args, and the keys will be
     interpretted "raw", with no underscore-to-hyphen conversion
+    
+*   Reserved Python keywords can now be used as subcommands by appending an
+	underscore `_` to them 
 
 
 ## 1.07 - 11/21/12
