@@ -503,7 +503,7 @@ class Command(object):
         return arg
 
         
-    def _aggregate_keywords(self, keywords, convert=True):
+    def _aggregate_keywords(self, keywords, raw=False):
         processed = []
         for k, v in keywords.items():
             # we're passing a short arg as a kwarg, example:
@@ -513,10 +513,11 @@ class Command(object):
                     processed.append("-" + k)
                     if v is not True:
                         processed.append(self._format_arg(v))
+                        
             # we're doing a long arg
             else:
-                if convert:
-                    k = k.replace("_", "-")
+                if not raw:  k = k.replace("_", "-")
+                
                 if v is True:
                     processed.append("--" + k)
                 elif v is False:
@@ -537,11 +538,10 @@ class Command(object):
 If you're using glob.glob(), please use sh.glob() instead." % self.path, stacklevel=3)
                 for sub_arg in arg: processed_args.append(self._format_arg(sub_arg))
             elif isinstance(arg, dict):
-                processed_args += self._aggregate_keywords(arg, convert=False)
+                processed_args += self._aggregate_keywords(arg, raw=True)
             else: 
                 processed_args.append(self._format_arg(arg))
             
-
         # aggregate the keyword arguments
         processed_args += self._aggregate_keywords(kwargs)
 
