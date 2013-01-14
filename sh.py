@@ -416,6 +416,7 @@ class Command(object):
         "iter_noblock": None,
         "ok_code": 0,
         "cwd": None,
+        "sep": "=",
         
         # this is for programs that expect their input to be from a terminal.
         # ssh is one of those programs
@@ -505,7 +506,7 @@ class Command(object):
         return arg
 
         
-    def _aggregate_keywords(self, keywords, raw=False):
+    def _aggregate_keywords(self, keywords, sep, raw=False):
         processed = []
         for k, v in keywords.items():
             # we're passing a short arg as a kwarg, example:
@@ -525,11 +526,11 @@ class Command(object):
                 elif v is False:
                     pass
                 else:
-                    processed.append("--%s=%s" % (k, self._format_arg(v)))
+                    processed.append("--%s%s%s" % (k, sep, self._format_arg(v)))
         return processed
                     
         
-    def _compile_args(self, args, kwargs):
+    def _compile_args(self, args, kwargs, sep):
         processed_args = []
                 
         # aggregate positional args
@@ -540,12 +541,12 @@ class Command(object):
 If you're using glob.glob(), please use sh.glob() instead." % self.path, stacklevel=3)
                 for sub_arg in arg: processed_args.append(self._format_arg(sub_arg))
             elif isinstance(arg, dict):
-                processed_args += self._aggregate_keywords(arg, raw=True)
+                processed_args += self._aggregate_keywords(arg, sep, raw=True)
             else: 
                 processed_args.append(self._format_arg(arg))
             
         # aggregate the keyword arguments
-        processed_args += self._aggregate_keywords(kwargs)
+        processed_args += self._aggregate_keywords(kwargs, sep)
 
         return processed_args
  
@@ -566,7 +567,8 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
         fn._partial_call_args.update(self._partial_call_args)
         fn._partial_call_args.update(pruned_call_args)
         fn._partial_baked_args.extend(self._partial_baked_args)
-        fn._partial_baked_args.extend(self._compile_args(args, kwargs))
+        sep = pruned_call_args.get("sep", self._call_args["sep"])
+        fn._partial_baked_args.extend(self._compile_args(args, kwargs, sep))
         return fn
        
     def __str__(self):
@@ -634,7 +636,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
             else:
                 args.insert(0, first_arg)
             
-        processed_args = self._compile_args(args, kwargs)
+        processed_args = self._compile_args(args, kwargs, call_args["sep"])
 
         # makes sure our arguments are broken up correctly
         split_args = self._partial_baked_args + processed_args
