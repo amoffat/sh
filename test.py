@@ -410,12 +410,12 @@ else:
     def test_custom_separator(self):
         py = create_tmp_test("""
 import sys
-print sys.argv[1]
+print(sys.argv[1])
 """)
         self.assertEqual(python(py.name, 
-            {"long-option": "underscore"}, _sep="=custom=").strip(), "--long-option=custom=underscore")
+            {"long-option": "underscore"}, _long_sep="=custom=").strip(), "--long-option=custom=underscore")
         # test baking too
-        python_baked = python.bake(py.name, {"long-option": "underscore"}, _sep="=baked=")
+        python_baked = python.bake(py.name, {"long-option": "underscore"}, _long_sep="=baked=")
         self.assertEqual(python_baked().strip(), "--long-option=baked=underscore")
         
     def test_command_wrapper(self):

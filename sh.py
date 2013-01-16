@@ -416,7 +416,7 @@ class Command(object):
         "iter_noblock": None,
         "ok_code": 0,
         "cwd": None,
-        "sep": "=",
+        "long_sep": "=",
         
         # this is for programs that expect their input to be from a terminal.
         # ssh is one of those programs
@@ -567,7 +567,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
         fn._partial_call_args.update(self._partial_call_args)
         fn._partial_call_args.update(pruned_call_args)
         fn._partial_baked_args.extend(self._partial_baked_args)
-        sep = pruned_call_args.get("sep", self._call_args["sep"])
+        sep = pruned_call_args.get("long_sep", self._call_args["long_sep"])
         fn._partial_baked_args.extend(self._compile_args(args, kwargs, sep))
         return fn
        
@@ -636,7 +636,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
             else:
                 args.insert(0, first_arg)
             
-        processed_args = self._compile_args(args, kwargs, call_args["sep"])
+        processed_args = self._compile_args(args, kwargs, call_args["long_sep"])
 
         # makes sure our arguments are broken up correctly
         split_args = self._partial_baked_args + processed_args
