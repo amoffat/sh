@@ -3,6 +3,9 @@
 
 ## 1.08 -
 
+*   _long_sep keyword argument added joining together a dictionary of arguments
+    passed in to a command
+
 *   Commands can now be passed a dictionary of args, and the keys will be
     interpretted "raw", with no underscore-to-hyphen conversion
     
