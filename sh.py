@@ -500,9 +500,16 @@ class Command(object):
         return call_args, kwargs
 
 
+    # this helper method is for normalizing an argument into a string in the
+    # system's default encoding.  we can feed it a number or a string or
+    # whatever 
     def _format_arg(self, arg):
         if IS_PY3: arg = str(arg)
-        else: arg = unicode(arg).encode(DEFAULT_ENCODING)
+        else:
+            # if the argument is already unicode, or a number or whatever,
+            # this first call will fail.  
+            try: arg = unicode(arg, DEFAULT_ENCODING).encode(DEFAULT_ENCODING)
+            except TypeError: arg = unicode(arg).encode(DEFAULT_ENCODING)
         return arg
 
         

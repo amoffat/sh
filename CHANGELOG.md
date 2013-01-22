@@ -3,6 +3,9 @@
 
 ## 1.08 -
 
+*   Bugfix where input arguments were being assumed as ascii or unicode, but
+    never as a string in a different encoding.
+
 *   _long_sep keyword argument added joining together a dictionary of arguments
     passed in to a command
 
