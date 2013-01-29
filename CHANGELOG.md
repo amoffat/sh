@@ -3,6 +3,8 @@
 
 ## 1.08 -
 
+*   Bugfix for Commands that are wrapped with functools.wraps()
+
 *   Bugfix where input arguments were being assumed as ascii or unicode, but
     never as a string in a different encoding.
 

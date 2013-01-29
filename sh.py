@@ -464,6 +464,10 @@ class Command(object):
         self._partial_baked_args = []
         self._partial_call_args = {}
         
+        # bugfix for functools.wraps.  issue #121
+        self.__name__ = repr(self)
+        
+        
     def __getattribute__(self, name):
         # convenience
         getattr = partial(object.__getattribute__, self)
