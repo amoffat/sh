@@ -587,7 +587,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
         except: return False
 
     def __repr__(self):
-        return str(self)
+        return "<Command %r>" % str(self)
         
     def __unicode__(self):
         baked_args = " ".join(self._partial_baked_args)
