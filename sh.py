@@ -468,7 +468,7 @@ class Command(object):
         if not path: raise CommandNotFound(program)
         
         cmd = cls(path)
-        if default_kwargs: cmd = cmd.bake(default_kwargs)
+        if default_kwargs: cmd = cmd.bake(**default_kwargs)
         
         return cmd
 
@@ -1503,7 +1503,7 @@ class StreamBufferer(object):
 # the exec() statement used in this file requires the "globals" argument to
 # be a dictionary
 class Environment(dict):
-    def __init__(self, globs, baked_args):
+    def __init__(self, globs, baked_args={}):
         self.globs = globs
         self.baked_args = baked_args
 
@@ -1598,7 +1598,7 @@ def run_repl(env):
 # system PATH worth of commands.  in this case, we just proxy the
 # import lookup to our Environment class
 class SelfWrapper(ModuleType):
-    def __init__(self, self_module, baked_args):
+    def __init__(self, self_module, baked_args={}):
         # this is super ugly to have to copy attributes like this,
         # but it seems to be the only way to make reload() behave
         # nicely.  if i make these attributes dynamic lookups in

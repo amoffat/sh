@@ -1340,7 +1340,14 @@ sys.stdout.write("te漢字st")
 
     def test_shared_secial_args(self):
         import sh
-        from StringIO import StringIO
+
+        if IS_PY3:
+            from io import StringIO
+            from io import BytesIO as cStringIO
+        else:
+            from StringIO import StringIO
+            from cStringIO import StringIO as cStringIO
+            
         out1 = sh.ls('.')
         out2 = StringIO()
         sh_new = sh(_out=out2)
