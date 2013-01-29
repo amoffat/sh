@@ -176,8 +176,7 @@ for l in "andrew":
         
         out = tr("[:lower:]", "[:upper:]", _in="andrew").strip()
         self.assertEqual(out, "ANDREW")
-        
-        
+
     def test_manual_stdin_iterable(self):
         from sh import tr
         
@@ -387,8 +386,38 @@ print(options.long_option.upper())
 """)
         self.assertTrue(python(py.name, long_option="testing").strip() == "TESTING")
         self.assertTrue(python(py.name).strip() == "")
+
+    def test_raw_args(self):
+        py = create_tmp_test("""
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("--long_option", action="store", default=None,
+    dest="long_option1")
+parser.add_option("--long-option", action="store", default=None,
+    dest="long_option2")
+options, args = parser.parse_args()
+
+if options.long_option1:
+    print(options.long_option1.upper())
+else:
+    print(options.long_option2.upper())
+""")
+        self.assertEqual(python(py.name, 
+            {"long_option": "underscore"}).strip(), "UNDERSCORE")
         
-    
+        self.assertEqual(python(py.name, long_option="hyphen").strip(), "HYPHEN")
+
+    def test_custom_separator(self):
+        py = create_tmp_test("""
+import sys
+print(sys.argv[1])
+""")
+        self.assertEqual(python(py.name, 
+            {"long-option": "underscore"}, _long_sep="=custom=").strip(), "--long-option=custom=underscore")
+        # test baking too
+        python_baked = python.bake(py.name, {"long-option": "underscore"}, _long_sep="=baked=")
+        self.assertEqual(python_baked().strip(), "--long-option=baked=underscore")
+        
     def test_command_wrapper(self):
         from sh import Command, which
         
