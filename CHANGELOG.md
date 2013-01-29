@@ -3,7 +3,10 @@
 
 ## 1.08 -
 
-*   Bugfix for Commands that are wrapped with functools.wraps()
+*   Bugfix where CommandNotFound was not being raised if Command was created
+    by instantiation.  [#113](https://github.com/amoffat/sh/issues/113)
+
+*   Bugfix for Commands that are wrapped with functools.wraps() [#121](https://github.com/amoffat/sh/issues/121]
 
 *   Bugfix where input arguments were being assumed as ascii or unicode, but
     never as a string in a different encoding.

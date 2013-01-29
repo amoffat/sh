@@ -291,6 +291,11 @@ print(sh.HERP + " " + str(len(os.environ)))
             import sh
             sh.awoefaowejfw
         self.assertRaises(CommandNotFound, do_import)
+        
+        def do_import():
+            import sh
+            sh.Command("ofajweofjawoe")
+        self.assertRaises(CommandNotFound, do_import)
 
 
     def test_command_wrapper_equivalence(self):

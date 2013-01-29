@@ -452,14 +452,11 @@ class Command(object):
         ("piped", "iter", "You cannot iterate when this command is being piped"),
     )
 
-    @classmethod
-    def _create(cls, program):
-        path = resolve_program(program)
-        if not path: raise CommandNotFound(program)
-        return cls(path)
-    
     def __init__(self, path):
-        self._path = which(path)
+        path = which(path)
+        if not path: raise CommandNotFound(path)
+        self._path = path
+            
         self._partial = False
         self._partial_baked_args = []
         self._partial_call_args = {}
@@ -1534,7 +1531,7 @@ Please import sh or import programs individually.")
         if builtin: return builtin
         
         # it must be a command then
-        return Command._create(k)
+        return Command(k)
     
     
     # methods that begin with "b_" are custom builtins and will override any
