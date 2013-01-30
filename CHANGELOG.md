@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 1.08 -
+## 1.08 - 1/29/12
 
 *	Added SignalException class and made all commands that end terminate by
 	a signal defined in SIGNALS_THAT_SHOULD_THROW_EXCEPTION raise it. [#91](https://github.com/amoffat/sh/issues/91)
