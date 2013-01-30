@@ -455,7 +455,7 @@ and the script will end.
 
 .. note::
 
-	You may also use ``.terminate()`` to send a SIGINT, or ``.signal(sig)`` to
+	You may also use ``.terminate()`` to send a SIGTERM, or ``.signal(sig)`` to
 	send a general `signal <http://docs.python.org/library/signal.html>`_.
 
 .. _buffer_sizes:
