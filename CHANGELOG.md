@@ -3,6 +3,9 @@
 
 ## 1.08 -
 
+*	Added SignalException class and made all commands that end terminate by
+	a signal defined in SIGNALS_THAT_SHOULD_THROW_EXCEPTION raise it. [#91](https://github.com/amoffat/sh/issues/91)
+
 *   Bugfix where CommandNotFound was not being raised if Command was created
     by instantiation.  [#113](https://github.com/amoffat/sh/issues/113)
 

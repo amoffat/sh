@@ -120,6 +120,17 @@ class ErrorReturnCode(Exception):
         msg = "\n\n  RAN: %r\n\n  STDOUT:\n%s\n\n  STDERR:\n%s" %\
             (full_cmd, tstdout.decode(DEFAULT_ENCODING), tstderr.decode(DEFAULT_ENCODING))
         super(ErrorReturnCode, self).__init__(msg)
+        
+        
+class SignalException(ErrorReturnCode): pass
+
+SIGNALS_THAT_SHOULD_THROW_EXCEPTION = (
+    signal.SIGKILL,
+    signal.SIGSEGV,
+    signal.SIGTERM,
+    signal.SIGINT,
+    signal.SIGQUIT
+)
 
 
 # we subclass AttributeError because:
@@ -127,7 +138,7 @@ class ErrorReturnCode(Exception):
 # https://github.com/amoffat/sh/issues/97#issuecomment-10610629
 class CommandNotFound(AttributeError): pass
 
-rc_exc_regex = re.compile("ErrorReturnCode_(\d+)")
+rc_exc_regex = re.compile("(ErrorReturnCode|SignalException)_(\d+)")
 rc_exc_cache = {}
 
 def get_rc_exc(rc):
@@ -135,8 +146,13 @@ def get_rc_exc(rc):
     try: return rc_exc_cache[rc]
     except KeyError: pass
     
-    name = "ErrorReturnCode_%d" % rc
-    exc = type(name, (ErrorReturnCode,), {})
+    if rc > 0:
+        name = "ErrorReturnCode_%d" % rc
+        exc = type(name, (ErrorReturnCode,), {})
+    else:
+        name = "SignalException_%d" % abs(rc)
+        exc = type(name, (SignalException,), {})
+        
     rc_exc_cache[rc] = exc
     return exc
 
@@ -222,6 +238,13 @@ class RunningCommand(object):
         self.cmd = cmd
         self.ran = " ".join(cmd)
         self.process = None
+        
+        # this flag is for whether or not we've handled the exit code (like
+        # by raising an exception).  this is necessary because .wait() is called
+        # from multiple places, and wait() triggers the exit code to be
+        # processed.  but we don't want to raise multiple exceptions, only
+        # one (if any at all)
+        self._handled_exit_code = False
 
         self.should_wait = True
         spawn_process = True
@@ -275,11 +298,18 @@ class RunningCommand(object):
     # here we determine if we had an exception, or an error code that we weren't
     # expecting to see.  if we did, we create and raise an exception
     def _handle_exit_code(self, code):
-        if code not in self.call_args["ok_code"] and code >= 0: raise get_rc_exc(code)(
-            " ".join(self.cmd),
-            self.process.stdout,
-            self.process.stderr
-        )        
+        if self._handled_exit_code: return
+        self._handled_exit_code = True
+        
+        if code not in self.call_args["ok_code"] and \
+        (code > 0 or -code in SIGNALS_THAT_SHOULD_THROW_EXCEPTION):
+            raise get_rc_exc(code)(
+                " ".join(self.cmd),
+                self.process.stdout,
+                self.process.stderr
+            )
+                
+                
 
     @property
     def stdout(self):
@@ -1532,7 +1562,10 @@ Please import sh or import programs individually.")
             try: return rc_exc_cache[k]
             except KeyError:
                 m = rc_exc_regex.match(k)
-                if m: return get_rc_exc(int(m.group(1)))
+                if m:
+                    exit_code = int(m.group(2))
+                    if m.group(1) == "SignalException": exit_code = -exit_code
+                    return get_rc_exc(exit_code)
                 
             # is it a builtin?
             try: return getattr(self["__builtins__"], k)

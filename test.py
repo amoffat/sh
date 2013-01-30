@@ -825,8 +825,11 @@ for i in range(5):
                 process.terminate()
                 return True
         
-        p = python(py.name, _out=agg, u=True)
-        p.wait()
+        try:
+            p = python(py.name, _out=agg, u=True)
+            p.wait()
+        except sh.SignalException_15:
+            pass
         
         self.assertEqual(p.process.exit_code, -signal.SIGTERM)
         self.assertTrue("4" not in p)
@@ -836,6 +839,7 @@ for i in range(5):
         
     def test_stdout_callback_kill(self):
         import signal
+        import sh
         
         py = create_tmp_test("""
 import sys
@@ -855,8 +859,11 @@ for i in range(5):
                 process.kill()
                 return True
         
-        p = python(py.name, _out=agg, u=True)
-        p.wait()
+        try:
+            p = python(py.name, _out=agg, u=True)
+            p.wait()
+        except sh.SignalException_9:
+            pass
         
         self.assertEqual(p.process.exit_code, -signal.SIGKILL)
         self.assertTrue("4" not in p)
@@ -957,7 +964,7 @@ import os
 import time
 
 for letter in "andrew":
-    time.sleep(0.5)
+    time.sleep(0.6)
     print(letter)
         """)
         
@@ -1189,7 +1196,8 @@ sys.stdin.read(1)
         sleep_for = 3
         timeout = 1
         started = time()
-        sh.sleep(sleep_for, _timeout=timeout).wait()
+        try: sh.sleep(sleep_for, _timeout=timeout).wait()
+        except sh.SignalException_9: pass
         elapsed = time() - started
         self.assertTrue(abs(elapsed - timeout) < 0.1)
         
@@ -1355,6 +1363,20 @@ sys.stdout.write("te漢字st")
         self.assertEqual(out1, out2.getvalue())
         out2.close()
 
+
+    def test_signal_exception(self):
+        from sh import SignalException, get_rc_exc
+        
+        def throw_terminate_signal():
+            py = create_tmp_test("""
+import time
+while True: time.sleep(1)
+""")
+            to_kill = python(py.name, _bg=True)
+            to_kill.terminate()
+            to_kill.wait()
+            
+        self.assertRaises(get_rc_exc(-15), throw_terminate_signal)
 
 
 
