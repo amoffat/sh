@@ -1,5 +1,29 @@
 # Changelog
 
+
+## 1.08 - 1/29/12
+
+*	Added SignalException class and made all commands that end terminate by
+	a signal defined in SIGNALS_THAT_SHOULD_THROW_EXCEPTION raise it. [#91](https://github.com/amoffat/sh/issues/91)
+
+*   Bugfix where CommandNotFound was not being raised if Command was created
+    by instantiation.  [#113](https://github.com/amoffat/sh/issues/113)
+
+*   Bugfix for Commands that are wrapped with functools.wraps() [#121](https://github.com/amoffat/sh/issues/121]
+
+*   Bugfix where input arguments were being assumed as ascii or unicode, but
+    never as a string in a different encoding.
+
+*   _long_sep keyword argument added joining together a dictionary of arguments
+    passed in to a command
+
+*   Commands can now be passed a dictionary of args, and the keys will be
+    interpretted "raw", with no underscore-to-hyphen conversion
+    
+*   Reserved Python keywords can now be used as subcommands by appending an
+	underscore `_` to them 
+
+
 ## 1.07 - 11/21/12
 
 *   Bugfix for PyDev when `locale.getpreferredencoding()` is empty.

@@ -176,8 +176,7 @@ for l in "andrew":
         
         out = tr("[:lower:]", "[:upper:]", _in="andrew").strip()
         self.assertEqual(out, "ANDREW")
-        
-        
+
     def test_manual_stdin_iterable(self):
         from sh import tr
         
@@ -292,6 +291,11 @@ print(sh.HERP + " " + str(len(os.environ)))
             import sh
             sh.awoefaowejfw
         self.assertRaises(CommandNotFound, do_import)
+        
+        def do_import():
+            import sh
+            sh.Command("ofajweofjawoe")
+        self.assertRaises(CommandNotFound, do_import)
 
 
     def test_command_wrapper_equivalence(self):
@@ -387,8 +391,38 @@ print(options.long_option.upper())
 """)
         self.assertTrue(python(py.name, long_option="testing").strip() == "TESTING")
         self.assertTrue(python(py.name).strip() == "")
+
+    def test_raw_args(self):
+        py = create_tmp_test("""
+from optparse import OptionParser
+parser = OptionParser()
+parser.add_option("--long_option", action="store", default=None,
+    dest="long_option1")
+parser.add_option("--long-option", action="store", default=None,
+    dest="long_option2")
+options, args = parser.parse_args()
+
+if options.long_option1:
+    print(options.long_option1.upper())
+else:
+    print(options.long_option2.upper())
+""")
+        self.assertEqual(python(py.name, 
+            {"long_option": "underscore"}).strip(), "UNDERSCORE")
         
-    
+        self.assertEqual(python(py.name, long_option="hyphen").strip(), "HYPHEN")
+
+    def test_custom_separator(self):
+        py = create_tmp_test("""
+import sys
+print(sys.argv[1])
+""")
+        self.assertEqual(python(py.name, 
+            {"long-option": "underscore"}, _long_sep="=custom=").strip(), "--long-option=custom=underscore")
+        # test baking too
+        python_baked = python.bake(py.name, {"long-option": "underscore"}, _long_sep="=baked=")
+        self.assertEqual(python_baked().strip(), "--long-option=baked=underscore")
+        
     def test_command_wrapper(self):
         from sh import Command, which
         
@@ -791,8 +825,11 @@ for i in range(5):
                 process.terminate()
                 return True
         
-        p = python(py.name, _out=agg, u=True)
-        p.wait()
+        try:
+            p = python(py.name, _out=agg, u=True)
+            p.wait()
+        except sh.SignalException_15:
+            pass
         
         self.assertEqual(p.process.exit_code, -signal.SIGTERM)
         self.assertTrue("4" not in p)
@@ -802,6 +839,7 @@ for i in range(5):
         
     def test_stdout_callback_kill(self):
         import signal
+        import sh
         
         py = create_tmp_test("""
 import sys
@@ -821,8 +859,11 @@ for i in range(5):
                 process.kill()
                 return True
         
-        p = python(py.name, _out=agg, u=True)
-        p.wait()
+        try:
+            p = python(py.name, _out=agg, u=True)
+            p.wait()
+        except sh.SignalException_9:
+            pass
         
         self.assertEqual(p.process.exit_code, -signal.SIGKILL)
         self.assertTrue("4" not in p)
@@ -923,7 +964,7 @@ import os
 import time
 
 for letter in "andrew":
-    time.sleep(0.5)
+    time.sleep(0.6)
     print(letter)
         """)
         
@@ -1155,7 +1196,8 @@ sys.stdin.read(1)
         sleep_for = 3
         timeout = 1
         started = time()
-        sh.sleep(sleep_for, _timeout=timeout).wait()
+        try: sh.sleep(sleep_for, _timeout=timeout).wait()
+        except sh.SignalException_9: pass
         elapsed = time() - started
         self.assertTrue(abs(elapsed - timeout) < 0.1)
         
@@ -1302,7 +1344,41 @@ sys.stdout.write("te漢字st")
         
         p = python(py.name, _encoding="ascii", _decode_errors="ignore")
         self.assertEqual(p, "test")
+
+
+    def test_shared_secial_args(self):
+        import sh
+
+        if IS_PY3:
+            from io import StringIO
+            from io import BytesIO as cStringIO
+        else:
+            from StringIO import StringIO
+            from cStringIO import StringIO as cStringIO
+            
+        out1 = sh.ls('.')
+        out2 = StringIO()
+        sh_new = sh(_out=out2)
+        sh_new.ls('.')
+        self.assertEqual(out1, out2.getvalue())
+        out2.close()
+
+
+    def test_signal_exception(self):
+        from sh import SignalException, get_rc_exc
         
+        def throw_terminate_signal():
+            py = create_tmp_test("""
+import time
+while True: time.sleep(1)
+""")
+            to_kill = python(py.name, _bg=True)
+            to_kill.terminate()
+            to_kill.wait()
+            
+        self.assertRaises(get_rc_exc(-15), throw_terminate_signal)
+
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
