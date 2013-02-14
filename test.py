@@ -1190,7 +1190,7 @@ sys.stdin.read(1)
         sh.sleep(sleep_for).wait()
         elapsed = time() - started
         
-        self.assertTrue(abs(elapsed - sleep_for) < 0.1)
+        self.assertTrue(abs(elapsed - sleep_for) < 0.5)
         
         # now make sure that killing early makes the process take less time
         sleep_for = 3
@@ -1199,7 +1199,7 @@ sys.stdin.read(1)
         try: sh.sleep(sleep_for, _timeout=timeout).wait()
         except sh.SignalException_9: pass
         elapsed = time() - started
-        self.assertTrue(abs(elapsed - timeout) < 0.1)
+        self.assertTrue(abs(elapsed - timeout) < 0.5)
         
         
     def test_binary_pipe(self):
