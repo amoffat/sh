@@ -148,10 +148,10 @@ def get_rc_exc(rc):
     
     if rc > 0:
         name = "ErrorReturnCode_%d" % rc
-        exc = type(name, (ErrorReturnCode,), {})
+        exc = type(name, (ErrorReturnCode,), {"exit_code": rc})
     else:
         name = "SignalException_%d" % abs(rc)
-        exc = type(name, (SignalException,), {})
+        exc = type(name, (SignalException,), {"exit_code": rc})
         
     rc_exc_cache[rc] = exc
     return exc
