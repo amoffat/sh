@@ -118,7 +118,8 @@ class ErrorReturnCode(Exception):
                 tstderr += ("... (%d more, please see e.stderr)" % err_delta).encode()
 
         msg = "\n\n  RAN: %r\n\n  STDOUT:\n%s\n\n  STDERR:\n%s" %\
-            (full_cmd, tstdout.decode(DEFAULT_ENCODING), tstderr.decode(DEFAULT_ENCODING))
+            (full_cmd, tstdout.decode(DEFAULT_ENCODING, "replace"),
+             tstderr.decode(DEFAULT_ENCODING, "replace"))
         super(ErrorReturnCode, self).__init__(msg)
         
         
@@ -454,7 +455,7 @@ class Command(object):
         "tty_out": True,
         
         "encoding": DEFAULT_ENCODING,
-        "decode_errors": "strict",
+        "decode_errors": "replace",
         
         # how long the process should run before it is auto-killed
         "timeout": 0,

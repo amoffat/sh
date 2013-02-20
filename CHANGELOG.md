@@ -4,6 +4,12 @@
 
 *   Added exit_code attribute to SignalException and ErrorReturnCode exception
 	classes.
+	
+*   Bugfix where throwing an ErrorReturnCode exception that had unicode on
+    a system with ascii encoding would fail a test. [#123](https://github.com/amoffat/sh/issues/123)
+    
+*   Changed default value for `_decode_errors` from "strict" to "replace". [#123](https://github.com/amoffat/sh/issues/123)
+
 
 ## 1.08 - 1/29/12
 
@@ -13,7 +19,7 @@
 *   Bugfix where CommandNotFound was not being raised if Command was created
     by instantiation.  [#113](https://github.com/amoffat/sh/issues/113)
 
-*   Bugfix for Commands that are wrapped with functools.wraps() [#121](https://github.com/amoffat/sh/issues/121]
+*   Bugfix for Commands that are wrapped with functools.wraps() [#121](https://github.com/amoffat/sh/issues/121)
 
 *   Bugfix where input arguments were being assumed as ascii or unicode, but
     never as a string in a different encoding.
