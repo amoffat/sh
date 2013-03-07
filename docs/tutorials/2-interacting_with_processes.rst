@@ -13,7 +13,7 @@ To interact with a process, we need to assign a callback to STDOUT.  See
 :ref:`tutorial1` for in-depth explanation of callbacks.  Unlike Tutorial 1,
 this callback
 will take 2 arguments: the STDOUT chunk and
-and a STDIN `Queue <http://docs.python.org/library/queue.html#queue-objects>`_
+a STDIN `Queue <http://docs.python.org/library/queue.html#queue-objects>`_
 object that we will ``.put()`` input on to send back to the process.
 
 Here's our first attempt::
