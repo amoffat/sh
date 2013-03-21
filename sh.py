@@ -320,6 +320,10 @@ class RunningCommand(object):
     def stderr(self):
         self.wait()
         return self.process.stderr
+
+    @property
+    def output(self):
+        return self.stdout + "\n" + self.stderr
     
     @property
     def exit_code(self):
