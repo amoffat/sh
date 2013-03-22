@@ -97,11 +97,12 @@ if IS_PY3:
 class ErrorReturnCode(Exception):
     truncate_cap = 750
 
-    def __init__(self, full_cmd, stdout, stderr):
+    def __init__(self, full_cmd, code, stdout, stderr):
         self.full_cmd = full_cmd
+        self.exit_code = code
         self.stdout = stdout
         self.stderr = stderr
-
+        self.output = stdout + "\n" + stderr
 
         if self.stdout is None: tstdout = "<redirected>"
         else:
@@ -305,6 +306,7 @@ class RunningCommand(object):
         (code > 0 or -code in SIGNALS_THAT_SHOULD_THROW_EXCEPTION):
             raise get_rc_exc(code)(
                 " ".join(self.cmd),
+                code,
                 self.process.stdout,
                 self.process.stderr
             )
