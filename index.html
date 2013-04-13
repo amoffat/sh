@@ -561,12 +561,39 @@ try something like this:</p>
 </div>
 <div class="section" id="ttys">
 <span id="id10"></span><h2>TTYs<a class="headerlink" href="#ttys" title="Permalink to this headline">¶</a></h2>
-<p>By default, sh does not attach a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal#Applications">TTY</a>
-to STDIN, instead it uses pipes.  However,
-some programs behave differently depending on if a TTY is attached to STDIN.
-If you need to attach a TTY,
-use the <a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword argument</em></a>
-<tt class="docutils literal"><span class="pre">_tty_in</span></tt>.</p>
+<p>Some applications behave differently depending on whether their standard file
+descriptors are attached to a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal#Applications">TTY</a> or not. For
+example, <a class="reference external" href="http://git-scm.com/">git</a> will disable features intended for humans
+such as colored and paged output when STDOUT is not attached to a TTY. Other
+programs may disable interactive input if a TTY is not attached to STDIN. Still
+other programs, such as SSH (without <tt class="docutils literal"><span class="pre">-n</span></tt>), <em>expect</em> their input to come from a
+TTY/terminal.</p>
+<p>By default, sh emulates a TTY for STDOUT but not for STDIN. You can change
+the default behavior by passing in extra
+<a class="reference internal" href="special_arguments.html#special-arguments"><em>special keyword arguments</em></a>, as such:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="23%" />
+<col width="31%" />
+<col width="46%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">FD</th>
+<th class="head">KEYWORD</th>
+<th class="head">DEFAULT</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>STDOUT</td>
+<td>_tty_out</td>
+<td>True (tty)</td>
+</tr>
+<tr class="row-odd"><td>STDIN</td>
+<td>_tty_in</td>
+<td>False (pipe)</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 
