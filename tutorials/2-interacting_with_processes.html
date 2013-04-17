@@ -54,7 +54,7 @@ but for the purposes of this demonstration, we try to enter a password.</p>
 <p>To interact with a process, we need to assign a callback to STDOUT.  See
 <a class="reference internal" href="1-real_time_output.html#tutorial1"><em>Tutorial 1: Tailing a real-time log file</em></a> for in-depth explanation of callbacks.  Unlike Tutorial 1,
 this callback
-will take 2 arguments: the STDOUT chunk and
+will take 2 arguments: the STDOUT chunk
 and a STDIN <a class="reference external" href="http://docs.python.org/library/queue.html#queue-objects">Queue</a>
 object that we will <tt class="docutils literal"><span class="pre">.put()</span></tt> input on to send back to the process.</p>
 <p>Here&#8217;s our first attempt:</p>

@@ -12,7 +12,7 @@ but for the purposes of this demonstration, we try to enter a password.
 To interact with a process, we need to assign a callback to STDOUT.  See
 :ref:`tutorial1` for in-depth explanation of callbacks.  Unlike Tutorial 1,
 this callback
-will take 2 arguments: the STDOUT chunk and
+will take 2 arguments: the STDOUT chunk
 and a STDIN `Queue <http://docs.python.org/library/queue.html#queue-objects>`_
 object that we will ``.put()`` input on to send back to the process.
 
