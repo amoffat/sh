@@ -570,9 +570,22 @@ to pass a dictionary of environement variables and their corresponding values::
 TTYs
 ----
 
-By default, sh does not attach a `TTY <http://en.wikipedia.org/wiki/Pseudo_terminal#Applications>`_
-to STDIN, instead it uses pipes.  However,
-some programs behave differently depending on if a TTY is attached to STDIN.
-If you need to attach a TTY,
-use the :ref:`special keyword argument <special_arguments>`
-``_tty_in``.
+Some applications behave differently depending on whether their standard file
+descriptors are attached to a `TTY
+<http://en.wikipedia.org/wiki/Pseudo_terminal#Applications>`_ or not. For
+example, `git <http://git-scm.com/>`_ will disable features intended for humans
+such as colored and paged output when STDOUT is not attached to a TTY. Other
+programs may disable interactive input if a TTY is not attached to STDIN. Still
+other programs, such as SSH (without ``-n``), *expect* their input to come from a
+TTY/terminal.
+
+By default, sh emulates a TTY for STDOUT but not for STDIN. You can change
+the default behavior by passing in extra
+:ref:`special keyword arguments <special_arguments>`, as such:
+
+======  ========  ============
+FD      KEYWORD   DEFAULT
+======  ========  ============
+STDOUT  _tty_out  True (tty)
+STDIN   _tty_in   False (pipe)
+======  ========  ============
