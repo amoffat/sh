@@ -3,13 +3,23 @@
 import sh
 from os.path import abspath, join, dirname 
 import logging
+import sys
+
 
 THIS_DIR = dirname(abspath(__file__))
 DOCS_DIR = join(THIS_DIR, "_docs_sources")
 
 
-
 if __name__ == "__main__":
+    try: sh_version = sys.argv[1]
+    except IndexError:
+        print("ERROR: Please pass in the sh version to embed in the \
+docs (ex: '1.08')")
+        exit(1)
+        
+    with open(join(DOCS_DIR, "sh_version"), "w") as h:
+        h.write(sh_version)
+    
     logging.basicConfig(level=logging.INFO)
     
     logging.info("compiling docs with sphinx")
@@ -18,4 +28,5 @@ if __name__ == "__main__":
     
     logging.info("cleaning up cruft")
     sh.rm(join(THIS_DIR, "objects.inv"))
+    sh.rm(join(DOCS_DIR, "sh_version"))
     sh.rm(join(THIS_DIR, "doctrees"), "-rf")

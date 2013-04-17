@@ -4,7 +4,7 @@
  *
  * Sphinx stylesheet -- basic theme.
  *
- * :copyright: Copyright 2007-2011 by the Sphinx team, see AUTHORS.
+ * :copyright: Copyright 2007-2010 by the Sphinx team, see AUTHORS.
  * :license: BSD, see LICENSE for details.
  *
  */
@@ -77,14 +77,6 @@ div.sphinxsidebar input {
     border: 1px solid #98dbcc;
     font-family: sans-serif;
     font-size: 1em;
-}
-
-div.sphinxsidebar #searchbox input[type="text"] {
-    width: 170px;
-}
-
-div.sphinxsidebar #searchbox input[type="submit"] {
-    width: 30px;
 }
 
 img {
@@ -221,29 +213,12 @@ p.rubric {
     font-weight: bold;
 }
 
-img.align-left, .figure.align-left, object.align-left {
-    clear: left;
-    float: left;
-    margin-right: 1em;
-}
-
-img.align-right, .figure.align-right, object.align-right {
-    clear: right;
-    float: right;
-    margin-left: 1em;
-}
-
-img.align-center, .figure.align-center, object.align-center {
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-}
-
 .align-left {
     text-align: left;
 }
 
 .align-center {
+    clear: both;
     text-align: center;
 }
 
@@ -420,7 +395,7 @@ dl.glossary dt {
 }
 
 .footnote:target  {
-    background-color: #ffa;
+    background-color: #ffa
 }
 
 .line-block {
@@ -447,16 +422,10 @@ dl.glossary dt {
     font-style: oblique;
 }
 
-abbr, acronym {
-    border-bottom: dotted 1px;
-    cursor: help;
-}
-
 /* -- code displays --------------------------------------------------------- */
 
 pre {
     overflow: auto;
-    overflow-y: hidden;  /* fixes display issues on Chrome browsers */
 }
 
 td.linenos pre {
