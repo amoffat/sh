@@ -41,6 +41,7 @@ IS_PY3 = sys.version_info[0] == 3
 import traceback
 import os
 import re
+import shlex
 from glob import glob as original_glob
 from types import ModuleType
 from functools import partial
@@ -523,6 +524,7 @@ class Command(object):
 
         if name.startswith("_"): return getattr(name)
         if name == "bake": return getattr("bake")
+        if name == "parse": return getattr("parse")
         if name.endswith("_"): name = name[:-1]
         
         return getattr("bake")(name)
@@ -609,8 +611,10 @@ If you're using glob.glob(), please use sh.glob() instead." % self.path, stackle
         processed_args += self._aggregate_keywords(kwargs, sep)
 
         return processed_args
- 
-    
+
+    def parse(self, args_as_str, **kwargs):
+        return self(*shlex.split(args_as_str), **kwargs)
+
     # TODO needs documentation
     def bake(self, *args, **kwargs):
         fn = Command(self._path)
