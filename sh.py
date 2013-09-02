@@ -347,7 +347,7 @@ class RunningCommand(object):
         # we do this because if get blocks, we can't catch a KeyboardInterrupt
         # so the slight timeout allows for that.
         while True:
-            try: chunk = self.process._pipe_queue.get(False, .001)
+            try: chunk = self.process._pipe_queue.get(True, 0.001)
             except Empty:
                 if self.call_args["iter_noblock"]: return errno.EWOULDBLOCK
             else:
