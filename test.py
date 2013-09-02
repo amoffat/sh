@@ -1379,6 +1379,62 @@ while True: time.sleep(1)
         self.assertRaises(get_rc_exc(-15), throw_terminate_signal)
 
 
+    def test_file_output_isnt_buffered(self):
+        # https://github.com/amoffat/sh/issues/147
+        
+        import time
+        
+        expected_time_increment = 0.1
+        py = create_tmp_test("""
+from time import sleep
+import sys
+
+for i in range(10):
+    print(i)
+    i += 1
+    sleep(%.2f)
+""" % expected_time_increment)
+        
+        file_obj = tempfile.TemporaryFile()
+        p = python(py.name, _out=file_obj, _bg=True)
+        
+        # now we're going to test that the output file receives a chunk of
+        # data roughly every expected_time_increment seconds, to prove that
+        # output is being flushed
+        
+        last_pos = 0
+        last_pos_time = 0
+        times = []
+        timeout = 5
+        started = time.time()
+        for i in range(10):
+            while True:
+                now = time.time()
+                if now - started > timeout:
+                    self.assertTrue(False, "timed out")
+                    
+                file_obj.seek(0, 2)
+                cur_pos = file_obj.tell()
+                if cur_pos > last_pos:
+                    last_pos = cur_pos
+                    if last_pos_time == 0:
+                        delta = 0
+                    else:
+                        delta = now - last_pos_time
+                    
+                    if last_pos_time > 0:
+                        self.assertLessEqual(abs(delta - expected_time_increment),
+                            expected_time_increment * 0.1)
+                        
+                    last_pos_time = now
+                    break
+                
+                time.sleep(0.01)
+                
+        p.wait()
+        file_obj.close()
+
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

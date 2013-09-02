@@ -1365,6 +1365,9 @@ class StreamReader(object):
         elif self.handler_type in ("cstringio", "fd"):
             self.handler.write(chunk)
             
+            # we should flush on an fd.  chunk is already the correctly-buffered
+            # size, so we don't need the fd buffering as well
+            self.handler.flush()
 
         if self.save_data:
             self.buffer.append(chunk)
