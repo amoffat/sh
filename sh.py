@@ -1013,9 +1013,14 @@ class OProc(object):
         # running, and closing the fd will cause some operation to
         # fail.  this is less complex than wrapping all the ops
         # in the above loop with out-of-band fd-close exceptions
-        while self.alive: _time.sleep(0.001)
-        if stdout: stdout.close()
-        if stderr: stderr.close()
+        while self.alive:
+            _time.sleep(0.001)
+            
+        if stdout:
+            stdout.close()
+            
+        if stderr:
+            stderr.close()
 
 
     @property
@@ -1337,8 +1342,10 @@ class StreamReader(object):
         if self.handler_type == "fn" and not self.should_quit:
             # try to use the encoding first, if that doesn't work, send
             # the bytes, because it might be binary
-            try: to_handler = chunk.decode(self.encoding, self.decode_errors)
-            except UnicodeDecodeError: to_handler = chunk
+            try:
+                to_handler = chunk.decode(self.encoding, self.decode_errors)
+            except UnicodeDecodeError:
+                to_handler = chunk
             
             # this is really ugly, but we can't store self.process as one of
             # the handler args in self.handler_args, the reason being is that
