@@ -1,1 +1,5 @@
 include AUTHORS.md LICENSE.txt README.md test.py
+
+global-exclude *.pyc
+global-exclude .gitignore
+global-exclude .DS_Store
