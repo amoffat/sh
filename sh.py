@@ -153,6 +153,8 @@ def get_rc_exc(rc):
         name = "SignalException_%d" % abs(rc)
         exc = type(name, (SignalException,), {})
         
+    exc.return_code = int(rc)
+
     rc_exc_cache[rc] = exc
     return exc
 
