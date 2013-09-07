@@ -6,6 +6,10 @@
 
 *   Added exit_code attribute to SignalException and ErrorReturnCode exception
     classes. [#127](https://github.com/amoffat/sh/issues/127)
+    
+*   Making the default behavior of spawned processes to not be explicitly
+    killed when the parent python process ends. Also making the spawned process
+    ignore SIGHUP. [#139](https://github.com/amoffat/sh/issues/139)
 
 ## 1.08 - 1/29/12
 

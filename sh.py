@@ -782,7 +782,7 @@ class OProc(object):
     _default_window_size = (24, 80)
 
     def __init__(self, cmd, stdin, stdout, stderr, call_args,
-            persist=False, pipe=STDOUT):
+            persist=True, pipe=STDOUT):
 
         self.call_args = call_args
 
@@ -830,6 +830,10 @@ class OProc(object):
 
         # child
         if self.pid == 0:
+            # ignoring SIGHUP lets us persist even after the parent process
+            # exits
+            signal.signal(signal.SIGHUP, signal.SIG_IGN)
+            
             # this piece of ugliness is due to a bug where we can lose output
             # if we do os.close(self._slave_stdout_fd) in the parent after
             # the child starts writing.
@@ -923,7 +927,8 @@ class OProc(object):
                 if stderr is not STDOUT: os.close(self._slave_stderr_fd)
             
             self.log.debug("started process")
-            if not persist: OProc._procs_to_cleanup.add(self)
+            if not persist:
+                OProc._procs_to_cleanup.add(self)
 
 
             if self.call_args["tty_in"]:
