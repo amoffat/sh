@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.09 -
+
+*   Added exit_code attribute to SignalException and ErrorReturnCode exception
+	classes.
 
 ## 1.08 - 1/29/12
 
