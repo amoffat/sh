@@ -485,6 +485,9 @@ class Command(object):
         "iter_noblock": None,
         "ok_code": 0,
         "cwd": None,
+        
+        # the separator delimiting between a long-argument's name and its value
+        # for example, --arg=derp, '=' is the long_sep
         "long_sep": "=",
         
         # this is for programs that expect their input to be from a terminal.
