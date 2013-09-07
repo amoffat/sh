@@ -25,10 +25,13 @@ if not skipUnless:
         return wrapper
 
 requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
-
+requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
 
 
 def create_tmp_test(code):
+    """ creates a temporary test file that lives on disk, on which we can run
+    python with sh """
+    
     py = tempfile.NamedTemporaryFile()
     if IS_PY3: code = bytes(code, "UTF-8")
     py.write(code)
@@ -41,7 +44,7 @@ def create_tmp_test(code):
 
 
 @requires_posix
-class Basic(unittest.TestCase):
+class FunctionalTests(unittest.TestCase):
 
     def test_print_command(self):
         from sh import ls, which
@@ -49,14 +52,18 @@ class Basic(unittest.TestCase):
         out = str(ls)
         self.assertEqual(out, actual_location)
 
+
     def test_unicode_arg(self):
         from sh import echo
         
         test = "漢字"
-        if not IS_PY3: test = test.decode("utf8")
+        if not IS_PY3:
+            test = test.decode("utf8")
         
-        p = echo(test).strip()
-        self.assertEqual(test, p)
+        p = echo(test, _encoding="utf8")        
+        output = p.strip()
+        self.assertEqual(test, output)
+        
 
     def test_number_arg(self):
         py = create_tmp_test("""
@@ -1263,9 +1270,13 @@ exit(1)
     # an UnicodeDecodeError
     def test_non_ascii_error(self):
         from sh import ls, ErrorReturnCode
-        
+                
         test = "/á"
-        if not IS_PY3:
+        
+        # coerce to unicode
+        if IS_PY3:
+            pass
+        else:
             test = test.decode("utf8")
         
         self.assertRaises(ErrorReturnCode, ls, test)
@@ -1337,7 +1348,13 @@ sys.stderr.write("stderr")
         py = create_tmp_test("""
 # -*- coding: utf8 -*-
 import sys
-sys.stdout.write("te漢字st")
+import os
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb')
+IS_PY3 = sys.version_info[0] == 3
+if IS_PY3:
+    sys.stdout.write(bytes("te漢字st", "utf8"))
+else:
+    sys.stdout.write("te漢字st")
 """)
         fn = partial(python, py.name, _encoding="ascii")
         def s(fn): str(fn())
@@ -1441,5 +1458,5 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         unittest.main()
     else:
-        suite = unittest.TestLoader().loadTestsFromTestCase(Basic)
+        suite = unittest.TestLoader().loadTestsFromTestCase(FunctionalTests)
         unittest.TextTestRunner(verbosity=2).run(suite)
