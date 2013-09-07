@@ -1265,7 +1265,8 @@ exit(1)
         from sh import ls, ErrorReturnCode
         
         test = "/á"
-        if not IS_PY3: test = test.decode("utf8")
+        if not IS_PY3:
+            test = test.decode("utf8")
         
         self.assertRaises(ErrorReturnCode, ls, test)
         
