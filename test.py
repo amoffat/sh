@@ -81,6 +81,17 @@ print(args[0])
         self.assertEqual(ls("/").exit_code, 0)
         self.assertRaises(ErrorReturnCode, ls, "/aofwje/garogjao4a/eoan3on")
         
+        
+    def test_exit_code_from_exception(self):
+        from sh import ls, ErrorReturnCode
+        self.assertRaises(ErrorReturnCode, ls, "/aofwje/garogjao4a/eoan3on")
+
+        try:
+            ls("/aofwje/garogjao4a/eoan3on")
+        except Exception as e:
+            self.assertEqual(e.exit_code, 2)
+            
+        
     def test_glob_warning(self):
         from sh import ls
         from glob import glob
