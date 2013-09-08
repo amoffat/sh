@@ -1452,7 +1452,7 @@ for i in range(10):
                         delta = now - last_pos_time
 
                     if last_pos_time > 0:
-                        self.assertLessEqual(abs(delta - expected_time_increment),
+                        self.assertTrue(abs(delta - expected_time_increment) <=
                             expected_time_increment * 0.1)
 
                     last_pos_time = now
