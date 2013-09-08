@@ -1624,13 +1624,17 @@ Please import sh or import programs individually.")
                 m = rc_exc_regex.match(k)
                 if m:
                     exit_code = int(m.group(2))
-                    if m.group(1) == "SignalException": exit_code = -exit_code
+                    if m.group(1) == "SignalException":
+                        exit_code = -exit_code
                     return get_rc_exc(exit_code)
 
             # is it a builtin?
-            try: return getattr(self["__builtins__"], k)
-            except AttributeError: pass
-        elif not k.startswith("_"): k = k.rstrip("_")
+            try:
+                return getattr(self["__builtins__"], k)
+            except AttributeError:
+                pass
+        elif not k.startswith("_"):
+            k = k.rstrip("_")
 
 
         # https://github.com/ipython/ipython/issues/2577
@@ -1725,8 +1729,10 @@ class SelfWrapper(ModuleType):
 
 # we're being run as a stand-alone script
 if __name__ == "__main__":
-    try: arg = sys.argv.pop(1)
-    except: arg = None
+    try:
+        arg = sys.argv.pop(1)
+    except:
+        arg = None
 
     if arg == "test":
         import subprocess
@@ -1736,7 +1742,8 @@ if __name__ == "__main__":
             py_bin = which(py_version)
 
             if py_bin:
-                print("Testing %s, locale %r" % (py_version.capitalize(), locale))
+                print("Testing %s, locale %r" % (py_version.capitalize(),
+                    locale))
 
                 env = os.environ.copy()
                 env["LC_ALL"] = locale
