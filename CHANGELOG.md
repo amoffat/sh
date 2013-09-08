@@ -1,10 +1,23 @@
 # Changelog
 
+## 1.09 -
+
+*   Fixed encoding errors related to a system encoding "ascii". [#123](https://github.com/amoffat/sh/issues/123)
+
+*   Added exit_code attribute to SignalException and ErrorReturnCode exception
+    classes. [#127](https://github.com/amoffat/sh/issues/127)
+    
+*   Making the default behavior of spawned processes to not be explicitly
+    killed when the parent python process ends. Also making the spawned process
+    ignore SIGHUP. [#139](https://github.com/amoffat/sh/issues/139)
+    
+*   Made OSX sleep hack to apply to PY2 as well as PY3.
+
 
 ## 1.08 - 1/29/12
 
 *	Added SignalException class and made all commands that end terminate by
-	a signal defined in SIGNALS_THAT_SHOULD_THROW_EXCEPTION raise it. [#91](https://github.com/amoffat/sh/issues/91)
+    a signal defined in SIGNALS_THAT_SHOULD_THROW_EXCEPTION raise it. [#91](https://github.com/amoffat/sh/issues/91)
 
 *   Bugfix where CommandNotFound was not being raised if Command was created
     by instantiation.  [#113](https://github.com/amoffat/sh/issues/113)
@@ -21,7 +34,7 @@
     interpretted "raw", with no underscore-to-hyphen conversion
     
 *   Reserved Python keywords can now be used as subcommands by appending an
-	underscore `_` to them 
+    underscore `_` to them 
 
 
 ## 1.07 - 11/21/12
@@ -31,18 +44,18 @@
 *   Fixes for IPython3 that involve `sh.<tab>` and `sh?`
 
 *   Added `_tee` special keyword argument to force stdout/stderr to store
-	internally and make available for piping data that is being redirected.
+    internally and make available for piping data that is being redirected.
 
 *   Added `_decode_errors` to be passed to all stdout/stderr decoding of a
     process.
 
 *   Added `_no_out`, `_no_err`, and `_no_pipe` special keyword arguments.  These
-	are used for long-running processes with lots of output.
-	
+    are used for long-running processes with lots of output.
+    
 *   Changed custom loggers that were created for each process to fixed loggers,
     so there are no longer logger references laying around in the logging
     module after the process ends and it garbage collected.
-	
+    
 
 ## 1.06 - 11/10/12
 
@@ -51,11 +64,11 @@
 *   Bugfix where `logging_enabled` could not be set from the importing module.
 
 *   Disabled garbage collection before fork to prevent garbage collection in
-	child process.
-	
+    child process.
+    
 *   Major bugfix where cyclical references were preventing process objects
-	(and their associated stdout/stderr buffers) from being garbage collected.
-	
+    (and their associated stdout/stderr buffers) from being garbage collected.
+    
 *   Bugfix in RunningCommand and OProc loggers, which could get really huge if
     a command was called that had a large number of arguments.
 
