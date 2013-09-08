@@ -76,20 +76,28 @@ print(args[0])
         out = python(py.name, 3).strip()
         self.assertEqual(out, "3")
 
+
     def test_exit_code(self):
-        from sh import ls, ErrorReturnCode
-        self.assertEqual(ls("/").exit_code, 0)
-        self.assertRaises(ErrorReturnCode, ls, "/aofwje/garogjao4a/eoan3on")
+        from sh import ErrorReturnCode
+        py = create_tmp_test("""
+exit(3)
+""")
+
+        self.assertRaises(ErrorReturnCode, python, py.name)
 
 
     def test_exit_code_from_exception(self):
-        from sh import ls, ErrorReturnCode
-        self.assertRaises(ErrorReturnCode, ls, "/aofwje/garogjao4a/eoan3on")
+        from sh import ErrorReturnCode
+        py = create_tmp_test("""
+exit(3)
+""")
+
+        self.assertRaises(ErrorReturnCode, python, py.name)
 
         try:
-            ls("/aofwje/garogjao4a/eoan3on")
+            python(py.name)
         except Exception as e:
-            self.assertEqual(e.exit_code, 2)
+            self.assertEqual(e.exit_code, 3)
 
 
     def test_glob_warning(self):
@@ -942,12 +950,14 @@ for i in range(42):
 
 
     def test_nonblocking_iter(self):
-        import tempfile
-        from sh import tail
         from errno import EWOULDBLOCK
 
-        tmp = tempfile.NamedTemporaryFile()
-        for line in tail("-f", tmp.name, _iter_noblock=True): break
+        py = create_tmp_test("""
+import time
+time.sleep(3)
+""")
+        for line in python(py.name, _iter_noblock=True):
+            break
         self.assertEqual(line, EWOULDBLOCK)
 
 
