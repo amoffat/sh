@@ -10,6 +10,9 @@
 *   Making the default behavior of spawned processes to not be explicitly
     killed when the parent python process ends. Also making the spawned process
     ignore SIGHUP. [#139](https://github.com/amoffat/sh/issues/139)
+    
+*   Made OSX sleep hack to apply to PY2 as well as PY3.
+
 
 ## 1.08 - 1/29/12
 
