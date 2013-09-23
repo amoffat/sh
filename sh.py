@@ -460,6 +460,8 @@ class Command(object):
         "out": None, # redirect STDOUT
         "err": None, # redirect STDERR
         "err_to_out": None, # redirect STDERR to STDOUT
+        "callback_kwargs": {}, # arguments to pass to callback function
+            #in either _err or _out
 
         # stdin buffer size
         # 1 for line, 0 for unbuffered, any other number for that amount
@@ -958,7 +960,7 @@ class OProc(object):
                 (self.call_args["tee"] in (True, "out") or stdout is None)
             self._stdout_stream = StreamReader("stdout", self, self._stdout_fd, stdout,
                 self._stdout, self.call_args["out_bufsize"], stdout_pipe,
-                save_data=save_stdout)
+                save_data=save_stdout, handler_kwargs=self.call_args["callback_kwargs"])
 
 
             if stderr is STDOUT or self._single_tty: self._stderr_stream = None
@@ -971,7 +973,7 @@ class OProc(object):
                     (self.call_args["tee"] in ("err",) or stderr is None)
                 self._stderr_stream = StreamReader("stderr", self, self._stderr_fd, stderr,
                     self._stderr, self.call_args["err_bufsize"], stderr_pipe,
-                    save_data=save_stderr)
+                    save_data=save_stderr, handler_kwargs=self.call_args["callback_kwargs"])
 
             # start the main io threads
             self._input_thread = self._start_thread(self.input_thread, self._stdin_stream)
@@ -1302,7 +1304,7 @@ class StreamWriter(object):
 
 class StreamReader(object):
     def __init__(self, name, process, stream, handler, buffer, bufsize,
-            pipe_queue=None, save_data=True):
+            pipe_queue=None, save_data=True, handler_kwargs={}):
         self.name = name
         self.process = weakref.ref(process)
         self.stream = stream
@@ -1310,6 +1312,7 @@ class StreamReader(object):
         self.save_data = save_data
         self.encoding = process.call_args["encoding"]
         self.decode_errors = process.call_args["decode_errors"]
+        self.handler_kwargs = handler_kwargs
 
         self.pipe_queue = None
         if pipe_queue: self.pipe_queue = weakref.ref(pipe_queue)
@@ -1363,7 +1366,7 @@ class StreamReader(object):
             self.handler_args = ()
             if num_args == implied_arg + 2:
                 self.handler_args = (self.process().stdin,)
-            elif num_args == implied_arg + 3:
+            elif num_args >= implied_arg + 3:
                 self.handler_args = (self.process().stdin, self.process)
 
 
@@ -1408,7 +1411,7 @@ class StreamReader(object):
             handler_args = self.handler_args
             if len(self.handler_args) == 2:
                 handler_args = (self.handler_args[0], self.process())
-            self.should_quit = self.handler(to_handler, *handler_args)
+            self.should_quit = self.handler(to_handler, *handler_args, **self.handler_kwargs)
 
         elif self.handler_type == "stringio":
             self.handler.write(chunk.decode(self.encoding, self.decode_errors))
