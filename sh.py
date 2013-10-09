@@ -793,7 +793,11 @@ class OProc(object):
             persist=True, pipe=STDOUT):
 
         self.call_args = call_args
-        if self.call_args["piped"] == "direct": self.call_args["tty_out"] = False
+        
+        # I had issues with getting 'Input/Output error reading stdin' from dd,
+        # until I set _tty_out=False
+        if self.call_args["piped"] == "direct":
+            self.call_args["tty_out"] = False
 
         self._single_tty = self.call_args["tty_in"] and self.call_args["tty_out"]
 
