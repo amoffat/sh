@@ -342,6 +342,7 @@ class RunningCommand(object):
 
         if code not in self.call_args["ok_code"] and \
         (code > 0 or -code in SIGNALS_THAT_SHOULD_THROW_EXCEPTION):
+            #print self.process.stderr
             raise get_rc_exc(code)(
                 self.ran,
                 self.process.stdout,
@@ -481,6 +482,7 @@ class Command(object):
 
         "env": None,
         "piped": None,
+        "direct": None,
         "iter": None,
         "iter_noblock": None,
         "ok_code": 0,
@@ -734,7 +736,10 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
                 # in the background, then this command should run in the
                 # background as well
                 if first_arg.call_args["bg"]: call_args["bg"] = True
-                stdin = first_arg.process._pipe_queue
+                if first_arg.call_args["piped"] == "direct":
+                    stdin = first_arg.process
+                else:
+                    stdin = first_arg.process._pipe_queue
 
             else:
                 args.insert(0, first_arg)
@@ -788,6 +793,7 @@ class OProc(object):
             persist=True, pipe=STDOUT):
 
         self.call_args = call_args
+        if self.call_args["piped"] == "direct": self.call_args["tty_out"] = False
 
         self._single_tty = self.call_args["tty_in"] and self.call_args["tty_out"]
 
@@ -806,7 +812,10 @@ class OProc(object):
 
         # do not consolidate stdin and stdout
         else:
-            if self.call_args["tty_in"]:
+            if isinstance(stdin, OProc):
+                self._slave_stdin_fd = stdin._stdout_fd
+                self._stdin_fd = None
+            elif self.call_args["tty_in"]:
                 self._slave_stdin_fd, self._stdin_fd = pty.openpty()
             else:
                 self._slave_stdin_fd, self._stdin_fd = os.pipe()
@@ -857,7 +866,9 @@ class OProc(object):
                 tty.setraw(self._stdout_fd)
 
 
-            os.close(self._stdin_fd)
+            if self._stdin_fd:
+                os.close(self._stdin_fd)
+                
             if not self._single_tty:
                 os.close(self._stdout_fd)
                 if stderr is not STDOUT: os.close(self._stderr_fd)
@@ -942,9 +953,8 @@ class OProc(object):
 
             # this represents the connection from a Queue object (or whatever
             # we're using to feed STDIN) to the process's STDIN fd
-            self._stdin_stream = StreamWriter("stdin", self, self._stdin_fd,
-                self.stdin, self.call_args["in_bufsize"])
-
+            self._stdin_stream = None if isinstance(self.stdin, OProc) else \
+                StreamWriter("stdin", self, self._stdin_fd, self.stdin, self.call_args["in_bufsize"])
 
             stdout_pipe = None
             if pipe is STDOUT and not self.call_args["no_pipe"]:
@@ -956,10 +966,11 @@ class OProc(object):
             # that we use to aggregate all the output
             save_stdout = not self.call_args["no_out"] and \
                 (self.call_args["tee"] in (True, "out") or stdout is None)
-            self._stdout_stream = StreamReader("stdout", self, self._stdout_fd, stdout,
-                self._stdout, self.call_args["out_bufsize"], stdout_pipe,
-                save_data=save_stdout)
-
+            
+            self._stdout_stream = None if self.call_args["piped"] == "direct" else \
+                StreamReader("stdout", self, self._stdout_fd, stdout,
+                    self._stdout, self.call_args["out_bufsize"], stdout_pipe,
+                    save_data=save_stdout)
 
             if stderr is STDOUT or self._single_tty: self._stderr_stream = None
             else:
@@ -974,7 +985,8 @@ class OProc(object):
                     save_data=save_stderr)
 
             # start the main io threads
-            self._input_thread = self._start_thread(self.input_thread, self._stdin_stream)
+            # stdin thread is not needed if we are connecting from another process's stdout pipe
+            self._input_thread = None if not self._stdin_stream else self._start_thread(self.input_thread, self._stdin_stream)
             self._output_thread = self._start_thread(self.output_thread, self._stdout_stream, self._stderr_stream)
 
 
@@ -1154,7 +1166,7 @@ class OProc(object):
             else:
                 self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
 
-            self._input_thread.join()
+            if self._input_thread: self._input_thread.join()
             self._output_thread.join()
 
             OProc._procs_to_cleanup.discard(self)
