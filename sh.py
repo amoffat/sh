@@ -342,7 +342,6 @@ class RunningCommand(object):
 
         if code not in self.call_args["ok_code"] and \
         (code > 0 or -code in SIGNALS_THAT_SHOULD_THROW_EXCEPTION):
-            #print self.process.stderr
             raise get_rc_exc(code)(
                 self.ran,
                 self.process.stdout,
@@ -482,7 +481,6 @@ class Command(object):
 
         "env": None,
         "piped": None,
-        "direct": None,
         "iter": None,
         "iter_noblock": None,
         "ok_code": 0,
