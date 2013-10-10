@@ -736,7 +736,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
                 # in the background, then this command should run in the
                 # background as well
                 if first_arg.call_args["bg"]: call_args["bg"] = True
-                if first_arg.call_args["piped"] == "direct":
+                if first_arg.call_args["piped"]:
                     stdin = first_arg.process
                 else:
                     stdin = first_arg.process._pipe_queue
@@ -796,7 +796,7 @@ class OProc(object):
         
         # I had issues with getting 'Input/Output error reading stdin' from dd,
         # until I set _tty_out=False
-        if self.call_args["piped"] == "direct":
+        if self.call_args["piped"]:
             self.call_args["tty_out"] = False
 
         self._single_tty = self.call_args["tty_in"] and self.call_args["tty_out"]
@@ -971,7 +971,7 @@ class OProc(object):
             save_stdout = not self.call_args["no_out"] and \
                 (self.call_args["tee"] in (True, "out") or stdout is None)
             
-            self._stdout_stream = None if self.call_args["piped"] == "direct" else \
+            self._stdout_stream = None if self.call_args["piped"] else \
                 StreamReader("stdout", self, self._stdout_fd, stdout,
                     self._stdout, self.call_args["out_bufsize"], stdout_pipe,
                     save_data=save_stdout)
