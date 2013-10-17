@@ -733,7 +733,9 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
                 # it makes sense that if the input pipe of a command is running
                 # in the background, then this command should run in the
                 # background as well
-                if first_arg.call_args["bg"]: call_args["bg"] = True
+                if first_arg.call_args["bg"]:
+                    call_args["bg"] = True
+                    
                 if first_arg.call_args["piped"]:
                     stdin = first_arg.process
                 else:
@@ -812,8 +814,12 @@ class OProc(object):
             self._stderr_fd = self._stdin_fd
             self._slave_stderr_fd = self._slave_stdin_fd
 
-        # do not consolidate stdin and stdout
+        # do not consolidate stdin and stdout.  this is the most common use-
+        # case
         else:
+            # this check here is because we may be doing "direct" piping
+            # (_piped="direct"), and so our stdin might be an instance of
+            # OProc
             if isinstance(stdin, OProc):
                 self._slave_stdin_fd = stdin._stdout_fd
                 self._stdin_fd = None
@@ -821,6 +827,7 @@ class OProc(object):
                 self._slave_stdin_fd, self._stdin_fd = pty.openpty()
             else:
                 self._slave_stdin_fd, self._stdin_fd = os.pipe()
+                
 
             # tty_out is usually the default
             if self.call_args["tty_out"]:
@@ -838,7 +845,8 @@ class OProc(object):
                 self._stderr_fd, self._slave_stderr_fd = os.pipe()
 
         gc_enabled = gc.isenabled()
-        if gc_enabled: gc.disable()
+        if gc_enabled:
+            gc.disable()
         self.pid = os.fork()
 
 
@@ -873,17 +881,21 @@ class OProc(object):
                 
             if not self._single_tty:
                 os.close(self._stdout_fd)
-                if stderr is not STDOUT: os.close(self._stderr_fd)
+                if stderr is not STDOUT:
+                    os.close(self._stderr_fd)
 
 
-            if self.call_args["cwd"]: os.chdir(self.call_args["cwd"])
+            if self.call_args["cwd"]:
+                os.chdir(self.call_args["cwd"])
             os.dup2(self._slave_stdin_fd, 0)
             os.dup2(self._slave_stdout_fd, 1)
 
             # we're not directing stderr to stdout?  then set self._slave_stderr_fd to
             # fd 2, the common stderr fd
-            if stderr is STDOUT: os.dup2(self._slave_stdout_fd, 2)
-            else: os.dup2(self._slave_stderr_fd, 2)
+            if stderr is STDOUT:
+                os.dup2(self._slave_stdout_fd, 2)
+            else:
+                os.dup2(self._slave_stderr_fd, 2)
 
             # don't inherit file descriptors
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
@@ -909,7 +921,8 @@ class OProc(object):
 
         # parent
         else:
-            if gc_enabled: gc.enable()
+            if gc_enabled:
+                gc.enable()
 
             if not OProc._registered_cleanup:
                 atexit.register(OProc._cleanup_procs)
@@ -933,7 +946,8 @@ class OProc(object):
             self._stdout = deque(maxlen=self.call_args["internal_bufsize"])
             self._stderr = deque(maxlen=self.call_args["internal_bufsize"])
 
-            if self.call_args["tty_in"]: self.setwinsize(self._stdin_fd)
+            if self.call_args["tty_in"]:
+                self.setwinsize(self._stdin_fd)
 
 
             self.log = Logger("process", repr(self))
@@ -941,7 +955,8 @@ class OProc(object):
             os.close(self._slave_stdin_fd)
             if not self._single_tty:
                 os.close(self._slave_stdout_fd)
-                if stderr is not STDOUT: os.close(self._slave_stderr_fd)
+                if stderr is not STDOUT:
+                    os.close(self._slave_stderr_fd)
 
             self.log.debug("started process")
             if not persist:
@@ -962,19 +977,21 @@ class OProc(object):
             if pipe is STDOUT and not self.call_args["no_pipe"]:
                 stdout_pipe = self._pipe_queue
 
+
+            save_stdout = not self.call_args["no_out"] and \
+                (self.call_args["tee"] in (True, "out") or stdout is None)
+
             # this represents the connection from a process's STDOUT fd to
             # wherever it has to go, sometimes a pipe Queue (that we will use
             # to pipe data to other processes), and also an internal deque
-            # that we use to aggregate all the output
-            save_stdout = not self.call_args["no_out"] and \
-                (self.call_args["tee"] in (True, "out") or stdout is None)
-            
+            # that we use to aggregate all the output            
             self._stdout_stream = None if self.call_args["piped"] else \
                 StreamReader("stdout", self, self._stdout_fd, stdout,
                     self._stdout, self.call_args["out_bufsize"], stdout_pipe,
                     save_data=save_stdout)
 
-            if stderr is STDOUT or self._single_tty: self._stderr_stream = None
+            if stderr is STDOUT or self._single_tty:
+                self._stderr_stream = None
             else:
                 stderr_pipe = None
                 if pipe is STDERR and not self.call_args["no_pipe"]:
@@ -1053,7 +1070,8 @@ class OProc(object):
             for stream in outputs:
                 self.log.debug("%r ready to be read from", stream)
                 done = stream.read()
-                if done: readers.remove(stream)
+                if done:
+                    readers.remove(stream)
 
             for stream in err:
                 pass
@@ -1099,8 +1117,10 @@ class OProc(object):
 
     def signal(self, sig):
         self.log.debug("sending signal %d", sig)
-        try: os.kill(self.pid, sig)
-        except OSError: pass
+        try:
+            os.kill(self.pid, sig)
+        except OSError:
+            pass
 
     def kill(self):
         self.log.debug("killing")
@@ -1118,10 +1138,13 @@ class OProc(object):
 
     def _handle_exit_code(self, exit_code):
         # if we exited from a signal, let our exit code reflect that
-        if os.WIFSIGNALED(exit_code): return -os.WTERMSIG(exit_code)
+        if os.WIFSIGNALED(exit_code):
+            return -os.WTERMSIG(exit_code)
         # otherwise just give us a normal exit code
-        elif os.WIFEXITED(exit_code): return os.WEXITSTATUS(exit_code)
-        else: raise RuntimeError("Unknown child exit status!")
+        elif os.WIFEXITED(exit_code):
+            return os.WEXITSTATUS(exit_code)
+        else:
+            raise RuntimeError("Unknown child exit status!")
 
     @property
     def alive(self):
@@ -1139,7 +1162,8 @@ class OProc(object):
         # and handle the status, otherwise let us do it.
         acquired = self._wait_lock.acquire(False)
         if not acquired:
-            if self.exit_code is not None: return False
+            if self.exit_code is not None:
+                return False
             return True
 
         try:
@@ -1151,9 +1175,12 @@ class OProc(object):
                 return False
 
         # no child process
-        except OSError: return False
-        else: return True
-        finally: self._wait_lock.release()
+        except OSError:
+            return False
+        else:
+            return True
+        finally:
+            self._wait_lock.release()
 
 
     def wait(self):
@@ -1168,7 +1195,11 @@ class OProc(object):
             else:
                 self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
 
-            if self._input_thread: self._input_thread.join()
+            # we may not have a thread for stdin, if the pipe has been connected
+            # via _piped="direct"
+            if self._input_thread:
+                self._input_thread.join()
+                
             self._output_thread.join()
 
             OProc._procs_to_cleanup.discard(self)
@@ -1200,9 +1231,12 @@ class StreamWriter(object):
             bufsize)
 
         # determine buffering for reading from the input we set for stdin
-        if bufsize == 1: self.bufsize = 1024
-        elif bufsize == 0: self.bufsize = 1
-        else: self.bufsize = bufsize
+        if bufsize == 1:
+            self.bufsize = 1024
+        elif bufsize == 0:
+            self.bufsize = 1
+        else:
+            self.bufsize = bufsize
 
 
         if isinstance(stdin, Queue):
@@ -1243,26 +1277,38 @@ class StreamWriter(object):
         return self.stream
 
     def get_queue_chunk(self):
-        try: chunk = self.stdin.get(True, 0.01)
-        except Empty: raise NoStdinData
-        if chunk is None: raise DoneReadingStdin
+        try:
+            chunk = self.stdin.get(True, 0.01)
+        except Empty:
+            raise NoStdinData
+        if chunk is None:
+            raise DoneReadingStdin
         return chunk
 
     def get_callable_chunk(self):
-        try: return self.stdin()
-        except: raise DoneReadingStdin
+        try:
+            return self.stdin()
+        except:
+            raise DoneReadingStdin
 
     def get_iter_chunk(self):
         try:
-            if IS_PY3: return self.stdin.__next__()
-            else: return self.stdin.next()
-        except StopIteration: raise DoneReadingStdin
+            if IS_PY3:
+                return self.stdin.__next__()
+            else:
+                return self.stdin.next()
+        except StopIteration:
+            raise DoneReadingStdin
 
     def get_file_chunk(self):
-        if self.stream_bufferer.type == 1: chunk = self.stdin.readline()
-        else: chunk = self.stdin.read(self.bufsize)
-        if not chunk: raise DoneReadingStdin
-        else: return chunk
+        if self.stream_bufferer.type == 1:
+            chunk = self.stdin.readline()
+        else:
+            chunk = self.stdin.read(self.bufsize)
+        if not chunk:
+            raise DoneReadingStdin
+        else:
+            return chunk
 
 
     # the return value answers the questions "are we done writing forever?"
@@ -1276,8 +1322,10 @@ class StreamWriter(object):
 
             if self.process().call_args["tty_in"]:
                 # EOF time
-                try: char = termios.tcgetattr(self.stream)[6][termios.VEOF]
-                except: char = chr(4).encode()
+                try:
+                    char = termios.tcgetattr(self.stream)[6][termios.VEOF]
+                except:
+                    char = chr(4).encode()
                 os.write(self.stream, char)
 
             return True
@@ -1306,11 +1354,14 @@ class StreamWriter(object):
         chunk = self.stream_bufferer.flush()
         self.log.debug("got chunk size %d to flush: %r", len(chunk), chunk[:30])
         try:
-            if chunk: os.write(self.stream, chunk)
+            if chunk:
+                os.write(self.stream, chunk)
+                
             if not self.process().call_args["tty_in"]:
                 self.log.debug("we used a TTY, so closing the stream")
                 os.close(self.stream)
-        except OSError: pass
+        except OSError:
+            pass
 
 
 
@@ -1326,7 +1377,8 @@ class StreamReader(object):
         self.decode_errors = process.call_args["decode_errors"]
 
         self.pipe_queue = None
-        if pipe_queue: self.pipe_queue = weakref.ref(pipe_queue)
+        if pipe_queue:
+            self.pipe_queue = weakref.ref(pipe_queue)
 
         self.log = Logger("streamreader", repr(self))
 
@@ -1334,20 +1386,27 @@ class StreamReader(object):
             self.decode_errors)
 
         # determine buffering
-        if bufsize == 1: self.bufsize = 1024
-        elif bufsize == 0: self.bufsize = 1
-        else: self.bufsize = bufsize
+        if bufsize == 1:
+            self.bufsize = 1024
+        elif bufsize == 0:
+            self.bufsize = 1
+        else:
+            self.bufsize = bufsize
 
 
         # here we're determining the handler type by doing some basic checks
         # on the handler object
         self.handler = handler
-        if callable(handler): self.handler_type = "fn"
-        elif isinstance(handler, StringIO): self.handler_type = "stringio"
+        if callable(handler):
+            self.handler_type = "fn"
+        elif isinstance(handler, StringIO):
+            self.handler_type = "stringio"
         elif isinstance(handler, cStringIO):
             self.handler_type = "cstringio"
-        elif hasattr(handler, "write"): self.handler_type = "fd"
-        else: self.handler_type = None
+        elif hasattr(handler, "write"):
+            self.handler_type = "fd"
+        else:
+            self.handler_type = None
 
 
         self.should_quit = False
@@ -1389,16 +1448,20 @@ class StreamReader(object):
 
     def close(self):
         chunk = self.stream_bufferer.flush()
-        self.log.debug("got chunk size %d to flush: %r",
-            len(chunk), chunk[:30])
-        if chunk: self.write_chunk(chunk)
+        self.log.debug("got chunk size %d to flush: %r", len(chunk), chunk[:30])
+        if chunk:
+            self.write_chunk(chunk)
 
         if self.handler_type == "fd" and hasattr(self.handler, "close"):
             self.handler.flush()
 
-        if self.pipe_queue and self.save_data: self.pipe_queue().put(None)
-        try: os.close(self.stream)
-        except OSError: pass
+        if self.pipe_queue and self.save_data:
+            self.pipe_queue().put(None)
+            
+        try:
+            os.close(self.stream)
+        except OSError:
+            pass
 
 
     def write_chunk(self, chunk):
@@ -1445,7 +1508,8 @@ class StreamReader(object):
     def read(self):
         # if we're PY3, we're reading bytes, otherwise we're reading
         # str
-        try: chunk = os.read(self.stream, self.bufsize)
+        try:
+            chunk = os.read(self.stream, self.bufsize)
         except OSError as e:
             self.log.debug("got errno %d, done reading", e.errno)
             return True
@@ -1496,7 +1560,8 @@ class StreamBufferer(object):
         self._buffering_lock.acquire()
         self.log.debug("got buffering lock for changing buffering")
         try:
-            if new_type == 0: self._use_up_buffer_first = True
+            if new_type == 0:
+                self._use_up_buffer_first = True
 
             self.type = new_type
         finally:
@@ -1516,7 +1581,8 @@ class StreamBufferer(object):
             # we've encountered binary, permanently switch to N size buffering
             # since matching on newline doesn't make sense anymore
             if self.type == 1:
-                try: chunk.decode(self.encoding, self.decode_errors)
+                try:
+                    chunk.decode(self.encoding, self.decode_errors)
                 except:
                     self.log.debug("detected binary data, changing buffering")
                     self.change_buffering(1024)
@@ -1616,8 +1682,10 @@ class Environment(dict):
         self.globs[k] = v
 
     def __getitem__(self, k):
-        try: return self.globs[k]
-        except KeyError: pass
+        try:
+            return self.globs[k]
+        except KeyError:
+            pass
 
         # the only way we'd get to here is if we've tried to
         # import * from a repl.  so, raise an exception, since
@@ -1634,7 +1702,8 @@ Please import sh or import programs individually.")
         # version by "id" and the program version with "id_"
         if not k.endswith("_"):
             # check if we're naming a dynamically generated ReturnCode exception
-            try: return rc_exc_cache[k]
+            try:
+                return rc_exc_cache[k]
             except KeyError:
                 m = rc_exc_regex.match(k)
                 if m:
@@ -1665,7 +1734,8 @@ Please import sh or import programs individually.")
 
         # is it a custom builtin?
         builtin = getattr(self, "b_" + k, None)
-        if builtin: return builtin
+        if builtin:
+            return builtin
 
         # it must be a command then
         # we use _create instead of instantiating the class directly because
@@ -1693,12 +1763,17 @@ def run_repl(env):
 
     print(banner.format(version=__version__))
     while True:
-        try: line = raw_input("sh> ")
-        except (ValueError, EOFError): break
+        try:
+            line = raw_input("sh> ")
+        except (ValueError, EOFError):
+            break
 
-        try: exec(compile(line, "<dummy>", "single"), env, env)
-        except SystemExit: break
-        except: print(traceback.format_exc())
+        try:
+            exec(compile(line, "<dummy>", "single"), env, env)
+        except SystemExit:
+            break
+        except:
+            print(traceback.format_exc())
 
     # cleans up our last line
     print("")
@@ -1727,11 +1802,13 @@ class SelfWrapper(ModuleType):
         self.env = Environment(globals(), baked_args)
 
     def __setattr__(self, name, value):
-        if hasattr(self, "env"): self.env[name] = value
+        if hasattr(self, "env"):
+            self.env[name] = value
         ModuleType.__setattr__(self, name, value)
 
     def __getattr__(self, name):
-        if name == "env": raise AttributeError
+        if name == "env":
+            raise AttributeError
         return self.env[name]
 
     # accept special keywords argument to define defaults for all operations
