@@ -736,7 +736,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
                 if first_arg.call_args["bg"]:
                     call_args["bg"] = True
                     
-                if first_arg.call_args["piped"]:
+                if first_arg.call_args["piped"] == "direct":
                     stdin = first_arg.process
                 else:
                     stdin = first_arg.process._pipe_queue
@@ -796,7 +796,7 @@ class OProc(object):
         
         # I had issues with getting 'Input/Output error reading stdin' from dd,
         # until I set _tty_out=False
-        if self.call_args["piped"]:
+        if self.call_args["piped"] == "direct":
             self.call_args["tty_out"] = False
 
         self._single_tty = self.call_args["tty_in"] and self.call_args["tty_out"]
@@ -984,8 +984,11 @@ class OProc(object):
             # this represents the connection from a process's STDOUT fd to
             # wherever it has to go, sometimes a pipe Queue (that we will use
             # to pipe data to other processes), and also an internal deque
-            # that we use to aggregate all the output            
-            self._stdout_stream = None if self.call_args["piped"] else \
+            # that we use to aggregate all the output
+            save_stdout = not self.call_args["no_out"] and \
+                (self.call_args["tee"] in (True, "out") or stdout is None)
+            
+            self._stdout_stream = None if self.call_args["piped"] == "direct" else \
                 StreamReader("stdout", self, self._stdout_fd, stdout,
                     self._stdout, self.call_args["out_bufsize"], stdout_pipe,
                     save_data=save_stdout)
