@@ -1,6 +1,12 @@
 # Changelog
 
-## 1.09 -
+## 1.10 -
+
+*   "direct" option added to `_piped` special keyword argument, which allows
+    sh to hand off a process's stdout fd directly to another process, instead
+    of buffering its stdout internally, then handing it off. [#119](https://github.com/amoffat/sh/issues/119)
+
+## 1.09 - 9/08/13
 
 *   Fixed encoding errors related to a system encoding "ascii". [#123](https://github.com/amoffat/sh/issues/123)
 
