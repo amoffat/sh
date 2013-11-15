@@ -416,6 +416,7 @@ class RunningCommand(object):
 
     def __eq__(self, other):
         return unicode(self) == unicode(other)
+    __hash__ = None  # Avoid DeprecationWarning in Python < 3
 
     def __contains__(self, item):
         return item in str(self)
@@ -675,6 +676,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
     def __eq__(self, other):
         try: return str(self) == str(other)
         except: return False
+    __hash__ = None  # Avoid DeprecationWarning in Python < 3
 
 
     def __repr__(self):
