@@ -987,8 +987,6 @@ class OProc(object):
     def setwinsize(fd):
         rows, cols = OProc._default_window_size
         TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
-        if TIOCSWINSZ == 2148037735: # L is not required in Python >= 2.2.
-            TIOCSWINSZ = -2146929561 # Same bits, but with sign.
 
         s = struct.pack('HHHH', rows, cols, 0, 0)
         fcntl.ioctl(fd, TIOCSWINSZ, s)
