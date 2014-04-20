@@ -1717,7 +1717,6 @@ class SelfWrapper(ModuleType):
         ModuleType.__setattr__(self, name, value)
 
     def __getattr__(self, name):
-        if name == "env": raise AttributeError
         return self.env[name]
 
     # accept special keywords argument to define defaults for all operations
