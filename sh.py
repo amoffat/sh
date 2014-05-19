@@ -682,7 +682,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
 
 
     def __unicode__(self):
-        baked_args = " ".join(self._partial_baked_args)
+        baked_args = " ".join(item.decode('utf-8') for item in self._partial_baked_args)
         if baked_args:
             baked_args = " " + baked_args
         return self._path + baked_args
