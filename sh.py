@@ -192,7 +192,7 @@ def get_rc_exc(rc):
 
 def which(program):
     def is_exe(fpath):
-        return os.path.exists(fpath) and os.access(fpath, os.X_OK)
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
     fpath, fname = os.path.split(program)
     if fpath:
