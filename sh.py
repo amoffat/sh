@@ -835,7 +835,9 @@ class OProc(object):
         if self.pid == 0:
             # ignoring SIGHUP lets us persist even after the parent process
             # exits
-            signal.signal(signal.SIGHUP, signal.SIG_IGN)
+            # only ignore if we're backgrounded
+            if self.call_args["bg"] is True:
+                signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
             # this piece of ugliness is due to a bug where we can lose output
             # if we do os.close(self._slave_stdout_fd) in the parent after
