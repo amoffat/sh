@@ -836,7 +836,7 @@ class OProc(object):
             # ignoring SIGHUP lets us persist even after the parent process
             # exits
             # only ignore if we're backgrounded
-            if self.call_args["bg"] is False:
+            if self.call_args["bg"] is True:
                 signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
             # this piece of ugliness is due to a bug where we can lose output
