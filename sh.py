@@ -156,11 +156,17 @@ class ErrorReturnCode(Exception):
 class SignalException(ErrorReturnCode): pass
 
 SIGNALS_THAT_SHOULD_THROW_EXCEPTION = (
+    signal.SIGABRT,
+    signal.SIGBUS,
+    signal.SIGFPE,
+    signal.SIGILL,
+    signal.SIGINT,
     signal.SIGKILL,
+    signal.SIGPIPE,
+    signal.SIGQUIT,
     signal.SIGSEGV,
     signal.SIGTERM,
-    signal.SIGINT,
-    signal.SIGQUIT
+    signal.SIGSYS,
 )
 
 
