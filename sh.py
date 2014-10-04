@@ -833,67 +833,70 @@ class OProc(object):
 
         # child
         if self.pid == 0:
-            # ignoring SIGHUP lets us persist even after the parent process
-            # exits
-            signal.signal(signal.SIGHUP, signal.SIG_IGN)
+            try:
+                # ignoring SIGHUP lets us persist even after the parent process
+                # exits
+                signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
-            # this piece of ugliness is due to a bug where we can lose output
-            # if we do os.close(self._slave_stdout_fd) in the parent after
-            # the child starts writing.
-            # see http://bugs.python.org/issue15898
-            if IS_OSX:
-                _time.sleep(0.01)
+                # this piece of ugliness is due to a bug where we can lose output
+                # if we do os.close(self._slave_stdout_fd) in the parent after
+                # the child starts writing.
+                # see http://bugs.python.org/issue15898
+                if IS_OSX:
+                    _time.sleep(0.01)
 
-            os.setsid()
+                os.setsid()
 
-            if self.call_args["tty_out"]:
-                # set raw mode, so there isn't any weird translation of newlines
-                # to \r\n and other oddities.  we're not outputting to a terminal
-                # anyways
-                #
-                # we HAVE to do this here, and not in the parent thread, because
-                # we have to guarantee that this is set before the child process
-                # is run, and we can't do it twice.
-                tty.setraw(self._stdout_fd)
-
-
-            os.close(self._stdin_fd)
-            if not self._single_tty:
-                os.close(self._stdout_fd)
-                if stderr is not STDOUT: os.close(self._stderr_fd)
+                if self.call_args["tty_out"]:
+                    # set raw mode, so there isn't any weird translation of newlines
+                    # to \r\n and other oddities.  we're not outputting to a terminal
+                    # anyways
+                    #
+                    # we HAVE to do this here, and not in the parent thread, because
+                    # we have to guarantee that this is set before the child process
+                    # is run, and we can't do it twice.
+                    tty.setraw(self._stdout_fd)
 
 
-            if self.call_args["cwd"]: os.chdir(self.call_args["cwd"])
-            os.dup2(self._slave_stdin_fd, 0)
-            os.dup2(self._slave_stdout_fd, 1)
-
-            # we're not directing stderr to stdout?  then set self._slave_stderr_fd to
-            # fd 2, the common stderr fd
-            if stderr is STDOUT: os.dup2(self._slave_stdout_fd, 2)
-            else: os.dup2(self._slave_stderr_fd, 2)
-
-            # don't inherit file descriptors
-            max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-            os.closerange(3, max_fd)
+                os.close(self._stdin_fd)
+                if not self._single_tty:
+                    os.close(self._stdout_fd)
+                    if stderr is not STDOUT: os.close(self._stderr_fd)
 
 
-            # set our controlling terminal
-            if self.call_args["tty_out"]:
-                tmp_fd = os.open(os.ttyname(1), os.O_RDWR)
-                os.close(tmp_fd)
+                if self.call_args["cwd"]: os.chdir(self.call_args["cwd"])
+                os.dup2(self._slave_stdin_fd, 0)
+                os.dup2(self._slave_stdout_fd, 1)
+
+                # we're not directing stderr to stdout?  then set self._slave_stderr_fd to
+                # fd 2, the common stderr fd
+                if stderr is STDOUT: os.dup2(self._slave_stdout_fd, 2)
+                else: os.dup2(self._slave_stderr_fd, 2)
+
+                # don't inherit file descriptors
+                max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
+                os.closerange(3, max_fd)
 
 
-            if self.call_args["tty_out"]:
-                self.setwinsize(1)
+                # set our controlling terminal
+                if self.call_args["tty_out"]:
+                    tmp_fd = os.open(os.ttyname(1), os.O_RDWR)
+                    os.close(tmp_fd)
 
-            # actually execute the process
-            if self.call_args["env"] is None:
-                os.execv(cmd[0], cmd)
-            else:
-                os.execve(cmd[0], cmd, self.call_args["env"])
 
-            os._exit(255)
+                if self.call_args["tty_out"]:
+                    self.setwinsize(1)
 
+                # actually execute the process
+                if self.call_args["env"] is None:
+                    os.execv(cmd[0], cmd)
+                else:
+                    os.execve(cmd[0], cmd, self.call_args["env"])
+
+            # Child process should either succeed in executing the command or
+            # exit immediately with error code.
+            finally:
+                os._exit(255)
         # parent
         else:
             if gc_enabled: gc.enable()
