@@ -92,6 +92,9 @@ if IS_PY3:
     basestring = str
 
 
+_unicode_methods = set(dir(unicode()))
+
+
 def encode_to_py3bytes_or_py2str(s):
     """ takes anything and attempts to return a py2 string or py3 bytes.  this
     is typically used when creating command + arguments to be executed via
@@ -425,7 +428,11 @@ class RunningCommand(object):
         if p in ("signal", "terminate", "kill"):
             if self.process: return getattr(self.process, p)
             else: raise AttributeError
-        return getattr(unicode(self), p)
+
+        # see if strings have what we're looking for
+        if p in _unicode_methods:
+            return getattr(unicode(self), p)
+        raise AttributeError
 
     def __repr__(self):
         try: return str(self)
