@@ -1584,6 +1584,17 @@ class StreamBufferer(object):
 
 
 
+class pushd(object):
+    def __init__(self, path):
+        self.path = path
+
+    def __enter__(self):
+        self.cwd = os.getcwd()
+        os.chdir(self.path)
+
+    def __exit__(self, exception_type, exception_val, trace):
+        os.chdir(self.cwd)
+
 
 
 # this allows lookups to names that aren't found in the global scope to be
