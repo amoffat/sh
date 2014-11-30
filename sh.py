@@ -547,10 +547,10 @@ class Command(object):
 
 
     def __init__(self, path):
-        path = which(path)
-        if not path:
+        found = which(path)
+        if not found:
             raise CommandNotFound(path)
-        self._path = path
+        self._path = found
 
         self._partial = False
         self._partial_baked_args = []
