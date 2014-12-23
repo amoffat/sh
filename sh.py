@@ -733,7 +733,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
         tmp_call_args, kwargs = self._extract_call_args(kwargs, self._partial_call_args)
         call_args.update(tmp_call_args)
 
-        if not getattr(call_args["ok_code"], '__contains__', None):
+        if not getattr(call_args["ok_code"], "__iter__", None):
             call_args["ok_code"] = [call_args["ok_code"]]
 
 
