@@ -2,6 +2,8 @@
 
 ## 1.10 -
 
+*   tests now include python 3.4 if available.  tests also stop on the first
+    python that suite that fails.
 *   SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGPIPE, SIGSYS have been added to the list
     of signals that throw an exception [PR
 #201](https://github.com/amoffat/sh/pull/201)

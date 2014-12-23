@@ -1476,8 +1476,16 @@ for i in range(10):
 
 
 if __name__ == "__main__":
+    # if we're running a specific test, we can let unittest framework figure out
+    # that test and run it itself.  it will also handle setting the return code
+    # of the process if any tests error or fail
     if len(sys.argv) > 1:
         unittest.main()
+
+    # otherwise, it looks like we want to run all the tests
     else:
         suite = unittest.TestLoader().loadTestsFromTestCase(FunctionalTests)
-        unittest.TextTestRunner(verbosity=2).run(suite)
+        result = unittest.TextTestRunner(verbosity=2).run(suite)
+
+        if not result.wasSuccessful():
+            exit(1)

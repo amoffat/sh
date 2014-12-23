@@ -1855,11 +1855,14 @@ if __name__ == "__main__":
                 env["LC_ALL"] = locale
                 p = subprocess.Popen([py_bin, os.path.join(THIS_DIR, "test.py")]
                     + sys.argv[1:], env=env)
-                p.wait()
+                return_code = p.wait()
+
+                if return_code != 0:
+                    exit(1)
             else:
                 print("Couldn't find %s, skipping" % py_version.capitalize())
 
-        versions = ("2.6", "2.7", "3.1", "3.2", "3.3")
+        versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4")
         locales = ("en_US.UTF-8", "C")
         for locale in locales:
             for version in versions:
