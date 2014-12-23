@@ -1681,10 +1681,25 @@ class StreamBufferer(object):
 
 @contextmanager
 def pushd(path):
-    cwd = os.getcwd()
-    os.chdir(path)
+    """ pushd is just a specialized form of args, where we're passing in the
+    current working directory """
+    with args(_cwd=path):
+        yield
+
+
+@contextmanager
+def args(*args, **kwargs):
+    """ allows us to temporarily override all the special keyword parameters in
+    a with context """
+    call_args = Command._call_args
+    old_args = call_args.copy()
+
+    for key,value in kwargs.items():
+        key = key.lstrip("_")
+        call_args[key] = value
+
     yield
-    os.chdir(cwd)
+    call_args.update(old_args)
 
 
 

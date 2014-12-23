@@ -7,6 +7,7 @@ import sys
 import sh
 import platform
 
+tempdir = tempfile.gettempdir()
 IS_OSX = platform.system() == "Darwin"
 IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
@@ -1475,13 +1476,29 @@ for i in range(10):
 
 
     def test_pushd(self):
+        """ test that pushd is just a specialized form of sh.args """
         import os
         old_wd = os.getcwd()
-        with sh.pushd("/tmp"):
+        with sh.pushd(tempdir):
             new_wd = sh.pwd().strip()
-        self.assertEqual(old_wd, os.getcwd())
-        self.assertEqual(new_wd, "/tmp")
 
+        self.assertNotEqual(old_wd, tempdir)
+        self.assertEqual(old_wd, os.getcwd())
+        self.assertEqual(new_wd, tempdir)
+
+
+    def test_args_context(self):
+        """ test that we can use the args with-context to temporarily override
+        command settings """
+        import os
+
+        old_wd = os.getcwd()
+        with sh.args(_cwd=tempdir):
+            new_wd = sh.pwd().strip()
+
+        self.assertNotEqual(old_wd, tempdir)
+        self.assertEqual(old_wd, os.getcwd())
+        self.assertEqual(new_wd, tempdir)
 
 
 if __name__ == "__main__":
