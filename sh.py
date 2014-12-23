@@ -46,6 +46,7 @@ from types import ModuleType
 from functools import partial
 import inspect
 import time as _time
+from contextlib import contextmanager
 
 from locale import getpreferredencoding
 DEFAULT_ENCODING = getpreferredencoding() or "utf-8"
@@ -1678,16 +1679,12 @@ class StreamBufferer(object):
 
 
 
-class pushd(object):
-    def __init__(self, path):
-        self.path = path
-
-    def __enter__(self):
-        self.cwd = os.getcwd()
-        os.chdir(self.path)
-
-    def __exit__(self, exception_type, exception_val, trace):
-        os.chdir(self.cwd)
+@contextmanager
+def pushd(path):
+    cwd = os.getcwd()
+    os.chdir(path)
+    yield
+    os.chdir(cwd)
 
 
 

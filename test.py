@@ -1474,6 +1474,15 @@ for i in range(10):
         file_obj.close()
 
 
+    def test_pushd(self):
+        import os
+        old_wd = os.getcwd()
+        with sh.pushd("/tmp"):
+            new_wd = sh.pwd().strip()
+        self.assertEqual(old_wd, os.getcwd())
+        self.assertEqual(new_wd, "/tmp")
+
+
 
 if __name__ == "__main__":
     # if we're running a specific test, we can let unittest framework figure out
