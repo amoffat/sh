@@ -2,6 +2,7 @@
 
 ## 1.10 -
 
+*   "callable" builtin has been faked for python3.1, which lacks it
 *   "direct" option added to `_piped` special keyword argument, which allows
     sh to hand off a process's stdout fd directly to another process, instead
     of buffering its stdout internally, then handing it off. [#119](https://github.com/amoffat/sh/issues/119)

@@ -55,6 +55,11 @@ if IS_PY3:
     from io import StringIO
     from io import BytesIO as cStringIO
     from queue import Queue, Empty
+
+    # for some reason, python 3.1 removed the builtin "callable", wtf
+    if not hasattr(__builtins__, "callable"):
+        def callable(ob):
+            return hasattr(ob, "__call__")
 else:
     from StringIO import StringIO
     from cStringIO import OutputType as cStringIO
