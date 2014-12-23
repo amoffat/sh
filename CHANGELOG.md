@@ -2,6 +2,11 @@
 
 ## 1.10 -
 
+*   added "sh.args" with context which allows overriding of all command defaults
+    for the duration of that context.
+*   added "sh.pushd" with context which takes a directory name and changes to that
+    directory for the duration of that with context. [#PR
+206](https://github.com/amoffat/sh/pull/206)
 *   tests now include python 3.4 if available.  tests also stop on the first
     python that suite that fails.
 *   SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGPIPE, SIGSYS have been added to the list

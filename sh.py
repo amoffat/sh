@@ -46,6 +46,7 @@ from types import ModuleType
 from functools import partial
 import inspect
 import time as _time
+from contextlib import contextmanager
 
 from locale import getpreferredencoding
 DEFAULT_ENCODING = getpreferredencoding() or "utf-8"
@@ -1677,6 +1678,28 @@ class StreamBufferer(object):
             self.log.debug("released buffering lock for flushing buffer")
 
 
+
+@contextmanager
+def pushd(path):
+    """ pushd is just a specialized form of args, where we're passing in the
+    current working directory """
+    with args(_cwd=path):
+        yield
+
+
+@contextmanager
+def args(*args, **kwargs):
+    """ allows us to temporarily override all the special keyword parameters in
+    a with context """
+    call_args = Command._call_args
+    old_args = call_args.copy()
+
+    for key,value in kwargs.items():
+        key = key.lstrip("_")
+        call_args[key] = value
+
+    yield
+    call_args.update(old_args)
 
 
 
