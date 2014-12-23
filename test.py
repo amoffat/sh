@@ -131,6 +131,7 @@ exit(3)
 
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=code_to_pass)
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=[code_to_pass])
+        ls("/aofwje/garogjao4a/eoan3on", _ok_code=range(code_to_pass + 1))
 
     def test_quote_escaping(self):
         py = create_tmp_test("""
