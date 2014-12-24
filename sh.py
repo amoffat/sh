@@ -1839,23 +1839,24 @@ class SelfWrapper(ModuleType):
         # python 3.2 (2.7 and 3.3 work fine) breaks on osx (not ubuntu)
         # if we set this to None.  and 3.3 needs a value for __path__
         self.__path__ = []
-        self.self_module = self_module
-        self.env = Environment(globals(), baked_args)
+        self.__self_module = self_module
+        self.__env = Environment(globals(), baked_args)
 
     def __setattr__(self, name, value):
-        if hasattr(self, "env"):
-            self.env[name] = value
-        ModuleType.__setattr__(self, name, value)
+        if hasattr(self, "__env"):
+            self.__env[name] = value
+        else:
+            ModuleType.__setattr__(self, name, value)
 
     def __getattr__(self, name):
-        if name == "env":
+        if name == "__env":
             raise AttributeError
-        return self.env[name]
+        return self.__env[name]
 
     # accept special keywords argument to define defaults for all operations
     # that will be processed with given by return SelfWrapper
     def __call__(self, **kwargs):
-        return SelfWrapper(self.self_module, kwargs)
+        return SelfWrapper(self.__self_module, kwargs)
 
 
 
