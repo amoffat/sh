@@ -332,7 +332,6 @@ print(sh.HERP + " " + str(len(os.environ)))
         self.assertEqual(Command(which("ls")), ls)
 
     def test_doesnt_execute_directories(self):
-        import tempfile
         save_path = os.environ['PATH']
         bin_dir1 = tempfile.mkdtemp()
         bin_dir2 = tempfile.mkdtemp()
@@ -344,12 +343,16 @@ print(sh.HERP + " " + str(len(os.environ)))
             # discovered by internal which(1)-clone
             os.makedirs(gcc_dir1)
             # an executable named gcc -- only this should be executed
-            bunk_header = u'#!/bin/sh\necho $*'.encode('ascii')
-            open(gcc_file2, 'w').write(bunk_header)
-            os.chmod(gcc_file2, 0755)
+            bunk_header = '#!/bin/sh\necho $*'
+            with open(gcc_file2, "w") as h:
+                h.write(bunk_header)
+            os.chmod(gcc_file2, int(0o755))
+
             from sh import gcc
             self.assertEqual(gcc._path, gcc_file2)
-            self.assertEqual(gcc('no-error').stdout.strip(), u'no-error')
+            self.assertEqual(gcc('no-error').stdout.strip(),
+                'no-error'.encode("ascii"))
+
         finally:
             os.environ['PATH'] = save_path
             if os.path.exists(gcc_file2):
