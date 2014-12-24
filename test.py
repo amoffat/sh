@@ -34,7 +34,8 @@ def create_tmp_test(code):
     python with sh """
 
     py = tempfile.NamedTemporaryFile()
-    if IS_PY3: code = bytes(code, "UTF-8")
+    if IS_PY3:
+        code = bytes(code, "UTF-8")
     py.write(code)
     py.flush()
     # we don't explicitly close, because close will remove the file, and we
