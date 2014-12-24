@@ -2,6 +2,7 @@
 
 ## 1.10 -
 
+*   only backgrounded processes will ignore SIGHUP
 *   allowed `ok_code` to take a `range` object. [#PR
 210](https://github.com/amoffat/sh/pull/210/files)
 *   added `sh.args` with context which allows overriding of all command defaults
