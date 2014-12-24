@@ -318,21 +318,27 @@ class RunningCommand(object):
 
         # we're running in the background, return self and let us lazily
         # evaluate
-        if call_args["bg"]: self.should_wait = False
+        if call_args["bg"]:
+            self.should_wait = False
 
         # redirection
-        if call_args["err_to_out"]: stderr = STDOUT
+        if call_args["err_to_out"]:
+            stderr = STDOUT
 
 
         # set up which stream should write to the pipe
         # TODO, make pipe None by default and limit the size of the Queue
         # in oproc.OProc
         pipe = STDOUT
-        if call_args["iter"] == "out" or call_args["iter"] is True: pipe = STDOUT
-        elif call_args["iter"] == "err": pipe = STDERR
+        if call_args["iter"] == "out" or call_args["iter"] is True:
+            pipe = STDOUT
+        elif call_args["iter"] == "err":
+            pipe = STDERR
 
-        if call_args["iter_noblock"] == "out" or call_args["iter_noblock"] is True: pipe = STDOUT
-        elif call_args["iter_noblock"] == "err": pipe = STDERR
+        if call_args["iter_noblock"] == "out" or call_args["iter_noblock"] is True:
+            pipe = STDOUT
+        elif call_args["iter_noblock"] == "err":
+            pipe = STDERR
 
 
         if spawn_process:
@@ -751,7 +757,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
                 # background as well
                 if first_arg.call_args["bg"]:
                     call_args["bg"] = True
-                    
+
                 if first_arg.call_args["piped"] == "direct":
                     stdin = first_arg.process
                 else:
@@ -798,18 +804,33 @@ STDERR = -2
 
 
 
-# Process open = Popen
-# Open Process = OProc
 class OProc(object):
+    """ this class is instantiated for every command to be exec'd.  it handles
+    all the nasty business involved with correctly setting up the input/output
+    to the child process.  it gets its name for subprocess.Popen (process open)
+    but we're calling ours OProc (open process) """
+
     _procs_to_cleanup = set()
     _registered_cleanup = False
     _default_window_size = (24, 80)
 
     def __init__(self, cmd, stdin, stdout, stderr, call_args,
             persist=True, pipe=STDOUT):
+        """
+            cmd is the full string that will be exec'd.  it includes the program
+            name and all its arguments
+
+            stdin, stdout, stderr are what the child will use for standard
+            input/output/err
+
+            call_args is a mapping of all the special keyword arguments to apply
+            to the child process
+
+            TODO persist should be a call arg!
+        """
 
         self.call_args = call_args
-        
+
         # I had issues with getting 'Input/Output error reading stdin' from dd,
         # until I set _tty_out=False
         if self.call_args["piped"] == "direct":
@@ -841,11 +862,12 @@ class OProc(object):
                 self._stdin_fd = None
             elif self.call_args["tty_in"]:
                 self._slave_stdin_fd, self._stdin_fd = pty.openpty()
+            # tty_in=False is the default
             else:
                 self._slave_stdin_fd, self._stdin_fd = os.pipe()
-                
 
-            # tty_out is usually the default
+
+            # tty_out=True is the default
             if self.call_args["tty_out"]:
                 self._stdout_fd, self._slave_stdout_fd = pty.openpty()
             else:
@@ -857,6 +879,9 @@ class OProc(object):
             # CTTY (because STDOUT is), the STDERR buffer won't always flush
             # by the time the process exits, and the data will be lost.
             # i've only seen this on OSX.
+            #
+            # TODO the stderr fds dont seem to get set anywhere else if this
+            # branch doesnt run!
             if stderr is not STDOUT:
                 self._stderr_fd, self._slave_stderr_fd = os.pipe()
 
@@ -1005,7 +1030,11 @@ class OProc(object):
             # that we use to aggregate all the output
             save_stdout = not self.call_args["no_out"] and \
                 (self.call_args["tee"] in (True, "out") or stdout is None)
-            
+
+            # if we're piping directly into another process's filedescriptor, we
+            # bypass reading from the stdout stream altogether, because we've
+            # already hooked up this processes's stdout fd to the other
+            # processes's stdin fd
             self._stdout_stream = None if self.call_args["piped"] == "direct" else \
                 StreamReader("stdout", self, self._stdout_fd, stdout,
                     self._stdout, self.call_args["out_bufsize"], stdout_pipe,
@@ -1218,7 +1247,7 @@ class OProc(object):
             # via _piped="direct"
             if self._input_thread:
                 self._input_thread.join()
-                
+
             self._output_thread.join()
 
             OProc._procs_to_cleanup.discard(self)
@@ -1375,7 +1404,7 @@ class StreamWriter(object):
         try:
             if chunk:
                 os.write(self.stream, chunk)
-                
+
             if not self.process().call_args["tty_in"]:
                 self.log.debug("we used a TTY, so closing the stream")
                 os.close(self.stream)
@@ -1476,7 +1505,7 @@ class StreamReader(object):
 
         if self.pipe_queue and self.save_data:
             self.pipe_queue().put(None)
-            
+
         try:
             os.close(self.stream)
         except OSError:

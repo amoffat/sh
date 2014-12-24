@@ -430,8 +430,6 @@ print(options.long_option)
         from sh import ls, wc
         c1 = int(wc(ls("-A1", _piped=True), l=True).strip())
         c2 = len(os.listdir("."))
-        if c1 != c2:
-            with open("/tmp/fail", "a") as h: h.write("FUCK\n")
         self.assertEqual(c1, c2)
 
 
