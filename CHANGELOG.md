@@ -2,14 +2,15 @@
 
 ## 1.10 -
 
+*   fix python2 deprecation warning when running with -3 [PR #165](https://github.com/amoffat/sh/pull/165)
 *   bugfix where sh.py was attempting to execute directories
-    [#196](https://github.com/amoffat/sh/issues/196), [#PR 189](https://github.com/amoffat/sh/pull/189)
+    [#196](https://github.com/amoffat/sh/issues/196), [PR #189](https://github.com/amoffat/sh/pull/189)
 *   only backgrounded processes will ignore SIGHUP
 *   allowed `ok_code` to take a `range` object. [#PR 210](https://github.com/amoffat/sh/pull/210/files)
 *   added `sh.args` with context which allows overriding of all command defaults
     for the duration of that context.
 *   added `sh.pushd` with context which takes a directory name and changes to that
-    directory for the duration of that with context. [#PR 206](https://github.com/amoffat/sh/pull/206)
+    directory for the duration of that with context. [PR #206](https://github.com/amoffat/sh/pull/206)
 *   tests now include python 3.4 if available.  tests also stop on the first
     python that suite that fails.
 *   SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGPIPE, SIGSYS have been added to the list
