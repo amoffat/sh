@@ -1533,6 +1533,27 @@ for i in range(10):
         self.assertEqual(new_wd, tempdir)
 
 
+    def test_piped_direct(self):
+        from sh import ls, wc
+
+        # sanity check that our ls shows something
+        p1 = ls("-A1")
+        self.assertNotEqual(str(p1), "")
+
+        # now let's run it again with direct piping.  this should yield no
+        # visible output, because all the stdout is written to the process's
+        # stdout fd
+        p2 = ls("-A1", _piped="direct")
+        p2.wait()
+        self.assertEqual(str(p2), "")
+
+        # now let us confirm that composing this function with another lets the
+        # outer function read from that stdout fd directly
+        c1 = int(wc(p2, l=True).strip())
+        c2 = len(os.listdir("."))
+        self.assertEqual(c1, c2)
+
+
 if __name__ == "__main__":
     # if we're running a specific test, we can let unittest framework figure out
     # that test and run it itself.  it will also handle setting the return code
