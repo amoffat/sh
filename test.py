@@ -331,6 +331,35 @@ print(sh.HERP + " " + str(len(os.environ)))
 
         self.assertEqual(Command(which("ls")), ls)
 
+    def test_doesnt_execute_directories(self):
+        import tempfile
+        save_path = os.environ['PATH']
+        bin_dir1 = tempfile.mkdtemp()
+        bin_dir2 = tempfile.mkdtemp()
+        gcc_dir1 = os.path.join(bin_dir1, 'gcc')
+        gcc_file2 = os.path.join(bin_dir2, 'gcc')
+        try:
+            os.environ['PATH'] = os.pathsep.join((bin_dir1, bin_dir2))
+            # a folder named 'gcc', its executable, but should not be
+            # discovered by internal which(1)-clone
+            os.makedirs(gcc_dir1)
+            # an executable named gcc -- only this should be executed
+            bunk_header = u'#!/bin/sh\necho $*'.encode('ascii')
+            open(gcc_file2, 'w').write(bunk_header)
+            os.chmod(gcc_file2, 0755)
+            from sh import gcc
+            self.assertEqual(gcc._path, gcc_file2)
+            self.assertEqual(gcc('no-error').stdout.strip(), u'no-error')
+        finally:
+            os.environ['PATH'] = save_path
+            if os.path.exists(gcc_file2):
+                os.unlink(gcc_file2)
+            if os.path.exists(gcc_dir1):
+                os.rmdir(gcc_dir1)
+            if os.path.exists(bin_dir1):
+                os.rmdir(bin_dir1)
+            if os.path.exists(bin_dir1):
+                os.rmdir(bin_dir2)
 
     def test_multiple_args_short_option(self):
         py = create_tmp_test("""
