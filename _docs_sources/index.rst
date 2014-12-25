@@ -369,7 +369,7 @@ loop over::
 	    print(line)
 	    
 By default, ``_iter`` iterates over stdout, but you can change set this specifically
-by passing either "err" or "out" to _for (instead of True).  Also by default,
+by passing either "err" or "out" to ``_iter`` (instead of True).  Also by default,
 output is line-buffered, but you can change this by changing :ref:`buffer_sizes`
 
 .. note::
