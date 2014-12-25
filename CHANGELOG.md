@@ -2,6 +2,9 @@
 
 ## 1.10 -
 
+*   bugfix for cwd not existing and causing the child process to continue
+    running parent process code [#202](https://github.com/amoffat/sh/issues/202)
+*   child process is now guaranteed to exit on exception between fork and exec.
 *   fix python2 deprecation warning when running with -3 [PR #165](https://github.com/amoffat/sh/pull/165)
 *   bugfix where sh.py was attempting to execute directories
     [#196](https://github.com/amoffat/sh/issues/196), [PR #189](https://github.com/amoffat/sh/pull/189)

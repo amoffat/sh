@@ -1,6 +1,7 @@
 # -*- coding: utf8 -*-
 
 import os
+from os.path import exists, join
 import unittest
 import tempfile
 import sys
@@ -356,13 +357,13 @@ print(sh.HERP + " " + str(len(os.environ)))
 
         finally:
             os.environ['PATH'] = save_path
-            if os.path.exists(gcc_file2):
+            if exists(gcc_file2):
                 os.unlink(gcc_file2)
-            if os.path.exists(gcc_dir1):
+            if exists(gcc_dir1):
                 os.rmdir(gcc_dir1)
-            if os.path.exists(bin_dir1):
+            if exists(bin_dir1):
                 os.rmdir(bin_dir1)
-            if os.path.exists(bin_dir1):
+            if exists(bin_dir1):
                 os.rmdir(bin_dir2)
 
     def test_multiple_args_short_option(self):
@@ -1552,6 +1553,16 @@ for i in range(10):
         c1 = int(wc(p2, l=True).strip())
         c2 = len(os.listdir("."))
         self.assertEqual(c1, c2)
+
+    def test_non_existant_cwd(self):
+        from sh import ls
+
+        # sanity check
+        non_exist_dir = join(tempdir, "aowjgoahewro") 
+        self.assertFalse(exists(non_exist_dir))
+
+        self.assertRaises(OSError, ls, _cwd=non_exist_dir)
+
 
 
 if __name__ == "__main__":

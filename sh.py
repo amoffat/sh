@@ -916,6 +916,19 @@ class OProc(object):
             if stderr is not STDOUT:
                 self._stderr_fd, self._slave_stderr_fd = os.pipe()
 
+
+        # this is a hack, but what we're doing here is intentionally throwing an
+        # OSError exception if our child processes's directory doesn't exist,
+        # but we're doing it BEFORE we fork.  the reason for before the fork is
+        # error handling.  i'm currently too lazy to implement what
+        # subprocess.py did and set up a error pipe to handle exceptions that
+        # happen between fork and exec.  it has only been seen in the wild for a
+        # missing cwd, so we'll handle it here.
+        cwd = self.call_args["cwd"]
+        if cwd is not None and not os.path.exists(cwd):
+            os.chdir(cwd)
+
+
         gc_enabled = gc.isenabled()
         if gc_enabled:
             gc.disable()
@@ -924,74 +937,82 @@ class OProc(object):
 
         # child
         if self.pid == 0:
-            # ignoring SIGHUP lets us persist even after the parent process
-            # exits
-            # only ignore if we're backgrounded
-            if self.call_args["bg"] is True:
-                signal.signal(signal.SIGHUP, signal.SIG_IGN)
+            try:
+                # ignoring SIGHUP lets us persist even after the parent process
+                # exits.  only ignore if we're backgrounded
+                if self.call_args["bg"] is True:
+                    signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
-            # this piece of ugliness is due to a bug where we can lose output
-            # if we do os.close(self._slave_stdout_fd) in the parent after
-            # the child starts writing.
-            # see http://bugs.python.org/issue15898
-            if IS_OSX:
-                _time.sleep(0.01)
+                # this piece of ugliness is due to a bug where we can lose output
+                # if we do os.close(self._slave_stdout_fd) in the parent after
+                # the child starts writing.
+                # see http://bugs.python.org/issue15898
+                if IS_OSX:
+                    _time.sleep(0.01)
 
-            os.setsid()
+                os.setsid()
 
-            if self.call_args["tty_out"]:
-                # set raw mode, so there isn't any weird translation of newlines
-                # to \r\n and other oddities.  we're not outputting to a terminal
-                # anyways
-                #
-                # we HAVE to do this here, and not in the parent thread, because
-                # we have to guarantee that this is set before the child process
-                # is run, and we can't do it twice.
-                tty.setraw(self._stdout_fd)
-
-
-            if self._stdin_fd:
-                os.close(self._stdin_fd)
-                
-            if not self._single_tty:
-                os.close(self._stdout_fd)
-                if stderr is not STDOUT:
-                    os.close(self._stderr_fd)
+                if self.call_args["tty_out"]:
+                    # set raw mode, so there isn't any weird translation of
+                    # newlines to \r\n and other oddities.  we're not outputting
+                    # to a terminal anyways
+                    #
+                    # we HAVE to do this here, and not in the parent process,
+                    # because we have to guarantee that this is set before the
+                    # child process is run, and we can't do it twice.
+                    tty.setraw(self._stdout_fd)
 
 
-            if self.call_args["cwd"]:
-                os.chdir(self.call_args["cwd"])
-            os.dup2(self._slave_stdin_fd, 0)
-            os.dup2(self._slave_stdout_fd, 1)
+                # if the parent-side fd for stdin exists, close it.  the case
+                # where it may not exist is if we're using piped="direct"
+                if self._stdin_fd:
+                    os.close(self._stdin_fd)
 
-            # we're not directing stderr to stdout?  then set self._slave_stderr_fd to
-            # fd 2, the common stderr fd
-            if stderr is STDOUT:
-                os.dup2(self._slave_stdout_fd, 2)
-            else:
-                os.dup2(self._slave_stderr_fd, 2)
-
-            # don't inherit file descriptors
-            max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-            os.closerange(3, max_fd)
+                if not self._single_tty:
+                    os.close(self._stdout_fd)
+                    if stderr is not STDOUT:
+                        os.close(self._stderr_fd)
 
 
-            # set our controlling terminal
-            if self.call_args["tty_out"]:
-                tmp_fd = os.open(os.ttyname(1), os.O_RDWR)
-                os.close(tmp_fd)
+                if cwd:
+                    os.chdir(cwd)
+
+                os.dup2(self._slave_stdin_fd, 0)
+                os.dup2(self._slave_stdout_fd, 1)
+
+                # we're not directing stderr to stdout?  then set self._slave_stderr_fd to
+                # fd 2, the common stderr fd
+                # TODO why are both branches the same????
+                if stderr is STDOUT:
+                    os.dup2(self._slave_stdout_fd, 2)
+                else:
+                    os.dup2(self._slave_stderr_fd, 2)
+
+                # don't inherit file descriptors
+                max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
+                os.closerange(3, max_fd)
 
 
-            if self.call_args["tty_out"]:
-                self.setwinsize(1)
+                # set our controlling terminal.  tty_out defaults to true
+                if self.call_args["tty_out"]:
+                    tmp_fd = os.open(os.ttyname(1), os.O_RDWR)
+                    os.close(tmp_fd)
 
-            # actually execute the process
-            if self.call_args["env"] is None:
-                os.execv(cmd[0], cmd)
-            else:
-                os.execve(cmd[0], cmd, self.call_args["env"])
 
-            os._exit(255)
+                if self.call_args["tty_out"]:
+                    self.setwinsize(1)
+
+                # actually execute the process
+                if self.call_args["env"] is None:
+                    os.execv(cmd[0], cmd)
+                else:
+                    os.execve(cmd[0], cmd, self.call_args["env"])
+
+            # we must ensure that we ALWAYS exit the child process, otherwise
+            # the parent process code will be executed twice on exception
+            # https://github.com/amoffat/sh/issues/202
+            finally:
+                os._exit(255)
 
         # parent
         else:
