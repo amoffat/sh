@@ -49,7 +49,7 @@ import time as _time
 from contextlib import contextmanager
 
 from locale import getpreferredencoding
-DEFAULT_ENCODING = getpreferredencoding() or "utf-8"
+DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
 
 
 if IS_PY3:
