@@ -1,14 +1,16 @@
 # -*- coding: utf8 -*-
 
 import os
-from os.path import exists, join
+from os.path import exists, join, realpath
 import unittest
 import tempfile
 import sys
 import sh
 import platform
 
-tempdir = tempfile.gettempdir()
+# we have to use the real path because on osx, /tmp is a symlink to
+# /private/tmp, and so assertions that gettempdir() == sh.pwd() will fail
+tempdir = realpath(tempfile.gettempdir())
 IS_OSX = platform.system() == "Darwin"
 IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
@@ -1529,6 +1531,7 @@ for i in range(10):
         with sh.args(_cwd=tempdir):
             new_wd = sh.pwd().strip()
 
+        # sanity
         self.assertNotEqual(old_wd, tempdir)
         self.assertEqual(old_wd, os.getcwd())
         self.assertEqual(new_wd, tempdir)
