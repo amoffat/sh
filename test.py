@@ -1581,6 +1581,14 @@ for i in range(10):
         self.assertRaises(OSError, ls, _cwd=non_exist_dir)
 
 
+    # https://github.com/amoffat/sh/issues/176
+    def test_baked_command_can_be_printed(self):
+        from sh import ls
+
+        ll = ls.bake("-l")
+        self.assertTrue(str(ll).endswith("/ls -l"))
+
+
 
 if __name__ == "__main__":
     # if we're running a specific test, we can let unittest framework figure out

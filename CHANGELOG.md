@@ -2,6 +2,7 @@
 
 ## 1.10 -
 
+*   bugfix for being unable to print a baked command in python3+ [#176](https://github.com/amoffat/sh/issues/176)
 *   bugfix for cwd not existing and causing the child process to continue
     running parent process code [#202](https://github.com/amoffat/sh/issues/202)
 *   child process is now guaranteed to exit on exception between fork and exec.
