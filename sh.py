@@ -139,14 +139,16 @@ class ErrorReturnCode(Exception):
         self.stderr = stderr
 
 
-        if self.stdout is None: exc_stdout = "<redirected>"
+        if self.stdout is None:
+            exc_stdout = "<redirected>"
         else:
             exc_stdout = self.stdout[:self.truncate_cap]
             out_delta = len(self.stdout) - len(exc_stdout)
             if out_delta:
                 exc_stdout += ("... (%d more, please see e.stdout)" % out_delta).encode()
 
-        if self.stderr is None: exc_stderr = "<redirected>"
+        if self.stderr is None:
+            exc_stderr = "<redirected>"
         else:
             exc_stderr = self.stderr[:self.truncate_cap]
             err_delta = len(self.stderr) - len(exc_stderr)
@@ -186,8 +188,10 @@ rc_exc_cache = {}
 
 def get_rc_exc(rc):
     rc = int(rc)
-    try: return rc_exc_cache[rc]
-    except KeyError: pass
+    try:
+        return rc_exc_cache[rc]
+    except KeyError:
+        pass
 
     if rc > 0:
         name = "ErrorReturnCode_%d" % rc
@@ -210,9 +214,11 @@ def which(program):
 
     fpath, fname = os.path.split(program)
     if fpath:
-        if is_exe(program): return program
+        if is_exe(program):
+            return program
     else:
-        if "PATH" not in os.environ: return None
+        if "PATH" not in os.environ:
+            return None
         for path in os.environ["PATH"].split(os.pathsep):
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):
@@ -227,8 +233,10 @@ def resolve_program(program):
         # that from python (we have to use underscores), so we'll check
         # if a dash version of our underscore command exists and use that
         # if it does
-        if "_" in program: path = which(program.replace("_", "-"))
-        if not path: return None
+        if "_" in program:
+            path = which(program.replace("_", "-"))
+        if not path:
+            return None
     return path
 
 
@@ -248,23 +256,28 @@ class Logger(object):
     def __init__(self, name, context=None):
         self.name = name
         self.context = "%s"
-        if context: self.context = "%s: %%s" % context
+        if context:
+            self.context = "%s: %%s" % context
         self.log = logging.getLogger(name)
 
     def info(self, msg, *args):
-        if not logging_enabled: return
+        if not logging_enabled:
+            return
         self.log.info(self.context, msg % args)
 
     def debug(self, msg, *args):
-        if not logging_enabled: return
+        if not logging_enabled:
+            return
         self.log.debug(self.context, msg % args)
 
     def error(self, msg, *args):
-        if not logging_enabled: return
+        if not logging_enabled:
+            return
         self.log.error(self.context, msg % args)
 
     def exception(self, msg, *args):
-        if not logging_enabled: return
+        if not logging_enabled:
+            return
         self.log.exception(self.context, msg % args)
 
 
@@ -357,7 +370,8 @@ class RunningCommand(object):
     # here we determine if we had an exception, or an error code that we weren't
     # expecting to see.  if we did, we create and raise an exception
     def _handle_exit_code(self, code):
-        if self._handled_exit_code: return
+        if self._handled_exit_code:
+            return
         self._handled_exit_code = True
 
         if code not in self.call_args["ok_code"] and \
@@ -408,14 +422,17 @@ class RunningCommand(object):
         while True:
             try: chunk = self.process._pipe_queue.get(True, 0.001)
             except Empty:
-                if self.call_args["iter_noblock"]: return errno.EWOULDBLOCK
+                if self.call_args["iter_noblock"]:
+                    return errno.EWOULDBLOCK
             else:
                 if chunk is None:
                     self.wait()
                     raise StopIteration()
-                try: return chunk.decode(self.call_args["encoding"],
-                    self.call_args["decode_errors"])
-                except UnicodeDecodeError: return chunk
+                try:
+                    return chunk.decode(self.call_args["encoding"],
+                        self.call_args["decode_errors"])
+                except UnicodeDecodeError:
+                    return chunk
 
     # python 3
     __next__ = next
@@ -425,8 +442,10 @@ class RunningCommand(object):
             Command._prepend_stack.pop()
 
     def __str__(self):
-        if IS_PY3: return self.__unicode__()
-        else: return unicode(self).encode(self.call_args["encoding"])
+        if IS_PY3:
+            return self.__unicode__()
+        else:
+            return unicode(self).encode(self.call_args["encoding"])
 
     def __unicode__(self):
         if self.process and self.stdout:
@@ -444,15 +463,18 @@ class RunningCommand(object):
     def __getattr__(self, p):
         # let these three attributes pass through to the OProc object
         if p in ("signal", "terminate", "kill"):
-            if self.process: return getattr(self.process, p)
-            else: raise AttributeError
+            if self.process:
+                return getattr(self.process, p)
+            else:
+                raise AttributeError
         return getattr(unicode(self), p)
 
     def __repr__(self):
         try: return str(self)
         except UnicodeDecodeError:
             if self.process:
-                if self.stdout: return repr(self.stdout)
+                if self.stdout:
+                    return repr(self.stdout)
             return repr("")
 
     def __long__(self):
@@ -558,7 +580,8 @@ class Command(object):
     @classmethod
     def _create(cls, program, **default_kwargs):
         path = resolve_program(program)
-        if not path: raise CommandNotFound(program)
+        if not path:
+            raise CommandNotFound(program)
 
         cmd = cls(path)
         if default_kwargs:
@@ -585,9 +608,12 @@ class Command(object):
         # convenience
         getattr = partial(object.__getattribute__, self)
 
-        if name.startswith("_"): return getattr(name)
-        if name == "bake": return getattr("bake")
-        if name.endswith("_"): name = name[:-1]
+        if name.startswith("_"):
+            return getattr(name)
+        if name == "bake":
+            return getattr("bake")
+        if name.endswith("_"):
+            name = name[:-1]
 
         return getattr("bake")(name)
 
@@ -677,7 +703,8 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
             try:
                 if pruned_call_args[k] == v:
                     del pruned_call_args[k]
-            except KeyError: continue
+            except KeyError:
+                continue
 
         fn._partial_call_args.update(self._partial_call_args)
         fn._partial_call_args.update(pruned_call_args)
@@ -694,8 +721,10 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
 
 
     def __eq__(self, other):
-        try: return str(self) == str(other)
-        except: return False
+        try:
+            return str(self) == str(other)
+        except:
+            return False
     __hash__ = None  # Avoid DeprecationWarning in Python < 3
 
 
@@ -727,8 +756,10 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
         for prepend in self._prepend_stack:
             # don't pass the 'with' call arg
             pcall_args = prepend.call_args.copy()
-            try: del pcall_args["with"]
-            except: pass
+            try:
+                del pcall_args["with"]
+            except:
+                pass
 
             call_args.update(pcall_args)
             cmd.extend(prepend.cmd)
@@ -1196,7 +1227,8 @@ class OProc(object):
 
     @property
     def alive(self):
-        if self.exit_code is not None: return False
+        if self.exit_code is not None:
+            return False
 
         # what we're doing here essentially is making sure that the main thread
         # (or another thread), isn't calling .wait() on the process.  because
@@ -1652,7 +1684,8 @@ class StreamBufferer(object):
                 chunk = chunk.decode(self.encoding, self.decode_errors)
                 while True:
                     newline = chunk.find("\n")
-                    if newline == -1: break
+                    if newline == -1:
+                        break
 
                     chunk_to_write = chunk[:newline + 1]
                     if self.buffer:
