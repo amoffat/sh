@@ -34,6 +34,12 @@ please install pbs 0.110 (http://pypi.python.org/pypi/pbs) for windows \
 support." % __version__)
 
 
+# be careful what we import.  these imports have module-level scope, so
+# they can override legitimate programs with the same name.  for example, if we
+# import the gzip module, we will not able to access the gzip program.
+#
+# TODO, come up with a mechanism that can "erase" the imports from availability
+# outside of sh
 
 import sys
 IS_PY3 = sys.version_info[0] == 3
