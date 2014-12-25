@@ -362,6 +362,7 @@ class RunningCommand(object):
 
         if spawn_process:
             self.log.debug("starting process")
+            Logger("command", "starting command").info(" ".join(cmd))
             self.process = OProc(cmd, stdin, stdout, stderr,
                 self.call_args, pipe=pipe)
 
