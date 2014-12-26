@@ -1490,12 +1490,12 @@ while True: time.sleep(1)
 
         import time
 
-        expected_time_increment = 0.1
+        expected_time_increment = 0.2
         py = create_tmp_test("""
 from time import sleep
 import sys
 
-for i in range(10):
+for i in range(5):
     print(i)
     i += 1
     sleep(%.2f)
@@ -1513,12 +1513,13 @@ for i in range(10):
         times = []
         timeout = 5
         started = time.time()
-        for i in range(10):
+        for i in range(5):
             while True:
                 now = time.time()
                 if now - started > timeout:
-                    self.assertTrue(False, "timed out")
+                    self.fail("test timed out")
 
+                # check if the end of our file has grown
                 file_obj.seek(0, 2)
                 cur_pos = file_obj.tell()
                 if cur_pos > last_pos:
@@ -1530,12 +1531,10 @@ for i in range(10):
 
                     if last_pos_time > 0:
                         self.assertTrue(abs(delta - expected_time_increment) <=
-                            expected_time_increment * 0.1)
+                                expected_time_increment * 0.1)
 
                     last_pos_time = now
                     break
-
-                time.sleep(0.01)
 
         p.wait()
         file_obj.close()
