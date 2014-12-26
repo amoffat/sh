@@ -624,6 +624,10 @@ class Command(object):
         # option also puts the command in the background, since it doesn't make
         # sense to have an un-backgrounded command with a done callback
         "done": None,
+
+        # a tuple (rows, columns) of the desired size of both the stdout and
+        # stdin ttys, if ttys are being used
+        "tty_size": (20, 80),
     }
 
     # these are arguments that cannot be called together, because they wouldn't
@@ -899,6 +903,24 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
 
 
 
+def _start_daemon_thread(fn, *args):
+    thrd = threading.Thread(target=fn, args=args)
+    thrd.daemon = True
+    thrd.start()
+    return thrd
+
+
+def setwinsize(fd, rows_cols):
+    """ set the terminal size of a tty file descriptor.  borrowed logic
+    from pexpect.py """
+    rows, cols = rows_cols
+    TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
+
+    s = struct.pack('HHHH', rows, cols, 0, 0)
+    fcntl.ioctl(fd, TIOCSWINSZ, s)
+
+
+
 # used in redirecting
 STDOUT = -1
 STDERR = -2
@@ -1070,7 +1092,7 @@ class OProc(object):
 
 
                 if self.call_args["tty_out"]:
-                    self.setwinsize(1)
+                    setwinsize(1, self.call_args["tty_size"])
 
                 # actually execute the process
                 if self.call_args["env"] is None:
@@ -1112,7 +1134,7 @@ class OProc(object):
             self._stderr = deque(maxlen=self.call_args["internal_bufsize"])
 
             if self.call_args["tty_in"]:
-                self.setwinsize(self._stdin_fd)
+                setwinsize(self._stdin_fd, self.call_args["tty_size"])
 
 
             self.log = Logger("process", repr(self))
@@ -1175,32 +1197,22 @@ class OProc(object):
                     self._stderr, self.call_args["err_bufsize"], stderr_pipe,
                     save_data=save_stderr)
 
+
             # start the main io threads
             # stdin thread is not needed if we are connecting from another process's stdout pipe
-            self._input_thread = None if not self._stdin_stream else self._start_thread(self.input_thread, self._stdin_stream)
-            self._output_thread = self._start_thread(self.output_thread, self._stdout_stream, self._stderr_stream)
+            self._input_thread = None
+            if self._stdin_stream:
+                self._input_thread = _start_daemon_thread(self.input_thread,
+                        self._stdin_stream)
+
+            self._output_thread = _start_daemon_thread(self.output_thread,
+                    self._stdout_stream, self._stderr_stream)
 
 
     def __repr__(self):
         return "<Process %d %r>" % (self.pid, self.cmd[:500])
 
 
-    # also borrowed from pexpect.py
-    @staticmethod
-    def setwinsize(fd):
-        rows, cols = OProc._default_window_size
-        TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
-
-        s = struct.pack('HHHH', rows, cols, 0, 0)
-        fcntl.ioctl(fd, TIOCSWINSZ, s)
-
-
-    @staticmethod
-    def _start_thread(fn, *args):
-        thrd = threading.Thread(target=fn, args=args)
-        thrd.daemon = True
-        thrd.start()
-        return thrd
 
     def change_in_bufsize(self, buf):
         self._stdin_stream.stream_bufferer.change_buffering(buf)
