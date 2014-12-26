@@ -1982,7 +1982,7 @@ if __name__ == "__main__":
                     locale))
 
                 env = os.environ.copy()
-                env["LC_ALL"] = locale
+                env["LANG"] = locale
                 p = subprocess.Popen([py_bin, os.path.join(THIS_DIR, "test.py")]
                     + sys.argv[1:], env=env)
                 return_code = p.wait()
