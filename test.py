@@ -1611,8 +1611,10 @@ for i in range(5):
         class Callback(object):
             def __init__(self):
                 self.called = False
+                self.p = None
             def __call__(self, p):
                 self.called = True
+                self.p = p
 
         py = create_tmp_test("""
 from time import time, sleep
@@ -1631,6 +1633,7 @@ print(time())
 
         self.assertTrue(callback.called)
         self.assertTrue(abs(wait_elapsed - 1.0) < 0.1)
+        self.assertEqual(callback.p.exit_code, 0)
 
 
     def test_done_cb_exc(self):
