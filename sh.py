@@ -140,6 +140,26 @@ def encode_to_py3bytes_or_py2str(s):
 
 
 class ErrorReturnCode(Exception):
+    """ base class for all exceptions as a result of a command's exit status
+    being deemed an error.  this base class is dynamically subclassed into
+    derived classes with the format: ErrorReturnCode_NNN where NNN is the exit
+    code number.  the reason for this is it reduces boiler plate code when
+    testing error return codes:
+    
+        try:
+            some_cmd()
+        except ErrorReturnCode_12:
+            print("couldn't do X")
+            
+    vs:
+        try:
+            some_cmd()
+        except ErrorReturnCode as e:
+            if e.exit_code == 12:
+                print("couldn't do X")
+    
+    it's not much of a savings, but i believe it makes the code easier to read """
+
     truncate_cap = 750
 
     def __init__(self, full_cmd, stdout, stderr):
