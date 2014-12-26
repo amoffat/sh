@@ -477,10 +477,15 @@ class RunningCommand(object):
             else:
                 raise AttributeError
 
-        return getattr(unicode(self), p)
-        # see if strings have what we're looking for
+        # see if strings have what we're looking for.  we're looking at the
+        # method names explicitly because we don't want to evaluate self unless
+        # we absolutely have to, the reason being, in python2, hasattr swallows
+        # exceptions, and if we try to run hasattr on a command that failed and
+        # is being run with _iter=True, the command will be evaluated, throw an
+        # exception, but hasattr will discard it
         if p in _unicode_methods:
             return getattr(unicode(self), p)
+
         raise AttributeError
 
     def __repr__(self):
