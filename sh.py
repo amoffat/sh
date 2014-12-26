@@ -1202,15 +1202,14 @@ class OProc(object):
         thrd.start()
         return thrd
 
-    def in_bufsize(self, buf):
+    def change_in_bufsize(self, buf):
         self._stdin_stream.stream_bufferer.change_buffering(buf)
 
-    def out_bufsize(self, buf):
+    def change_out_bufsize(self, buf):
         self._stdout_stream.stream_bufferer.change_buffering(buf)
 
-    def err_bufsize(self, buf):
-        if self._stderr_stream:
-            self._stderr_stream.stream_bufferer.change_buffering(buf)
+    def change_err_bufsize(self, buf):
+        self._stderr_stream.stream_bufferer.change_buffering(buf)
 
 
     def input_thread(self, stdin):

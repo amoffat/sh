@@ -1245,25 +1245,30 @@ sys.stdout.flush()
 sys.stdin.read(1)
 """)
 
-        d = {"success": False}
+        d = {
+            "newline_buffer_success": False,
+            "unbuffered_success": False,
+        }
         def interact(line, stdin, process):
             line = line.strip()
             if not line: return
 
             if line == "switch buffering":
-                process.out_bufsize(0)
+                d["newline_buffer_success"] = True
+                process.change_out_bufsize(0)
                 stdin.put("a")
 
             elif line == "unbuffered":
                 stdin.put("b")
-                d["success"] = True
+                d["unbuffered_success"] = True
                 return True
 
         # start with line buffered stdout
         pw_stars = python(py.name, _out=interact, _out_bufsize=1, u=True)
         pw_stars.wait()
 
-        self.assertTrue(d["success"])
+        self.assertTrue(d["newline_buffer_success"])
+        self.assertTrue(d["unbuffered_success"])
 
 
 
