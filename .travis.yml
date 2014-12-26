@@ -1,12 +1,15 @@
-# Wire up travis
+os:
+    - linux
+    - osx
+
 language: python
 
 python:
-  - 2.6
-  - 2.7
-  - pypy
-  - 3.2
-  - 3.3
+    - 2.6
+    - 2.7
+    - pypy
+    - 3.2
+    - 3.3
 
 env:
     - LC_ALL=C
@@ -15,7 +18,7 @@ env:
 before_script: pip install coverage coveralls
 
 script:
-  - coverage run --source sh test.py
-  - coverage report
+    - coverage run --source sh test.py
+    - coverage report
 
 after_success: coveralls
