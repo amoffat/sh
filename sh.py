@@ -104,6 +104,9 @@ if IS_PY3:
     basestring = str
 
 
+_unicode_methods = set(dir(unicode()))
+
+
 def encode_to_py3bytes_or_py2str(s):
     """ takes anything and attempts to return a py2 string or py3 bytes.  this
     is typically used when creating command + arguments to be executed via
@@ -473,7 +476,17 @@ class RunningCommand(object):
                 return getattr(self.process, p)
             else:
                 raise AttributeError
-        return getattr(unicode(self), p)
+
+        # see if strings have what we're looking for.  we're looking at the
+        # method names explicitly because we don't want to evaluate self unless
+        # we absolutely have to, the reason being, in python2, hasattr swallows
+        # exceptions, and if we try to run hasattr on a command that failed and
+        # is being run with _iter=True, the command will be evaluated, throw an
+        # exception, but hasattr will discard it
+        if p in _unicode_methods:
+            return getattr(unicode(self), p)
+
+        raise AttributeError
 
     def __repr__(self):
         try: return str(self)

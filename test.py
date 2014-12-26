@@ -91,6 +91,23 @@ exit(3)
         self.assertRaises(ErrorReturnCode, python, py.name)
 
 
+    def test_exit_code_with_hasattr(self):
+        from sh import ErrorReturnCode
+        py = create_tmp_test("""
+exit(3)
+""")
+
+        try:
+            out = python(py.name, _iter=True)
+            # hasattr can swallow exceptions
+            hasattr(out, 'something_not_there')
+            list(out)
+            self.assertEqual(out.exit_code, 3)
+            self.fail("Command exited with error, but no exception thrown")
+        except ErrorReturnCode as e:
+            pass
+
+
     def test_exit_code_from_exception(self):
         from sh import ErrorReturnCode
         py = create_tmp_test("""
