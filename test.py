@@ -1117,7 +1117,6 @@ for i in range(42):
         #   ValueError: invalid literal for int() with base 10: ''
         self.assertEqual(int(echo("123", _bg=True)), 123)
 
-
     def test_cwd(self):
         from sh import pwd
         from os.path import realpath

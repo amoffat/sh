@@ -292,6 +292,19 @@ class Logger(object):
 
 
 class RunningCommand(object):
+    """ this represents an executing Command object.  it is returned as the
+    result of __call__() being executed on a Command instance.  this creates a
+    reference to a OProc instance, which is a low-level wrapper around the
+    process that was exec'd
+
+    this is the class that gets manipulated the most by user code, and so it
+    implements various convenience methods and logical mechanisms for the
+    underlying process.  for example, if a user tries to access a
+    backgrounded-process's stdout/err, the RunningCommand object is smart enough
+    to know to wait() on the process to finish first.  and when the process
+    finishes, RunningCommand is smart enough to translate exit codes to
+    exceptions. """
+
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
         truncate = 20
         if len(cmd) > truncate:
@@ -512,6 +525,14 @@ class RunningCommand(object):
 
 
 class Command(object):
+    """ represents an un-run system program, like "ls" or "cd".  because it
+    represents the program itself (and not a running instance of it), it should
+    hold very little state.  in fact, the only state it does hold is baked
+    arguments.
+    
+    when a Command object is called, the result that is returned is a
+    RunningCommand object, which represents the Command put into an execution
+    state. """
     _prepend_stack = []
 
     _call_args = {
@@ -865,10 +886,10 @@ STDERR = -2
 
 
 class OProc(object):
-    """ this class is instantiated for every command to be exec'd.  it handles
-    all the nasty business involved with correctly setting up the input/output
-    to the child process.  it gets its name for subprocess.Popen (process open)
-    but we're calling ours OProc (open process) """
+    """ this class is instantiated by RunningCommand for a command to be exec'd.
+    it handles all the nasty business involved with correctly setting up the
+    input/output to the child process.  it gets its name for subprocess.Popen
+    (process open) but we're calling ours OProc (open process) """
 
     _procs_to_cleanup = set()
     _registered_cleanup = False
