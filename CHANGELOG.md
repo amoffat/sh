@@ -2,6 +2,7 @@
 
 ## 1.10 -
 
+*   feature, `_done` special keyword argument that accepts a callback to be called when the command completes successfully [#185](https://github.com/amoffat/sh/issues/185)
 *   bugfix for being unable to print a baked command in python3+ [#176](https://github.com/amoffat/sh/issues/176)
 *   bugfix for cwd not existing and causing the child process to continue
     running parent process code [#202](https://github.com/amoffat/sh/issues/202)

@@ -374,6 +374,8 @@ class RunningCommand(object):
 
     def wait(self):
         self._handle_exit_code(self.process.wait())
+        if self.call_args["done"]:
+            self.call_args["done"](self)
         return self
 
     # here we determine if we had an exception, or an error code that we weren't
@@ -576,6 +578,11 @@ class Command(object):
         # the output is being T'd to both the redirected destination and our
         # internal buffers
         "tee": None,
+
+        # will be called when a process terminates without exception.  this
+        # option also puts the command in the background, since it doesn't make
+        # sense to have an un-backgrounded command with a done callback
+        "done": None,
     }
 
     # these are arguments that cannot be called together, because they wouldn't
@@ -796,6 +803,9 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
         if not getattr(call_args["ok_code"], "__iter__", None):
             call_args["ok_code"] = [call_args["ok_code"]]
 
+
+        if call_args["done"]:
+            call_args["bg"] = True
 
         # check if we're piping via composition
         stdin = call_args["in"]

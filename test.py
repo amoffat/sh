@@ -1605,6 +1605,57 @@ for i in range(5):
         self.assertTrue(str(ll).endswith("/ls -l"))
 
 
+    # https://github.com/amoffat/sh/issues/185
+    def test_done_callback(self):
+        import time
+
+        class Callback(object):
+            def __init__(self):
+                self.called = False
+            def __call__(self, p):
+                self.called = True
+
+        py = create_tmp_test("""
+from time import time, sleep
+sleep(1)
+print(time())
+""")
+
+        callback = Callback()
+        p = python(py.name, _done=callback)
+
+        # do a little setup to prove that a command with a _done callback is run
+        # in the background
+        wait_start = time.time()
+        p.wait()
+        wait_elapsed = time.time() - wait_start
+
+        self.assertTrue(callback.called)
+        self.assertTrue(abs(wait_elapsed - 1.0) < 0.1)
+
+
+    def test_done_cb_exc(self):
+        from sh import ErrorReturnCode
+
+        class Callback(object):
+            def __init__(self):
+                self.called = False
+            def __call__(self, p):
+                self.called = True
+
+        py = create_tmp_test("exit(1)")
+
+        callback = Callback()
+        try:
+            p = python(py.name, _done=callback)
+            p.wait()
+        except ErrorReturnCode:
+            self.assertFalse(callback.called)
+        else:
+            self.fail("command should've thrown an exception")
+
+
+
 
 if __name__ == "__main__":
     # if we're running a specific test, we can let unittest framework figure out
