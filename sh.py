@@ -74,6 +74,7 @@ else:
 
 IS_OSX = platform.system() == "Darwin"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+SH_LOGGER_NAME = "sh"
 
 
 import errno
@@ -95,7 +96,6 @@ import logging
 import weakref
 
 
-logging_enabled = False
 
 
 if IS_PY3:
@@ -282,33 +282,55 @@ def glob(arg):
 
 
 class Logger(object):
+    """ provides a memory-inexpensive logger.  a gotcha about python's builtin
+    logger is that logger objects are never garbage collected.  if you create a
+    thousand loggers with unique names, they'll sit there in memory until your
+    script is done.  with sh, it's easy to create loggers with unique names if
+    we want our loggers to include our command arguments.  for example, these
+    are all unique loggers:
+        
+            ls -l
+            ls -l /tmp
+            ls /tmp
+
+    so instead of creating unique loggers, and without sacrificing logging
+    output, we use this class, which maintains as part of its state, the logging
+    "context", which will be the very unique name.  this allows us to get a
+    logger with a very general name, eg: "command", and have a unique name
+    appended to it via the context, eg: "ls -l /tmp" """
     def __init__(self, name, context=None):
         self.name = name
-        self.context = "%s"
-        if context:
-            self.context = "%s: %%s" % context
-        self.log = logging.getLogger(name)
+        self.context = context
+        self.log = logging.getLogger("%s.%s" % (SH_LOGGER_NAME, name))
+
+    def _format_msg(self, msg, *args):
+        if self.context:
+            msg = "%s: %s" % (self.context, msg)
+        return msg % args
+
+    def get_child(self, name, context):
+        new_name = self.name + "." + name
+        new_context = self.context + "." + context
+        l = Logger(new_name, new_context)
+        return l
 
     def info(self, msg, *args):
-        if not logging_enabled:
-            return
-        self.log.info(self.context, msg % args)
+        self.log.info(self._format_msg(msg, *args))
 
     def debug(self, msg, *args):
-        if not logging_enabled:
-            return
-        self.log.debug(self.context, msg % args)
+        self.log.debug(self._format_msg(msg, *args))
 
     def error(self, msg, *args):
-        if not logging_enabled:
-            return
-        self.log.error(self.context, msg % args)
+        self.log.error(self._format_msg(msg, *args))
 
     def exception(self, msg, *args):
-        if not logging_enabled:
-            return
-        self.log.exception(self.context, msg % args)
+        self.log.exception(self._format_msg(msg, *args))
 
+
+def friendly_truncate(s, max_len):
+    if len(s) > max_len:
+        s = "%s...(%d more)" % (s[:max_len], len(s) - max_len)
+    return s
 
 
 class RunningCommand(object):
@@ -326,17 +348,6 @@ class RunningCommand(object):
     exceptions. """
 
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
-        truncate = 20
-        if len(cmd) > truncate:
-            logger_str = "command %r...(%d more) call_args %r" % \
-                (cmd[:truncate], len(cmd) - truncate, call_args)
-        else:
-            logger_str = "command %r call_args %r" % (cmd, call_args)
-
-        self.log = Logger("command", logger_str)
-        self.call_args = call_args
-        self.cmd = cmd
-
         # self.ran is used for auditing what actually ran.  for example, in
         # exceptions, or if you just want to know what was ran after the
         # command ran
@@ -344,6 +355,17 @@ class RunningCommand(object):
             self.ran = " ".join([arg.decode(DEFAULT_ENCODING, "ignore") for arg in cmd])
         else:
             self.ran = " ".join(cmd)
+
+
+        friendly_cmd = friendly_truncate(self.ran, 20)
+        friendly_call_args = friendly_truncate(str(call_args), 20)
+
+        logger_str = "<Command %r call_args %s>" % (friendly_cmd,
+                friendly_call_args)
+
+        self.log = Logger("command", logger_str)
+        self.call_args = call_args
+        self.cmd = cmd
 
         self.process = None
 
@@ -397,9 +419,9 @@ class RunningCommand(object):
 
 
         if spawn_process:
-            self.log.debug("starting process")
-            self.process = OProc(cmd, stdin, stdout, stderr,
-                self.call_args, pipe=pipe)
+            self.log.info("starting process")
+            self.process = OProc(self.log, cmd, stdin, stdout, stderr,
+                    self.call_args, pipe=pipe)
 
             if self.should_wait:
                 self.wait()
@@ -919,6 +941,51 @@ def setwinsize(fd, rows_cols):
     s = struct.pack('HHHH', rows, cols, 0, 0)
     fcntl.ioctl(fd, TIOCSWINSZ, s)
 
+def construct_streamreader_callback(process, handler):
+    """ here we're constructing a closure for our streamreader callback.  this
+    is used in the case that we pass a callback into _out or _err, meaning we
+    want to our callback to handle each bit of output
+
+    we construct the closure based on how many arguments it takes.  the reason
+    for this is to make it as easy as possible for people to use, without
+    limiting them.  a new user will assume the callback takes 1 argument (the
+    data).  as they get more advanced, they may want to terminate the process,
+    or pass some stdin back, and will realize that they can pass a callback of
+    more args """
+
+    implied_arg = 0
+    if inspect.ismethod(handler):
+        implied_arg = 1
+        num_args = len(inspect.getargspec(handler).args)
+
+    else:
+        if inspect.isfunction(handler):
+            num_args = len(inspect.getargspec(handler).args)
+
+        # is an object instance with __call__ method
+        else:
+            implied_arg = 1
+            num_args = len(inspect.getargspec(handler.__call__).args)
+
+    handler_args = ()
+    if num_args == implied_arg + 2:
+        handler_args = (process.stdin,)
+    elif num_args == implied_arg + 3:
+        # notice we're only storing a weakref, to prevent cyclic references
+        # (where the process holds a streamreader, and a streamreader holds a
+        # handler-closure with a reference to the process
+        handler_args = (process.stdin, weakref.ref(process))
+
+    def fn(chunk):
+        # this is pretty ugly, but we're evaluating the process at call-time,
+        # because it's a weakref
+        args = handler_args
+        if len(args) == 2:
+            args = (handler_args[0], handler_args[1]())
+        return handler(chunk, *args)
+
+    return fn
+
 
 
 # used in redirecting
@@ -937,7 +1004,7 @@ class OProc(object):
     _registered_cleanup = False
     _default_window_size = (24, 80)
 
-    def __init__(self, cmd, stdin, stdout, stderr, call_args,
+    def __init__(self, parent_log, cmd, stdin, stdout, stderr, call_args,
             persist=True, pipe=STDOUT):
         """
             cmd is the full string that will be exec'd.  it includes the program
@@ -1014,8 +1081,8 @@ class OProc(object):
         # but we're doing it BEFORE we fork.  the reason for before the fork is
         # error handling.  i'm currently too lazy to implement what
         # subprocess.py did and set up a error pipe to handle exceptions that
-        # happen between fork and exec.  it has only been seen in the wild for a
-        # missing cwd, so we'll handle it here.
+        # happen in the child between fork and exec.  it has only been seen in
+        # the wild for a missing cwd, so we'll handle it here.
         cwd = self.call_args["cwd"]
         if cwd is not None and not os.path.exists(cwd):
             os.chdir(cwd)
@@ -1137,7 +1204,7 @@ class OProc(object):
                 setwinsize(self._stdin_fd, self.call_args["tty_size"])
 
 
-            self.log = Logger("process", repr(self))
+            self.log = parent_log.get_child("process", repr(self))
 
             os.close(self._slave_stdin_fd)
             if not self._single_tty:
@@ -1157,8 +1224,14 @@ class OProc(object):
 
             # this represents the connection from a Queue object (or whatever
             # we're using to feed STDIN) to the process's STDIN fd
-            self._stdin_stream = None if isinstance(self.stdin, OProc) else \
-                StreamWriter("stdin", self, self._stdin_fd, self.stdin, self.call_args["in_bufsize"])
+            self._stdin_stream = None
+            if not isinstance(self.stdin, OProc):
+                self._stdin_stream = \
+                        StreamWriter(self.log.get_child("streamwriter",
+                            "stdin"), self._stdin_fd, self.stdin,
+                            self.call_args["in_bufsize"],
+                            self.call_args["encoding"],
+                            self.call_args["tty_in"])
 
             stdout_pipe = None
             if pipe is STDOUT and not self.call_args["no_pipe"]:
@@ -1175,14 +1248,22 @@ class OProc(object):
             save_stdout = not self.call_args["no_out"] and \
                 (self.call_args["tee"] in (True, "out") or stdout is None)
 
+
             # if we're piping directly into another process's filedescriptor, we
             # bypass reading from the stdout stream altogether, because we've
             # already hooked up this processes's stdout fd to the other
             # processes's stdin fd
-            self._stdout_stream = None if self.call_args["piped"] == "direct" else \
-                StreamReader("stdout", self, self._stdout_fd, stdout,
-                    self._stdout, self.call_args["out_bufsize"], stdout_pipe,
-                    save_data=save_stdout)
+            self._stdout_stream = None
+            if self.call_args["piped"] != "direct":
+                if callable(stdout):
+                    stdout = construct_streamreader_callback(self, stdout)
+                self._stdout_stream = \
+                        StreamReader(self.log.get_child("streamreader",
+                            "stdout"), self._stdout_fd, stdout, self._stdout,
+                            self.call_args["out_bufsize"],
+                            self.call_args["encoding"],
+                            self.call_args["decode_errors"], stdout_pipe,
+                            save_data=save_stdout)
 
             if stderr is STDOUT or self._single_tty:
                 self._stderr_stream = None
@@ -1193,8 +1274,14 @@ class OProc(object):
 
                 save_stderr = not self.call_args["no_err"] and \
                     (self.call_args["tee"] in ("err",) or stderr is None)
-                self._stderr_stream = StreamReader("stderr", self, self._stderr_fd, stderr,
-                    self._stderr, self.call_args["err_bufsize"], stderr_pipe,
+
+                if callable(stderr):
+                    stderr = construct_streamreader_callback(self, stderr)
+
+                self._stderr_stream = StreamReader(Logger("streamreader"),
+                    self._stderr_fd, stderr, self._stderr,
+                    self.call_args["err_bufsize"], self.call_args["encoding"],
+                    self.call_args["decode_errors"], stderr_pipe,
                     save_data=save_stderr)
 
 
@@ -1396,21 +1483,21 @@ class NoStdinData(Exception): pass
 
 
 
-# this guy is for reading from some input (the stream) and writing to our
-# opened process's stdin fd.  the stream can be a Queue, a callable, something
-# with the "read" method, a string, or an iterable
 class StreamWriter(object):
-    def __init__(self, name, process, stream, stdin, bufsize):
-        self.name = name
-        self.process = weakref.ref(process)
+    """ StreamWriter reads from some input (the stream param) and writes to a
+    stdin fd.  the stream may be a Queue, a callable, something with the "read"
+    method, a string, or an iterable """
+
+    def __init__(self, log, stream, stdin, bufsize, encoding, tty_in):
         self.stream = stream
         self.stdin = stdin
 
-        self.log = Logger("streamwriter", repr(self))
+        self.log = log
+        self.encoding = encoding
+        self.tty_in = tty_in
 
 
-        self.stream_bufferer = StreamBufferer(self.process().call_args["encoding"],
-            bufsize)
+        self.stream_bufferer = StreamBufferer(self.encoding, bufsize)
 
         # determine buffering for reading from the input we set for stdin
         if bufsize == 1:
@@ -1451,9 +1538,6 @@ class StreamWriter(object):
 
         self.log.debug("parsed stdin as a %s", log_msg)
 
-
-    def __repr__(self):
-        return "<StreamWriter %s for %r>" % (self.name, self.process())
 
     def fileno(self):
         return self.stream
@@ -1502,7 +1586,7 @@ class StreamWriter(object):
         except DoneReadingStdin:
             self.log.debug("done reading")
 
-            if self.process().call_args["tty_in"]:
+            if self.tty_in:
                 # EOF time
                 try:
                     char = termios.tcgetattr(self.stream)[6][termios.VEOF]
@@ -1518,7 +1602,7 @@ class StreamWriter(object):
 
         # if we're not bytes, make us bytes
         if IS_PY3 and hasattr(chunk, "encode"):
-            chunk = chunk.encode(self.process().call_args["encoding"])
+            chunk = chunk.encode(self.encoding)
 
         for chunk in self.stream_bufferer.process(chunk):
             self.log.debug("got chunk size %d: %r", len(chunk), chunk[:30])
@@ -1539,7 +1623,7 @@ class StreamWriter(object):
             if chunk:
                 os.write(self.stream, chunk)
 
-            if not self.process().call_args["tty_in"]:
+            if not self.tty_in:
                 self.log.debug("we used a TTY, so closing the stream")
                 os.close(self.stream)
         except OSError:
@@ -1548,21 +1632,19 @@ class StreamWriter(object):
 
 
 class StreamReader(object):
-    def __init__(self, name, process, stream, handler, buffer, bufsize,
-            pipe_queue=None, save_data=True):
-        self.name = name
-        self.process = weakref.ref(process)
+    def __init__(self, log, stream, handler, buffer, bufsize, encoding,
+            decode_errors, pipe_queue=None, save_data=True):
         self.stream = stream
         self.buffer = buffer
         self.save_data = save_data
-        self.encoding = process.call_args["encoding"]
-        self.decode_errors = process.call_args["decode_errors"]
+        self.encoding = encoding
+        self.decode_errors = decode_errors
 
         self.pipe_queue = None
         if pipe_queue:
             self.pipe_queue = weakref.ref(pipe_queue)
 
-        self.log = Logger("streamreader", repr(self))
+        self.log = log
 
         self.stream_bufferer = StreamBufferer(self.encoding, bufsize,
             self.decode_errors)
@@ -1593,40 +1675,9 @@ class StreamReader(object):
 
         self.should_quit = False
 
-        # here we choose how to call the callback, depending on how many
-        # arguments it takes.  the reason for this is to make it as easy as
-        # possible for people to use, without limiting them.  a new user will
-        # assume the callback takes 1 argument (the data).  as they get more
-        # advanced, they may want to terminate the process, or pass some stdin
-        # back, and will realize that they can pass a callback of more args
-        if self.handler_type == "fn":
-            implied_arg = 0
-            if inspect.ismethod(handler):
-                implied_arg = 1
-                num_args = len(inspect.getargspec(handler).args)
-
-            else:
-                if inspect.isfunction(handler):
-                    num_args = len(inspect.getargspec(handler).args)
-
-                # is an object instance with __call__ method
-                else:
-                    implied_arg = 1
-                    num_args = len(inspect.getargspec(handler.__call__).args)
-
-
-            self.handler_args = ()
-            if num_args == implied_arg + 2:
-                self.handler_args = (self.process().stdin,)
-            elif num_args == implied_arg + 3:
-                self.handler_args = (self.process().stdin, self.process)
-
 
     def fileno(self):
         return self.stream
-
-    def __repr__(self):
-        return "<StreamReader %s for %r>" % (self.name, self.process())
 
     def close(self):
         chunk = self.stream_bufferer.flush()
@@ -1657,17 +1708,7 @@ class StreamReader(object):
             except UnicodeDecodeError:
                 to_handler = chunk
 
-            # this is really ugly, but we can't store self.process as one of
-            # the handler args in self.handler_args, the reason being is that
-            # it would create cyclic references, and prevent objects from
-            # being garbage collected.  so we're determining if this handler
-            # even requires self.process (by the argument count), and if it
-            # does, resolving the weakref to a hard reference and passing
-            # that into the handler
-            handler_args = self.handler_args
-            if len(self.handler_args) == 2:
-                handler_args = (self.handler_args[0], self.process())
-            self.should_quit = self.handler(to_handler, *handler_args)
+            self.should_quit = self.handler(to_handler)
 
         elif self.handler_type == "stringio":
             self.handler.write(chunk.decode(self.encoding, self.decode_errors))
