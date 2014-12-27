@@ -1253,9 +1253,6 @@ class OProc(object):
                 stdout_pipe = self._pipe_queue
 
 
-            save_stdout = not self.call_args["no_out"] and \
-                (self.call_args["tee"] in (True, "out") or stdout is None)
-
             # this represents the connection from a process's STDOUT fd to
             # wherever it has to go, sometimes a pipe Queue (that we will use
             # to pipe data to other processes), and also an internal deque
