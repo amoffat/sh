@@ -1141,7 +1141,6 @@ class OProc(object):
 
                 # we're not directing stderr to stdout?  then set self._slave_stderr_fd to
                 # fd 2, the common stderr fd
-                # TODO why are both branches the same????
                 if stderr is STDOUT:
                     os.dup2(self._slave_stdout_fd, 2)
                 else:
