@@ -669,6 +669,8 @@ class Command(object):
         #("fg", "bg", "Command can't be run in the foreground and background"),
         ("err", "err_to_out", "Stderr is already being redirected"),
         ("piped", "iter", "You cannot iterate when this command is being piped"),
+        ("piped", "no_pipe", "Using a pipe doesn't make sense if you've\
+disabled the pipe"),
     )
 
 
