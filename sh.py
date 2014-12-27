@@ -1293,7 +1293,8 @@ class OProc(object):
                         self._stdin_stream)
 
             self._output_thread = _start_daemon_thread(self.output_thread,
-                    self._stdout_stream, self._stderr_stream)
+                    self._stdout_stream, self._stderr_stream,
+                    self.call_args["timeout"], self.started)
 
 
     def __repr__(self):
@@ -1320,7 +1321,11 @@ class OProc(object):
         stdin.close()
 
 
-    def output_thread(self, stdout, stderr):
+    def output_thread(self, stdout, stderr, timeout, started):
+        """ this function is run in a separate thread.  it reads from the
+        process's stdout stream (a streamreader), and waits for it to claim that
+        its done """
+
         readers = []
         errors = []
 
@@ -1345,9 +1350,9 @@ class OProc(object):
                 pass
 
             # test if the process has been running too long
-            if self.call_args["timeout"]:
+            if timeout:
                 now = _time.time()
-                if now - self.started > self.call_args["timeout"]:
+                if now - started > timeout:
                     self.log.debug("we've been running too long")
                     self.kill()
 
