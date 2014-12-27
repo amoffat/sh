@@ -400,28 +400,28 @@ class RunningCommand(object):
 
         # redirection
         if call_args["err_to_out"]:
-            stderr = STDOUT
+            stderr = OProc.STDOUT
 
 
         # set up which stream should write to the pipe
         # TODO, make pipe None by default and limit the size of the Queue
         # in oproc.OProc
-        pipe = STDOUT
+        pipe = OProc.STDOUT
         if call_args["iter"] == "out" or call_args["iter"] is True:
-            pipe = STDOUT
+            pipe = OProc.STDOUT
         elif call_args["iter"] == "err":
-            pipe = STDERR
+            pipe = OProc.STDERR
 
         if call_args["iter_noblock"] == "out" or call_args["iter_noblock"] is True:
-            pipe = STDOUT
+            pipe = OProc.STDOUT
         elif call_args["iter_noblock"] == "err":
-            pipe = STDERR
+            pipe = OProc.STDERR
 
 
         if spawn_process:
             self.log.info("starting process")
             self.process = OProc(self.log, cmd, stdin, stdout, stderr,
-                    self.call_args, pipe=pipe)
+                    self.call_args, pipe, True)
 
             if self.should_wait:
                 self.wait()
@@ -995,12 +995,6 @@ def construct_streamreader_callback(process, handler):
 
 
 
-# used in redirecting
-STDOUT = -1
-STDERR = -2
-
-
-
 class OProc(object):
     """ this class is instantiated by RunningCommand for a command to be exec'd.
     it handles all the nasty business involved with correctly setting up the
@@ -1011,8 +1005,12 @@ class OProc(object):
     _registered_cleanup = False
     _default_window_size = (24, 80)
 
-    def __init__(self, parent_log, cmd, stdin, stdout, stderr, call_args,
-            persist=True, pipe=STDOUT):
+    # used in redirecting
+    STDOUT = -1
+    STDERR = -2
+
+    def __init__(self, parent_log, cmd, stdin, stdout, stderr, call_args, pipe,
+            persist):
         """
             cmd is the full string that will be exec'd.  it includes the program
             name and all its arguments
@@ -1079,7 +1077,7 @@ class OProc(object):
             #
             # TODO the stderr fds dont seem to get set anywhere else if this
             # branch doesnt run!
-            if stderr is not STDOUT:
+            if stderr is not OProc.STDOUT:
                 self._stderr_fd, self._slave_stderr_fd = os.pipe()
 
 
@@ -1136,7 +1134,7 @@ class OProc(object):
 
                 if not self._single_tty:
                     os.close(self._stdout_fd)
-                    if stderr is not STDOUT:
+                    if stderr is not OProc.STDOUT:
                         os.close(self._stderr_fd)
 
 
@@ -1148,7 +1146,7 @@ class OProc(object):
 
                 # we're not directing stderr to stdout?  then set self._slave_stderr_fd to
                 # fd 2, the common stderr fd
-                if stderr is STDOUT:
+                if stderr is OProc.STDOUT:
                     os.dup2(self._slave_stdout_fd, 2)
                 else:
                     os.dup2(self._slave_stderr_fd, 2)
@@ -1224,7 +1222,7 @@ class OProc(object):
             os.close(self._slave_stdin_fd)
             if not self._single_tty:
                 os.close(self._slave_stdout_fd)
-                if stderr is not STDOUT:
+                if stderr is not OProc.STDOUT:
                     os.close(self._slave_stderr_fd)
 
             self.log.debug("started process")
@@ -1249,7 +1247,7 @@ class OProc(object):
                             self.call_args["tty_in"])
 
             stdout_pipe = None
-            if pipe is STDOUT and not self.call_args["no_pipe"]:
+            if pipe is OProc.STDOUT and not self.call_args["no_pipe"]:
                 stdout_pipe = self._pipe_queue
 
 
@@ -1277,11 +1275,11 @@ class OProc(object):
                             self.call_args["decode_errors"], stdout_pipe,
                             save_data=save_stdout)
 
-            if stderr is STDOUT or self._single_tty:
+            if stderr is OProc.STDOUT or self._single_tty:
                 self._stderr_stream = None
             else:
                 stderr_pipe = None
-                if pipe is STDERR and not self.call_args["no_pipe"]:
+                if pipe is OProc.STDERR and not self.call_args["no_pipe"]:
                     stderr_pipe = self._pipe_queue
 
                 save_stderr = not self.call_args["no_err"] and \
