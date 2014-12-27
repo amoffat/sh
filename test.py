@@ -1177,6 +1177,26 @@ else:
         self.assertEqual(response, "no tty attached!\n")
 
 
+    def test_tty_output(self):
+        py = create_tmp_test("""
+import sys
+import os
+
+if os.isatty(sys.stdout.fileno()):
+    sys.stdout.write("tty attached")
+    sys.stdout.flush()
+else:
+    sys.stdout.write("no tty attached")
+    sys.stdout.flush()
+""")
+
+        out = python(py.name, _tty_out=True)
+        self.assertEqual(out, "tty attached")
+
+        out = python(py.name, _tty_out=False)
+        self.assertEqual(out, "no tty attached")
+
+
     def test_stringio_output(self):
         from sh import echo
         if IS_PY3:
