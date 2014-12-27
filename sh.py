@@ -486,7 +486,8 @@ class RunningCommand(object):
         # we do this because if get blocks, we can't catch a KeyboardInterrupt
         # so the slight timeout allows for that.
         while True:
-            try: chunk = self.process._pipe_queue.get(True, 0.001)
+            try:
+                chunk = self.process._pipe_queue.get(True, 0.001)
             except Empty:
                 if self.call_args["iter_noblock"]:
                     return errno.EWOULDBLOCK
@@ -564,6 +565,15 @@ class RunningCommand(object):
 
 
 
+def output_redirect_is_filename(out):
+    return out \
+        and not callable(out) \
+        and not hasattr(out, "write") \
+        and not isinstance(out, (cStringIO, StringIO))
+
+
+
+
 
 
 class Command(object):
@@ -628,6 +638,7 @@ class Command(object):
         # how long the process should run before it is auto-killed
         "timeout": 0,
 
+        # TODO write some docs on "long-running processes"
         # these control whether or not stdout/err will get aggregated together
         # as the process runs.  this has memory usage implications, so sometimes
         # with long-running processes with a lot of data, it makes sense to
@@ -905,18 +916,12 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
 
         # stdout redirection
         stdout = call_args["out"]
-        if stdout \
-            and not callable(stdout) \
-            and not hasattr(stdout, "write") \
-            and not isinstance(stdout, (cStringIO, StringIO)):
-
+        if output_redirect_is_filename(stdout):
             stdout = open(str(stdout), "wb")
-
 
         # stderr redirection
         stderr = call_args["err"]
-        if stderr and not callable(stderr) and not hasattr(stderr, "write") \
-            and not isinstance(stderr, (cStringIO, StringIO)):
+        if output_redirect_is_filename(stderr):
             stderr = open(str(stderr), "wb")
 
 
@@ -1169,6 +1174,10 @@ class OProc(object):
             # we must ensure that we ALWAYS exit the child process, otherwise
             # the parent process code will be executed twice on exception
             # https://github.com/amoffat/sh/issues/202
+            #
+            # if your parent process experiences an exit code 255, it is most
+            # likely that an exception occurred between the fork of the child
+            # and the exec.  this should be reported.
             finally:
                 os._exit(255)
 
@@ -1187,6 +1196,11 @@ class OProc(object):
             self.exit_code = None
 
             self.stdin = stdin or Queue()
+
+            # _pipe_queue is used internally to hand off stdout from one process
+            # to another.  by default, all stdout from a process gets dumped
+            # into this pipe queue, to be consumed in real time (hence the
+            # thread-safe Queue), or at a potentially later time
             self._pipe_queue = Queue()
 
             # this is used to prevent a race condition when we're waiting for
@@ -1486,13 +1500,123 @@ class DoneReadingStdin(Exception): pass
 class NoStdinData(Exception): pass
 
 
+def determine_how_to_read_input(input_obj, bufsize_type):
+    """ given some kind of input object, and a desired buffering type, return a
+    function that knows how to read chunks of that input object.
+    
+    each reader function should return a chunk and raise a DoneReadingStdin
+    exception when there's no more data to read """
+
+    get_chunk = None
+
+    if isinstance(input_obj, Queue):
+        log_msg = "queue"
+        get_chunk = get_queue_chunk_reader(input_obj)
+
+    elif callable(input_obj):
+        log_msg = "callable"
+        get_chunk = get_callable_chunk_reader(input_obj)
+
+    # also handles stringio
+    elif hasattr(input_obj, "read"):
+        log_msg = "file descriptor"
+        get_chunk = get_file_chunk_reader(input_obj, bufsize_type)
+
+    elif isinstance(input_obj, basestring):
+        log_msg = "string"
+        get_chunk = get_iter_string_reader(input_obj, bufsize_type)
+
+    else:
+        log_msg = "general iterable"
+        get_chunk = get_iter_chunk_reader(iter(input_obj))
+
+    return get_chunk, log_msg
+
+
+
+def get_queue_chunk_reader(stdin):
+    def fn():
+        try:
+            chunk = stdin.get(True, 0.01)
+        except Empty:
+            raise NoStdinData
+        if chunk is None:
+            raise DoneReadingStdin
+        return chunk
+    return fn
+
+
+def get_callable_chunk_reader(stdin):
+    def fn():
+        try:
+            return stdin()
+        except:
+            raise DoneReadingStdin
+    return fn
+
+
+def get_iter_string_reader(stdin, bufsize_type):
+    bufsize = bufsize_type_to_bufsize(bufsize_type)
+    if bufsize_type == 1:
+        # TODO, make the split() be a generator
+        iter_str = iter((c + "\n" for c in stdin.split("\n")))
+    else:
+        iter_str = iter(stdin[i:i + bufsize] for i in range(0, len(stdin), bufsize))
+    return get_iter_chunk_reader(iter_str)
+
+
+def get_iter_chunk_reader(stdin):
+    def fn():
+        try:
+            if IS_PY3:
+                return stdin.__next__()
+            else:
+                return stdin.next()
+        except StopIteration:
+            raise DoneReadingStdin
+    return fn
+
+def get_file_chunk_reader(stdin, bufsize_type):
+    bufsize = bufsize_type_to_bufsize(bufsize_type)
+
+    def fn():
+        if bufsize_type == 1:
+            chunk = stdin.readline()
+        else:
+            chunk = stdin.read(bufsize)
+        if not chunk:
+            raise DoneReadingStdin
+        else:
+            return chunk
+    return fn
+
+
+def bufsize_type_to_bufsize(bf_type):
+    """ for a given bufsize type, return the actual bufsize we will read.
+    notice that although 1 means "newline-buffered", we're reading a chunk size
+    of 1024.  this is because we have to read something.  we let a
+    StreamBufferer instance handle splitting our chunk on newlines """
+
+    # newlines
+    if bf_type == 1:
+        bufsize = 1024
+    # unbuffered
+    elif bf_type == 0:
+        bufsize = 1
+    # or buffered by specific amount
+    else:
+        bufsize = bf_type
+
+    return bufsize
+
+
 
 class StreamWriter(object):
-    """ StreamWriter reads from some input (the stream param) and writes to a
-    stdin fd.  the stream may be a Queue, a callable, something with the "read"
-    method, a string, or an iterable """
+    """ StreamWriter reads from some input (the stdin param) and writes to a fd
+    (the stream param).  the stdin may be a Queue, a callable, something with
+    the "read" method, a string, or an iterable """
 
-    def __init__(self, log, stream, stdin, bufsize, encoding, tty_in):
+    def __init__(self, log, stream, stdin, bufsize_type, encoding, tty_in):
         self.stream = stream
         self.stdin = stdin
 
@@ -1501,84 +1625,15 @@ class StreamWriter(object):
         self.tty_in = tty_in
 
 
-        self.stream_bufferer = StreamBufferer(self.encoding, bufsize)
-
-        # determine buffering for reading from the input we set for stdin
-        if bufsize == 1:
-            self.bufsize = 1024
-        elif bufsize == 0:
-            self.bufsize = 1
-        else:
-            self.bufsize = bufsize
-
-
-        if isinstance(stdin, Queue):
-            log_msg = "queue"
-            self.get_chunk = self.get_queue_chunk
-
-        elif callable(stdin):
-            log_msg = "callable"
-            self.get_chunk = self.get_callable_chunk
-
-        # also handles stringio
-        elif hasattr(stdin, "read"):
-            log_msg = "file descriptor"
-            self.get_chunk = self.get_file_chunk
-
-        elif isinstance(stdin, basestring):
-            log_msg = "string"
-
-            if bufsize == 1:
-                # TODO, make the split() be a generator
-                self.stdin = iter((c + "\n" for c in stdin.split("\n")))
-            else:
-                self.stdin = iter(stdin[i:i + self.bufsize] for i in range(0, len(stdin), self.bufsize))
-            self.get_chunk = self.get_iter_chunk
-
-        else:
-            log_msg = "general iterable"
-            self.stdin = iter(stdin)
-            self.get_chunk = self.get_iter_chunk
-
+        self.stream_bufferer = StreamBufferer(self.encoding, bufsize_type)
+        self.get_chunk, log_msg = determine_how_to_read_input(stdin,
+                bufsize_type)
         self.log.debug("parsed stdin as a %s", log_msg)
 
 
     def fileno(self):
         return self.stream
 
-    def get_queue_chunk(self):
-        try:
-            chunk = self.stdin.get(True, 0.01)
-        except Empty:
-            raise NoStdinData
-        if chunk is None:
-            raise DoneReadingStdin
-        return chunk
-
-    def get_callable_chunk(self):
-        try:
-            return self.stdin()
-        except:
-            raise DoneReadingStdin
-
-    def get_iter_chunk(self):
-        try:
-            if IS_PY3:
-                return self.stdin.__next__()
-            else:
-                return self.stdin.next()
-        except StopIteration:
-            raise DoneReadingStdin
-
-    def get_file_chunk(self):
-        if self.stream_bufferer.type == 1:
-            chunk = self.stdin.readline()
-        else:
-            chunk = self.stdin.read(self.bufsize)
-        if not chunk:
-            raise DoneReadingStdin
-        else:
-            return chunk
 
 
     # the return value answers the questions "are we done writing forever?"
@@ -1636,7 +1691,9 @@ class StreamWriter(object):
 
 
 class StreamReader(object):
-    def __init__(self, log, stream, handler, buffer, bufsize, encoding,
+    """ reads from some output (the stream) and sends what it just read to the
+    handler.  """
+    def __init__(self, log, stream, handler, buffer, bufsize_type, encoding,
             decode_errors, pipe_queue=None, save_data=True):
         self.stream = stream
         self.buffer = buffer
@@ -1650,16 +1707,9 @@ class StreamReader(object):
 
         self.log = log
 
-        self.stream_bufferer = StreamBufferer(self.encoding, bufsize,
+        self.stream_bufferer = StreamBufferer(self.encoding, bufsize_type,
             self.decode_errors)
-
-        # determine buffering
-        if bufsize == 1:
-            self.bufsize = 1024
-        elif bufsize == 0:
-            self.bufsize = 1
-        else:
-            self.bufsize = bufsize
+        self.bufsize = bufsize_type_to_bufsize(bufsize_type)
 
 
         # here we're determining the handler type by doing some basic checks
@@ -1675,7 +1725,6 @@ class StreamReader(object):
             self.handler_type = "fd"
         else:
             self.handler_type = None
-
 
         self.should_quit = False
 
@@ -1751,13 +1800,14 @@ class StreamReader(object):
 
 
 
-# this is used for feeding in chunks of stdout/stderr, and breaking it up into
-# chunks that will actually be put into the internal buffers.  for example, if
-# you have two processes, one being piped to the other, and you want that,
-# first process to feed lines of data (instead of the chunks however they
-# come in), OProc will use an instance of this class to chop up the data and
-# feed it as lines to be sent down the pipe
 class StreamBufferer(object):
+    """ this is used for feeding in chunks of stdout/stderr, and breaking it up
+    into chunks that will actually be put into the internal buffers.  for
+    example, if you have two processes, one being piped to the other, and you
+    want that, first process to feed lines of data (instead of the chunks
+    however they come in), OProc will use an instance of this class to chop up
+    the data and feed it as lines to be sent down the pipe """
+
     def __init__(self, encoding=DEFAULT_ENCODING, buffer_type=1,
             decode_errors="strict"):
         # 0 for unbuffered, 1 for line, everything else for that amount

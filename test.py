@@ -1443,13 +1443,16 @@ sys.stderr.write("stderr")
     def test_no_pipe(self):
         from sh import ls
 
+        # calling a command regular should fill up the pipe_queue
         p = ls()
         self.assertFalse(p.process._pipe_queue.empty())
 
+        # calling a command with a callback should not
         def callback(line): pass
         p = ls(_out=callback)
         self.assertTrue(p.process._pipe_queue.empty())
 
+        # calling a command regular with no_pipe also should not
         p = ls(_no_pipe=True)
         self.assertTrue(p.process._pipe_queue.empty())
 
@@ -1680,7 +1683,6 @@ print(time())
             self.assertFalse(callback.called)
         else:
             self.fail("command should've thrown an exception")
-
 
 
 
