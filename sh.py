@@ -374,7 +374,7 @@ class RunningCommand(object):
         # from multiple places, and wait() triggers the exit code to be
         # processed.  but we don't want to raise multiple exceptions, only
         # one (if any at all)
-        self._handled_exit_code = False
+        self._process_completed = False
 
         self.should_wait = True
         spawn_process = True
@@ -428,25 +428,20 @@ class RunningCommand(object):
 
 
     def wait(self):
-        self._handle_exit_code(self.process.wait())
-        if self.call_args["done"]:
-            self.call_args["done"](self)
+        if not self._process_completed:
+            self.handle_command_exit_code(self.process.wait())
+            self._process_completed = True
         return self
 
-    # here we determine if we had an exception, or an error code that we weren't
-    # expecting to see.  if we did, we create and raise an exception
-    def _handle_exit_code(self, code):
-        if self._handled_exit_code:
-            return
-        self._handled_exit_code = True
 
-        if code not in self.call_args["ok_code"] and \
-        (code > 0 or -code in SIGNALS_THAT_SHOULD_THROW_EXCEPTION):
-            raise get_rc_exc(code)(
-                self.ran,
-                self.process.stdout,
-                self.process.stderr
-            )
+    def handle_command_exit_code(self, code):
+        """ here we determine if we had an exception, or an error code that we
+        weren't expecting to see.  if we did, we create and raise an exception
+        """
+        if (code not in self.call_args["ok_code"] and (code > 0 or -code in
+            SIGNALS_THAT_SHOULD_THROW_EXCEPTION)):
+            exc = get_rc_exc(code)
+            raise exc(self.ran, self.process.stdout, self.process.stderr)
 
 
 
@@ -995,6 +990,20 @@ def construct_streamreader_callback(process, handler):
 
 
 
+def handle_process_exit_code(exit_code):
+    """ this should only ever be called once for each child process """
+    # if we exited from a signal, let our exit code reflect that
+    if os.WIFSIGNALED(exit_code):
+        return -os.WTERMSIG(exit_code)
+    # otherwise just give us a normal exit code
+    elif os.WIFEXITED(exit_code):
+        return os.WEXITSTATUS(exit_code)
+    else:
+        raise RuntimeError("Unknown child exit status!")
+
+
+
+
 class OProc(object):
     """ this class is instantiated by RunningCommand for a command to be exec'd.
     it handles all the nasty business involved with correctly setting up the
@@ -1193,6 +1202,9 @@ class OProc(object):
 
             self.started = _time.time()
             self.cmd = cmd
+
+            # exit code should only be manipulated from within self._wait_lock
+            # to prevent race conditions
             self.exit_code = None
 
             self.stdin = stdin or Queue()
@@ -1311,7 +1323,6 @@ class OProc(object):
         return "<Process %d %r>" % (self.pid, self.cmd[:500])
 
 
-
     def change_in_bufsize(self, buf):
         self._stdin_stream.stream_bufferer.change_buffering(buf)
 
@@ -1323,6 +1334,9 @@ class OProc(object):
 
 
     def input_thread(self, stdin):
+        """ this is run in a separate thread.  it writes into our process's
+        stdin (a streamwriter) and waits the process to end AND everything that
+        can be written to be written """
         done = False
         while not done and self.is_alive():
             self.log.debug("%r ready for more input", stdin)
@@ -1346,6 +1360,11 @@ class OProc(object):
             readers.append(stderr)
             errors.append(stderr)
 
+        # this is our select loop for polling stdout or stderr that is ready to
+        # be read and processed.  if one of those streamreaders indicate that it
+        # is done altogether being read from, we remove it from our list of
+        # things to poll.  when no more things are left to poll, we leave this
+        # loop and clean up
         while readers:
             outputs, inputs, err = select.select(readers, [], errors, 0.1)
 
@@ -1419,17 +1438,11 @@ class OProc(object):
             proc.kill()
 
 
-    def _handle_exit_code(self, exit_code):
-        # if we exited from a signal, let our exit code reflect that
-        if os.WIFSIGNALED(exit_code):
-            return -os.WTERMSIG(exit_code)
-        # otherwise just give us a normal exit code
-        elif os.WIFEXITED(exit_code):
-            return os.WEXITSTATUS(exit_code)
-        else:
-            raise RuntimeError("Unknown child exit status!")
-
     def is_alive(self):
+        """ polls if our child process has completed, without blocking.  this
+        method has side-effects, such as setting our exit_code, if we happen to
+        see our child exit while this is running """
+
         if self.exit_code is not None:
             return False
 
@@ -1451,10 +1464,12 @@ class OProc(object):
 
         try:
             # WNOHANG is just that...we're calling waitpid without hanging...
-            # essentially polling the process
+            # essentially polling the process.  the return result is (0, 0) if
+            # there's no process status, so we check that pid == self.pid below
+            # in order to determine how to proceed
             pid, exit_code = os.waitpid(self.pid, os.WNOHANG)
             if pid == self.pid:
-                self.exit_code = self._handle_exit_code(exit_code)
+                self.exit_code = handle_process_exit_code(exit_code)
                 return False
 
         # no child process
@@ -1467,14 +1482,18 @@ class OProc(object):
 
 
     def wait(self):
+        """ waits for the process to complete, handles the exit code """
+
         self.log.debug("acquiring wait lock to wait for completion")
+        # using the lock in a with-context blocks, which is what we want if
+        # we're running wait()
         with self._wait_lock:
             self.log.debug("got wait lock")
 
             if self.exit_code is None:
                 self.log.debug("exit code not set, waiting on pid")
-                pid, exit_code = os.waitpid(self.pid, 0)
-                self.exit_code = self._handle_exit_code(exit_code)
+                pid, exit_code = os.waitpid(self.pid, 0) # blocks
+                self.exit_code = handle_process_exit_code(exit_code)
             else:
                 self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
 
@@ -1483,6 +1502,8 @@ class OProc(object):
             if self._input_thread:
                 self._input_thread.join()
 
+            # wait for our stdout and stderr streamreaders to finish reading and
+            # aggregating the process output
             self._output_thread.join()
 
             OProc._procs_to_cleanup.discard(self)
@@ -1492,15 +1513,15 @@ class OProc(object):
 
 
 
-class DoneReadingStdin(Exception): pass
-class NoStdinData(Exception): pass
+class DoneReadingForever(Exception): pass
+class NotYetReadyToRead(Exception): pass
 
 
 def determine_how_to_read_input(input_obj, bufsize_type):
     """ given some kind of input object, and a desired buffering type, return a
     function that knows how to read chunks of that input object.
     
-    each reader function should return a chunk and raise a DoneReadingStdin
+    each reader function should return a chunk and raise a DoneReadingForever
     exception when there's no more data to read """
 
     get_chunk = None
@@ -1535,9 +1556,9 @@ def get_queue_chunk_reader(stdin):
         try:
             chunk = stdin.get(True, 0.01)
         except Empty:
-            raise NoStdinData
+            raise NotYetReadyToRead
         if chunk is None:
-            raise DoneReadingStdin
+            raise DoneReadingForever
         return chunk
     return fn
 
@@ -1547,7 +1568,7 @@ def get_callable_chunk_reader(stdin):
         try:
             return stdin()
         except:
-            raise DoneReadingStdin
+            raise DoneReadingForever
     return fn
 
 
@@ -1569,7 +1590,7 @@ def get_iter_chunk_reader(stdin):
             else:
                 return stdin.next()
         except StopIteration:
-            raise DoneReadingStdin
+            raise DoneReadingForever
     return fn
 
 def get_file_chunk_reader(stdin, bufsize_type):
@@ -1581,7 +1602,7 @@ def get_file_chunk_reader(stdin, bufsize_type):
         else:
             chunk = stdin.read(bufsize)
         if not chunk:
-            raise DoneReadingStdin
+            raise DoneReadingForever
         else:
             return chunk
     return fn
@@ -1628,17 +1649,24 @@ class StreamWriter(object):
 
 
     def fileno(self):
+        """ defining this allows us to do select.select on an instance of this
+        class """
         return self.stream
 
 
 
-    # the return value answers the questions "are we done writing forever?"
     def write(self):
+        """ attempt to get a chunk of data to write to our child process's
+        stdin, then write it.  the return value answers the questions "are we
+        done writing forever?" """
+
         # get_chunk may sometimes return bytes, and sometimes returns trings
         # because of the nature of the different types of STDIN objects we
         # support
-        try: chunk = self.get_chunk()
-        except DoneReadingStdin:
+        try:
+            chunk = self.get_chunk()
+
+        except DoneReadingForever:
             self.log.debug("done reading")
 
             if self.tty_in:
@@ -1651,7 +1679,7 @@ class StreamWriter(object):
 
             return True
 
-        except NoStdinData:
+        except NotYetReadyToRead:
             self.log.debug("received no data")
             return False
 
@@ -1681,6 +1709,7 @@ class StreamWriter(object):
             if not self.tty_in:
                 self.log.debug("we used a TTY, so closing the stream")
                 os.close(self.stream)
+
         except OSError:
             pass
 
@@ -1726,6 +1755,8 @@ class StreamReader(object):
 
 
     def fileno(self):
+        """ defining this allows us to do select.select on an instance of this
+        class """
         return self.stream
 
     def close(self):
