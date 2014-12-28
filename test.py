@@ -1688,6 +1688,62 @@ print(time())
             self.fail("command should've thrown an exception")
 
 
+    def test_stdin_newline_bufsize(self):
+        import sh
+        from time import sleep
+
+        # this tries to receive some known data and measures the time it takes
+        # to receive it.  since we're flushing by newline, we should only be
+        # able to receive the data when a newline is fed in
+        py = create_tmp_test("""
+import sys
+from time import time
+
+started = time()
+data = sys.stdin.read(len("testing\\n"))
+waited = time() - started
+sys.stdout.write(data)
+sys.stdout.write(str(waited) + "\\n")
+
+started = time()
+data = sys.stdin.read(len("done\\n"))
+waited = time() - started
+sys.stdout.write(data)
+sys.stdout.write(str(waited) + "\\n")
+
+sys.stdout.flush()
+""")
+
+        # we'll feed in text incrementally, sleeping strategically before
+        # sending a newline.  we then measure the amount that we slept
+        # indirectly in the child process
+        def create_stdin():
+            data = {"counter": 0}
+            def stdin():
+                if data["counter"] == 0:
+                    data["counter"] += 1
+                    return "test"
+                elif data["counter"] == 1:
+                    sleep(1)
+                    data["counter"] += 1
+                    return "ing\n"
+                elif data["counter"] == 2:
+                    sleep(1)
+                    return "done\n"
+                else:
+                    raise sh.DoneReadingForever
+            return stdin
+
+        out = python(py.name, _in=create_stdin(), _in_bufsize=1)
+        word1, time1, word2, time2, _ = out.split("\n")
+        time1 = float(time1)
+        time2 = float(time2)
+        self.assertEqual(word1, "testing")
+        self.assertTrue(abs(1-time1) < 0.1)
+        self.assertEqual(word2, "done")
+        self.assertTrue(abs(1-time2) < 0.1)
+
+
 
 if __name__ == "__main__":
     # if we're running a specific test, we can let unittest framework figure out
