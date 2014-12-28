@@ -1594,9 +1594,10 @@ def get_iter_chunk_reader(stdin):
     def fn():
         try:
             if IS_PY3:
-                return stdin.__next__()
+                chunk = stdin.__next__()
             else:
-                return stdin.next()
+                chunk = stdin.next()
+            return chunk
         except StopIteration:
             raise DoneReadingForever
     return fn
