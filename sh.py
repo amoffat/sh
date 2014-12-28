@@ -360,6 +360,9 @@ class RunningCommand(object):
         friendly_cmd = friendly_truncate(self.ran, 20)
         friendly_call_args = friendly_truncate(str(call_args), 20)
 
+        # we're setting up the logger string here, instead of __repr__ because
+        # we reserve __repr__ to behave as if it was evaluating the child
+        # process's output
         logger_str = "<Command %r call_args %s>" % (friendly_cmd,
                 friendly_call_args)
 
@@ -368,15 +371,8 @@ class RunningCommand(object):
         self.cmd = cmd
 
         self.process = None
-
-        # this flag is for whether or not we've handled the exit code (like
-        # by raising an exception).  this is necessary because .wait() is called
-        # from multiple places, and wait() triggers the exit code to be
-        # processed.  but we don't want to raise multiple exceptions, only
-        # one (if any at all)
         self._process_completed = False
-
-        self.should_wait = True
+        should_wait = True
         spawn_process = True
 
 
@@ -388,15 +384,15 @@ class RunningCommand(object):
 
 
         if callable(call_args["out"]) or callable(call_args["err"]):
-            self.should_wait = False
+            should_wait = False
 
         if call_args["piped"] or call_args["iter"] or call_args["iter_noblock"]:
-            self.should_wait = False
+            should_wait = False
 
         # we're running in the background, return self and let us lazily
         # evaluate
         if call_args["bg"]:
-            self.should_wait = False
+            should_wait = False
 
         # redirection
         if call_args["err_to_out"]:
@@ -418,19 +414,26 @@ class RunningCommand(object):
             pipe = OProc.STDERR
 
 
+        # there's currently only one case where we wouldn't spawn a child
+        # process, and that's if we're using a with-context with our command
         if spawn_process:
             self.log.info("starting process")
             self.process = OProc(self.log, cmd, stdin, stdout, stderr,
                     self.call_args, pipe, True)
 
-            if self.should_wait:
+            if should_wait:
                 self.wait()
 
 
     def wait(self):
         if not self._process_completed:
-            self.handle_command_exit_code(self.process.wait())
             self._process_completed = True
+            self.handle_command_exit_code(self.process.wait())
+
+            # https://github.com/amoffat/sh/issues/185
+            if self.call_args["done"]:
+                self.call_args["done"](self)
+
         return self
 
 
@@ -468,16 +471,18 @@ class RunningCommand(object):
         return len(str(self))
 
     def __enter__(self):
-        # we don't actually do anything here because anything that should
-        # have been done would have been done in the Command.__call__ call.
-        # essentially all that has to happen is the comand be pushed on
-        # the prepend stack.
+        """ we don't actually do anything here because anything that should have
+        been done would have been done in the Command.__call__ call.
+        essentially all that has to happen is the comand be pushed on the
+        prepend stack. """
         pass
 
     def __iter__(self):
         return self
 
     def next(self):
+        """ allow us to iterate over the output of our command """
+
         # we do this because if get blocks, we can't catch a KeyboardInterrupt
         # so the slight timeout allows for that.
         while True:

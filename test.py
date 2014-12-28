@@ -918,12 +918,14 @@ for i in range(5):
                 process.terminate()
                 return True
 
+        caught_signal = False
         try:
             p = python(py.name, _out=agg, u=True)
             p.wait()
         except sh.SignalException_15:
-            pass
+            caught_signal = True
 
+        self.assertTrue(caught_signal)
         self.assertEqual(p.process.exit_code, -signal.SIGTERM)
         self.assertTrue("4" not in p)
         self.assertTrue("4" not in stdout)
