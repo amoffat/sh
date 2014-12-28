@@ -1324,7 +1324,7 @@ class OProc(object):
 
     def input_thread(self, stdin):
         done = False
-        while not done and self.alive:
+        while not done and self.is_alive():
             self.log.debug("%r ready for more input", stdin)
             done = stdin.write()
 
@@ -1371,7 +1371,7 @@ class OProc(object):
         # we can't close it until the process has ended, otherwise the
         # child will get SIGHUP.  typically, if we've broken out of
         # the above loop, and we're here, the process is just about to
-        # end, so it's probably ok to aggressively poll self.alive
+        # end, so it's probably ok to aggressively poll self.is_alive()
         #
         # the other option to this would be to do the CTTY close from
         # the method that does the actual os.waitpid() call, but the
@@ -1379,7 +1379,7 @@ class OProc(object):
         # running, and closing the fd will cause some operation to
         # fail.  this is less complex than wrapping all the ops
         # in the above loop with out-of-band fd-close exceptions
-        while self.alive:
+        while self.is_alive():
             _time.sleep(0.001)
 
         if stdout:
@@ -1429,8 +1429,7 @@ class OProc(object):
         else:
             raise RuntimeError("Unknown child exit status!")
 
-    @property
-    def alive(self):
+    def is_alive(self):
         if self.exit_code is not None:
             return False
 
