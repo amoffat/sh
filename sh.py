@@ -1720,6 +1720,75 @@ class StreamWriter(object):
 
 
 
+def determine_how_to_feed_output(handler, encoding, decode_errors):
+    if callable(handler):
+        process, finish = get_callback_chunk_consumer(handler, encoding,
+                decode_errors)
+    elif isinstance(handler, cStringIO):
+        process, finish = get_cstringio_chunk_consumer(handler)
+    elif isinstance(handler, StringIO):
+        process, finish = get_stringio_chunk_consumer(handler, encoding,
+                decode_errors)
+    elif hasattr(handler, "write"):
+        process, finish = get_file_chunk_consumer(handler)
+    else:
+        process = lambda chunk: False
+        finish = lambda: None
+
+    return process, finish
+
+
+def get_file_chunk_consumer(handler):
+    def process(chunk):
+        handler.write(chunk)
+        # we should flush on an fd.  chunk is already the correctly-buffered
+        # size, so we don't need the fd buffering as well
+        handler.flush()
+        return False
+
+    def finish():
+        if hasattr(handler, "flush"):
+            handler.flush()
+
+    return process, finish
+
+def get_callback_chunk_consumer(handler, encoding, decode_errors):
+    def process(chunk):
+        # try to use the encoding first, if that doesn't work, send
+        # the bytes, because it might be binary
+        try:
+            chunk = chunk.decode(encoding, decode_errors)
+        except UnicodeDecodeError:
+            pass
+        return handler(chunk)
+
+    def finish():
+        pass
+
+    return process, finish
+
+def get_cstringio_chunk_consumer(handler):
+    def process(chunk):
+        handler.write(chunk)
+        return False
+
+    def finish():
+        pass
+
+    return process, finish
+
+
+def get_stringio_chunk_consumer(handler, encoding, decode_errors):
+    def process(chunk):
+        handler.write(chunk.decode(encoding, decode_errors))
+        return False
+
+    def finish():
+        pass
+
+    return process, finish
+
+
 class StreamReader(object):
     """ reads from some output (the stream) and sends what it just read to the
     handler.  """
@@ -1741,20 +1810,8 @@ class StreamReader(object):
             self.decode_errors)
         self.bufsize = bufsize_type_to_bufsize(bufsize_type)
 
-
-        # here we're determining the handler type by doing some basic checks
-        # on the handler object
-        self.handler = handler
-        if callable(handler):
-            self.handler_type = "fn"
-        elif isinstance(handler, StringIO):
-            self.handler_type = "stringio"
-        elif isinstance(handler, cStringIO):
-            self.handler_type = "cstringio"
-        elif hasattr(handler, "write"):
-            self.handler_type = "fd"
-        else:
-            self.handler_type = None
+        self.process_chunk, self.finish_chunk_processor = \
+                determine_how_to_feed_output(handler, encoding, decode_errors)
 
         self.should_quit = False
 
@@ -1770,8 +1827,7 @@ class StreamReader(object):
         if chunk:
             self.write_chunk(chunk)
 
-        if self.handler_type == "fd" and hasattr(self.handler, "close"):
-            self.handler.flush()
+        self.finish_chunk_processor()
 
         if self.pipe_queue and self.save_data:
             self.pipe_queue().put(None)
@@ -1785,25 +1841,9 @@ class StreamReader(object):
     def write_chunk(self, chunk):
         # in PY3, the chunk coming in will be bytes, so keep that in mind
 
-        if self.handler_type == "fn" and not self.should_quit:
-            # try to use the encoding first, if that doesn't work, send
-            # the bytes, because it might be binary
-            try:
-                to_handler = chunk.decode(self.encoding, self.decode_errors)
-            except UnicodeDecodeError:
-                to_handler = chunk
+        if not self.should_quit:
+            self.should_quit = self.process_chunk(chunk)
 
-            self.should_quit = self.handler(to_handler)
-
-        elif self.handler_type == "stringio":
-            self.handler.write(chunk.decode(self.encoding, self.decode_errors))
-
-        elif self.handler_type in ("cstringio", "fd"):
-            self.handler.write(chunk)
-
-            # we should flush on an fd.  chunk is already the correctly-buffered
-            # size, so we don't need the fd buffering as well
-            self.handler.flush()
 
         if self.save_data:
             self.buffer.append(chunk)

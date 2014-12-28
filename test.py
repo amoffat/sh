@@ -138,7 +138,8 @@ exit(3)
 
     def test_stdin_from_string(self):
         from sh import sed
-        self.assertEqual(sed(_in="test", e="s/test/lol/").strip(), "lol")
+        self.assertEqual(sed(_in="one test three", e="s/test/two/").strip(),
+                "one two three")
 
     def test_ok_code(self):
         from sh import ls, ErrorReturnCode_1, ErrorReturnCode_2
