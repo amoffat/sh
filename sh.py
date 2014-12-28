@@ -1674,6 +1674,8 @@ class StreamWriter(object):
         # support
         try:
             chunk = self.get_chunk()
+            if chunk is None:
+                raise DoneReadingForever
 
         except DoneReadingForever:
             self.log.debug("done reading")
