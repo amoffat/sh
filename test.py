@@ -1798,6 +1798,32 @@ sys.stdout.flush()
         self.assertTrue(abs(1-time2) < 0.1)
 
 
+class StreamBuffererTests(unittest.TestCase):
+    def test_unbuffered(self):
+        from sh import StreamBufferer
+        b = StreamBufferer(0)
+
+        self.assertEqual(b.process("test"), ["test"])
+        self.assertEqual(b.process("one"), ["one"])
+        self.assertEqual(b.process(""), [""])
+        self.assertEqual(b.flush(), "")
+
+    def test_newline_unbuffered(self):
+        from sh import StreamBufferer
+        b = StreamBufferer(1)
+
+        self.assertEqual(b.process("testing\none\ntwo"), ["testing\n", "one\n"])
+        self.assertEqual(b.process("\nthree\nfour"), ["two\n", "three\n"])
+        self.assertEqual(b.flush(), "four")
+
+    def test_chunk_buffered(self):
+        from sh import StreamBufferer
+        b = StreamBufferer(10)
+
+        self.assertEqual(b.process("testing\none\ntwo"), ["testing\non"])
+        self.assertEqual(b.process("\nthree\n"), ["e\ntwo\nthre"])
+        self.assertEqual(b.flush(), "e\n")
+
 
 
 if __name__ == "__main__":

@@ -1650,7 +1650,7 @@ class StreamWriter(object):
         self.tty_in = tty_in
 
 
-        self.stream_bufferer = StreamBufferer(self.encoding, bufsize_type)
+        self.stream_bufferer = StreamBufferer(bufsize_type, self.encoding)
         self.get_chunk, log_msg = determine_how_to_read_input(stdin)
         self.log.debug("parsed stdin as a %s", log_msg)
 
@@ -1696,12 +1696,13 @@ class StreamWriter(object):
         if IS_PY3 and hasattr(chunk, "encode"):
             chunk = chunk.encode(self.encoding)
 
-        for chunk in self.stream_bufferer.process(chunk):
-            self.log.debug("got chunk size %d: %r", len(chunk), chunk[:30])
+        for proc_chunk in self.stream_bufferer.process(chunk):
+            self.log.debug("got chunk size %d: %r", len(proc_chunk),
+                    proc_chunk[:30])
 
             self.log.debug("writing chunk to process")
             try:
-                os.write(self.stream, chunk)
+                os.write(self.stream, proc_chunk)
             except OSError:
                 self.log.debug("OSError writing stdin chunk")
                 return True
@@ -1810,8 +1811,8 @@ class StreamReader(object):
 
         self.log = log
 
-        self.stream_bufferer = StreamBufferer(self.encoding, bufsize_type,
-            self.decode_errors)
+        self.stream_bufferer = StreamBufferer(bufsize_type, self.encoding,
+                self.decode_errors)
         self.bufsize = bufsize_type_to_bufsize(bufsize_type)
 
         self.process_chunk, self.finish_chunk_processor = \
@@ -1884,7 +1885,7 @@ class StreamBufferer(object):
     however they come in), OProc will use an instance of this class to chop up
     the data and feed it as lines to be sent down the pipe """
 
-    def __init__(self, encoding=DEFAULT_ENCODING, buffer_type=1,
+    def __init__(self, buffer_type, encoding=DEFAULT_ENCODING,
             decode_errors="strict"):
         # 0 for unbuffered, 1 for line, everything else for that amount
         self.type = buffer_type
