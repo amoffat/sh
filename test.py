@@ -394,7 +394,11 @@ print(sh.HERP + " " + str(len(os.environ)))
             os.chmod(gcc_file2, int(0o755))
 
             from sh import gcc
-            self.assertEqual(gcc._path, gcc_file2)
+            if IS_PY3:
+                self.assertEqual(gcc._path,
+                        gcc_file2.encode(sh.DEFAULT_ENCODING))
+            else:
+                self.assertEqual(gcc._path, gcc_file2)
             self.assertEqual(gcc('no-error').stdout.strip(),
                 'no-error'.encode("ascii"))
 
