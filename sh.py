@@ -1580,11 +1580,18 @@ def get_callable_chunk_reader(stdin):
 def get_iter_string_reader(stdin, bufsize_type):
     bufsize = bufsize_type_to_bufsize(bufsize_type)
     if bufsize_type == 1:
-        # this was the original logic.  the two should return equivalent values,
-        # but the new logic has better memory characteristics by being a
-        # generator
-        #iter_str = (c + "\n" for c in stdin.split("\n"))
-        iter_str = (m.group(0) for m in re.finditer(r".*?\n", stdin))
+        def iterate_over_splits(s):
+            m = None
+            for m in re.finditer(r".*?\n", s):
+                yield m.group(0)
+            if m:
+                final_chunk = s[m.end(0):]
+                if final_chunk:
+                    yield final_chunk
+            elif s:
+                yield s
+
+        iter_str = iterate_over_splits(stdin)
     else:
         iter_str = (stdin[i:i + bufsize] for i in range(0, len(stdin), bufsize))
     return get_iter_chunk_reader(iter_str)

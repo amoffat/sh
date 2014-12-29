@@ -1688,6 +1688,59 @@ print(time())
             self.fail("command should've thrown an exception")
 
 
+    def test_stdin_unbuffered_bufsize(self):
+        import sh
+        from time import sleep
+
+        # this tries to receive some known data and measures the time it takes
+        # to receive it.  since we're flushing by newline, we should only be
+        # able to receive the data when a newline is fed in
+        py = create_tmp_test("""
+import sys
+from time import time
+
+started = time()
+data = sys.stdin.read(len("testing"))
+waited = time() - started
+sys.stdout.write(data + "\\n")
+sys.stdout.write(str(waited) + "\\n")
+
+started = time()
+data = sys.stdin.read(len("done")+1)
+waited = time() - started
+sys.stdout.write(data + "\\n")
+sys.stdout.write(str(waited) + "\\n")
+
+sys.stdout.flush()
+""")
+
+        def create_stdin():
+            data = {"counter": 0}
+            def stdin():
+                if data["counter"] == 0:
+                    data["counter"] += 1
+                    return "test"
+                elif data["counter"] == 1:
+                    sleep(1)
+                    data["counter"] += 1
+                    return "ing"
+                elif data["counter"] == 2:
+                    sleep(1)
+                    return "done"
+                else:
+                    raise sh.DoneReadingForever
+            return stdin
+
+        out = python(py.name, _in=create_stdin(), _in_bufsize=0)
+        word1, time1, word2, time2, _ = out.split("\n")
+        time1 = float(time1)
+        time2 = float(time2)
+        self.assertEqual(word1, "testing")
+        self.assertTrue(abs(1-time1) < 0.1)
+        self.assertEqual(word2, "done")
+        self.assertTrue(abs(1-time2) < 0.1)
+
+
     def test_stdin_newline_bufsize(self):
         import sh
         from time import sleep
@@ -1743,6 +1796,71 @@ sys.stdout.flush()
         self.assertEqual(word2, "done")
         self.assertTrue(abs(1-time2) < 0.1)
 
+
+class StdinUnitTests(unittest.TestCase):
+    """ tests for objects that can serve as stdin for a spawned process.  should
+    include tests for the various stdin buffering modes """
+
+    def evaluate_stdin(self, fn):
+        from sh import DoneReadingForever
+
+        chunks = []
+        while True:
+            try:
+                chunk = fn()
+                if chunk is None:
+                    raise DoneReadingForever
+            except DoneReadingForever:
+                break
+            else:
+                chunks.append(chunk)
+        return chunks
+
+
+    def test_unbuffered_string(self):
+        from sh import get_iter_string_reader, DoneReadingForever
+
+        s = "testing\none two three"
+        get_chunk = get_iter_string_reader(s, 0)
+        correct = list(s)
+        self.assertEqual(self.evaluate_stdin(get_chunk), correct)
+
+
+    def test_newline_buffered_string(self):
+        from sh import get_iter_string_reader, DoneReadingForever
+
+        # only one newline, but at the end, send the remaining chunk
+        get_chunk = get_iter_string_reader("testing\none two three", 1)
+        correct = ["testing\n", "one two three"]
+        self.assertEqual(self.evaluate_stdin(get_chunk), correct)
+
+        # no newlines, so the whole thing should be considered "the remaining
+        # chunk"
+        get_chunk = get_iter_string_reader("testing one two three", 1)
+        correct = ["testing one two three"]
+        self.assertEqual(self.evaluate_stdin(get_chunk), correct)
+
+        # nothing sent, nothing received
+        get_chunk = get_iter_string_reader("", 1)
+        correct = []
+        self.assertEqual(self.evaluate_stdin(get_chunk), correct)
+
+        # only newline-flushed chunks sent
+        get_chunk = get_iter_string_reader("one\ntwo\nthree\nfour\n", 1)
+        correct = ["one\n", "two\n", "three\n", "four\n"]
+        self.assertEqual(self.evaluate_stdin(get_chunk), correct)
+
+
+    def test_buffered_amount_string(self):
+        from sh import get_iter_string_reader, DoneReadingForever
+
+        get_chunk = get_iter_string_reader("testing\none two three", 10)
+        correct = ["testing\non", "e two thre", "e"]
+        self.assertEqual(self.evaluate_stdin(get_chunk), correct)
+
+        get_chunk = get_iter_string_reader("", 10)
+        correct = []
+        self.assertEqual(self.evaluate_stdin(get_chunk), correct)
 
 
 if __name__ == "__main__":
