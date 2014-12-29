@@ -1,3 +1,6 @@
+"""
+http://amoffat.github.io/sh/
+"""
 #===============================================================================
 # Copyright (C) 2011-2015 by Andrew Moffat
 #
@@ -2094,7 +2097,7 @@ class Environment(dict):
 
         # somebody tried to be funny and do "from sh import *"
         if k == "__all__":
-            raise ImportError("Cannot import * from sh. \
+            raise AttributeError("Cannot import * from sh. \
 Please import sh or import programs individually.")
 
 

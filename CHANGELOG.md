@@ -2,6 +2,7 @@
 
 ## 1.10 -
 
+*   fixed `help(sh)` from the python shell and `pydoc sh` from the command line. [#173](https://github.com/amoffat/sh/issues/173)
 *   program names can no longer be shadowed by names that sh.py defines internally. removed the requirement of trailing underscores for programs that could have their names shadowed, like `id`.
 *   memory optimization when a child process's stdin is a newline-delimted string and our bufsize is newlines
 *   feature, `_done` special keyword argument that accepts a callback to be called when the command completes successfully [#185](https://github.com/amoffat/sh/issues/185)
