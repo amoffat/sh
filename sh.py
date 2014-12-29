@@ -1953,6 +1953,7 @@ class StreamBufferer(object):
                 return [chunk]
 
             # line buffered
+            # we must decode the bytes before we try to match on newline
             elif self.type == 1:
                 total_to_write = []
                 chunk = chunk.decode(self.encoding, self.decode_errors)

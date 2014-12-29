@@ -1803,26 +1803,26 @@ class StreamBuffererTests(unittest.TestCase):
         from sh import StreamBufferer
         b = StreamBufferer(0)
 
-        self.assertEqual(b.process("test"), ["test"])
-        self.assertEqual(b.process("one"), ["one"])
-        self.assertEqual(b.process(""), [""])
-        self.assertEqual(b.flush(), "")
+        self.assertEqual(b.process(b"test"), [b"test"])
+        self.assertEqual(b.process(b"one"), [b"one"])
+        self.assertEqual(b.process(b""), [b""])
+        self.assertEqual(b.flush(), b"")
 
-    def test_newline_unbuffered(self):
+    def test_newline_buffered(self):
         from sh import StreamBufferer
         b = StreamBufferer(1)
 
-        self.assertEqual(b.process("testing\none\ntwo"), ["testing\n", "one\n"])
-        self.assertEqual(b.process("\nthree\nfour"), ["two\n", "three\n"])
-        self.assertEqual(b.flush(), "four")
+        self.assertEqual(b.process(b"testing\none\ntwo"), [b"testing\n", b"one\n"])
+        self.assertEqual(b.process(b"\nthree\nfour"), [b"two\n", b"three\n"])
+        self.assertEqual(b.flush(), b"four")
 
     def test_chunk_buffered(self):
         from sh import StreamBufferer
         b = StreamBufferer(10)
 
-        self.assertEqual(b.process("testing\none\ntwo"), ["testing\non"])
-        self.assertEqual(b.process("\nthree\n"), ["e\ntwo\nthre"])
-        self.assertEqual(b.flush(), "e\n")
+        self.assertEqual(b.process(b"testing\none\ntwo"), [b"testing\non"])
+        self.assertEqual(b.process(b"\nthree\n"), [b"e\ntwo\nthre"])
+        self.assertEqual(b.flush(), b"e\n")
 
 
 
