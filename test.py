@@ -1826,6 +1826,21 @@ time.sleep(3)
 
 
 class MiscTests(unittest.TestCase):
+    @requires_utf8
+    def test_unicode_path(self):
+        import sh
+        py = create_tmp_test("""
+echo "HI"
+""", "字")
+        os.chmod(py.name, int(0o755))
+        cmd = sh.Command(py.name)
+
+        # all of these should behave just fine
+        str(cmd)
+        repr(cmd)
+        unicode(cmd)
+
+
     # https://github.com/amoffat/sh/issues/121
     def test_wraps(self):
         from sh import ls
