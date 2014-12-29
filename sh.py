@@ -1522,12 +1522,17 @@ class DoneReadingForever(Exception): pass
 class NotYetReadyToRead(Exception): pass
 
 
-def determine_how_to_read_input(input_obj, bufsize_type):
-    """ given some kind of input object, and a desired buffering type, return a
-    function that knows how to read chunks of that input object.
+def determine_how_to_read_input(input_obj):
+    """ given some kind of input object, return a function that knows how to
+    read chunks of that input object.
     
     each reader function should return a chunk and raise a DoneReadingForever
-    exception when there's no more data to read """
+    exception, or return None, when there's no more data to read
+
+    NOTE: the function returned does not need to care much about the requested
+    buffering type (eg, unbuffered vs newline-buffered).  the StreamBufferer
+    will take care of that.  these functions just need to return a
+    reasonably-sized chunk of data. """
 
     get_chunk = None
 
@@ -1542,11 +1547,11 @@ def determine_how_to_read_input(input_obj, bufsize_type):
     # also handles stringio
     elif hasattr(input_obj, "read"):
         log_msg = "file descriptor"
-        get_chunk = get_file_chunk_reader(input_obj, bufsize_type)
+        get_chunk = get_file_chunk_reader(input_obj)
 
     elif isinstance(input_obj, basestring):
         log_msg = "string"
-        get_chunk = get_iter_string_reader(input_obj, bufsize_type)
+        get_chunk = get_iter_string_reader(input_obj)
 
     else:
         log_msg = "general iterable"
@@ -1577,23 +1582,13 @@ def get_callable_chunk_reader(stdin):
     return fn
 
 
-def get_iter_string_reader(stdin, bufsize_type):
-    bufsize = bufsize_type_to_bufsize(bufsize_type)
-    if bufsize_type == 1:
-        def iterate_over_splits(s):
-            m = None
-            for m in re.finditer(r".*?\n", s):
-                yield m.group(0)
-            if m:
-                final_chunk = s[m.end(0):]
-                if final_chunk:
-                    yield final_chunk
-            elif s:
-                yield s
-
-        iter_str = iterate_over_splits(stdin)
-    else:
-        iter_str = (stdin[i:i + bufsize] for i in range(0, len(stdin), bufsize))
+def get_iter_string_reader(stdin):
+    """ return an iterator that returns a chunk of a string every time it is
+    called.  notice that even though bufsize_type might be line buffered, we're
+    not doing any line buffering here.  that's because our StreamBufferer
+    handles all buffering.  we just need to return a reasonable-sized chunk. """
+    bufsize = 1024
+    iter_str = (stdin[i:i + bufsize] for i in range(0, len(stdin), bufsize))
     return get_iter_chunk_reader(iter_str)
 
 
@@ -1609,14 +1604,11 @@ def get_iter_chunk_reader(stdin):
             raise DoneReadingForever
     return fn
 
-def get_file_chunk_reader(stdin, bufsize_type):
-    bufsize = bufsize_type_to_bufsize(bufsize_type)
+def get_file_chunk_reader(stdin):
+    bufsize = 1024
 
     def fn():
-        if bufsize_type == 1:
-            chunk = stdin.readline()
-        else:
-            chunk = stdin.read(bufsize)
+        chunk = stdin.read(bufsize)
         if not chunk:
             raise DoneReadingForever
         else:
@@ -1659,8 +1651,7 @@ class StreamWriter(object):
 
 
         self.stream_bufferer = StreamBufferer(self.encoding, bufsize_type)
-        self.get_chunk, log_msg = determine_how_to_read_input(stdin,
-                bufsize_type)
+        self.get_chunk, log_msg = determine_how_to_read_input(stdin)
         self.log.debug("parsed stdin as a %s", log_msg)
 
 
