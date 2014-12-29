@@ -580,7 +580,10 @@ class RunningCommand(object):
         if self.process and self.stdout:
             return self.stdout.decode(self.call_args["encoding"],
                 self.call_args["decode_errors"])
-        return u""
+        elif IS_PY3:
+            return ""
+        else:
+            return unicode("")
 
     def __eq__(self, other):
         return unicode(self) == unicode(other)
@@ -774,14 +777,15 @@ output"),
         found = which(path)
         if not found:
             raise CommandNotFound(path)
-        self._path = found
+
+        self._path = encode_to_py3bytes_or_py2str(found) 
 
         self._partial = False
         self._partial_baked_args = []
         self._partial_call_args = {}
 
         # bugfix for functools.wraps.  issue #121
-        self.__name__ = repr(self)
+        self.__name__ = str(self)
 
 
     def __getattribute__(self, name):
@@ -899,7 +903,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
         if IS_PY3:
             return self.__unicode__()
         else:
-            return unicode(self).encode(DEFAULT_ENCODING)
+            return self.__unicode__().encode(DEFAULT_ENCODING)
 
 
     def __eq__(self, other):
@@ -922,7 +926,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
         baked_args = " ".join(item.decode(DEFAULT_ENCODING) for item in self._partial_baked_args)
         if baked_args:
             baked_args = " " + baked_args
-        return self._path + baked_args
+        return self._path.decode(DEFAULT_ENCODING) + baked_args
 
     def __enter__(self):
         self(_with=True)
