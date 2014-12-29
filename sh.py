@@ -1084,9 +1084,6 @@ class OProc(object):
             # CTTY (because STDOUT is), the STDERR buffer won't always flush
             # by the time the process exits, and the data will be lost.
             # i've only seen this on OSX.
-            #
-            # TODO the stderr fds dont seem to get set anywhere else if this
-            # branch doesnt run!
             if stderr is not OProc.STDOUT:
                 self._stderr_fd, self._slave_stderr_fd = os.pipe()
 
