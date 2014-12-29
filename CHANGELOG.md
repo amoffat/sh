@@ -2,6 +2,8 @@
 
 ## 1.10 -
 
+*   program names can no longer be shadowed by names that sh.py defines internally. removed the requirement of trailing underscores for programs that could have their names shadowed, like `id`.
+*   memory optimization when a child process's stdin is a newline-delimted string and our bufsize is newlines
 *   feature, `_done` special keyword argument that accepts a callback to be called when the command completes successfully [#185](https://github.com/amoffat/sh/issues/185)
 *   bugfix for being unable to print a baked command in python3+ [#176](https://github.com/amoffat/sh/issues/176)
 *   bugfix for cwd not existing and causing the child process to continue running parent process code [#202](https://github.com/amoffat/sh/issues/202)

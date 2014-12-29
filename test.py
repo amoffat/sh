@@ -138,7 +138,8 @@ exit(3)
 
     def test_stdin_from_string(self):
         from sh import sed
-        self.assertEqual(sed(_in="test", e="s/test/lol/").strip(), "lol")
+        self.assertEqual(sed(_in="one test three", e="s/test/two/").strip(),
+                "one two three")
 
     def test_ok_code(self):
         from sh import ls, ErrorReturnCode_1, ErrorReturnCode_2
@@ -918,12 +919,14 @@ for i in range(5):
                 process.terminate()
                 return True
 
+        caught_signal = False
         try:
             p = python(py.name, _out=agg, u=True)
             p.wait()
         except sh.SignalException_15:
-            pass
+            caught_signal = True
 
+        self.assertTrue(caught_signal)
         self.assertEqual(p.process.exit_code, -signal.SIGTERM)
         self.assertTrue("4" not in p)
         self.assertTrue("4" not in stdout)
@@ -1177,6 +1180,26 @@ else:
         self.assertEqual(response, "no tty attached!\n")
 
 
+    def test_tty_output(self):
+        py = create_tmp_test("""
+import sys
+import os
+
+if os.isatty(sys.stdout.fileno()):
+    sys.stdout.write("tty attached")
+    sys.stdout.flush()
+else:
+    sys.stdout.write("no tty attached")
+    sys.stdout.flush()
+""")
+
+        out = python(py.name, _tty_out=True)
+        self.assertEqual(out, "tty attached")
+
+        out = python(py.name, _tty_out=False)
+        self.assertEqual(out, "no tty attached")
+
+
     def test_stringio_output(self):
         from sh import echo
         if IS_PY3:
@@ -1245,25 +1268,30 @@ sys.stdout.flush()
 sys.stdin.read(1)
 """)
 
-        d = {"success": False}
+        d = {
+            "newline_buffer_success": False,
+            "unbuffered_success": False,
+        }
         def interact(line, stdin, process):
             line = line.strip()
             if not line: return
 
             if line == "switch buffering":
-                process.out_bufsize(0)
+                d["newline_buffer_success"] = True
+                process.change_out_bufsize(0)
                 stdin.put("a")
 
             elif line == "unbuffered":
                 stdin.put("b")
-                d["success"] = True
+                d["unbuffered_success"] = True
                 return True
 
         # start with line buffered stdout
         pw_stars = python(py.name, _out=interact, _out_bufsize=1, u=True)
         pw_stars.wait()
 
-        self.assertTrue(d["success"])
+        self.assertTrue(d["newline_buffer_success"])
+        self.assertTrue(d["unbuffered_success"])
 
 
 
@@ -1418,13 +1446,16 @@ sys.stderr.write("stderr")
     def test_no_pipe(self):
         from sh import ls
 
+        # calling a command regular should fill up the pipe_queue
         p = ls()
         self.assertFalse(p.process._pipe_queue.empty())
 
+        # calling a command with a callback should not
         def callback(line): pass
         p = ls(_out=callback)
         self.assertTrue(p.process._pipe_queue.empty())
 
+        # calling a command regular with no_pipe also should not
         p = ls(_no_pipe=True)
         self.assertTrue(p.process._pipe_queue.empty())
 
@@ -1470,7 +1501,7 @@ else:
 
 
     def test_signal_exception(self):
-        from sh import SignalException, get_rc_exc
+        from sh import SignalException_15
 
         def throw_terminate_signal():
             py = create_tmp_test("""
@@ -1481,7 +1512,7 @@ while True: time.sleep(1)
             to_kill.terminate()
             to_kill.wait()
 
-        self.assertRaises(get_rc_exc(-15), throw_terminate_signal)
+        self.assertRaises(SignalException_15, throw_terminate_signal)
 
 
     def test_file_output_isnt_buffered(self):
@@ -1611,10 +1642,10 @@ for i in range(5):
         class Callback(object):
             def __init__(self):
                 self.called = False
-                self.p = None
+                self.exit_code = None
             def __call__(self, p):
                 self.called = True
-                self.p = p
+                self.exit_code = p.exit_code
 
         py = create_tmp_test("""
 from time import time, sleep
@@ -1633,7 +1664,7 @@ print(time())
 
         self.assertTrue(callback.called)
         self.assertTrue(abs(wait_elapsed - 1.0) < 0.1)
-        self.assertEqual(callback.p.exit_code, 0)
+        self.assertEqual(callback.exit_code, 0)
 
 
     def test_done_cb_exc(self):
@@ -1657,6 +1688,142 @@ print(time())
             self.fail("command should've thrown an exception")
 
 
+    def test_stdin_unbuffered_bufsize(self):
+        import sh
+        from time import sleep
+
+        # this tries to receive some known data and measures the time it takes
+        # to receive it.  since we're flushing by newline, we should only be
+        # able to receive the data when a newline is fed in
+        py = create_tmp_test("""
+import sys
+from time import time
+
+started = time()
+data = sys.stdin.read(len("testing"))
+waited = time() - started
+sys.stdout.write(data + "\\n")
+sys.stdout.write(str(waited) + "\\n")
+
+started = time()
+data = sys.stdin.read(len("done"))
+waited = time() - started
+sys.stdout.write(data + "\\n")
+sys.stdout.write(str(waited) + "\\n")
+
+sys.stdout.flush()
+""")
+
+        def create_stdin():
+            data = {"counter": 0}
+            def stdin():
+                if data["counter"] == 0:
+                    data["counter"] += 1
+                    return "test"
+                elif data["counter"] == 1:
+                    data["counter"] += 1
+                    sleep(1)
+                    return "ing"
+                elif data["counter"] == 2:
+                    data["counter"] += 1
+                    sleep(1)
+                    return "done"
+                else:
+                    raise sh.DoneReadingForever
+            return stdin
+
+        out = python(py.name, _in=create_stdin(), _in_bufsize=0)
+        word1, time1, word2, time2, _ = out.split("\n")
+        time1 = float(time1)
+        time2 = float(time2)
+        self.assertEqual(word1, "testing")
+        self.assertTrue(abs(1-time1) < 0.1)
+        self.assertEqual(word2, "done")
+        self.assertTrue(abs(1-time2) < 0.1)
+
+
+    def test_stdin_newline_bufsize(self):
+        import sh
+        from time import sleep
+
+        # this tries to receive some known data and measures the time it takes
+        # to receive it.  since we're flushing by newline, we should only be
+        # able to receive the data when a newline is fed in
+        py = create_tmp_test("""
+import sys
+from time import time
+
+started = time()
+data = sys.stdin.read(len("testing\\n"))
+waited = time() - started
+sys.stdout.write(data)
+sys.stdout.write(str(waited) + "\\n")
+
+started = time()
+data = sys.stdin.read(len("done\\n"))
+waited = time() - started
+sys.stdout.write(data)
+sys.stdout.write(str(waited) + "\\n")
+
+sys.stdout.flush()
+""")
+
+        # we'll feed in text incrementally, sleeping strategically before
+        # sending a newline.  we then measure the amount that we slept
+        # indirectly in the child process
+        def create_stdin():
+            data = {"counter": 0}
+            def stdin():
+                if data["counter"] == 0:
+                    data["counter"] += 1
+                    return "test"
+                elif data["counter"] == 1:
+                    sleep(1)
+                    data["counter"] += 1
+                    return "ing\n"
+                elif data["counter"] == 2:
+                    sleep(1)
+                    return "done\n"
+                else:
+                    raise sh.DoneReadingForever
+            return stdin
+
+        out = python(py.name, _in=create_stdin(), _in_bufsize=1)
+        word1, time1, word2, time2, _ = out.split("\n")
+        time1 = float(time1)
+        time2 = float(time2)
+        self.assertEqual(word1, "testing")
+        self.assertTrue(abs(1-time1) < 0.1)
+        self.assertEqual(word2, "done")
+        self.assertTrue(abs(1-time2) < 0.1)
+
+
+class StreamBuffererTests(unittest.TestCase):
+    def test_unbuffered(self):
+        from sh import _disable_whitelist, StreamBufferer
+        b = StreamBufferer(0)
+
+        self.assertEqual(b.process(b"test"), [b"test"])
+        self.assertEqual(b.process(b"one"), [b"one"])
+        self.assertEqual(b.process(b""), [b""])
+        self.assertEqual(b.flush(), b"")
+
+    def test_newline_buffered(self):
+        from sh import _disable_whitelist, StreamBufferer
+        b = StreamBufferer(1)
+
+        self.assertEqual(b.process(b"testing\none\ntwo"), [b"testing\n", b"one\n"])
+        self.assertEqual(b.process(b"\nthree\nfour"), [b"two\n", b"three\n"])
+        self.assertEqual(b.flush(), b"four")
+
+    def test_chunk_buffered(self):
+        from sh import _disable_whitelist, StreamBufferer
+        b = StreamBufferer(10)
+
+        self.assertEqual(b.process(b"testing\none\ntwo"), [b"testing\non"])
+        self.assertEqual(b.process(b"\nthree\n"), [b"e\ntwo\nthre"])
+        self.assertEqual(b.flush(), b"e\n")
+
 
 
 if __name__ == "__main__":
@@ -1668,7 +1835,7 @@ if __name__ == "__main__":
 
     # otherwise, it looks like we want to run all the tests
     else:
-        suite = unittest.TestLoader().loadTestsFromTestCase(FunctionalTests)
+        suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
         result = unittest.TextTestRunner(verbosity=2).run(suite)
 
         if not result.wasSuccessful():
