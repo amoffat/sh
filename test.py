@@ -1835,7 +1835,7 @@ if __name__ == "__main__":
 
     # otherwise, it looks like we want to run all the tests
     else:
-        suite = unittest.TestLoader().loadTestsFromTestCase(FunctionalTests)
+        suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
         result = unittest.TextTestRunner(verbosity=2).run(suite)
 
         if not result.wasSuccessful():
