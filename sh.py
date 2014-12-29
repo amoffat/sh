@@ -187,6 +187,7 @@ class ErrorReturnCode(Exception):
 
 
 class SignalException(ErrorReturnCode): pass
+class TimeoutException(Exception): pass
 
 SIGNALS_THAT_SHOULD_THROW_EXCEPTION = (
     signal.SIGABRT,
@@ -424,7 +425,12 @@ class RunningCommand(object):
     def wait(self):
         if not self._process_completed:
             self._process_completed = True
-            self.handle_command_exit_code(self.process.wait())
+
+            exit_code = self.process.wait()
+            if self.process.timed_out:
+                raise TimeoutException
+            else:
+                self.handle_command_exit_code(exit_code)
 
             # https://github.com/amoffat/sh/issues/185
             if self.call_args["done"]:
@@ -1203,6 +1209,11 @@ class OProc(object):
                 OProc._registered_cleanup = True
 
 
+            # used to determine what exception to raise.  if our process was
+            # killed via a timeout counter, we'll raise something different than
+            # a SIGKILL exception
+            self.timed_out = False
+
             self.started = time.time()
             self.cmd = cmd
 
@@ -1386,6 +1397,7 @@ class OProc(object):
                 now = time.time()
                 if now - started > timeout:
                     self.log.debug("we've been running too long")
+                    self.timed_out = True
                     self.kill()
 
 
@@ -2064,6 +2076,7 @@ class Environment(dict):
         "ErrorReturnCode",
         "NotYetReadyToRead",
         "SignalException",
+        "TimeoutException",
         "__project_url__",
         "__version__",
         "args",

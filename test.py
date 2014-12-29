@@ -1318,8 +1318,10 @@ sys.stdin.read(1)
         sleep_for = 3
         timeout = 1
         started = time()
-        try: sh.sleep(sleep_for, _timeout=timeout).wait()
-        except sh.SignalException_9: pass
+        try:
+            sh.sleep(sleep_for, _timeout=timeout).wait()
+        except sh.TimeoutException:
+            pass
         elapsed = time() - started
         self.assertTrue(abs(elapsed - timeout) < 0.5)
 
