@@ -209,11 +209,58 @@ SIGNALS_THAT_SHOULD_THROW_EXCEPTION = (
 # https://github.com/amoffat/sh/issues/97#issuecomment-10610629
 class CommandNotFound(AttributeError): pass
 
-rc_exc_regex = re.compile("(ErrorReturnCode|SignalException)_(\d+)")
+
+
+
+rc_exc_regex = re.compile("(ErrorReturnCode|SignalException)_((\d+)|SIG\w+)")
 rc_exc_cache = {}
 
-def get_rc_exc(rc):
-    rc = int(rc)
+
+def get_exc_from_name(name):
+    """ takes an exception name, like:
+
+        ErrorReturnCode_1
+        SignalException_9
+        SignalException_SIGHUP
+
+    and returns the corresponding exception.  this is primarily used for
+    importing exceptions from sh into user code, for instance, to capture those
+    exceptions """
+
+    exc = None
+    try:
+        return rc_exc_cache[name]
+    except KeyError:
+        m = rc_exc_regex.match(name)
+        if m:
+            base = m.group(1)
+            rc_or_sig_name = m.group(2)
+
+            if base == "SignalException":
+                try:
+                    rc = -int(rc_or_sig_name)
+                except ValueError:
+                    rc = -getattr(signal, rc_or_sig_name)
+            else:
+                rc = int(rc_or_sig_name)
+
+            exc = get_rc_exc(rc)
+    return exc
+
+
+def get_rc_exc(rc_or_sig_name):
+    """ takes a exit code, signal number, or signal name, and produces an
+    exception that corresponds to that return code.  positive return codes yield
+    ErrorReturnCode exception, negative return codes yield SignalException
+
+    we also cache the generated exception so that only one signal of that type
+    exists, preserving identity """
+
+    try:
+        rc = int(rc_or_sig_name)
+    except ValueError:
+        rc = -getattr(signal, rc_or_sig_name)
+
     try:
         return rc_exc_cache[rc]
     except KeyError:
@@ -221,11 +268,12 @@ def get_rc_exc(rc):
 
     if rc > 0:
         name = "ErrorReturnCode_%d" % rc
-        exc = type(name, (ErrorReturnCode,), {"exit_code": rc})
+        base = ErrorReturnCode
     else:
         name = "SignalException_%d" % abs(rc)
-        exc = type(name, (SignalException,), {"exit_code": rc})
+        base = SignalException
 
+    exc = type(name, (base,), {"exit_code": rc})
     rc_exc_cache[rc] = exc
     return exc
 
@@ -2115,15 +2163,9 @@ Please import sh or import programs individually.")
 
 
         # check if we're naming a dynamically generated ReturnCode exception
-        try:
-            return rc_exc_cache[k]
-        except KeyError:
-            m = rc_exc_regex.match(k)
-            if m:
-                exit_code = int(m.group(2))
-                if m.group(1) == "SignalException":
-                    exit_code = -exit_code
-                return get_rc_exc(exit_code)
+        exc = get_exc_from_name(k)
+        if exc:
+            return exc
 
 
         # https://github.com/ipython/ipython/issues/2577

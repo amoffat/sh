@@ -2,6 +2,7 @@
 
 ## 1.10 -
 
+*   signal exceptions can now be caught by number or name.  `SignalException_9 == SignalException_SIGKILL`
 *   child processes that timeout via `_timeout` raise `sh.TimeoutException` instead of `sh.SignalExeception_9` [#172](https://github.com/amoffat/sh/issues/172)
 *   fixed `help(sh)` from the python shell and `pydoc sh` from the command line. [#173](https://github.com/amoffat/sh/issues/173)
 *   program names can no longer be shadowed by names that sh.py defines internally. removed the requirement of trailing underscores for programs that could have their names shadowed, like `id`.

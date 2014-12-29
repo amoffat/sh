@@ -923,7 +923,7 @@ for i in range(5):
         try:
             p = python(py.name, _out=agg, u=True)
             p.wait()
-        except sh.SignalException_15:
+        except sh.SignalException_SIGTERM:
             caught_signal = True
 
         self.assertTrue(caught_signal)
@@ -958,7 +958,7 @@ for i in range(5):
         try:
             p = python(py.name, _out=agg, u=True)
             p.wait()
-        except sh.SignalException_9:
+        except sh.SignalException_SIGKILL:
             pass
 
         self.assertEqual(p.process.exit_code, -signal.SIGKILL)
@@ -1798,6 +1798,20 @@ sys.stdout.flush()
         self.assertTrue(abs(1-time1) < 0.1)
         self.assertEqual(word2, "done")
         self.assertTrue(abs(1-time2) < 0.1)
+
+
+class MiscTests(unittest.TestCase):
+    def test_signal_exception_aliases(self):
+        """ proves that signal exceptions with numbers and names are equivalent
+        """
+        import signal
+        import sh
+
+        sig_name = "SignalException_%d" % signal.SIGQUIT
+        sig = getattr(sh, sig_name)
+        from sh import SignalException_SIGQUIT
+
+        self.assertEqual(sig, SignalException_SIGQUIT)
 
 
 class StreamBuffererTests(unittest.TestCase):
