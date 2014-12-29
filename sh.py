@@ -111,11 +111,15 @@ def encode_to_py3bytes_or_py2str(s):
     fallback_encoding = "utf8"
 
     if IS_PY3:
-        s = str(s)
-        try:
-            s = bytes(s, DEFAULT_ENCODING)
-        except UnicodeEncodeError:
-            s = bytes(s, fallback_encoding)
+        # if we're already bytes, do nothing
+        if isinstance(s, bytes):
+            pass
+        else:
+            s = str(s)
+            try:
+                s = bytes(s, DEFAULT_ENCODING)
+            except UnicodeEncodeError:
+                s = bytes(s, fallback_encoding)
     else:
         # attempt to convert the thing to unicode from the system's encoding
         try:
