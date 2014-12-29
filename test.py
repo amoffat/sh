@@ -7,6 +7,7 @@ import tempfile
 import sys
 import sh
 import platform
+from functools import wraps
 
 # we have to use the real path because on osx, /tmp is a symlink to
 # /private/tmp, and so assertions that gettempdir() == sh.pwd() will fail
@@ -24,19 +25,27 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 skipUnless = getattr(unittest, "skipUnless", None)
 if not skipUnless:
-    def skipUnless(*args, **kwargs):
-        def wrapper(thing): return thing
+    # our stupid skipUnless wrapper for python2.6
+    def skipUnless(condition, reason):
+        def wrapper(test):
+            if condition:
+                return test
+            else:
+                @wraps(test)
+                def skip(*args, **kwargs):
+                    return
+                return skip
         return wrapper
 
 requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
 requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
 
 
-def create_tmp_test(code):
+def create_tmp_test(code, prefix="tmp"):
     """ creates a temporary test file that lives on disk, on which we can run
     python with sh """
 
-    py = tempfile.NamedTemporaryFile()
+    py = tempfile.NamedTemporaryFile(prefix=prefix)
     if IS_PY3:
         code = bytes(code, "UTF-8")
     py.write(code)
