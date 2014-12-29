@@ -187,7 +187,12 @@ class ErrorReturnCode(Exception):
 
 
 class SignalException(ErrorReturnCode): pass
-class TimeoutException(Exception): pass
+class TimeoutException(Exception):
+    """ the exception thrown when a command is killed because a specified
+    timeout (via _timeout) was hit """
+    def __init__(self, exit_code):
+        self.exit_code = exit_code
+        super(Exception, self).__init__()
 
 SIGNALS_THAT_SHOULD_THROW_EXCEPTION = (
     signal.SIGABRT,
@@ -476,7 +481,10 @@ class RunningCommand(object):
 
             exit_code = self.process.wait()
             if self.process.timed_out:
-                raise TimeoutException
+                # if we timed out, our exit code represents a signal, which is
+                # negative, so let's make it positive to store in our
+                # TimeoutException
+                raise TimeoutException(-exit_code)
             else:
                 self.handle_command_exit_code(exit_code)
 
@@ -693,6 +701,7 @@ class Command(object):
 
         # how long the process should run before it is auto-killed
         "timeout": 0,
+        "timeout_signal": signal.SIGKILL,
 
         # TODO write some docs on "long-running processes"
         # these control whether or not stdout/err will get aggregated together
@@ -1378,7 +1387,8 @@ class OProc(object):
 
             self._output_thread = _start_daemon_thread(self.output_thread,
                     self._stdout_stream, self._stderr_stream,
-                    self.call_args["timeout"], self.started)
+                    self.call_args["timeout"], self.started,
+                    self.call_args["timeout_signal"])
 
 
     def __repr__(self):
@@ -1407,7 +1417,7 @@ class OProc(object):
         stdin.close()
 
 
-    def output_thread(self, stdout, stderr, timeout, started):
+    def output_thread(self, stdout, stderr, timeout, started, timeout_exc):
         """ this function is run in a separate thread.  it reads from the
         process's stdout stream (a streamreader), and waits for it to claim that
         its done """
@@ -1446,7 +1456,7 @@ class OProc(object):
                 if now - started > timeout:
                     self.log.debug("we've been running too long")
                     self.timed_out = True
-                    self.kill()
+                    self.signal(timeout_exc)
 
 
         # this is here because stdout may be the controlling TTY, and

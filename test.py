@@ -1800,6 +1800,22 @@ sys.stdout.flush()
         self.assertTrue(abs(1-time2) < 0.1)
 
 
+    def test_custom_timeout_signal(self):
+        from sh import TimeoutException
+        import signal
+
+        py = create_tmp_test("""
+import time
+time.sleep(3)
+""")
+        try:
+            python(py.name, _timeout=1, _timeout_signal=signal.SIGQUIT)
+        except TimeoutException as e:
+            self.assertEqual(e.exit_code, signal.SIGQUIT)
+        else:
+            self.fail("we should have handled a TimeoutException")
+
+
 class MiscTests(unittest.TestCase):
     def test_signal_exception_aliases(self):
         """ proves that signal exceptions with numbers and names are equivalent
