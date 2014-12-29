@@ -1576,7 +1576,7 @@ for i in range(5):
 
                     if last_pos_time > 0:
                         self.assertTrue(abs(delta - expected_time_increment) <=
-                                expected_time_increment * 0.1)
+                                expected_time_increment * 0.5)
 
                     last_pos_time = now
                     break
