@@ -1826,6 +1826,11 @@ time.sleep(3)
 
 
 class MiscTests(unittest.TestCase):
+    # https://github.com/amoffat/sh/issues/121
+    def test_wraps(self):
+        from sh import ls
+        wraps(ls)(lambda f: True)
+
     def test_signal_exception_aliases(self):
         """ proves that signal exceptions with numbers and names are equivalent
         """
