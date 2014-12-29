@@ -567,16 +567,20 @@ class RunningCommand(object):
             Command._prepend_stack.pop()
 
     def __str__(self):
+        """ in python3, should return unicode.  in python2, should return a
+        string of bytes """
         if IS_PY3:
             return self.__unicode__()
         else:
             return unicode(self).encode(self.call_args["encoding"])
 
     def __unicode__(self):
+        """ a magic method defined for python2.  calling unicode() on a
+        RunningCommand object will call this """
         if self.process and self.stdout:
             return self.stdout.decode(self.call_args["encoding"],
                 self.call_args["decode_errors"])
-        return ""
+        return u""
 
     def __eq__(self, other):
         return unicode(self) == unicode(other)
@@ -605,7 +609,10 @@ class RunningCommand(object):
         raise AttributeError
 
     def __repr__(self):
-        try: return str(self)
+        """ in python3, should return unicode.  in python2, should return a
+        string of bytes """
+        try:
+            return str(self)
         except UnicodeDecodeError:
             if self.process:
                 if self.stdout:
@@ -887,6 +894,8 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
         return fn
 
     def __str__(self):
+        """ in python3, should return unicode.  in python2, should return a
+        string of bytes """
         if IS_PY3:
             return self.__unicode__()
         else:
@@ -902,10 +911,14 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
 
 
     def __repr__(self):
+        """ in python3, should return unicode.  in python2, should return a
+        string of bytes """
         return "<Command %r>" % str(self)
 
 
     def __unicode__(self):
+        """ a magic method defined for python2.  calling unicode() on a
+        self will call this """
         baked_args = " ".join(item.decode(DEFAULT_ENCODING) for item in self._partial_baked_args)
         if baked_args:
             baked_args = " " + baked_args
