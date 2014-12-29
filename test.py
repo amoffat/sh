@@ -41,11 +41,11 @@ requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
 requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
 
 
-def create_tmp_test(code, prefix="tmp"):
+def create_tmp_test(code, prefix="tmp", delete=True):
     """ creates a temporary test file that lives on disk, on which we can run
     python with sh """
 
-    py = tempfile.NamedTemporaryFile(prefix=prefix)
+    py = tempfile.NamedTemporaryFile(prefix=prefix, delete=delete)
     if IS_PY3:
         code = bytes(code, "UTF-8")
     py.write(code)
@@ -1828,17 +1828,34 @@ time.sleep(3)
 class MiscTests(unittest.TestCase):
     @requires_utf8
     def test_unicode_path(self):
-        import sh
-        py = create_tmp_test("""
-echo "HI"
-""", "字")
-        os.chmod(py.name, int(0o755))
-        cmd = sh.Command(py.name)
+        from sh import Command
 
-        # all of these should behave just fine
-        str(cmd)
-        repr(cmd)
-        unicode(cmd)
+        py = create_tmp_test("""#!/usr/bin/env python
+# -*- coding: utf8 -*-
+print("字")
+""", "字", delete=False)
+
+        try:
+            py.close()
+            os.chmod(py.name, int(0o755))
+            cmd = Command(py.name)
+
+            # all of these should behave just fine
+            str(cmd)
+            repr(cmd)
+            unicode(cmd)
+
+            running = cmd()
+            str(running)
+            repr(running)
+            unicode(running)
+
+            str(running.process)
+            repr(running.process)
+            unicode(running.process)
+
+        finally:
+            os.unlink(py.name)
 
 
     # https://github.com/amoffat/sh/issues/121
