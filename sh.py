@@ -954,10 +954,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
             call_args.update(pcall_args)
             cmd.extend(prepend.cmd)
 
-        if IS_PY3:
-            cmd.append(bytes(self._path, call_args["encoding"]))
-        else:
-            cmd.append(self._path)
+        cmd.append(self._path)
 
         # here we extract the special kwargs and override any
         # special kwargs from the possibly baked command
