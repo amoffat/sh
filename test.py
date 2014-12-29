@@ -1501,7 +1501,7 @@ else:
 
 
     def test_signal_exception(self):
-        from sh import SignalException, get_rc_exc
+        from sh import SignalException_15
 
         def throw_terminate_signal():
             py = create_tmp_test("""
@@ -1512,7 +1512,7 @@ while True: time.sleep(1)
             to_kill.terminate()
             to_kill.wait()
 
-        self.assertRaises(get_rc_exc(-15), throw_terminate_signal)
+        self.assertRaises(SignalException_15, throw_terminate_signal)
 
 
     def test_file_output_isnt_buffered(self):
@@ -1800,7 +1800,7 @@ sys.stdout.flush()
 
 class StreamBuffererTests(unittest.TestCase):
     def test_unbuffered(self):
-        from sh import StreamBufferer
+        from sh import _disable_whitelist, StreamBufferer
         b = StreamBufferer(0)
 
         self.assertEqual(b.process(b"test"), [b"test"])
@@ -1809,7 +1809,7 @@ class StreamBuffererTests(unittest.TestCase):
         self.assertEqual(b.flush(), b"")
 
     def test_newline_buffered(self):
-        from sh import StreamBufferer
+        from sh import _disable_whitelist, StreamBufferer
         b = StreamBufferer(1)
 
         self.assertEqual(b.process(b"testing\none\ntwo"), [b"testing\n", b"one\n"])
@@ -1817,7 +1817,7 @@ class StreamBuffererTests(unittest.TestCase):
         self.assertEqual(b.flush(), b"four")
 
     def test_chunk_buffered(self):
-        from sh import StreamBufferer
+        from sh import _disable_whitelist, StreamBufferer
         b = StreamBufferer(10)
 
         self.assertEqual(b.process(b"testing\none\ntwo"), [b"testing\non"])

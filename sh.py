@@ -34,13 +34,6 @@ please install pbs 0.110 (http://pypi.python.org/pypi/pbs) for windows \
 support." % __version__)
 
 
-# be careful what we import.  these imports have module-level scope, so
-# they can override legitimate programs with the same name.  for example, if we
-# import the gzip module, we will not able to access the gzip program.
-#
-# TODO, come up with a mechanism that can "erase" the imports from availability
-# outside of sh
-
 import sys
 IS_PY3 = sys.version_info[0] == 3
 
@@ -48,10 +41,10 @@ import traceback
 import os
 import re
 from glob import glob as original_glob
+import time
 from types import ModuleType
 from functools import partial
 import inspect
-import time as _time
 from contextlib import contextmanager
 
 from locale import getpreferredencoding
@@ -1126,7 +1119,7 @@ class OProc(object):
                 # the child starts writing.
                 # see http://bugs.python.org/issue15898
                 if IS_OSX:
-                    _time.sleep(0.01)
+                    time.sleep(0.01)
 
                 os.setsid()
 
@@ -1205,7 +1198,7 @@ class OProc(object):
                 OProc._registered_cleanup = True
 
 
-            self.started = _time.time()
+            self.started = time.time()
             self.cmd = cmd
 
             # exit code should only be manipulated from within self._wait_lock
@@ -1385,7 +1378,7 @@ class OProc(object):
 
             # test if the process has been running too long
             if timeout:
-                now = _time.time()
+                now = time.time()
                 if now - started > timeout:
                     self.log.debug("we've been running too long")
                     self.kill()
@@ -1404,7 +1397,7 @@ class OProc(object):
         # fail.  this is less complex than wrapping all the ops
         # in the above loop with out-of-band fd-close exceptions
         while self.is_alive():
-            _time.sleep(0.001)
+            time.sleep(0.001)
 
         if stdout:
             stdout.close()
@@ -2044,59 +2037,75 @@ def args(*args, **kwargs):
 
 
 
-# this allows lookups to names that aren't found in the global scope to be
-# searched for as a program name.  for example, if "ls" isn't found in this
-# module's scope, we consider it a system program and try to find it.
-#
-# we use a dict instead of just a regular object as the base class because
-# the exec() statement used in this file requires the "globals" argument to
-# be a dictionary
 class Environment(dict):
+    """ this allows lookups to names that aren't found in the global scope to be
+    searched for as a program name.  for example, if "ls" isn't found in this
+    module's scope, we consider it a system program and try to find it.
+
+    we use a dict instead of just a regular object as the base class because the
+    exec() statement used in this file requires the "globals" argument to be a
+    dictionary """
+
+
+    # this is a list of all of the names that the sh module exports that will
+    # not resolve to functions.  we don't want to accidentally shadow real
+    # commands with functions/imports that we define in sh.py.  for example,
+    # "import time" may override the time system program
+    whitelist = set([
+        "Command",
+        "CommandNotFound",
+        "DEFAULT_ENCODING",
+        "DoneReadingForever",
+        "ErrorReturnCode",
+        "NotYetReadyToRead",
+        "SignalException",
+        "__project_url__",
+        "__version__",
+        "args",
+        "glob",
+        "pushd",
+    ])
+
     def __init__(self, globs, baked_args={}):
         self.globs = globs
         self.baked_args = baked_args
+        self.disable_whitelist = False
 
     def __setitem__(self, k, v):
         self.globs[k] = v
 
     def __getitem__(self, k):
-        try:
-            return self.globs[k]
-        except KeyError:
-            pass
+        # if we first import "_disable_whitelist" from sh, we can import
+        # anything defined in the global scope of sh.py.  this is useful for our
+        # tests
+        if k == "_disable_whitelist":
+            self.disable_whitelist = True
+            return None
 
-        # the only way we'd get to here is if we've tried to
-        # import * from a repl.  so, raise an exception, since
-        # that's really the only sensible thing to do
+        # we're trying to import something real (maybe), see if it's in our
+        # global scope
+        if k in self.whitelist or self.disable_whitelist:
+            try:
+                return self.globs[k]
+            except KeyError:
+                pass
+
+        # somebody tried to be funny and do "from sh import *"
         if k == "__all__":
             raise ImportError("Cannot import * from sh. \
 Please import sh or import programs individually.")
 
-        # if we end with "_" just go ahead and skip searching
-        # our namespace for python stuff.  this was mainly for the
-        # command "id", which is a popular program for finding
-        # if a user exists, but also a python function for getting
-        # the address of an object.  so can call the python
-        # version by "id" and the program version with "id_"
-        if not k.endswith("_"):
-            # check if we're naming a dynamically generated ReturnCode exception
-            try:
-                return rc_exc_cache[k]
-            except KeyError:
-                m = rc_exc_regex.match(k)
-                if m:
-                    exit_code = int(m.group(2))
-                    if m.group(1) == "SignalException":
-                        exit_code = -exit_code
-                    return get_rc_exc(exit_code)
 
-            # is it a builtin?
-            try:
-                return getattr(self["__builtins__"], k)
-            except AttributeError:
-                pass
-        elif not k.startswith("_"):
-            k = k.rstrip("_")
+        # check if we're naming a dynamically generated ReturnCode exception
+        try:
+            return rc_exc_cache[k]
+        except KeyError:
+            m = rc_exc_regex.match(k)
+            if m:
+                exit_code = int(m.group(2))
+                if m.group(1) == "SignalException":
+                    exit_code = -exit_code
+                return get_rc_exc(exit_code)
 
 
         # https://github.com/ipython/ipython/issues/2577
@@ -2194,7 +2203,6 @@ class SelfWrapper(ModuleType):
     # that will be processed with given by return SelfWrapper
     def __call__(self, **kwargs):
         return SelfWrapper(self.__self_module, kwargs)
-
 
 
 
