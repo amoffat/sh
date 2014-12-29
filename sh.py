@@ -412,7 +412,7 @@ class RunningCommand(object):
         if spawn_process:
             self.log.info("starting process")
             self.process = OProc(self.log, cmd, stdin, stdout, stderr,
-                    self.call_args, pipe, True)
+                    self.call_args, pipe)
 
             if should_wait:
                 self.wait()
@@ -585,6 +585,12 @@ class Command(object):
         #"fg": False, # run command in foreground
 
         "bg": False, # run command in background
+
+        # if our command should live on after our parent process (our python
+        # script) ends.  this really only makes sense if _bg is True, because
+        # otherwise the command waits to complete by default
+        "persist": True,
+
         "with": False, # prepend the command to every command after it
         "in": None,
         "out": None, # redirect STDOUT
@@ -1016,8 +1022,7 @@ class OProc(object):
     STDOUT = -1
     STDERR = -2
 
-    def __init__(self, parent_log, cmd, stdin, stdout, stderr, call_args, pipe,
-            persist):
+    def __init__(self, parent_log, cmd, stdin, stdout, stderr, call_args, pipe):
         """
             cmd is the full string that will be exec'd.  it includes the program
             name and all its arguments
@@ -1027,8 +1032,6 @@ class OProc(object):
 
             call_args is a mapping of all the special keyword arguments to apply
             to the child process
-
-            TODO persist should be a call arg!
         """
 
         self.call_args = call_args
@@ -1236,7 +1239,7 @@ class OProc(object):
                     os.close(self._slave_stderr_fd)
 
             self.log.debug("started process")
-            if not persist:
+            if not self.call_args["persist"]:
                 OProc._procs_to_cleanup.add(self)
 
 
