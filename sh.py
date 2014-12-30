@@ -1242,7 +1242,7 @@ class OProc(object):
                     # we HAVE to do this here, and not in the parent process,
                     # because we have to guarantee that this is set before the
                     # child process is run, and we can't do it twice.
-                    tty.setraw(self._stdout_fd)
+                    tty.setraw(self._slave_stdout_fd)
 
 
                 # if the parent-side fd for stdin exists, close it.  the case
