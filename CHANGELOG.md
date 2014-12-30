@@ -2,6 +2,7 @@
 
 ## 1.10 -
 
+*   partially applied functions with `functools.partial` have been fixed for `_out` and `_err` callbacks [#160](https://github.com/amoffat/sh/issues/160)
 *   `_out` or `_err` being callables no longer puts the running command in the background.  to achieve the previous behavior, pass `_bg=True` to your command.
 *   deprecated `_with` contexts [#195](https://github.com/amoffat/sh/issues/195)
 *   `_timeout_signal` allows you to specify your own signal to kill a timed-out process with.  use a constant from the `signal` stdlib module. [#171](https://github.com/amoffat/sh/issues/171)

@@ -1049,24 +1049,47 @@ def construct_streamreader_callback(process, handler):
     or pass some stdin back, and will realize that they can pass a callback of
     more args """
 
+
+    # implied arg refers to the "self" that methods will pass in.  we need to
+    # account for this implied arg when figuring out what function the user
+    # passed in based on number of args
     implied_arg = 0
-    if inspect.ismethod(handler):
+
+    partial_args = 0
+    handler_to_inspect = handler
+
+    if isinstance(handler, partial):
+        partial_args = len(handler.args)
+        handler_to_inspect = handler.func
+
+    if inspect.ismethod(handler_to_inspect):
         implied_arg = 1
-        num_args = len(inspect.getargspec(handler).args)
+        num_args = len(inspect.getargspec(handler_to_inspect).args)
 
     else:
-        if inspect.isfunction(handler):
-            num_args = len(inspect.getargspec(handler).args)
+        if inspect.isfunction(handler_to_inspect):
+            num_args = len(inspect.getargspec(handler_to_inspect).args)
 
         # is an object instance with __call__ method
         else:
             implied_arg = 1
-            num_args = len(inspect.getargspec(handler.__call__).args)
+            num_args = len(inspect.getargspec(handler_to_inspect.__call__).args)
+
+
+    net_args = num_args - implied_arg - partial_args
 
     handler_args = ()
-    if num_args == implied_arg + 2:
+
+    # just the chunk
+    if net_args == 1:
+        handler_args = ()
+
+    # chunk, stdin
+    if net_args == 2:
         handler_args = (process.stdin,)
-    elif num_args == implied_arg + 3:
+
+    # chunk, stdin, process
+    elif net_args == 3:
         # notice we're only storing a weakref, to prevent cyclic references
         # (where the process holds a streamreader, and a streamreader holds a
         # handler-closure with a reference to the process

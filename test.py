@@ -1831,6 +1831,36 @@ time.sleep(3)
             self.fail("we should have handled a TimeoutException")
 
 
+    def test_partially_applied_callback(self):
+        from functools import partial
+
+        py = create_tmp_test("""
+for i in range(10):
+    print(i)
+""")
+
+        output = []
+        def fn(foo, line):
+            output.append((foo, int(line.strip())))
+
+        log_line = partial(fn, "hello")
+        out = python(py.name, _out=log_line)
+        self.assertEqual(output, [("hello", i) for i in range(10)])
+
+
+        output = []
+        def fn(foo, line, stdin, proc):
+            output.append((foo, int(line.strip())))
+
+        log_line = partial(fn, "hello")
+        out = python(py.name, _out=log_line)
+        self.assertEqual(output, [("hello", i) for i in range(10)])
+
+
+
+
+
+
 class MiscTests(unittest.TestCase):
     @requires_utf8
     def test_unicode_path(self):
