@@ -91,6 +91,15 @@ import logging
 import weakref
 
 
+# TODO remove with contexts in next version
+def with_context_warning():
+    warnings.warn("""
+with contexts are deprecated because they are not thread safe.  they will be \
+removed in the next version.  use subcommands instead \
+http://amoffat.github.io/sh/#sub-commands. see \
+https://github.com/amoffat/sh/issues/195
+""".strip(), stacklevel=3)
+
 
 
 if IS_PY3:
@@ -536,7 +545,7 @@ class RunningCommand(object):
         been done would have been done in the Command.__call__ call.
         essentially all that has to happen is the comand be pushed on the
         prepend stack. """
-        pass
+        with_context_warning()
 
     def __iter__(self):
         return self
@@ -930,6 +939,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
         return self._path.decode(DEFAULT_ENCODING) + baked_args
 
     def __enter__(self):
+        with_context_warning()
         self(_with=True)
 
     def __exit__(self, typ, value, traceback):
