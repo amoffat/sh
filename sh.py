@@ -81,7 +81,6 @@ import termios
 import signal
 import gc
 import select
-import atexit
 import threading
 import tty
 import fcntl
@@ -663,12 +662,10 @@ class Command(object):
         # currently unsupported
         #"fg": False, # run command in foreground
 
-        "bg": False, # run command in background
-
-        # if our command should live on after our parent process (our python
-        # script) ends.  this really only makes sense if _bg is True, because
-        # otherwise the command waits to complete by default
-        "persist": True,
+        # run a command in the background.  commands run in the background
+        # ignore SIGHUP and do not automatically exit when the parent process
+        # ends
+        "bg": False,
 
         "with": False, # prepend the command to every command after it
         "in": None,
@@ -1100,8 +1097,6 @@ class OProc(object):
     input/output to the child process.  it gets its name for subprocess.Popen
     (process open) but we're calling ours OProc (open process) """
 
-    _procs_to_cleanup = set()
-    _registered_cleanup = False
     _default_window_size = (24, 80)
 
     # used in redirecting
@@ -1279,11 +1274,6 @@ class OProc(object):
             if gc_enabled:
                 gc.enable()
 
-            if not OProc._registered_cleanup:
-                atexit.register(OProc._cleanup_procs)
-                OProc._registered_cleanup = True
-
-
             # used to determine what exception to raise.  if our process was
             # killed via a timeout counter, we'll raise something different than
             # a SIGKILL exception
@@ -1327,8 +1317,6 @@ class OProc(object):
                     os.close(self._slave_stderr_fd)
 
             self.log.debug("started process")
-            if not self.call_args["persist"]:
-                OProc._procs_to_cleanup.add(self)
 
 
             if self.call_args["tty_in"]:
@@ -1523,11 +1511,6 @@ class OProc(object):
         self.log.debug("terminating")
         self.signal(signal.SIGTERM)
 
-    @staticmethod
-    def _cleanup_procs():
-        for proc in OProc._procs_to_cleanup:
-            proc.kill()
-
 
     def is_alive(self):
         """ polls if our child process has completed, without blocking.  this
@@ -1596,8 +1579,6 @@ class OProc(object):
             # wait for our stdout and stderr streamreaders to finish reading and
             # aggregating the process output
             self._output_thread.join()
-
-            OProc._procs_to_cleanup.discard(self)
 
             return self.exit_code
 
