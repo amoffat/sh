@@ -804,7 +804,7 @@ for i in range(5):
         stdout = []
         def agg(line): stdout.append(line)
 
-        p = python(py.name, _out=agg, u=True)
+        p = python(py.name, _out=agg, u=True, _bg=True)
 
         # we give a little pause to make sure that the NamedTemporaryFile
         # exists when the python process actually starts
@@ -934,7 +934,7 @@ for i in range(5):
 
         caught_signal = False
         try:
-            p = python(py.name, _out=agg, u=True)
+            p = python(py.name, _out=agg, u=True, _bg=True)
             p.wait()
         except sh.SignalException_SIGTERM:
             caught_signal = True
@@ -968,12 +968,14 @@ for i in range(5):
                 process.kill()
                 return True
 
+        caught_signal = False
         try:
-            p = python(py.name, _out=agg, u=True)
+            p = python(py.name, _out=agg, u=True, _bg=True)
             p.wait()
         except sh.SignalException_SIGKILL:
-            pass
+            caught_signal = True
 
+        self.assertTrue(caught_signal)
         self.assertEqual(p.process.exit_code, -signal.SIGKILL)
         self.assertTrue("4" not in p)
         self.assertTrue("4" not in stdout)

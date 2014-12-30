@@ -445,9 +445,6 @@ class RunningCommand(object):
             Command._prepend_stack.append(self)
 
 
-        if callable(call_args["out"]) or callable(call_args["err"]):
-            should_wait = False
-
         if call_args["piped"] or call_args["iter"] or call_args["iter_noblock"]:
             should_wait = False
 
