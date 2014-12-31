@@ -1,0 +1,4 @@
+coverage==3.7.1
+py==1.4.26
+tox==1.8.1
+virtualenv==12.0.4

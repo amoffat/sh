@@ -1,0 +1,24 @@
+os:
+    - linux
+    - osx
+
+language: python
+
+python:
+    - 2.6
+    - 2.7
+    - 3.2
+    - 3.3
+    - 3.4
+
+env:
+    - LC_ALL=C
+    - LC_ALL=en_US.UTF-8
+
+before_script: pip install coverage coveralls
+
+script:
+    - coverage run --source sh test.py
+    - coverage report
+
+after_success: coveralls

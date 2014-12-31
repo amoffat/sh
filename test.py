@@ -1,12 +1,17 @@
 # -*- coding: utf8 -*-
 
 import os
+from os.path import exists, join, realpath
 import unittest
 import tempfile
 import sys
 import sh
 import platform
+from functools import wraps
 
+# we have to use the real path because on osx, /tmp is a symlink to
+# /private/tmp, and so assertions that gettempdir() == sh.pwd() will fail
+tempdir = realpath(tempfile.gettempdir())
 IS_OSX = platform.system() == "Darwin"
 IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
@@ -20,20 +25,29 @@ THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
 skipUnless = getattr(unittest, "skipUnless", None)
 if not skipUnless:
-    def skipUnless(*args, **kwargs):
-        def wrapper(thing): return thing
+    # our stupid skipUnless wrapper for python2.6
+    def skipUnless(condition, reason):
+        def wrapper(test):
+            if condition:
+                return test
+            else:
+                @wraps(test)
+                def skip(*args, **kwargs):
+                    return
+                return skip
         return wrapper
 
 requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
 requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
 
 
-def create_tmp_test(code):
+def create_tmp_test(code, prefix="tmp", delete=True):
     """ creates a temporary test file that lives on disk, on which we can run
     python with sh """
 
-    py = tempfile.NamedTemporaryFile()
-    if IS_PY3: code = bytes(code, "UTF-8")
+    py = tempfile.NamedTemporaryFile(prefix=prefix, delete=delete)
+    if IS_PY3:
+        code = bytes(code, "UTF-8")
     py.write(code)
     py.flush()
     # we don't explicitly close, because close will remove the file, and we
@@ -86,6 +100,23 @@ exit(3)
         self.assertRaises(ErrorReturnCode, python, py.name)
 
 
+    def test_exit_code_with_hasattr(self):
+        from sh import ErrorReturnCode
+        py = create_tmp_test("""
+exit(3)
+""")
+
+        try:
+            out = python(py.name, _iter=True)
+            # hasattr can swallow exceptions
+            hasattr(out, 'something_not_there')
+            list(out)
+            self.assertEqual(out.exit_code, 3)
+            self.fail("Command exited with error, but no exception thrown")
+        except ErrorReturnCode as e:
+            pass
+
+
     def test_exit_code_from_exception(self):
         from sh import ErrorReturnCode
         py = create_tmp_test("""
@@ -116,7 +147,8 @@ exit(3)
 
     def test_stdin_from_string(self):
         from sh import sed
-        self.assertEqual(sed(_in="test", e="s/test/lol/").strip(), "lol")
+        self.assertEqual(sed(_in="one test three", e="s/test/two/").strip(),
+                "one two three")
 
     def test_ok_code(self):
         from sh import ls, ErrorReturnCode_1, ErrorReturnCode_2
@@ -130,6 +162,7 @@ exit(3)
 
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=code_to_pass)
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=[code_to_pass])
+        ls("/aofwje/garogjao4a/eoan3on", _ok_code=range(code_to_pass + 1))
 
     def test_quote_escaping(self):
         py = create_tmp_test("""
@@ -247,19 +280,33 @@ for l in "andrew":
 
 
     def test_environment(self):
+        """ tests that environments variables that we pass into sh commands
+        exist in the environment, and on the sh module """
         import os
 
+        # this is the environment we'll pass into our commands
         env = {"HERP": "DERP"}
 
+        # python on osx will bizarrely add some extra environment variables that
+        # i didn't ask for.  for this test, we prune those out if they exist
+        osx_cruft = [
+            "__CF_USER_TEXT_ENCODING",
+            "__PYVENV_LAUNCHER__",
+            "VERSIONER_PYTHON_PREFER_32_BIT",
+            "VERSIONER_PYTHON_VERSION",
+        ]
+
+        # first we test that the environment exists in our child process as
+        # we've set it
         py = create_tmp_test("""
 import os
 
-osx_cruft = ["__CF_USER_TEXT_ENCODING", "__PYVENV_LAUNCHER__"]
+osx_cruft = %s
 for key in osx_cruft:
     try: del os.environ[key]
     except: pass
 print(os.environ["HERP"] + " " + str(len(os.environ)))
-""")
+""" % osx_cruft)
         out = python(py.name, _env=env).strip()
         self.assertEqual(out, "DERP 1")
 
@@ -267,12 +314,12 @@ print(os.environ["HERP"] + " " + str(len(os.environ)))
 import os, sys
 sys.path.insert(0, os.getcwd())
 import sh
-osx_cruft = ["__CF_USER_TEXT_ENCODING", "__PYVENV_LAUNCHER__"]
+osx_cruft = %s
 for key in osx_cruft:
     try: del os.environ[key]
     except: pass
 print(sh.HERP + " " + str(len(os.environ)))
-""")
+""" % osx_cruft)
         out = python(py.name, _env=env, _cwd=THIS_DIR).strip()
         self.assertEqual(out, "DERP 1")
 
@@ -329,6 +376,42 @@ print(sh.HERP + " " + str(len(os.environ)))
 
         self.assertEqual(Command(which("ls")), ls)
 
+    def test_doesnt_execute_directories(self):
+        save_path = os.environ['PATH']
+        bin_dir1 = tempfile.mkdtemp()
+        bin_dir2 = tempfile.mkdtemp()
+        gcc_dir1 = os.path.join(bin_dir1, 'gcc')
+        gcc_file2 = os.path.join(bin_dir2, 'gcc')
+        try:
+            os.environ['PATH'] = os.pathsep.join((bin_dir1, bin_dir2))
+            # a folder named 'gcc', its executable, but should not be
+            # discovered by internal which(1)-clone
+            os.makedirs(gcc_dir1)
+            # an executable named gcc -- only this should be executed
+            bunk_header = '#!/bin/sh\necho $*'
+            with open(gcc_file2, "w") as h:
+                h.write(bunk_header)
+            os.chmod(gcc_file2, int(0o755))
+
+            from sh import gcc
+            if IS_PY3:
+                self.assertEqual(gcc._path,
+                        gcc_file2.encode(sh.DEFAULT_ENCODING))
+            else:
+                self.assertEqual(gcc._path, gcc_file2)
+            self.assertEqual(gcc('no-error').stdout.strip(),
+                'no-error'.encode("ascii"))
+
+        finally:
+            os.environ['PATH'] = save_path
+            if exists(gcc_file2):
+                os.unlink(gcc_file2)
+            if exists(gcc_dir1):
+                os.rmdir(gcc_dir1)
+            if exists(bin_dir1):
+                os.rmdir(bin_dir1)
+            if exists(bin_dir1):
+                os.rmdir(bin_dir2)
 
     def test_multiple_args_short_option(self):
         py = create_tmp_test("""
@@ -395,8 +478,6 @@ print(options.long_option)
         from sh import ls, wc
         c1 = int(wc(ls("-A1", _piped=True), l=True).strip())
         c2 = len(os.listdir("."))
-        if c1 != c2:
-            with open("/tmp/fail", "a") as h: h.write("FUCK\n")
         self.assertEqual(c1, c2)
 
 
@@ -723,7 +804,7 @@ for i in range(5):
         stdout = []
         def agg(line): stdout.append(line)
 
-        p = python(py.name, _out=agg, u=True)
+        p = python(py.name, _out=agg, u=True, _bg=True)
 
         # we give a little pause to make sure that the NamedTemporaryFile
         # exists when the python process actually starts
@@ -851,12 +932,14 @@ for i in range(5):
                 process.terminate()
                 return True
 
+        caught_signal = False
         try:
-            p = python(py.name, _out=agg, u=True)
+            p = python(py.name, _out=agg, u=True, _bg=True)
             p.wait()
-        except sh.SignalException_15:
-            pass
+        except sh.SignalException_SIGTERM:
+            caught_signal = True
 
+        self.assertTrue(caught_signal)
         self.assertEqual(p.process.exit_code, -signal.SIGTERM)
         self.assertTrue("4" not in p)
         self.assertTrue("4" not in stdout)
@@ -885,12 +968,14 @@ for i in range(5):
                 process.kill()
                 return True
 
+        caught_signal = False
         try:
-            p = python(py.name, _out=agg, u=True)
+            p = python(py.name, _out=agg, u=True, _bg=True)
             p.wait()
-        except sh.SignalException_9:
-            pass
+        except sh.SignalException_SIGKILL:
+            caught_signal = True
 
+        self.assertTrue(caught_signal)
         self.assertEqual(p.process.exit_code, -signal.SIGKILL)
         self.assertTrue("4" not in p)
         self.assertTrue("4" not in stdout)
@@ -1050,7 +1135,6 @@ for i in range(42):
         #   ValueError: invalid literal for int() with base 10: ''
         self.assertEqual(int(echo("123", _bg=True)), 123)
 
-
     def test_cwd(self):
         from sh import pwd
         from os.path import realpath
@@ -1109,6 +1193,26 @@ else:
 
         response = python(py.name)
         self.assertEqual(response, "no tty attached!\n")
+
+
+    def test_tty_output(self):
+        py = create_tmp_test("""
+import sys
+import os
+
+if os.isatty(sys.stdout.fileno()):
+    sys.stdout.write("tty attached")
+    sys.stdout.flush()
+else:
+    sys.stdout.write("no tty attached")
+    sys.stdout.flush()
+""")
+
+        out = python(py.name, _tty_out=True)
+        self.assertEqual(out, "tty attached")
+
+        out = python(py.name, _tty_out=False)
+        self.assertEqual(out, "no tty attached")
 
 
     def test_stringio_output(self):
@@ -1179,25 +1283,30 @@ sys.stdout.flush()
 sys.stdin.read(1)
 """)
 
-        d = {"success": False}
+        d = {
+            "newline_buffer_success": False,
+            "unbuffered_success": False,
+        }
         def interact(line, stdin, process):
             line = line.strip()
             if not line: return
 
             if line == "switch buffering":
-                process.out_bufsize(0)
+                d["newline_buffer_success"] = True
+                process.change_out_bufsize(0)
                 stdin.put("a")
 
             elif line == "unbuffered":
                 stdin.put("b")
-                d["success"] = True
+                d["unbuffered_success"] = True
                 return True
 
         # start with line buffered stdout
         pw_stars = python(py.name, _out=interact, _out_bufsize=1, u=True)
         pw_stars.wait()
 
-        self.assertTrue(d["success"])
+        self.assertTrue(d["newline_buffer_success"])
+        self.assertTrue(d["unbuffered_success"])
 
 
 
@@ -1224,8 +1333,10 @@ sys.stdin.read(1)
         sleep_for = 3
         timeout = 1
         started = time()
-        try: sh.sleep(sleep_for, _timeout=timeout).wait()
-        except sh.SignalException_9: pass
+        try:
+            sh.sleep(sleep_for, _timeout=timeout).wait()
+        except sh.TimeoutException:
+            pass
         elapsed = time() - started
         self.assertTrue(abs(elapsed - timeout) < 0.5)
 
@@ -1352,13 +1463,16 @@ sys.stderr.write("stderr")
     def test_no_pipe(self):
         from sh import ls
 
+        # calling a command regular should fill up the pipe_queue
         p = ls()
         self.assertFalse(p.process._pipe_queue.empty())
 
+        # calling a command with a callback should not
         def callback(line): pass
         p = ls(_out=callback)
         self.assertTrue(p.process._pipe_queue.empty())
 
+        # calling a command regular with no_pipe also should not
         p = ls(_no_pipe=True)
         self.assertTrue(p.process._pipe_queue.empty())
 
@@ -1404,7 +1518,7 @@ else:
 
 
     def test_signal_exception(self):
-        from sh import SignalException, get_rc_exc
+        from sh import SignalException_15
 
         def throw_terminate_signal():
             py = create_tmp_test("""
@@ -1415,7 +1529,7 @@ while True: time.sleep(1)
             to_kill.terminate()
             to_kill.wait()
 
-        self.assertRaises(get_rc_exc(-15), throw_terminate_signal)
+        self.assertRaises(SignalException_15, throw_terminate_signal)
 
 
     def test_file_output_isnt_buffered(self):
@@ -1423,12 +1537,12 @@ while True: time.sleep(1)
 
         import time
 
-        expected_time_increment = 0.1
+        expected_time_increment = 0.2
         py = create_tmp_test("""
 from time import sleep
 import sys
 
-for i in range(10):
+for i in range(5):
     print(i)
     i += 1
     sleep(%.2f)
@@ -1446,12 +1560,13 @@ for i in range(10):
         times = []
         timeout = 5
         started = time.time()
-        for i in range(10):
+        for i in range(5):
             while True:
                 now = time.time()
                 if now - started > timeout:
-                    self.assertTrue(False, "timed out")
+                    self.fail("test timed out")
 
+                # check if the end of our file has grown
                 file_obj.seek(0, 2)
                 cur_pos = file_obj.tell()
                 if cur_pos > last_pos:
@@ -1463,21 +1578,379 @@ for i in range(10):
 
                     if last_pos_time > 0:
                         self.assertTrue(abs(delta - expected_time_increment) <=
-                            expected_time_increment * 0.1)
+                                expected_time_increment * 0.5)
 
                     last_pos_time = now
                     break
-
-                time.sleep(0.01)
 
         p.wait()
         file_obj.close()
 
 
+    def test_pushd(self):
+        """ test that pushd is just a specialized form of sh.args """
+        import os
+        old_wd = os.getcwd()
+        with sh.pushd(tempdir):
+            new_wd = sh.pwd().strip()
+
+        self.assertNotEqual(old_wd, tempdir)
+        self.assertEqual(old_wd, os.getcwd())
+        self.assertEqual(new_wd, tempdir)
+
+
+    def test_args_context(self):
+        """ test that we can use the args with-context to temporarily override
+        command settings """
+        import os
+
+        old_wd = os.getcwd()
+        with sh.args(_cwd=tempdir):
+            new_wd = sh.pwd().strip()
+
+        # sanity
+        self.assertNotEqual(old_wd, tempdir)
+        self.assertEqual(old_wd, os.getcwd())
+        self.assertEqual(new_wd, tempdir)
+
+
+    def test_piped_direct(self):
+        from sh import ls, wc
+
+        # sanity check that our ls shows something
+        p1 = ls("-A1")
+        self.assertNotEqual(str(p1), "")
+
+        # now let's run it again with direct piping.  this should yield no
+        # visible output, because all the stdout is written to the process's
+        # stdout fd
+        p2 = ls("-A1", _piped="direct")
+        p2.wait()
+        self.assertEqual(str(p2), "")
+
+        # now let us confirm that composing this function with another lets the
+        # outer function read from that stdout fd directly
+        c1 = int(wc(p2, l=True).strip())
+        c2 = len(os.listdir("."))
+        self.assertEqual(c1, c2)
+
+    def test_non_existant_cwd(self):
+        from sh import ls
+
+        # sanity check
+        non_exist_dir = join(tempdir, "aowjgoahewro") 
+        self.assertFalse(exists(non_exist_dir))
+
+        self.assertRaises(OSError, ls, _cwd=non_exist_dir)
+
+
+    # https://github.com/amoffat/sh/issues/176
+    def test_baked_command_can_be_printed(self):
+        from sh import ls
+
+        ll = ls.bake("-l")
+        self.assertTrue(str(ll).endswith("/ls -l"))
+
+
+    # https://github.com/amoffat/sh/issues/185
+    def test_done_callback(self):
+        import time
+
+        class Callback(object):
+            def __init__(self):
+                self.called = False
+                self.exit_code = None
+            def __call__(self, p):
+                self.called = True
+                self.exit_code = p.exit_code
+
+        py = create_tmp_test("""
+from time import time, sleep
+sleep(1)
+print(time())
+""")
+
+        callback = Callback()
+        p = python(py.name, _done=callback)
+
+        # do a little setup to prove that a command with a _done callback is run
+        # in the background
+        wait_start = time.time()
+        p.wait()
+        wait_elapsed = time.time() - wait_start
+
+        self.assertTrue(callback.called)
+        self.assertTrue(abs(wait_elapsed - 1.0) < 0.1)
+        self.assertEqual(callback.exit_code, 0)
+
+
+    def test_done_cb_exc(self):
+        from sh import ErrorReturnCode
+
+        class Callback(object):
+            def __init__(self):
+                self.called = False
+            def __call__(self, p):
+                self.called = True
+
+        py = create_tmp_test("exit(1)")
+
+        callback = Callback()
+        try:
+            p = python(py.name, _done=callback)
+            p.wait()
+        except ErrorReturnCode:
+            self.assertFalse(callback.called)
+        else:
+            self.fail("command should've thrown an exception")
+
+
+    def test_stdin_unbuffered_bufsize(self):
+        import sh
+        from time import sleep
+
+        # this tries to receive some known data and measures the time it takes
+        # to receive it.  since we're flushing by newline, we should only be
+        # able to receive the data when a newline is fed in
+        py = create_tmp_test("""
+import sys
+from time import time
+
+started = time()
+data = sys.stdin.read(len("testing"))
+waited = time() - started
+sys.stdout.write(data + "\\n")
+sys.stdout.write(str(waited) + "\\n")
+
+started = time()
+data = sys.stdin.read(len("done"))
+waited = time() - started
+sys.stdout.write(data + "\\n")
+sys.stdout.write(str(waited) + "\\n")
+
+sys.stdout.flush()
+""")
+
+        def create_stdin():
+            data = {"counter": 0}
+            def stdin():
+                if data["counter"] == 0:
+                    data["counter"] += 1
+                    return "test"
+                elif data["counter"] == 1:
+                    data["counter"] += 1
+                    sleep(1)
+                    return "ing"
+                elif data["counter"] == 2:
+                    data["counter"] += 1
+                    sleep(1)
+                    return "done"
+                else:
+                    raise sh.DoneReadingForever
+            return stdin
+
+        out = python(py.name, _in=create_stdin(), _in_bufsize=0)
+        word1, time1, word2, time2, _ = out.split("\n")
+        time1 = float(time1)
+        time2 = float(time2)
+        self.assertEqual(word1, "testing")
+        self.assertTrue(abs(1-time1) < 0.1)
+        self.assertEqual(word2, "done")
+        self.assertTrue(abs(1-time2) < 0.1)
+
+
+    def test_stdin_newline_bufsize(self):
+        import sh
+        from time import sleep
+
+        # this tries to receive some known data and measures the time it takes
+        # to receive it.  since we're flushing by newline, we should only be
+        # able to receive the data when a newline is fed in
+        py = create_tmp_test("""
+import sys
+from time import time
+
+started = time()
+data = sys.stdin.read(len("testing\\n"))
+waited = time() - started
+sys.stdout.write(data)
+sys.stdout.write(str(waited) + "\\n")
+
+started = time()
+data = sys.stdin.read(len("done\\n"))
+waited = time() - started
+sys.stdout.write(data)
+sys.stdout.write(str(waited) + "\\n")
+
+sys.stdout.flush()
+""")
+
+        # we'll feed in text incrementally, sleeping strategically before
+        # sending a newline.  we then measure the amount that we slept
+        # indirectly in the child process
+        def create_stdin():
+            data = {"counter": 0}
+            def stdin():
+                if data["counter"] == 0:
+                    data["counter"] += 1
+                    return "test"
+                elif data["counter"] == 1:
+                    sleep(1)
+                    data["counter"] += 1
+                    return "ing\n"
+                elif data["counter"] == 2:
+                    sleep(1)
+                    return "done\n"
+                else:
+                    raise sh.DoneReadingForever
+            return stdin
+
+        out = python(py.name, _in=create_stdin(), _in_bufsize=1)
+        word1, time1, word2, time2, _ = out.split("\n")
+        time1 = float(time1)
+        time2 = float(time2)
+        self.assertEqual(word1, "testing")
+        self.assertTrue(abs(1-time1) < 0.1)
+        self.assertEqual(word2, "done")
+        self.assertTrue(abs(1-time2) < 0.1)
+
+
+    def test_custom_timeout_signal(self):
+        from sh import TimeoutException
+        import signal
+
+        py = create_tmp_test("""
+import time
+time.sleep(3)
+""")
+        try:
+            python(py.name, _timeout=1, _timeout_signal=signal.SIGQUIT)
+        except TimeoutException as e:
+            self.assertEqual(e.exit_code, signal.SIGQUIT)
+        else:
+            self.fail("we should have handled a TimeoutException")
+
+
+    def test_partially_applied_callback(self):
+        from functools import partial
+
+        py = create_tmp_test("""
+for i in range(10):
+    print(i)
+""")
+
+        output = []
+        def fn(foo, line):
+            output.append((foo, int(line.strip())))
+
+        log_line = partial(fn, "hello")
+        out = python(py.name, _out=log_line)
+        self.assertEqual(output, [("hello", i) for i in range(10)])
+
+
+        output = []
+        def fn(foo, line, stdin, proc):
+            output.append((foo, int(line.strip())))
+
+        log_line = partial(fn, "hello")
+        out = python(py.name, _out=log_line)
+        self.assertEqual(output, [("hello", i) for i in range(10)])
+
+
+
+
+
+
+class MiscTests(unittest.TestCase):
+    @requires_utf8
+    def test_unicode_path(self):
+        from sh import Command
+
+        py = create_tmp_test("""#!/usr/bin/env python
+# -*- coding: utf8 -*-
+print("字")
+""", "字", delete=False)
+
+        try:
+            py.close()
+            os.chmod(py.name, int(0o755))
+            cmd = Command(py.name)
+
+            # all of these should behave just fine
+            str(cmd)
+            repr(cmd)
+            unicode(cmd)
+
+            running = cmd()
+            str(running)
+            repr(running)
+            unicode(running)
+
+            str(running.process)
+            repr(running.process)
+            unicode(running.process)
+
+        finally:
+            os.unlink(py.name)
+
+
+    # https://github.com/amoffat/sh/issues/121
+    def test_wraps(self):
+        from sh import ls
+        wraps(ls)(lambda f: True)
+
+    def test_signal_exception_aliases(self):
+        """ proves that signal exceptions with numbers and names are equivalent
+        """
+        import signal
+        import sh
+
+        sig_name = "SignalException_%d" % signal.SIGQUIT
+        sig = getattr(sh, sig_name)
+        from sh import SignalException_SIGQUIT
+
+        self.assertEqual(sig, SignalException_SIGQUIT)
+
+
+class StreamBuffererTests(unittest.TestCase):
+    def test_unbuffered(self):
+        from sh import _disable_whitelist, StreamBufferer
+        b = StreamBufferer(0)
+
+        self.assertEqual(b.process(b"test"), [b"test"])
+        self.assertEqual(b.process(b"one"), [b"one"])
+        self.assertEqual(b.process(b""), [b""])
+        self.assertEqual(b.flush(), b"")
+
+    def test_newline_buffered(self):
+        from sh import _disable_whitelist, StreamBufferer
+        b = StreamBufferer(1)
+
+        self.assertEqual(b.process(b"testing\none\ntwo"), [b"testing\n", b"one\n"])
+        self.assertEqual(b.process(b"\nthree\nfour"), [b"two\n", b"three\n"])
+        self.assertEqual(b.flush(), b"four")
+
+    def test_chunk_buffered(self):
+        from sh import _disable_whitelist, StreamBufferer
+        b = StreamBufferer(10)
+
+        self.assertEqual(b.process(b"testing\none\ntwo"), [b"testing\non"])
+        self.assertEqual(b.process(b"\nthree\n"), [b"e\ntwo\nthre"])
+        self.assertEqual(b.flush(), b"e\n")
+
+
 
 if __name__ == "__main__":
+    # if we're running a specific test, we can let unittest framework figure out
+    # that test and run it itself.  it will also handle setting the return code
+    # of the process if any tests error or fail
     if len(sys.argv) > 1:
         unittest.main()
+
+    # otherwise, it looks like we want to run all the tests
     else:
-        suite = unittest.TestLoader().loadTestsFromTestCase(FunctionalTests)
-        unittest.TextTestRunner(verbosity=2).run(suite)
+        suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
+        result = unittest.TextTestRunner(verbosity=2).run(suite)
+
+        if not result.wasSuccessful():
+            exit(1)
