@@ -1220,7 +1220,7 @@ class OProc(object):
 
 
         # child
-        if self.pid == 0:
+        if self.pid == 0: # pragma: no cover
             try:
                 # ignoring SIGHUP lets us persist even after the parent process
                 # exits.  only ignore if we're backgrounded
@@ -2246,7 +2246,7 @@ Please import sh or import programs individually.")
 
 
 
-def run_repl(env):
+def run_repl(env): # pragma: no cover
     banner = "\n>> sh v{version}\n>> https://github.com/amoffat/sh\n"
 
     print(banner.format(version=__version__))
@@ -2308,7 +2308,7 @@ class SelfWrapper(ModuleType):
 
 
 # we're being run as a stand-alone script
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     try:
         arg = sys.argv.pop(1)
     except:
