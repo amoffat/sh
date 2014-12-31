@@ -362,7 +362,9 @@ class Logger(object):
     appended to it via the context, eg: "ls -l /tmp" """
     def __init__(self, name, context=None):
         self.name = name
-        self.context = context
+        if context:
+            context = context.replace("%", "%%")
+        self.context = context 
         self.log = logging.getLogger("%s.%s" % (SH_LOGGER_NAME, name))
 
     def _format_msg(self, msg, *args):

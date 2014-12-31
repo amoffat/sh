@@ -1861,7 +1861,19 @@ for i in range(10):
 
 
 
+
+
 class MiscTests(unittest.TestCase):
+    def test_percent_doesnt_fail_logging(self):
+        """ test that a command name doesn't interfere with string formatting in
+        the internal loggers """
+        py = create_tmp_test("""
+print("cool")
+""")
+        out = python(py.name, "%")
+        out = python(py.name, "%%")
+        out = python(py.name, "%%%")
+
     @requires_utf8
     def test_unicode_path(self):
         from sh import Command
