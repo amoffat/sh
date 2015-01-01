@@ -2,9 +2,7 @@ from __future__ import print_function
 import os
 import sys
 import sh
-
-try: from distutils.core import setup
-except ImportError: from setuptools import setup
+from setuptools import setup
 
 
 setup(
