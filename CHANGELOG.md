@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2 -
+
+*   `_done` callback no longer assumes you want your command put in the background.
+*   `_done` callback is now called asynchronously in a separate thread.
+
 ## 1.10 - 12/30/14
 
 *   partially applied functions with `functools.partial` have been fixed for `_out` and `_err` callbacks [#160](https://github.com/amoffat/sh/issues/160)
