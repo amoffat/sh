@@ -131,6 +131,6 @@ every command, but some may not be used together.
 		the respective internal buffers are not filled.  For example, if you're
 		downloading a file and using a callback on stdout, the internal stdout
 		buffer, nor the pipe buffer be filled with data from stdout.  This
-		option forces those buffers to be filled anyways, in effect "tee-ing"
-		the output into two places (the callback/redirect handler, and the
-		internal buffers).
+		option forces one of stderr (``_tee='err'``) or stdout (``_tee='out'`` or ``_tee=True``)
+		to be filled anyways, in effect "tee-ing" the output into two places
+		(the callback/redirect handler, and the internal buffers).
