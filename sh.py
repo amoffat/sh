@@ -175,7 +175,6 @@ class ErrorReturnCode(Exception):
         self.stdout = stdout
         self.stderr = stderr
 
-
         if self.stdout is None:
             exc_stdout = "<redirected>"
         else:
@@ -195,6 +194,11 @@ class ErrorReturnCode(Exception):
         msg = "\n\n  RAN: %r\n\n  STDOUT:\n%s\n\n  STDERR:\n%s" % \
             (full_cmd, exc_stdout.decode(DEFAULT_ENCODING, "replace"),
              exc_stderr.decode(DEFAULT_ENCODING, "replace"))
+
+        # one final encoding.  we do this because python exceptions apparently
+        # shit the bed if they see a unicode character they don't understand
+        msg = msg.encode(DEFAULT_ENCODING)
+
         super(ErrorReturnCode, self).__init__(msg)
 
 
@@ -510,9 +514,10 @@ class RunningCommand(object):
         """ here we determine if we had an exception, or an error code that we
         weren't expecting to see.  if we did, we create and raise an exception
         """
-        exc = get_exc_exit_code_would_raise(code, self.call_args["ok_code"])
-        if exc:
-            raise exc(self.ran, self.process.stdout, self.process.stderr)
+        exc_class = get_exc_exit_code_would_raise(code, self.call_args["ok_code"])
+        if exc_class:
+            exc = exc_class(self.ran, self.process.stdout, self.process.stderr)
+            raise exc
 
 
 
