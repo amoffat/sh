@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   added `_truncate_exc`, defaulting to `True`, which tells our exceptions to truncate output.
 *   bugfix for exceptions whose messages contained unicode
 *   `_done` callback no longer assumes you want your command put in the background.
 *   `_done` callback is now called asynchronously in a separate thread.

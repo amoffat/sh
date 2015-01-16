@@ -170,7 +170,7 @@ class ErrorReturnCode(Exception):
 
     truncate_cap = 750
 
-    def __init__(self, full_cmd, stdout, stderr):
+    def __init__(self, full_cmd, stdout, stderr, truncate=True):
         self.full_cmd = full_cmd
         self.stdout = stdout
         self.stderr = stderr
@@ -178,18 +178,22 @@ class ErrorReturnCode(Exception):
         if self.stdout is None:
             exc_stdout = "<redirected>"
         else:
-            exc_stdout = self.stdout[:self.truncate_cap]
-            out_delta = len(self.stdout) - len(exc_stdout)
-            if out_delta:
-                exc_stdout += ("... (%d more, please see e.stdout)" % out_delta).encode()
+            exc_stdout = self.stdout
+            if truncate:
+                exc_stdout = exc_stdout[:self.truncate_cap]
+                out_delta = len(self.stdout) - len(exc_stdout)
+                if out_delta:
+                    exc_stdout += ("... (%d more, please see e.stdout)" % out_delta).encode()
 
         if self.stderr is None:
             exc_stderr = "<redirected>"
         else:
-            exc_stderr = self.stderr[:self.truncate_cap]
-            err_delta = len(self.stderr) - len(exc_stderr)
-            if err_delta:
-                exc_stderr += ("... (%d more, please see e.stderr)" % err_delta).encode()
+            exc_stderr = self.stderr
+            if truncate:
+                exc_stderr = exc_stderr[:self.truncate_cap]
+                err_delta = len(self.stderr) - len(exc_stderr)
+                if err_delta:
+                    exc_stderr += ("... (%d more, please see e.stderr)" % err_delta).encode()
 
         msg = "\n\n  RAN: %r\n\n  STDOUT:\n%s\n\n  STDERR:\n%s" % \
             (full_cmd, exc_stdout.decode(DEFAULT_ENCODING, "replace"),
@@ -516,7 +520,8 @@ class RunningCommand(object):
         """
         exc_class = get_exc_exit_code_would_raise(code, self.call_args["ok_code"])
         if exc_class:
-            exc = exc_class(self.ran, self.process.stdout, self.process.stderr)
+            exc = exc_class(self.ran, self.process.stdout, self.process.stderr,
+                    self.call_args["truncate_exc"])
             raise exc
 
 
@@ -749,6 +754,9 @@ class Command(object):
         # a tuple (rows, columns) of the desired size of both the stdout and
         # stdin ttys, if ttys are being used
         "tty_size": (20, 80),
+
+        # whether or not our exceptions should be truncated
+        "truncate_exc": True,
     }
 
     # these are arguments that cannot be called together, because they wouldn't
