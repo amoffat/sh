@@ -153,19 +153,19 @@ class ErrorReturnCode(Exception):
     derived classes with the format: ErrorReturnCode_NNN where NNN is the exit
     code number.  the reason for this is it reduces boiler plate code when
     testing error return codes:
-    
+
         try:
             some_cmd()
         except ErrorReturnCode_12:
             print("couldn't do X")
-            
+
     vs:
         try:
             some_cmd()
         except ErrorReturnCode as e:
             if e.exit_code == 12:
                 print("couldn't do X")
-    
+
     it's not much of a savings, but i believe it makes the code easier to read """
 
     truncate_cap = 750
@@ -350,7 +350,7 @@ class Logger(object):
     script is done.  with sh, it's easy to create loggers with unique names if
     we want our loggers to include our command arguments.  for example, these
     are all unique loggers:
-        
+
             ls -l
             ls -l /tmp
             ls /tmp
@@ -364,7 +364,7 @@ class Logger(object):
         self.name = name
         if context:
             context = context.replace("%", "%%")
-        self.context = context 
+        self.context = context
         self.log = logging.getLogger("%s.%s" % (SH_LOGGER_NAME, name))
 
     def _format_msg(self, msg, *args):
@@ -660,7 +660,7 @@ class Command(object):
     represents the program itself (and not a running instance of it), it should
     hold very little state.  in fact, the only state it does hold is baked
     arguments.
-    
+
     when a Command object is called, the result that is returned is a
     RunningCommand object, which represents the Command put into an execution
     state. """
@@ -787,7 +787,7 @@ output"),
         if not found:
             raise CommandNotFound(path)
 
-        self._path = encode_to_py3bytes_or_py2str(found) 
+        self._path = encode_to_py3bytes_or_py2str(found)
 
         self._partial = False
         self._partial_baked_args = []
@@ -1479,12 +1479,23 @@ class OProc(object):
             outputs, inputs, err = select.select(readers, [], errors, 0.1)
 
             # stdout and stderr
-            for stream in outputs:
-                self.log.debug("%r ready to be read from", stream)
-                done = stream.read()
-                if done:
-                    readers.remove(stream)
+            # When process is dead and we are inside this 'while' loop, then
+            # we are facing deadlock here. Because 'select' always returns
+            # empty 'outputs' list. So here we have to check if process is
+            # still alive, and if not then clear 'readers' list.
+            if outputs:
+                for stream in outputs:
+                    self.log.debug("%r ready to be read from", stream)
+                    done = stream.read()
+                    if done:
+                        readers.remove(stream)
+            # To avoid frequent calling of self.alive() we can add counter for
+            # select.select() calls and check self.alive only after 10 - 20
+            # calls to select.select()
+            elif not self.is_alive():
+                readers = []
 
+            # Do we really need this loop?
             for stream in err:
                 pass
 
@@ -1624,7 +1635,7 @@ class NotYetReadyToRead(Exception): pass
 def determine_how_to_read_input(input_obj):
     """ given some kind of input object, return a function that knows how to
     read chunks of that input object.
-    
+
     each reader function should return a chunk and raise a DoneReadingForever
     exception, or return None, when there's no more data to read
 
