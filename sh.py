@@ -1492,7 +1492,7 @@ class OProc(object):
             # To avoid frequent calling of self.alive() we can add counter for
             # select.select() calls and check self.alive only after 10 - 20
             # calls to select.select()
-             elif not self.is_alive():
+            elif not self.is_alive():
                 for stream in readers:
                     self.log.debug("%r ready to finish reading from", stream)
                     done = stream.read()
