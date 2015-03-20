@@ -85,7 +85,36 @@ substitute the dash for an underscore::
 		import sh
 		run = sh.Command("/home/amoffat/run.sh")
 		run()
+
+
+Multiple arguments
+------------------
+
+Commands that take multiple arguments, need to be invoked using separate 
+string for each argument rather than single string for all the arguments
+together. One might expect the following to work, the way it works in 
+*nix shell, but it doesn't::
+
+		from sh import tar
+		tar("cvf /tmp/test.tar /my/home/directory")
+	
+You will run into error that may seem baffling::
+
+		RAN: '/bin/tar cvf /tmp/test.tar /my/home/directory'
 		
+		STDOUT:
+		
+		STDERR:
+		/bin/tar: Old option 'f' requires an argument.
+		Try '/bin/tar --help' or '/bin/tar --usage' for more information.
+
+Right way to do this is to break up your arguments before passing them into a program.
+A shell (bash) typically does this for you. It turns "tar cvf /tmp/test.tar /my/home/directory/" 
+into 4 strings: "tar", "cvf", "/tmp/test.tar" and "/my/home/directory/" before
+passing them into the binary. You have to do this manually with sh.py.::
+
+		from sh import tar
+		tar("cvf", "/tmp/test.tar", "/my/home/directory/")
 
 Keyword arguments
 -----------------
