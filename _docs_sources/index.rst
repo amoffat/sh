@@ -79,12 +79,14 @@ substitute the dash for an underscore::
 
     For commands with more exotic characters in their names, like ``.``, or
     if you just don't like the "magic"-ness of dynamic lookups, you
-    may use sh's ``Command`` wrapper and pass in the absolute path of the
-    executable::
+    may use sh's ``Command`` wrapper and pass in the command name or 
+    the absolute path of the executable::
 	
 		import sh
-		run = sh.Command("/home/amoffat/run.sh")
+		run = sh.Command("/home/amoffat/run.sh") # Absolute path
 		run()
+		lscmd = sh.Command("ls")  # Absolute path not needed
+		lscmd()
 
 
 Multiple arguments
