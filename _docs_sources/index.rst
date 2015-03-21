@@ -88,7 +88,6 @@ substitute the dash for an underscore::
 		lscmd = sh.Command("ls")  # Absolute path not needed
 		lscmd()
 
-
 Multiple arguments
 ------------------
 
@@ -117,6 +116,30 @@ passing them into the binary. You have to do this manually with sh.py.::
 
 		from sh import tar
 		tar("cvf", "/tmp/test.tar", "/my/home/directory/")
+
+
+Arguments to sh's ``Command`` wrapper
+-------------------------------------
+
+Similar to the above, arguments to the ``sh.Command`` must be separate.
+e.g. the following does not work::
+
+		lscmd = sh.Command("/bin/ls -l")
+		tarcmd = sh.Command("/bin/tar cvf /tmp/test.tar /my/home/directory/")
+
+You will run into ``CommandNotFound(path)`` exception even when correct full path is specified.
+The correct way to do this is to :
+
+#. build ``Command`` object using *only* the binary
+#. pass the arguments to the object *when invoking*
+
+as follows::
+
+		lscmd = sh.Command("/bin/ls")
+		lscmd("-l")
+		tarcmd = sh.Command("/bin/tar")
+		tarcmd("cvf", "/tmp/test.tar", "/my/home/directory/")
+
 
 Keyword arguments
 -----------------
