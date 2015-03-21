@@ -79,13 +79,67 @@ substitute the dash for an underscore::
 
     For commands with more exotic characters in their names, like ``.``, or
     if you just don't like the "magic"-ness of dynamic lookups, you
-    may use sh's ``Command`` wrapper and pass in the absolute path of the
-    executable::
+    may use sh's ``Command`` wrapper and pass in the command name or 
+    the absolute path of the executable::
 	
 		import sh
-		run = sh.Command("/home/amoffat/run.sh")
+		run = sh.Command("/home/amoffat/run.sh") # Absolute path
 		run()
+		lscmd = sh.Command("ls")  # Absolute path not needed
+		lscmd()
+
+Multiple arguments
+------------------
+
+Commands that take multiple arguments, need to be invoked using separate 
+string for each argument rather than single string for all the arguments
+together. One might expect the following to work, the way it works in 
+*nix shell, but it doesn't::
+
+		from sh import tar
+		tar("cvf /tmp/test.tar /my/home/directory")
+	
+You will run into error that may seem baffling::
+
+		RAN: '/bin/tar cvf /tmp/test.tar /my/home/directory'
 		
+		STDOUT:
+		
+		STDERR:
+		/bin/tar: Old option 'f' requires an argument.
+		Try '/bin/tar --help' or '/bin/tar --usage' for more information.
+
+Right way to do this is to break up your arguments before passing them into a program.
+A shell (bash) typically does this for you. It turns "tar cvf /tmp/test.tar /my/home/directory/" 
+into 4 strings: "tar", "cvf", "/tmp/test.tar" and "/my/home/directory/" before
+passing them into the binary. You have to do this manually with sh.py.::
+
+		from sh import tar
+		tar("cvf", "/tmp/test.tar", "/my/home/directory/")
+
+
+Arguments to sh's ``Command`` wrapper
+-------------------------------------
+
+Similar to the above, arguments to the ``sh.Command`` must be separate.
+e.g. the following does not work::
+
+		lscmd = sh.Command("/bin/ls -l")
+		tarcmd = sh.Command("/bin/tar cvf /tmp/test.tar /my/home/directory/")
+
+You will run into ``CommandNotFound(path)`` exception even when correct full path is specified.
+The correct way to do this is to :
+
+#. build ``Command`` object using *only* the binary
+#. pass the arguments to the object *when invoking*
+
+as follows::
+
+		lscmd = sh.Command("/bin/ls")
+		lscmd("-l")
+		tarcmd = sh.Command("/bin/tar")
+		tarcmd("cvf", "/tmp/test.tar", "/my/home/directory/")
+
 
 Keyword arguments
 -----------------
@@ -369,7 +423,7 @@ loop over::
 	    print(line)
 	    
 By default, ``_iter`` iterates over stdout, but you can change set this specifically
-by passing either "err" or "out" to _for (instead of True).  Also by default,
+by passing either "err" or "out" to ``_iter`` (instead of True).  Also by default,
 output is line-buffered, but you can change this by changing :ref:`buffer_sizes`
 
 .. note::

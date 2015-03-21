@@ -94,8 +94,8 @@ every command, but some may not be used together.
 		will be able to retrieve only 100 characters.
 		
 	_timeout
-		How much time we should give the process to complete.  If the process
-		does not finish within the timeout, it will be sent SIGKILL.
+		How much time, in seconds, we should give the process to complete.  If the
+		process does not finish within the timeout, it will be sent SIGKILL.
 		
 	_encoding
 		The character encoding of the process's STDOUT.  By default, this is "utf8".
