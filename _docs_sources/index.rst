@@ -592,6 +592,22 @@ This works by telling ``tail -f`` that it is being used in a pipeline, and that
 it should send its output line-by-line to ``tr``.  By default, ``_piped`` sends
 stdout, but you can easily make it send stderr instead by using ``_piped="err"``
 
+In both the cases ``_piped=True`` and ``_piped="err"``, the data still flows via python.
+But when large amount of data is being passed via the pipe, the processes should be able 
+to be connected together at a more fundamental level. 
+This is where ``_piped="direct"`` is useful. e.g.::
+
+		from sh import seq 
+		from sh import sort
+		sort(seq('100000', _piped="direct"), '-R')
+
+is much (about 5 times) faster than ::
+
+		from sh import seq 
+		from sh import sort
+		sort(seq('100000', _piped=True), '-R')
+
+
 .. _environments:
 
 Environments
