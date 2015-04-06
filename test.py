@@ -696,6 +696,17 @@ print(sys.argv[1])
         self.assertEqual(out, correct)
 
 
+    def test_custom_separator_space(self):
+        py = create_tmp_test("""
+import sys
+print(str(sys.argv[1:]))
+""")
+        opt = {"long-option": "space"}
+        correct = ["--long-option", "space"]
+        out = python(py.name, opt, _long_sep=" ").strip()
+        self.assertEqual(out, str(correct))
+
+
     def test_command_wrapper(self):
         from sh import Command, which
 

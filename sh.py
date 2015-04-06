@@ -1004,8 +1004,13 @@ output"),
                     processed.append(encode_to_py3bytes_or_py2str("--" + k))
                     processed.append(encode_to_py3bytes_or_py2str(v))
                 else:
-                    arg = encode_to_py3bytes_or_py2str("--%s%s%s" % (k, sep, v))
-                    processed.append(arg)
+                    # pass long args separated by space as two args
+                    if sep != " ":
+                        arg = encode_to_py3bytes_or_py2str("--%s%s%s" % (k, sep, v))
+                        processed.append(arg)
+                    else:
+                        processed.append(encode_to_py3bytes_or_py2str("--" + k))
+                        processed.append(encode_to_py3bytes_or_py2str(v))
         return processed
 
 
