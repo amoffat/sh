@@ -555,8 +555,8 @@ print(sys.argv[1])
                 else:
                     self.foo_ex = None
                 finally:
-                    self.foo_stdout = 'foo' in self.stdout
-                    self.foo_stderr = 'foo' in self.stderr
+                    self.foo_stdout = b"foo" in self.stdout
+                    self.foo_stderr = b"foo" in self.stderr
 
         py = create_tmp_test("""
 import sys
