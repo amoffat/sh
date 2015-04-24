@@ -667,6 +667,9 @@ class Command(object):
     _prepend_stack = []
 
     _call_args = {
+        # running command (sub)class
+        "cmd_cls": RunningCommand,
+
         # currently unsupported
         #"fg": False, # run command in foreground
 
@@ -1017,8 +1020,9 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
         if output_redirect_is_filename(stderr):
             stderr = open(str(stderr), "wb")
 
+        running_cmd_cls = call_args["cmd_cls"]
 
-        return RunningCommand(cmd, call_args, stdin, stdout, stderr)
+        return running_cmd_cls(cmd, call_args, stdin, stdout, stderr)
 
 
 
@@ -2159,6 +2163,7 @@ class Environment(dict):
     # "import time" may override the time system program
     whitelist = set([
         "Command",
+        "RunningCommand",
         "CommandNotFound",
         "DEFAULT_ENCODING",
         "DoneReadingForever",

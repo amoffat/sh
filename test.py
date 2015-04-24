@@ -542,6 +542,40 @@ print(sys.argv[1])
         self.assertEqual(c1, c2)
 
 
+    def test_custom_running_command(self):
+
+        class FooRunningCommand(sh.RunningCommand):
+
+            def __init__(self, cmd, call_args, stdin, stdout, stderr):
+                try:
+                    super(FooRunningCommand, self).__init__(cmd, call_args,
+                                                            stdin, stdout, stderr)
+                except sh.ErrorReturnCode as ex:
+                    self.foo_ex = ex
+                else:
+                    self.foo_ex = None
+                finally:
+                    self.foo_stdout = 'foo' in self.stdout
+                    self.foo_stderr = 'foo' in self.stderr
+
+        py = create_tmp_test("""
+import sys
+sys.stdout.write(sys.argv[1])
+sys.stderr.write(sys.argv[2])
+exit(int(sys.argv[3]))
+""")
+
+        p = python(py.name, "foo", "bar", 0, _cmd_cls=FooRunningCommand)
+        self.assertTrue(p.foo_stdout)
+        self.assertFalse(p.foo_stderr)
+        self.assertTrue(p.foo_ex is None)
+
+        p = python(py.name, "bar", "foo", 1, _cmd_cls=FooRunningCommand)
+        self.assertFalse(p.foo_stdout)
+        self.assertTrue(p.foo_stderr)
+        self.assertTrue(isinstance(p.foo_ex, sh.ErrorReturnCode))
+
+
     def test_background(self):
         from sh import sleep
         import time
