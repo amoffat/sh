@@ -976,6 +976,31 @@ subprocess.Popen(sys.argv[1:], shell=False).wait()
         self.assertEqual(iam1, iam2)
 
 
+    # https://github.com/amoffat/sh/pull/252
+    def test_stdout_pipe(self):
+        py = create_tmp_test(r"""
+import sys
+
+sys.stdout.write("foobar\n")
+""")
+
+        read_fd, write_fd = os.pipe()
+        read, write = os.fdopen(read_fd, 'rb', 0), os.fdopen(write_fd, 'wb', 0)
+        p = python(py.name, _out=write, u=True)
+        write.close()
+
+        def alarm(sig, action):
+            self.fail("Timeout while reading from pipe")
+
+        import signal
+        signal.signal(signal.SIGALRM, alarm)
+        signal.alarm(3)
+
+        self.assertEqual(b"foobar\n", read.read(-1))
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, signal.SIG_DFL)
+
+
     def test_stdout_callback(self):
         py = create_tmp_test("""
 import sys
