@@ -196,12 +196,12 @@ class ErrorReturnCode(Exception):
                     exc_stderr += ("... (%d more, please see e.stderr)" % err_delta).encode()
 
         msg = "\n\n  RAN: %r\n\n  STDOUT:\n%s\n\n  STDERR:\n%s" % \
-            (full_cmd, exc_stdout.decode(DEFAULT_ENCODING, "replace"),
+            (self.full_cmd, exc_stdout.decode(DEFAULT_ENCODING, "replace"),
              exc_stderr.decode(DEFAULT_ENCODING, "replace"))
 
         # one final encoding.  we do this because python exceptions apparently
         # shit the bed if they see a unicode character they don't understand
-        msg = msg.encode(DEFAULT_ENCODING)
+        msg = msg.encode(DEFAULT_ENCODING, "replace")
 
         super(ErrorReturnCode, self).__init__(msg)
 
