@@ -2184,6 +2184,7 @@ class Environment(dict):
     # "import time" may override the time system program
     whitelist = set([
         "Command",
+        "RunningCommand",
         "CommandNotFound",
         "DEFAULT_ENCODING",
         "DoneReadingForever",
