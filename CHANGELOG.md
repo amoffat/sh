@@ -6,6 +6,7 @@
 *   bugfix for exceptions whose messages contained unicode
 *   `_done` callback no longer assumes you want your command put in the background.
 *   `_done` callback is now called asynchronously in a separate thread.
+*   `_done` callback is called regardless of exception, which is necessary in order to release held resources, for example a process pool
 
 ## 1.10 - 12/30/14
 

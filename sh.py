@@ -1138,7 +1138,7 @@ def handle_process_exit_code(exit_code, done_callback, ok_codes):
 
     # should we call our done callback?
     exc = get_exc_exit_code_would_raise(exit_code, ok_codes) 
-    if not exc and done_callback:
+    if done_callback:
         done_callback(exit_code)
 
     return exit_code
