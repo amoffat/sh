@@ -364,7 +364,7 @@ class Logger(object):
         self.name = name
         if context:
             context = context.replace("%", "%%")
-        self.context = context 
+        self.context = context
         self.log = logging.getLogger("%s.%s" % (SH_LOGGER_NAME, name))
 
     def _format_msg(self, msg, *args):
@@ -374,7 +374,7 @@ class Logger(object):
 
     def get_child(self, name, context):
         new_name = self.name + "." + name
-        new_context = self.context + "." + context
+        new_context = (self.context + "." if self.context else "") + context
         l = Logger(new_name, new_context)
         return l
 
