@@ -391,12 +391,6 @@ class Logger(object):
         self.log.exception(self._format_msg(msg, *args))
 
 
-def friendly_truncate(s, max_len):
-    if len(s) > max_len:
-        s = "%s...(%d more)" % (s[:max_len], len(s) - max_len)
-    return s
-
-
 class RunningCommand(object):
     """ this represents an executing Command object.  it is returned as the
     result of __call__() being executed on a Command instance.  this creates a
@@ -421,16 +415,7 @@ class RunningCommand(object):
             self.ran = " ".join(cmd)
 
 
-        friendly_cmd = friendly_truncate(self.ran, 20)
-        friendly_call_args = friendly_truncate(str(call_args), 20)
-
-        # we're setting up the logger string here, instead of __repr__ because
-        # we reserve __repr__ to behave as if it was evaluating the child
-        # process's output
-        logger_str = "<Command %r call_args %s>" % (friendly_cmd,
-                friendly_call_args)
-
-        self.log = Logger("command", logger_str)
+        self.log = Logger("command", None)
         self.call_args = call_args
         self.cmd = cmd
 
@@ -478,7 +463,6 @@ class RunningCommand(object):
         # there's currently only one case where we wouldn't spawn a child
         # process, and that's if we're using a with-context with our command
         if spawn_process:
-            self.log.info("starting process")
             self.process = OProc(self.log, cmd, stdin, stdout, stderr,
                     self.call_args, pipe)
 
@@ -1222,6 +1206,7 @@ class OProc(object):
         # child
         if self.pid == 0: # pragma: no cover
             try:
+                parent_log.debug('starting process %r: "%r"', os.getpid(), cmd)
                 # ignoring SIGHUP lets us persist even after the parent process
                 # exits.  only ignore if we're backgrounded
                 if self.call_args["bg"] is True:
@@ -1339,8 +1324,7 @@ class OProc(object):
             if self.call_args["tty_in"]:
                 setwinsize(self._stdin_fd, self.call_args["tty_size"])
 
-
-            self.log = parent_log.get_child("process", repr(self))
+            self.log = parent_log.get_child("process", str(self.pid))
 
             os.close(self._slave_stdin_fd)
             if not self._single_tty:
@@ -1348,8 +1332,7 @@ class OProc(object):
                 if stderr is not OProc.STDOUT:
                     os.close(self._slave_stderr_fd)
 
-            self.log.debug("started process")
-
+            self.log.debug('started "%r"', cmd)
 
             if self.call_args["tty_in"]:
                 attr = termios.tcgetattr(self._stdin_fd)
