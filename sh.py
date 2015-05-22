@@ -68,6 +68,12 @@ else:
     from cStringIO import OutputType as cStringIO
     from Queue import Queue, Empty
 
+try:
+    # This is only as of python 3.3
+    from shlex import quote as shlex_quote
+except ImportError:
+    from pipes import quote as shlex_quote
+
 IS_OSX = platform.system() == "Darwin"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 SH_LOGGER_NAME = "sh"
@@ -1332,7 +1338,7 @@ class OProc(object):
                 if stderr is not OProc.STDOUT:
                     os.close(self._slave_stderr_fd)
 
-            self.log.debug('started "%r"', cmd)
+            self.log.info('started %s', ' '.join([shlex_quote(arg) for arg in cmd]))
 
             if self.call_args["tty_in"]:
                 attr = termios.tcgetattr(self._stdin_fd)
