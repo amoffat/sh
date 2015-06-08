@@ -886,7 +886,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
 
     # TODO needs documentation
     def bake(self, *args, **kwargs):
-        fn = Command(self._path)
+        fn = type(self)(self._path)
         fn._partial = True
 
         call_args, kwargs = self._extract_call_args(kwargs)
