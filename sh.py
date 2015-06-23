@@ -503,7 +503,7 @@ class RunningCommand(object):
 
             exit_code = self.process.wait()
             if self.stdin_proc is not None:
-                stdin_proc_exit_code = self.stdin_proc.process.wait()
+                self.stdin_proc.wait()
 
             if self.process.timed_out:
                 # if we timed out, our exit code represents a signal, which is
@@ -512,9 +512,6 @@ class RunningCommand(object):
                 raise TimeoutException(-exit_code)
             else:
                 self.handle_command_exit_code(exit_code)
-
-            if self.stdin_proc is not None:
-                self.stdin_proc.handle_command_exit_code(stdin_proc_exit_code)
 
             # https://github.com/amoffat/sh/issues/185
             if self.call_args["done"]:
