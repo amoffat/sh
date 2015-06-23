@@ -1856,10 +1856,29 @@ for i in range(10):
         out = python(py.name, _out=log_line)
         self.assertEqual(output, [("hello", i) for i in range(10)])
 
+    def test_unchecked_producer_failure(self):
+        from sh import ErrorReturnCode_2
 
+        producer = create_tmp_test("""
+import sys
+for i in range(10):
+    print(i)
+sys.exit(2)
+""")
 
+        consumer = create_tmp_test("""
+import sys
+for line in sys.stdin:
+    pass
+""")
 
+        direct_pipe = python(producer.name, _piped="direct")
 
+        self.assertRaises(ErrorReturnCode_2, python, direct_pipe, consumer.name)
+
+        normal_pipe = python(producer.name, _piped="direct")
+
+        self.assertRaises(ErrorReturnCode_2, python, normal_pipe, consumer.name)
 
 
 
