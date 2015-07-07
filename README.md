@@ -3,7 +3,7 @@
 [![Version](https://img.shields.io/pypi/v/sh.svg)](https://pypi.python.org/pypi/sh) [![Downloads](https://img.shields.io/pypi/dd/sh.svg)](https://pypi.python.org/pypi/sh)
 
 sh (previously [pbs](http://pypi.python.org/pypi/pbs)) is a full-fledged
-subprocess replacement for Python 2.6 - 3.4
+subprocess replacement for Python 2.6 - 3.4, PyPy and PyPy3
 that allows you to call any program as if it were a function:
 
 ```python
