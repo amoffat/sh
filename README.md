@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/amoffat/sh.svg?branch=master)](https://travis-ci.org/amoffat/sh) [![Coverage Status](https://coveralls.io/repos/amoffat/sh/badge.svg?branch=master&service=github)](https://coveralls.io/github/amoffat/sh?branch=master)
 
-[![Version](https://pypip.in/v/sh/badge.png)](https://pypi.python.org/pypi/sh) [![Downloads](https://pypip.in/d/sh/badge.png)](https://pypi.python.org/pypi/sh)
+[![Version](https://img.shields.io/pypi/v/sh.svg)](https://pypi.python.org/pypi/sh) [![Downloads](https://img.shields.io/pypi/dd/sh.svg)](https://pypi.python.org/pypi/sh)
 
 sh (previously [pbs](http://pypi.python.org/pypi/pbs)) is a full-fledged
 subprocess replacement for Python 2.6 - 3.4
