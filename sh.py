@@ -70,7 +70,7 @@ else:
 
 IS_OSX = platform.system() == "Darwin"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
-SH_LOGGER_NAME = "sh"
+SH_LOGGER_NAME = __name__
 
 
 import errno
@@ -153,19 +153,19 @@ class ErrorReturnCode(Exception):
     derived classes with the format: ErrorReturnCode_NNN where NNN is the exit
     code number.  the reason for this is it reduces boiler plate code when
     testing error return codes:
-    
+
         try:
             some_cmd()
         except ErrorReturnCode_12:
             print("couldn't do X")
-            
+
     vs:
         try:
             some_cmd()
         except ErrorReturnCode as e:
             if e.exit_code == 12:
                 print("couldn't do X")
-    
+
     it's not much of a savings, but i believe it makes the code easier to read """
 
     truncate_cap = 750
@@ -350,7 +350,7 @@ class Logger(object):
     script is done.  with sh, it's easy to create loggers with unique names if
     we want our loggers to include our command arguments.  for example, these
     are all unique loggers:
-        
+
             ls -l
             ls -l /tmp
             ls /tmp
@@ -364,7 +364,7 @@ class Logger(object):
         self.name = name
         if context:
             context = context.replace("%", "%%")
-        self.context = context 
+        self.context = context
         self.log = logging.getLogger("%s.%s" % (SH_LOGGER_NAME, name))
 
     def _format_msg(self, msg, *args):
@@ -660,7 +660,7 @@ class Command(object):
     represents the program itself (and not a running instance of it), it should
     hold very little state.  in fact, the only state it does hold is baked
     arguments.
-    
+
     when a Command object is called, the result that is returned is a
     RunningCommand object, which represents the Command put into an execution
     state. """
@@ -787,7 +787,7 @@ output"),
         if not found:
             raise CommandNotFound(path)
 
-        self._path = encode_to_py3bytes_or_py2str(found) 
+        self._path = encode_to_py3bytes_or_py2str(found)
 
         self._partial = False
         self._partial_baked_args = []
@@ -1624,7 +1624,7 @@ class NotYetReadyToRead(Exception): pass
 def determine_how_to_read_input(input_obj):
     """ given some kind of input object, return a function that knows how to
     read chunks of that input object.
-    
+
     each reader function should return a chunk and raise a DoneReadingForever
     exception, or return None, when there's no more data to read
 
@@ -2280,31 +2280,86 @@ class SelfWrapper(ModuleType):
         # but it seems to be the only way to make reload() behave
         # nicely.  if i make these attributes dynamic lookups in
         # __getattr__, reload sometimes chokes in weird ways...
-        for attr in ["__builtins__", "__doc__", "__name__", "__package__"]:
+        for attr in ["__builtins__", "__doc__", "__file__", "__name__", "__package__"]:
             setattr(self, attr, getattr(self_module, attr, None))
 
         # python 3.2 (2.7 and 3.3 work fine) breaks on osx (not ubuntu)
         # if we set this to None.  and 3.3 needs a value for __path__
         self.__path__ = []
         self.__self_module = self_module
-        self.__env = Environment(globals(), baked_args)
-
-    def __setattr__(self, name, value):
-        if hasattr(self, "__env"):
-            self.__env[name] = value
-        else:
-            ModuleType.__setattr__(self, name, value)
+        self.__env = Environment(globals(), baked_args=baked_args)
 
     def __getattr__(self, name):
-        if name == "__env":
-            raise AttributeError
         return self.__env[name]
 
-    # accept special keywords argument to define defaults for all operations
-    # that will be processed with given by return SelfWrapper
     def __call__(self, **kwargs):
-        return SelfWrapper(self.__self_module, kwargs)
+        "DO NOT store the new module returned by this function in a variable named 'sh'"
+        baked_args = self.__env.baked_args.copy()
+        baked_args.update(kwargs)
+        return self.__class__(self.__self_module, baked_args)
 
+
+class ModuleImporterFromVariables(object):
+    """
+    Implements the Importer protocol.
+    This hook allow to import modules from variables.
+    Example:
+        mod = build_a_module()
+        import mod
+    """
+    def __init__(self, restrict_to=None, forbid_mod_names=None):
+        # We can only store class names here, not class objects,
+        # as SelfWrapper class definition will be overriden next time this module is loaded
+        self.restrict_to = restrict_to
+        self.forbid_mod_names = forbid_mod_names
+
+    def register_if_not_active(self):
+        # For the same reason as above, 'isinstance' won't work here,
+        # because if there is an instance of ModuleImporterFromVariables in that list,
+        # its class correspond to a previous definition of ModuleImporterFromVariables,
+        # before this file was reloaded
+        if not any(getattr(module, 'restrict_to', None) == self.restrict_to for module in sys.meta_path):
+            sys.meta_path.insert(0, self)
+
+    def find_module(self, mod_fullname, path=None):
+        if self.forbid_mod_names and mod_fullname in self.forbid_mod_names:
+            return None
+        parent_frame = inspect.currentframe().f_back
+        # This function is called from the frozen importlib,
+        # so we go back up frame per frame until we're "out" of the importlib code
+        while parent_frame.f_code.co_filename == '<frozen importlib._bootstrap>':
+            parent_frame = parent_frame.f_back
+        if mod_fullname not in parent_frame.f_locals and mod_fullname not in parent_frame.f_globals:
+            return None
+        return self
+
+    def load_module(self, mod_fullname, parent_frame=None):
+        "We intentionnally do zero caching through sys.modules"
+        if not parent_frame:
+            parent_frame = inspect.currentframe().f_back
+        # This function is called from the frozen importlib,
+        # so we go back up frame per frame until we're "out" of the importlib code
+        while parent_frame.f_code.co_filename == '<frozen importlib._bootstrap>':
+            parent_frame = parent_frame.f_back
+        if mod_fullname in parent_frame.f_locals:
+            module = parent_frame.f_locals[mod_fullname]
+        elif mod_fullname in parent_frame.f_globals:
+            module = parent_frame.f_globals[mod_fullname]
+        else:
+            raise ImportError("%s not found in scope" % (mod_fullname,))
+        if self.restrict_to and not any(str(type(module)) == classname for classname in self.restrict_to):
+            raise ImportError("%s (%s) does not belong to the list of allowed modules: %s" % (mod_fullname, module, self.restrict_to))
+        if self.forbid_mod_names and mod_fullname in self.forbid_mod_names:
+            raise ImportError("%s (%s) is a forbidden module name" % (mod_fullname, module))
+        module.__loader__ = self
+        return module
+
+    # Methods needed for Python 3
+    def create_module(self, spec):
+        return self.load_module(spec.name, parent_frame=inspect.currentframe().f_back)
+
+    def exec_module(self, module):
+        pass
 
 
 # we're being run as a stand-alone script
@@ -2350,3 +2405,4 @@ if __name__ == "__main__": # pragma: no cover
 else:
     self = sys.modules[__name__]
     sys.modules[__name__] = SelfWrapper(self)
+    ModuleImporterFromVariables(restrict_to=["<class 'sh.SelfWrapper'>"], forbid_mod_names='sh').register_if_not_active()
