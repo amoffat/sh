@@ -530,6 +530,18 @@ print(sys.argv[1])
         python_baked = python.bake(py.name, {"long-option": "underscore"}, _long_sep="=baked=")
         self.assertEqual(python_baked().strip(), "--long-option=baked=underscore")
 
+    def test_custom_long_prefix(self):
+        py = create_tmp_test("""
+import sys
+print(sys.argv[1])
+""")
+        self.assertEqual(python(py.name,
+            {"long-option": "underscore"}, _long_prefix="-custom-").strip(), "-custom-long-option=underscore")
+        # test baking too
+        python_baked = python.bake(py.name, {"long-option": "underscore"}, _long_prefix="-baked-")
+        self.assertEqual(python_baked().strip(), "-baked-long-option=underscore")
+
+
     def test_command_wrapper(self):
         from sh import Command, which
 
