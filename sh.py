@@ -883,6 +883,9 @@ class Command(object):
         # for example, --arg=derp, '=' is the long_sep
         "long_sep": "=",
 
+        # the prefix used for long arguments
+        "long_prefix": "--",
+
         # this is for programs that expect their input to be from a terminal.
         # ssh is one of those programs
         "tty_in": False,
@@ -1019,8 +1022,6 @@ output"),
         return call_args, kwargs
 
 
-
-
     # TODO needs documentation
     def bake(self, *args, **kwargs):
         fn = Command(self._path)
@@ -1040,7 +1041,9 @@ output"),
         fn._partial_call_args.update(pruned_call_args)
         fn._partial_baked_args.extend(self._partial_baked_args)
         sep = pruned_call_args.get("long_sep", self._call_args["long_sep"])
-        fn._partial_baked_args.extend(compile_args(args, kwargs, sep))
+        prefix = pruned_call_args.get("long_prefix",
+                self._call_args["long_prefix"])
+        fn._partial_baked_args.extend(compile_args(args, kwargs, sep, prefix))
         return fn
 
     def __str__(self):
@@ -1142,8 +1145,8 @@ output"),
             else:
                 args.insert(0, first_arg)
 
-
-        processed_args = compile_args(args, kwargs, call_args["long_sep"])
+        processed_args = compile_args(args, kwargs, call_args["long_sep"],
+                call_args["long_prefix"])
 
         # makes sure our arguments are broken up correctly
         split_args = self._partial_baked_args + processed_args
@@ -1185,7 +1188,7 @@ output"),
         return RunningCommand(cmd, call_args, stdin, stdout, stderr)
 
 
-def compile_args(args, kwargs, sep):
+def compile_args(args, kwargs, sep, prefix):
     """ takes args and kwargs, as they were passed into the command instance
     being executed with __call__, and compose them into a flat list that
     will eventually be fed into exec.  example:
@@ -1216,17 +1219,17 @@ def compile_args(args, kwargs, sep):
             for sub_arg in arg:
                 processed_args.append(encode(sub_arg))
         elif isinstance(arg, dict):
-            processed_args += aggregate_keywords(arg, sep, raw=True)
+            processed_args += aggregate_keywords(arg, sep, prefix, raw=True)
         else:
             processed_args.append(encode(arg))
 
     # aggregate the keyword arguments
-    processed_args += aggregate_keywords(kwargs, sep)
+    processed_args += aggregate_keywords(kwargs, sep, prefix)
 
     return processed_args
 
 
-def aggregate_keywords(keywords, sep, raw=False):
+def aggregate_keywords(keywords, sep, prefix, raw=False):
     """ take our keyword arguments, and a separator, and compose the list of
     flat long (and short) arguments.  example
 
@@ -1283,10 +1286,10 @@ def aggregate_keywords(keywords, sep, raw=False):
             elif v is False:
                 pass
             elif sep is None or sep == " ":
-                processed.append(encode("--" + k))
+                processed.append(encode(prefix + k))
                 processed.append(encode(v))
             else:
-                arg = encode("--%s%s%s" % (k, sep, v))
+                arg = encode("%s%s%s%s" % (prefix, k, sep, v))
                 processed.append(arg)
 
     return processed
