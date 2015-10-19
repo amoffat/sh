@@ -598,7 +598,7 @@ Environments
 ------------
 
 The :ref:`special keyword argument <special_arguments>` ``_env`` allows you
-to pass a dictionary of environement variables and their corresponding values::
+to pass a dictionary of environment variables and their corresponding values::
 
 	import sh
 	sh.google_chrome(_env={"SOCKS_SERVER": "localhost:1234"})
