@@ -131,20 +131,6 @@ exit(3)
             self.assertEqual(e.exit_code, 3)
 
 
-    def test_glob_warning(self):
-        from sh import ls
-        from glob import glob
-        import warnings
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-
-            ls(glob("ofjaoweijfaowe"))
-
-            self.assertTrue(len(w) == 1)
-            self.assertTrue(issubclass(w[-1].category, UserWarning))
-            self.assertTrue("glob" in str(w[-1].message))
-
     def test_stdin_from_string(self):
         from sh import sed
         self.assertEqual(sed(_in="one test three", e="s/test/two/").strip(),

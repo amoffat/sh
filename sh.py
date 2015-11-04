@@ -43,7 +43,6 @@ IS_PY3 = sys.version_info[0] == 3
 import traceback
 import os
 import re
-from glob import glob as original_glob
 import time
 from types import ModuleType
 from functools import partial
@@ -52,6 +51,7 @@ from contextlib import contextmanager
 
 from locale import getpreferredencoding
 DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
+
 
 
 if IS_PY3:
@@ -338,16 +338,6 @@ def resolve_program(program):
             return None
     return path
 
-
-# we add this thin wrapper to glob.glob because of a specific edge case where
-# glob does not expand to anything.  for example, if you try to do
-# glob.glob("*.py") and there are no *.py files in the directory, glob.glob
-# returns an empty list.  this empty list gets passed to the command, and
-# then the command fails with a misleading error message.  this thin wrapper
-# ensures that if there is no expansion, we pass in the original argument,
-# so that when the command fails, the error message is clearer
-def glob(arg):
-    return original_glob(arg) or arg
 
 
 
@@ -880,9 +870,6 @@ output"),
         # aggregate positional args
         for arg in args:
             if isinstance(arg, (list, tuple)):
-                if not arg:
-                    warnings.warn("Empty list passed as an argument to %r. \
-If you're using glob.glob(), please use sh.glob() instead." % self._path, stacklevel=3)
                 for sub_arg in arg:
                     processed_args.append(encode_to_py3bytes_or_py2str(sub_arg))
             elif isinstance(arg, dict):
