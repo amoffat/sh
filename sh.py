@@ -2248,8 +2248,11 @@ Please import sh or import programs individually.")
     # common shell builtins that people are used to, but which aren't actually
     # full-fledged system binaries
 
-    def b_cd(self, path):
-        os.chdir(path)
+    def b_cd(self, path=None):
+        if path:
+            os.chdir(path)
+        else:
+            os.chdir(os.path.expanduser('~'))
 
     def b_which(self, program):
         return which(program)

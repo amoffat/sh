@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   `sh.cd` called with no arguments no changes into the user's home directory, like native `cd`
 *   `sh.glob` removed entirely.  the rationale is correctness over hand-holding.
 *   added `_truncate_exc`, defaulting to `True`, which tells our exceptions to truncate output.
 *   bugfix for exceptions whose messages contained unicode
