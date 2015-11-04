@@ -2,8 +2,9 @@
 
 ## 1.2 -
 
-*   `sh.cd` called with no arguments no changes into the user's home directory, like native `cd`
-*   `sh.glob` removed entirely.  the rationale is correctness over hand-holding.
+*   bugfix where calling `next()` on an iterable process that has raised `StopIteration`, hangs [#273](https://github.com/amoffat/sh/issues/273)
+*   `sh.cd` called with no arguments no changes into the user's home directory, like native `cd` [#275](https://github.com/amoffat/sh/issues/275)
+*   `sh.glob` removed entirely.  the rationale is correctness over hand-holding. [#279](https://github.com/amoffat/sh/issues/279)
 *   added `_truncate_exc`, defaulting to `True`, which tells our exceptions to truncate output.
 *   bugfix for exceptions whose messages contained unicode
 *   `_done` callback no longer assumes you want your command put in the background.

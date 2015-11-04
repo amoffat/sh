@@ -437,6 +437,10 @@ class RunningCommand(object):
         should_wait = True
         spawn_process = True
 
+        # this is used to track if we've already raised StopIteration, and if we
+        # have, raise it immediately again if the user tries to call next() on
+        # us.  https://github.com/amoffat/sh/issues/273
+        self._stopped_iteration = False
 
         # with contexts shouldn't run at all yet, they prepend
         # to every command in the context
@@ -551,6 +555,9 @@ class RunningCommand(object):
     def next(self):
         """ allow us to iterate over the output of our command """
 
+        if self._stopped_iteration:
+            raise StopIteration()
+
         # we do this because if get blocks, we can't catch a KeyboardInterrupt
         # so the slight timeout allows for that.
         while True:
@@ -562,6 +569,7 @@ class RunningCommand(object):
             else:
                 if chunk is None:
                     self.wait()
+                    self._stopped_iteration = True
                     raise StopIteration()
                 try:
                     return chunk.decode(self.call_args["encoding"],

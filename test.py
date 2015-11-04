@@ -1910,6 +1910,23 @@ print("字")
         self.assertEqual(sig, SignalException_SIGQUIT)
 
 
+    # https://github.com/amoffat/sh/issues/273
+    def test_stop_iteration_doesnt_block(self):
+        """ proves that calling calling next() on a stopped iterator doesn't
+        hang. """
+
+        import sh
+        py = create_tmp_test("""
+print("cool")
+""")
+        p = python(py.name, _iter=True)
+        for i in range(100):
+            try:
+                next(p)
+            except StopIteration:
+                pass
+
+
 class StreamBuffererTests(unittest.TestCase):
     def test_unbuffered(self):
         from sh import _disable_whitelist, StreamBufferer
