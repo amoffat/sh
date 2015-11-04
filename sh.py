@@ -736,9 +736,7 @@ class Command(object):
         # internal buffers
         "tee": None,
 
-        # will be called when a process terminates without exception.  this
-        # option also puts the command in the background, since it doesn't make
-        # sense to have an un-backgrounded command with a done callback
+        # will be called when a process terminates regardless of exception
         "done": None,
 
         # a tuple (rows, columns) of the desired size of both the stdout and

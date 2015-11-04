@@ -1686,7 +1686,7 @@ print(time())
             p = python(py.name, _done=callback, _bg=True)
             p.wait()
         except ErrorReturnCode:
-            self.assertFalse(callback.called)
+            self.assertTrue(callback.called)
         else:
             self.fail("command should've thrown an exception")
 
