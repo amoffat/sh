@@ -2238,6 +2238,7 @@ class Environment(dict):
         "TimeoutException",
         "__project_url__",
         "__version__",
+        "__file__",
         "args",
         "glob",
         "pushd",
