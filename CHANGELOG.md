@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   `_long_sep` can now take `None` which splits the long form arguments into individual arguments [#258](https://github.com/amoffat/sh/issues/258)
 *   made internal threading non-daemoned so that resources are freed correctly.  this potentially could cause locking, but i have not seen it do so.
 *   making `_piped` perform "direct" piping by default (linking fds together).  this fixes memory problems [#270](https://github.com/amoffat/sh/issues/270)
 *   bugfix where calling `next()` on an iterable process that has raised `StopIteration`, hangs [#273](https://github.com/amoffat/sh/issues/273)
