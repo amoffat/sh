@@ -284,10 +284,20 @@ through the base class ErrorReturnCode::
 	except ErrorReturnCode_2:
 	    print("folder doesn't exist!")
 	    create_the_folder()
+		# access exception details: e.full_cmd, e.stdout, e.stderr, e.exit_code
+		print(e.full_cmd) # prints "ls /some/non-existant/folder"
+		print(e.stderr) # prints "ls: /some/non-existant/folder: No such file or directory\n"
+		print(e.stdout) # prints nothing in this case, but holds standard output
+		print(e.exit_code) # prints "2"
 	except ErrorReturnCode:
 	    print("unknown error")
 	    exit(1)
-	    
+
+.. note::
+	By default, the ``stderr`` and ``stdout`` fields of ErrorReturnCode are truncated to 750 characters. This behavior
+	can be changed by monkey patching ``ErrorReturnCode.truncate_cap`` to a different value prior to invoking a command
+	using ``sh``.
+
 .. note::
 	
 	Signals **will not** raise an ErrorReturnCode.  The command will return
