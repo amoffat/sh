@@ -55,7 +55,7 @@ DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
 
 
 if IS_PY3:
-    from io import StringIO
+    from io import StringIO, UnsupportedOperation
     from io import BytesIO as cStringIO
     from queue import Queue, Empty
 
@@ -1740,6 +1740,24 @@ def get_file_chunk_reader(stdin):
     bufsize = 1024
 
     def fn():
+
+        # python 3.* includes a fileno on stringios, but accessing it throws an
+        # exception.  that exception is how we'll know we can't do a select on
+        # stdin
+        is_real_file = True
+        if IS_PY3:
+            try:
+                stdin.fileno()
+            except UnsupportedOperation:
+                is_real_file = False
+
+        # this select is for files that may not yet be ready to read.  we test
+        # for fileno because StringIO/BytesIO cannot be used in a select
+        if is_real_file and hasattr(stdin, "fileno"):
+            outputs, _, _ = select.select([stdin], [], [], 0.1)
+            if not outputs:
+                raise NotYetReadyToRead
+
         chunk = stdin.read(bufsize)
         if not chunk:
             raise DoneReadingForever
