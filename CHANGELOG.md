@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   `_preexec_fn` option for executing a function after the child process forks but before it execs [#260](https://github.com/amoffat/sh/issues/260)
 *   `_fg` reintroduced, with limited functionality.  hurrah! [#92](https://github.com/amoffat/sh/issues/92)
 *   bugfix where a command would block if passed a fd for stdin that wasn't yet ready to read [#253](https://github.com/amoffat/sh/issues/253)
 *   `_long_sep` can now take `None` which splits the long form arguments into individual arguments [#258](https://github.com/amoffat/sh/issues/258)

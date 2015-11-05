@@ -1865,8 +1865,6 @@ for i in range(10):
 
 
 
-
-
 class MiscTests(unittest.TestCase):
     def test_percent_doesnt_fail_logging(self):
         """ test that a command name doesn't interfere with string formatting in

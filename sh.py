@@ -754,6 +754,9 @@ class Command(object):
 
         # whether or not our exceptions should be truncated
         "truncate_exc": True,
+
+        # a function to call after the child forks but before the process execs
+        "preexec_fn": None,
     }
 
     # these are arguments that cannot be called together, because they wouldn't
@@ -1328,6 +1331,10 @@ class OProc(object):
 
                 if self.call_args["tty_out"]:
                     setwinsize(1, self.call_args["tty_size"])
+
+                preexec_fn = self.call_args["preexec_fn"]
+                if callable(preexec_fn):
+                    preexec_fn()
 
                 # actually execute the process
                 if self.call_args["env"] is None:
