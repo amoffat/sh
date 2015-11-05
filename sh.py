@@ -991,7 +991,7 @@ output"),
                 if first_arg.call_args["bg"]:
                     call_args["bg"] = True
 
-                if first_arg.call_args["piped"] == "direct":
+                if first_arg.call_args["piped"]:
                     stdin = first_arg.process
                 else:
                     stdin = first_arg.process._pipe_queue
@@ -1167,7 +1167,7 @@ class OProc(object):
 
         # I had issues with getting 'Input/Output error reading stdin' from dd,
         # until I set _tty_out=False
-        if self.call_args["piped"] == "direct":
+        if self.call_args["piped"]:
             self.call_args["tty_out"] = False
 
         self._single_tty = self.call_args["tty_in"] and self.call_args["tty_out"]
@@ -1188,14 +1188,19 @@ class OProc(object):
         # do not consolidate stdin and stdout.  this is the most common use-
         # case
         else:
-            # this check here is because we may be doing "direct" piping
-            # (_piped="direct"), and so our stdin might be an instance of
-            # OProc
+            # this check here is because we may be doing piping and so our stdin
+            # might be an instance of OProc
             if isinstance(stdin, OProc):
-                self._slave_stdin_fd = stdin._stdout_fd
+                fd_to_use = stdin._stdout_fd
+                if stdin.call_args["piped"] == "err":
+                    fd_to_use = stdin._stderr_fd
+
+                self._slave_stdin_fd = fd_to_use
                 self._stdin_fd = None
+
             elif self.call_args["tty_in"]:
                 self._slave_stdin_fd, self._stdin_fd = pty.openpty()
+
             # tty_in=False is the default
             else:
                 self._slave_stdin_fd, self._stdin_fd = os.pipe()
@@ -1264,7 +1269,7 @@ class OProc(object):
 
 
                 # if the parent-side fd for stdin exists, close it.  the case
-                # where it may not exist is if we're using piped="direct"
+                # where it may not exist is if we're using piping
                 if self._stdin_fd:
                     os.close(self._stdin_fd)
 
@@ -1401,7 +1406,7 @@ class OProc(object):
             # already hooked up this processes's stdout fd to the other
             # processes's stdin fd
             self._stdout_stream = None
-            if self.call_args["piped"] != "direct":
+            if self.call_args["piped"] not in ("out", True):
                 if callable(stdout):
                     stdout = construct_streamreader_callback(self, stdout)
                 self._stdout_stream = \
@@ -1412,9 +1417,15 @@ class OProc(object):
                             self.call_args["decode_errors"], stdout_pipe,
                             save_data=save_stdout)
 
-            if stderr is OProc.STDOUT or self._single_tty:
-                self._stderr_stream = None
-            else:
+
+            # if stderr is going to one place (because it's grouped with stdout,
+            # or we're dealing with a single tty), then we don't actually need a
+            # stream reader for stdout, because we've already set one up for
+            # stdout above
+            self._stderr_stream = None
+            if stderr is not OProc.STDOUT and not self._single_tty \
+                    and self.call_args["piped"] not in ("err",):
+
                 stderr_pipe = None
                 if pipe is OProc.STDERR and not self.call_args["no_pipe"]:
                     stderr_pipe = self._pipe_queue
@@ -1511,7 +1522,6 @@ class OProc(object):
                     self.log.debug("we've been running too long")
                     self.timed_out = True
                     self.signal(timeout_exc)
-
 
         # this is here because stdout may be the controlling TTY, and
         # we can't close it until the process has ended, otherwise the

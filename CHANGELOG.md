@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   making `_piped` perform "direct" piping by default (linking fds together).  this fixes memory problems [#270](https://github.com/amoffat/sh/issues/270)
 *   bugfix where calling `next()` on an iterable process that has raised `StopIteration`, hangs [#273](https://github.com/amoffat/sh/issues/273)
 *   `sh.cd` called with no arguments no changes into the user's home directory, like native `cd` [#275](https://github.com/amoffat/sh/issues/275)
 *   `sh.glob` removed entirely.  the rationale is correctness over hand-holding. [#279](https://github.com/amoffat/sh/issues/279)

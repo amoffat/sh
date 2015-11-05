@@ -185,9 +185,21 @@ import os
 import time
 
 for l in "andrew":
-    print(l)
+    sys.stdout.write(l)
     time.sleep(.2)
 """)
+
+        inc_py = create_tmp_test("""
+import sys
+while True:
+    letter = sys.stdin.read(1)
+    if not letter:
+        break
+    sys.stdout.write(chr(ord(letter)+1))
+""")
+
+        def inc(proc, *args, **kwargs):
+            return python(proc, "-u", inc_py.name, *args, **kwargs)
 
         class Derp(object):
             def __init__(self):
@@ -198,21 +210,22 @@ for l in "andrew":
             def agg(self, line):
                 self.stdout.append(line.strip())
                 now = time.time()
-                if self.last_received: self.times.append(now - self.last_received)
+                if self.last_received:
+                    self.times.append(now - self.last_received)
                 self.last_received = now
 
         derp = Derp()
 
-        p = tr(
-               tr(
-                  tr(
-                     python(py.name, _piped=True),
-                  "aw", "wa", _piped=True),
-               "ne", "en", _piped=True),
-            "dr", "rd", _out=derp.agg)
+        p = inc(
+                inc(
+                    inc(
+                        python("-u", py.name, _piped=True),
+                    _piped=True),
+                _piped=True),
+            _out=derp.agg)
 
         p.wait()
-        self.assertEqual("".join(derp.stdout), "werdna")
+        self.assertEqual("".join(derp.stdout), "dqguhz")
         self.assertTrue(all([t > .15 for t in derp.times]))
 
 
@@ -615,6 +628,25 @@ sys.stderr.flush()
         self.assertTrue(stdout == "stdoutstderr")
 
 
+    def test_err_piped(self):
+        py = create_tmp_test("""
+import sys
+sys.stderr.write("stderr")
+""")
+
+        py2 = create_tmp_test("""
+import sys
+while True:
+    line = sys.stdin.read()
+    if not line:
+        break
+    sys.stdout.write(line)
+""")
+
+        out = python(python("-u", py.name, _piped="err"), "-u", py2.name)
+        self.assertEqual(out, "stderr")
+
+
 
     def test_out_redirection(self):
         import tempfile
@@ -664,7 +696,7 @@ sys.stdout.write("stdout")
 sys.stderr.write("stderr")
 """)
         file_obj = tempfile.TemporaryFile()
-        p = python(py.name, _err=file_obj)
+        p = python("-u", py.name, _err=file_obj)
 
         file_obj.seek(0)
         stderr = file_obj.read().decode()
@@ -698,7 +730,7 @@ import os
 sys.stdout.write("stdout")
 sys.stderr.write("stderr")
 """)
-      stdout = python(py.name, _err=file_obj.name, u=True).wait()
+      stdout = python("-u", py.name, _err=file_obj.name).wait()
       file_obj.seek(0)
       stderr = file_obj.read().decode()
       file_obj.close()
@@ -767,7 +799,7 @@ for i in range(5): print(i)
         def agg(line):
             stdout.append(line)
 
-        p = python(py.name, _out=agg, u=True)
+        p = python("-u", py.name, _out=agg)
         p.wait()
 
         self.assertTrue(len(stdout) == 5)
@@ -790,7 +822,7 @@ for i in range(5):
         stdout = []
         def agg(line): stdout.append(line)
 
-        p = python(py.name, _out=agg, u=True, _bg=True)
+        p = python("-u", py.name, _out=agg, _bg=True)
 
         # we give a little pause to make sure that the NamedTemporaryFile
         # exists when the python process actually starts
@@ -811,7 +843,7 @@ for i in range(5): print("herpderp")
         stdout = []
         def agg(line): stdout.append(line)
 
-        p = python(py.name, _out=agg, _out_bufsize=1, u=True)
+        p = python("-u", py.name, _out=agg, _out_bufsize=1)
         p.wait()
 
         self.assertTrue(len(stdout) == 5)
@@ -829,7 +861,7 @@ for i in range(5): print("herpderp")
         stdout = []
         def agg(char): stdout.append(char)
 
-        p = python(py.name, _out=agg, _out_bufsize=0, u=True)
+        p = python("-u", py.name, _out=agg, _out_bufsize=0)
         p.wait()
 
         # + 5 newlines
@@ -847,7 +879,7 @@ for i in range(5): sys.stdout.write("herpderp")
         stdout = []
         def agg(chunk): stdout.append(chunk)
 
-        p = python(py.name, _out=agg, _out_bufsize=4, u=True)
+        p = python("-u", py.name, _out=agg, _out_bufsize=4)
         p.wait()
 
         self.assertTrue(len(stdout) == (len("herp") / 2 * 5))
@@ -869,7 +901,7 @@ print(derp)
         def agg(line, stdin):
             if line.strip() == "4": stdin.put("derp\n")
 
-        p = python(py.name, _out=agg, u=True, _tee=True)
+        p = python("-u", py.name, _out=agg, _tee=True)
         p.wait()
 
         self.assertTrue("derp" in p)
@@ -890,7 +922,7 @@ for i in range(5): print(i)
             stdout.append(line)
             if line == "2": return True
 
-        p = python(py.name, _out=agg, u=True, _tee=True)
+        p = python("-u", py.name, _out=agg, _tee=True)
         p.wait()
 
         self.assertTrue("4" in p)
@@ -920,7 +952,7 @@ for i in range(5):
 
         caught_signal = False
         try:
-            p = python(py.name, _out=agg, u=True, _bg=True)
+            p = python("-u", py.name, _out=agg, _bg=True)
             p.wait()
         except sh.SignalException_SIGTERM:
             caught_signal = True
@@ -956,7 +988,7 @@ for i in range(5):
 
         caught_signal = False
         try:
-            p = python(py.name, _out=agg, u=True, _bg=True)
+            p = python("-u", py.name, _out=agg, _bg=True)
             p.wait()
         except sh.SignalException_SIGKILL:
             caught_signal = True
@@ -1042,12 +1074,14 @@ for i in range(42):
 """)
 
         out = []
-        for line in python(py.name, _iter="err", u=True): out.append(line)
+        for line in python("-u", py.name, _iter="err"):
+            out.append(line)
         self.assertTrue(len(out) == 42)
 
         # verify that nothing is going to stdout
         out = []
-        for line in python(py.name, _iter="out", u=True): out.append(line)
+        for line in python("-u", py.name, _iter="out"):
+            out.append(line)
         self.assertTrue(len(out) == 0)
 
 
@@ -1074,7 +1108,8 @@ import time
 
 while True:
     line = sys.stdin.readline()
-    if not line: break
+    if not line:
+        break
     print(line.strip().upper())
         """)
 
@@ -1083,8 +1118,10 @@ while True:
         last_received = None
 
         letters = ""
-        for line in python(python(py1.name, _piped="out", u=True), py2.name, _iter=True, u=True):
-            if not letters: start = time.time()
+        for line in python(python("-u", py1.name, _piped="out"), "-u",
+                py2.name, _iter=True):
+            if not letters:
+                start = time.time()
             letters += line.strip()
 
             now = time.time()
@@ -1109,7 +1146,7 @@ for i in range(42):
         def agg(line): stderr.append(int(line.strip()))
 
         out = []
-        for line in python(py.name, _iter=True, _err=agg, u=True): out.append(line)
+        for line in python("-u", py.name, _iter=True, _err=agg): out.append(line)
 
         self.assertTrue(len(out) == 42)
         self.assertTrue(sum(stderr) == 1722)
@@ -1288,7 +1325,7 @@ sys.stdin.read(1)
                 return True
 
         # start with line buffered stdout
-        pw_stars = python(py.name, _out=interact, _out_bufsize=1, u=True)
+        pw_stars = python("-u", py.name, _out=interact, _out_bufsize=1)
         pw_stars.wait()
 
         self.assertTrue(d["newline_buffer_success"])
@@ -1600,25 +1637,6 @@ for i in range(5):
         self.assertEqual(new_wd, tempdir)
 
 
-    def test_piped_direct(self):
-        from sh import ls, wc
-
-        # sanity check that our ls shows something
-        p1 = ls("-A1")
-        self.assertNotEqual(str(p1), "")
-
-        # now let's run it again with direct piping.  this should yield no
-        # visible output, because all the stdout is written to the process's
-        # stdout fd
-        p2 = ls("-A1", _piped="direct")
-        p2.wait()
-        self.assertEqual(str(p2), "")
-
-        # now let us confirm that composing this function with another lets the
-        # outer function read from that stdout fd directly
-        c1 = int(wc(p2, l=True).strip())
-        c2 = len(os.listdir("."))
-        self.assertEqual(c1, c2)
 
     def test_non_existant_cwd(self):
         from sh import ls
