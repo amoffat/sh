@@ -674,8 +674,7 @@ class Command(object):
     _prepend_stack = []
 
     _call_args = {
-        # currently unsupported
-        #"fg": False, # run command in foreground
+        "fg": False, # run command in foreground
 
         # run a command in the background.  commands run in the background
         # ignore SIGHUP and do not automatically exit when the parent process
@@ -1014,6 +1013,26 @@ output"),
         cmd.extend(final_args)
 
 
+        # if we're running in foreground mode, we need to completely bypass
+        # launching a RunningCommand and OProc and just do a spawn
+        if call_args["fg"]:
+            if call_args["env"] is None:
+                launch = lambda: os.spawnv(os.P_WAIT, cmd[0], cmd)
+            else:
+                launch = lambda: os.spawnve(os.P_WAIT, cmd[0], cmd, call_args["env"])
+
+            exit_code = launch()
+            exc_class = get_exc_exit_code_would_raise(exit_code, call_args["ok_code"])
+            if exc_class:
+                if IS_PY3:
+                    ran = " ".join([arg.decode(DEFAULT_ENCODING, "ignore") for arg in cmd])
+                else:
+                    ran = " ".join(cmd)
+                exc = exc_class(ran, None, None, call_args["truncate_exc"])
+                raise exc
+            return None
+
+
         # stdout redirection
         stdout = call_args["out"]
         if output_redirect_is_filename(stdout):
@@ -1123,7 +1142,7 @@ def get_exc_exit_code_would_raise(exit_code, ok_codes):
     return exc
 
 
-def handle_process_exit_code(exit_code, done_callback, ok_codes):
+def handle_process_exit_code(exit_code, done_callback):
     """ this should only ever be called once for each child process """
     # if we exited from a signal, let our exit code reflect that
     if os.WIFSIGNALED(exit_code):
@@ -1135,7 +1154,6 @@ def handle_process_exit_code(exit_code, done_callback, ok_codes):
         raise RuntimeError("Unknown child exit status!")
 
     # should we call our done callback?
-    exc = get_exc_exit_code_would_raise(exit_code, ok_codes) 
     if done_callback:
         done_callback(exit_code)
 
@@ -1607,7 +1625,7 @@ class OProc(object):
             pid, exit_code = os.waitpid(self.pid, os.WNOHANG)
             if pid == self.pid:
                 self.exit_code = handle_process_exit_code(exit_code,
-                        self.call_args["done"], self.call_args["ok_code"])
+                        self.call_args["done"])
                 return False
 
         # no child process
@@ -1632,7 +1650,7 @@ class OProc(object):
                 self.log.debug("exit code not set, waiting on pid")
                 pid, exit_code = os.waitpid(self.pid, 0) # blocks
                 self.exit_code = handle_process_exit_code(exit_code,
-                        self.call_args["done"], self.call_args["ok_code"])
+                        self.call_args["done"])
             else:
                 self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
 
