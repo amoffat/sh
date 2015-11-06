@@ -60,6 +60,13 @@ def create_tmp_test(code, prefix="tmp", delete=True):
 @requires_posix
 class FunctionalTests(unittest.TestCase):
 
+    def setUp(self):
+        self._environ = os.environ.copy()
+
+    def tearDown(self):
+        os.environ = self._environ
+
+
     def test_print_command(self):
         from sh import ls, which
         actual_location = which("ls")
