@@ -1904,11 +1904,16 @@ def determine_how_to_feed_output(handler, encoding, decode_errors):
     if callable(handler):
         process, finish = get_callback_chunk_consumer(handler, encoding,
                 decode_errors)
+
+    # in py3, this is used for bytes
     elif isinstance(handler, cStringIO):
         process, finish = get_cstringio_chunk_consumer(handler)
+
+    # in py3, this is used for unicode
     elif isinstance(handler, StringIO):
         process, finish = get_stringio_chunk_consumer(handler, encoding,
                 decode_errors)
+
     elif hasattr(handler, "write"):
         process, finish = get_file_chunk_consumer(handler)
     else:
