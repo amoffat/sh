@@ -325,6 +325,7 @@ def which(program):
 
     return None
 
+
 def resolve_program(program):
     path = which(program)
     if not path:
@@ -771,27 +772,6 @@ disabled the pipe"),
 output"),
     )
 
-
-    # this method exists because of the need to have some way of letting
-    # manual object instantiation not perform the underscore-to-dash command
-    # conversion that resolve_program uses.
-    #
-    # there are 2 ways to create a Command object.  using sh.Command(<program>)
-    # or by using sh.<program>.  the method fed into sh.Command must be taken
-    # literally, and so no underscore-dash conversion is performed.  the one
-    # for sh.<program> must do the underscore-dash converesion, because we
-    # can't type dashes in method names
-    @classmethod
-    def _create(cls, program, **default_kwargs):
-        path = resolve_program(program)
-        if not path:
-            raise CommandNotFound(program)
-
-        cmd = cls(path)
-        if default_kwargs:
-            cmd = cmd.bake(**default_kwargs)
-
-        return cmd
 
 
     def __init__(self, path):
@@ -2297,22 +2277,36 @@ Please import sh or import programs individually.")
         if k.startswith("__") and k.endswith("__"):
             raise AttributeError
 
-        # how about an environment variable?
-        try:
-            return os.environ[k]
-        except KeyError:
-            pass
 
         # is it a custom builtin?
         builtin = getattr(self, "b_" + k, None)
         if builtin:
             return builtin
 
-        # it must be a command then
-        # we use _create instead of instantiating the class directly because
-        # _create uses resolve_program, which will automatically do underscore-
-        # to-dash conversions.  instantiating directly does not use that
-        return Command._create(k, **self.baked_args)
+
+        # is it a command?
+        path = resolve_program(k)
+        if path:
+            cmd = Command(path)
+            if self.baked_args:
+                cmd = cmd.bake(**self.baked_args)
+            return cmd
+
+
+        # how about an environment variable?
+        # this check must come after testing if its a command, because on some
+        # systems, there are an environment variables that can conflict with
+        # command names.
+        # https://github.com/amoffat/sh/issues/238
+        try:
+            return os.environ[k]
+        except KeyError:
+            pass
+
+
+        # nothing found, raise an exception
+        raise CommandNotFound(k)
+
 
 
     # methods that begin with "b_" are custom builtins and will override any

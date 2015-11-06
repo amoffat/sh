@@ -328,7 +328,6 @@ print(sh.HERP + " " + str(len(os.environ)))
         self.assertEqual(which("fjoawjefojawe"), None)
         self.assertEqual(which("ls"), str(ls))
 
-
     def test_foreground(self):
         return
         raise NotImplementedError
