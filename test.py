@@ -1,10 +1,11 @@
 # -*- coding: utf8 -*-
 
 import os
-from os.path import exists, join, realpath
+from os.path import exists, join, realpath, dirname
 import unittest
 import tempfile
 import sys
+import stat
 import sh
 import platform
 from functools import wraps
@@ -21,7 +22,7 @@ else:
     from sh import python
 
 
-THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+THIS_DIR = dirname(os.path.abspath(__file__))
 
 skipUnless = getattr(unittest, "skipUnless", None)
 if not skipUnless:
@@ -50,6 +51,11 @@ def create_tmp_test(code, prefix="tmp", delete=True):
         code = bytes(code, "UTF-8")
     py.write(code)
     py.flush()
+
+    # make the file executable
+    st = os.stat(py.name)
+    os.chmod(py.name, st.st_mode | stat.S_IEXEC)
+
     # we don't explicitly close, because close will remove the file, and we
     # don't want that until the test case is done.  so we let the gc close it
     # when it goes out of scope
@@ -335,9 +341,21 @@ print(sh.HERP + " " + str(len(os.environ)))
         self.assertEqual(which("fjoawjefojawe"), None)
         self.assertEqual(which("ls"), str(ls))
 
-    def test_foreground(self):
-        return
-        raise NotImplementedError
+
+    def test_which_paths(self):
+        from sh import which
+        py = create_tmp_test("""
+print("hi")
+""")
+        test_path = dirname(py.name)
+        _, test_name = os.path.split(py.name)
+
+        found_path = which(test_name)
+        self.assertEqual(found_path, None)
+
+        found_path = which(test_name, [test_path])
+        self.assertEqual(found_path, py.name)
+
 
     def test_no_arg(self):
         import pwd

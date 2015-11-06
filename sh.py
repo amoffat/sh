@@ -305,25 +305,43 @@ def get_rc_exc(rc_or_sig_name):
 
 
 
-def which(program):
+def which(program, paths=None):
+    """ takes a program name or full path, plus an optional collection of search
+    paths, and returns the full path of the requested executable.  if paths is
+    specified, it is the entire list of search paths, and the PATH env is not
+    used at all.  otherwise, PATH env is used to look for the program """
+
     def is_exe(fpath):
         return (os.path.exists(fpath) and
                 os.access(fpath, os.X_OK) and
                 os.path.isfile(os.path.realpath(fpath)))
 
+    found_path = None
     fpath, fname = os.path.split(program)
+
+    # if there's a path component, then we've specified a path to the program,
+    # and we should just test if that program is executable.  if it is, return
     if fpath:
         if is_exe(program):
-            return program
+            found_path = program
+
+    # otherwise, we've just passed in the program name, and we need to search
+    # the paths to find where it actually lives
     else:
-        if "PATH" not in os.environ:
-            return None
-        for path in os.environ["PATH"].split(os.pathsep):
+        paths_to_search = []
+
+        if isinstance(paths, (tuple, list)):
+            paths_to_search.extend(paths)
+        else:
+            env_paths = os.environ.get("PATH", "").split(os.pathsep)
+            paths_to_search.extend(env_paths)
+
+        for path in paths_to_search:
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):
-                return exe_file
+                found_path = exe_file
 
-    return None
+    return found_path
 
 
 def resolve_program(program):
@@ -774,8 +792,8 @@ output"),
 
 
 
-    def __init__(self, path):
-        found = which(path)
+    def __init__(self, path, search_paths=None):
+        found = which(path, search_paths)
         if not found:
             raise CommandNotFound(path)
 
@@ -2320,8 +2338,8 @@ Please import sh or import programs individually.")
         else:
             os.chdir(os.path.expanduser('~'))
 
-    def b_which(self, program):
-        return which(program)
+    def b_which(self, program, paths=None):
+        return which(program, paths)
 
 
 
