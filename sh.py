@@ -2078,7 +2078,7 @@ class StreamBufferer(object):
         # we need to use that up, so we don't lose it
         self._use_up_buffer_first = False
 
-        # the buffering lock is used because we might chance the buffering
+        # the buffering lock is used because we might change the buffering
         # types from a different thread.  for example, if we have a stdout
         # callback, we might use it to change the way stdin buffers.  so we
         # lock
@@ -2110,11 +2110,11 @@ class StreamBufferer(object):
         self._buffering_lock.acquire()
         self.log.debug("got buffering lock to process chunk (buffering: %d)", self.type)
         try:
-            # we've encountered binary, permanently switch to N size buffering
-            # since matching on newline doesn't make sense anymore
             if self.type == 1:
                 try:
                     chunk.decode(self.encoding, self.decode_errors)
+                # we've encountered binary, permanently switch to N size buffering
+                # since matching on newline doesn't make sense anymore
                 except:
                     self.log.debug("detected binary data, changing buffering")
                     self.change_buffering(1024)
