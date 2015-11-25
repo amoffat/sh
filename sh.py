@@ -1854,6 +1854,9 @@ def get_file_chunk_consumer(handler):
         if hasattr(handler, "flush"):
             handler.flush()
 
+        if hasattr(handler, "close"):
+            handler.close()
+
     return process, finish
 
 def get_callback_chunk_consumer(handler, encoding, decode_errors):
