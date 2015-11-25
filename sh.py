@@ -1531,7 +1531,9 @@ class OProc(object):
     def signal(self, sig):
         self.log.debug("sending signal %d", sig)
         try:
-            os.kill(self.pid, sig)
+            # Kill the entire process group as the command may have
+            # spawned subprocesses we don't want left around
+            os.killpg(os.getpgid(self.pid), sig)
         except OSError:
             pass
 
