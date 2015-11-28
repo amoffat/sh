@@ -710,6 +710,9 @@ class Command(object):
         # for example, --arg=derp, '=' is the long_sep
         "long_sep": "=",
 
+        # the prefix used for long arguments
+        "long_prefix": "--",
+
         # this is for programs that expect their input to be from a terminal.
         # ssh is one of those programs
         "tty_in": False,
@@ -836,7 +839,7 @@ output"),
         return call_args, kwargs
 
 
-    def _aggregate_keywords(self, keywords, sep, raw=False):
+    def _aggregate_keywords(self, keywords, sep, raw=False, long_prefix='--'):
         processed = []
         for k, v in keywords.items():
             # we're passing a short arg as a kwarg, example:
@@ -853,16 +856,18 @@ output"),
                     k = k.replace("_", "-")
 
                 if v is True:
-                    processed.append(encode_to_py3bytes_or_py2str("--" + k))
+                    processed.append(encode_to_py3bytes_or_py2str(long_prefix
+                                                                  + k))
                 elif v is False:
                     pass
                 else:
-                    arg = encode_to_py3bytes_or_py2str("--%s%s%s" % (k, sep, v))
+                    arg = encode_to_py3bytes_or_py2str(
+                        "%s%s%s%s" % (long_prefix, k, sep, v))
                     processed.append(arg)
         return processed
 
 
-    def _compile_args(self, args, kwargs, sep):
+    def _compile_args(self, args, kwargs, sep, long_prefix='--'):
         processed_args = []
 
         # aggregate positional args
@@ -874,12 +879,14 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
                 for sub_arg in arg:
                     processed_args.append(encode_to_py3bytes_or_py2str(sub_arg))
             elif isinstance(arg, dict):
-                processed_args += self._aggregate_keywords(arg, sep, raw=True)
+                processed_args += self._aggregate_keywords(
+                    arg, sep, raw=True, long_prefix=long_prefix)
             else:
                 processed_args.append(encode_to_py3bytes_or_py2str(arg))
 
         # aggregate the keyword arguments
-        processed_args += self._aggregate_keywords(kwargs, sep)
+        processed_args += self._aggregate_keywords(kwargs, sep,
+                                                   long_prefix=long_prefix)
 
         return processed_args
 
@@ -903,7 +910,10 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
         fn._partial_call_args.update(pruned_call_args)
         fn._partial_baked_args.extend(self._partial_baked_args)
         sep = pruned_call_args.get("long_sep", self._call_args["long_sep"])
-        fn._partial_baked_args.extend(self._compile_args(args, kwargs, sep))
+        prefix = pruned_call_args.get("long_prefix",
+                                      self._call_args["long_prefix"])
+        fn._partial_baked_args.extend(self._compile_args(
+            args, kwargs, sep, long_prefix=prefix))
         return fn
 
     def __str__(self):
@@ -997,7 +1007,9 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
             else:
                 args.insert(0, first_arg)
 
-        processed_args = self._compile_args(args, kwargs, call_args["long_sep"])
+        processed_args = self._compile_args(
+            args, kwargs, call_args["long_sep"],
+            long_prefix=call_args["long_prefix"])
 
         # makes sure our arguments are broken up correctly
         split_args = self._partial_baked_args + processed_args
