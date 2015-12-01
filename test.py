@@ -1590,12 +1590,12 @@ for i in range(5):
     def test_pushd(self):
         """ test that pushd is just a specialized form of sh.args """
         import os
-        old_wd = os.getcwd()
+        old_wd = sh.pwd().strip()
         with sh.pushd(tempdir):
             new_wd = sh.pwd().strip()
 
         self.assertNotEqual(old_wd, tempdir)
-        self.assertEqual(old_wd, os.getcwd())
+        self.assertEqual(old_wd, sh.pwd().strip())
         self.assertEqual(new_wd, tempdir)
 
 
@@ -1604,14 +1604,30 @@ for i in range(5):
         command settings """
         import os
 
-        old_wd = os.getcwd()
+        old_wd = sh.pwd().strip()
         with sh.args(_cwd=tempdir):
             new_wd = sh.pwd().strip()
 
         # sanity
         self.assertNotEqual(old_wd, tempdir)
-        self.assertEqual(old_wd, os.getcwd())
+        self.assertEqual(old_wd, sh.pwd().strip())
         self.assertEqual(new_wd, tempdir)
+
+
+    def test_args_context_exception(self):
+        """ test that args with-context will revert command settings
+        if an exception is thrown """
+        import os
+
+        old_wd = os.getcwd()
+        try:
+            with sh.args(_cwd=tempdir):
+                new_wd = sh.pwd().strip()
+                raise Exception()
+        except Exception:
+            self.assertNotEqual(old_wd, tempdir)
+            self.assertEqual(old_wd, sh.pwd().strip())
+            self.assertEqual(new_wd, tempdir)
 
 
     def test_piped_direct(self):
