@@ -1843,16 +1843,28 @@ def determine_how_to_feed_output(handler, encoding, decode_errors):
 
 
 def get_file_chunk_consumer(handler):
+    def flush(handler):
+        while True:
+            try:
+                handler.flush()
+                break
+            except IOError as e:
+                # EAGAIN, maybe launched on mac os only, writing on a non blocking socket may raise this
+                if e.errno == 35:
+                    continue
+                else:
+                    raise
+
     def process(chunk):
         handler.write(chunk)
         # we should flush on an fd.  chunk is already the correctly-buffered
         # size, so we don't need the fd buffering as well
-        handler.flush()
+        flush(handler)
         return False
 
     def finish():
         if hasattr(handler, "flush"):
-            handler.flush()
+            flush(handler)
 
     return process, finish
 
