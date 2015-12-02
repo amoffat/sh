@@ -46,9 +46,10 @@ import re
 from glob import glob as original_glob
 import time
 from types import ModuleType
-from functools import partial
+from functools import partial, wraps
 import inspect
 from contextlib import contextmanager
+import errno
 
 from locale import getpreferredencoding
 DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
@@ -1842,29 +1843,37 @@ def determine_how_to_feed_output(handler, encoding, decode_errors):
     return process, finish
 
 
-def get_file_chunk_consumer(handler):
-    def flush(handler):
+def retry_on_eagain(func):
+    """
+    A decorator that retries calling its function on EAGAIN errors.
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
         while True:
             try:
-                handler.flush()
-                break
-            except IOError as e:
-                # EAGAIN, maybe launched on mac os only, writing on a non blocking socket may raise this
-                if e.errno == 35:
-                    continue
-                else:
+                return func(*args, **kwargs)
+            except IOError as err:
+                if err.errno != errno.EAGAIN:
                     raise
 
+    return wrapper
+
+
+def get_file_chunk_consumer(handler):
+
+    @retry_on_eagain
     def process(chunk):
         handler.write(chunk)
         # we should flush on an fd.  chunk is already the correctly-buffered
         # size, so we don't need the fd buffering as well
-        flush(handler)
+        handler.flush()
         return False
 
+    @retry_on_eagain
     def finish():
         if hasattr(handler, "flush"):
-            flush(handler)
+            handler.flush()
 
     return process, finish
 
