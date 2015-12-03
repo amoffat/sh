@@ -479,7 +479,18 @@ class RunningCommand(object):
         # process, and that's if we're using a with-context with our command
         if spawn_process:
             self.log.info("starting process")
-            self.process = OProc(self.log, cmd, stdin, stdout, stderr,
+            if isinstance(stdin, RunningCommand):
+                self.stdin_proc = stdin
+
+                if stdin.call_args["piped"] == "direct":
+                    oproc_stdin = stdin.process
+                else:
+                    oproc_stdin = stdin.process._pipe_queue
+            else:
+                self.stdin_proc = None
+                oproc_stdin = stdin
+
+            self.process = OProc(self.log, cmd, oproc_stdin, stdout, stderr,
                     self.call_args, pipe)
 
             if should_wait:
@@ -491,6 +502,9 @@ class RunningCommand(object):
             self._process_completed = True
 
             exit_code = self.process.wait()
+            if self.stdin_proc is not None:
+                self.stdin_proc.wait()
+
             if self.process.timed_out:
                 # if we timed out, our exit code represents a signal, which is
                 # negative, so let's make it positive to store in our
@@ -989,11 +1003,7 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
                 if first_arg.call_args["bg"]:
                     call_args["bg"] = True
 
-                if first_arg.call_args["piped"] == "direct":
-                    stdin = first_arg.process
-                else:
-                    stdin = first_arg.process._pipe_queue
-
+                stdin = first_arg
             else:
                 args.insert(0, first_arg)
 

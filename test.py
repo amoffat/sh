@@ -1856,11 +1856,62 @@ for i in range(10):
         out = python(py.name, _out=log_line)
         self.assertEqual(output, [("hello", i) for i in range(10)])
 
+    def test_unchecked_producer_failure(self):
+        from sh import ErrorReturnCode_2
 
+        producer = create_tmp_test("""
+import sys
+for i in range(10):
+    print(i)
+sys.exit(2)
+""")
 
+        consumer = create_tmp_test("""
+import sys
+for line in sys.stdin:
+    pass
+""")
 
+        direct_pipe = python(producer.name, _piped="direct")
 
+        self.assertRaises(ErrorReturnCode_2, python, direct_pipe, consumer.name)
 
+        normal_pipe = python(producer.name, _piped="direct")
+
+        self.assertRaises(ErrorReturnCode_2, python, normal_pipe, consumer.name)
+
+    def test_unchecked_pipeline_failure(self):
+        # similar to test_unchecked_producer_failure, but this
+        # tests a multi-stage pipeline
+
+        from sh import ErrorReturnCode_2
+
+        producer = create_tmp_test("""
+import sys
+for i in range(10):
+    print(i)
+sys.exit(2)
+""")
+
+        middleman = create_tmp_test("""
+import sys
+for line in sys.stdin:
+    print("> " + line)
+""")
+
+        consumer = create_tmp_test("""
+import sys
+for line in sys.stdin:
+    pass
+""")
+
+        producer_direct_pipe = python(producer.name, _piped="direct")
+        middleman_direct_pipe = python(producer_direct_pipe, middleman.name, _piped="direct")
+        self.assertRaises(ErrorReturnCode_2, python, middleman_direct_pipe, consumer.name)
+
+        producer_normal_pipe = python(producer.name, _piped=True)
+        middleman_normal_pipe = python(producer_normal_pipe, middleman.name, _piped=True)
+        self.assertRaises(ErrorReturnCode_2, python, middleman_normal_pipe, consumer.name)
 
 
 class MiscTests(unittest.TestCase):
