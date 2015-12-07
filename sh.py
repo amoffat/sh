@@ -707,6 +707,8 @@ class Command(object):
         "cwd": None,
 
         # the separator delimiting between a long-argument's name and its value
+        # setting this to None will cause name and value to be two separate
+        # arguments, like for short options
         # for example, --arg=derp, '=' is the long_sep
         "long_sep": "=",
 
@@ -856,6 +858,9 @@ output"),
                     processed.append(encode_to_py3bytes_or_py2str("--" + k))
                 elif v is False:
                     pass
+                elif sep is None:
+                    processed.append(encode_to_py3bytes_or_py2str("--" + k))
+                    processed.append(encode_to_py3bytes_or_py2str(v))
                 else:
                     arg = encode_to_py3bytes_or_py2str("--%s%s%s" % (k, sep, v))
                     processed.append(arg)
