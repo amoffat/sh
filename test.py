@@ -1852,7 +1852,7 @@ for i in range(5):
 
 
     def test_pushd(self):
-        """ test that pushd is just a specialized form of sh.args """
+        """ test basic pushd functionality """
         import os
         old_wd = sh.pwd().strip()
 
@@ -1862,6 +1862,48 @@ for i in range(5):
         self.assertNotEqual(old_wd, tempdir)
         self.assertEqual(old_wd, sh.pwd().strip())
         self.assertEqual(new_wd, tempdir)
+
+
+    def test_pushd_glob(self):
+        """ test that pushd works with glob correctly """
+        import sh
+        from sh import mkdir, rm, touch, ls
+
+        child = join(tempdir, 'glob_test_dir')
+        mkdir('-p', child)
+
+        touch(join(tempdir, 'glob-test-root'))
+        touch(join(child, 'glob-test-child'))
+
+        old_wd = os.getcwd()
+        try:
+            os.chdir(tempdir)
+            self.assertEqual('glob-test-root', ls(sh.glob('glob-test-*')).strip())
+
+            with sh.pushd('glob_test_dir'):
+                self.assertEqual('glob-test-child', ls(sh.glob('glob-test-*')).strip())
+
+            self.assertEqual('glob-test-root', ls(sh.glob('glob-test-*')).strip())
+        finally:
+            rm('-r', '-f', 'glob_test_dir')
+            rm('-f', 'glob-test-root')
+            os.chdir(old_wd)
+
+
+    def test_pushd_cd(self):
+        """ test that pushd works like pushd/popd with built-in cd correctly """
+        import sh
+        from sh import mkdir
+
+        child = join(tempdir, 'pushd_cd_test_dir')
+        mkdir('-p', child)
+
+        old_wd = os.getcwd()
+        with sh.pushd(tempdir):
+            self.assertEqual(tempdir, os.getcwd())
+            sh.cd(child)
+            self.assertEqual(child, os.getcwd())
+        self.assertEqual(old_wd, os.getcwd())
 
 
     def test_args_context(self):
