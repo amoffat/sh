@@ -28,7 +28,6 @@ __version__ = "1.11"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
-
 import platform
 
 if "windows" in platform.system().lower():
@@ -2121,10 +2120,13 @@ class StreamBufferer(object):
 
 @contextmanager
 def pushd(path):
-    """ pushd is just a specialized form of args, where we're passing in the
-    current working directory """
-    with args(_cwd=path):
-        yield
+    """ pushd changes the actual working directory for the duration of the
+    context, unlike the _cwd arg this will work with other built-ins such as
+    sh.glob correctly """
+    orig_path = os.getcwd()
+    os.chdir(path)
+    yield
+    os.chdir(orig_path)
 
 
 @contextmanager
