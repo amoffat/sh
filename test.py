@@ -4,8 +4,8 @@ import os
 from os.path import exists, join, realpath
 import unittest
 import tempfile
+import sh as _sh # importing under another name to avoid skewing tests
 import sys
-import sh
 import platform
 from functools import wraps
 
@@ -14,12 +14,16 @@ from functools import wraps
 tempdir = realpath(tempfile.gettempdir())
 IS_OSX = platform.system() == "Darwin"
 IS_PY3 = sys.version_info[0] == 3
+
 if IS_PY3:
     unicode = str
-    python = sh.Command(sh.which("python%d.%d" % sys.version_info[:2]))
+    from io import StringIO
+    from io import BytesIO as cStringIO
+    python = _sh.Command(_sh.which("python%d.%d" % sys.version_info[:2]))
 else:
-    from sh import python
-
+    from StringIO import StringIO
+    from cStringIO import StringIO as cStringIO
+    python = _sh.python
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -38,7 +42,7 @@ if not skipUnless:
         return wrapper
 
 requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
-requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
+requires_utf8 = skipUnless(_sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
 
 
 def create_tmp_test(code, prefix="tmp", delete=True):
@@ -59,7 +63,6 @@ def create_tmp_test(code, prefix="tmp", delete=True):
 
 @requires_posix
 class FunctionalTests(unittest.TestCase):
-
     def test_print_command(self):
         from sh import ls, which
         actual_location = which("ls")
@@ -393,6 +396,7 @@ print(sh.HERP + " " + str(len(os.environ)))
                 h.write(bunk_header)
             os.chmod(gcc_file2, int(0o755))
 
+            import sh
             from sh import gcc
             if IS_PY3:
                 self.assertEqual(gcc._path,
@@ -932,6 +936,7 @@ for i in range(5):
                 process.terminate()
                 return True
 
+        import sh
         caught_signal = False
         try:
             p = python(py.name, _out=agg, u=True, _bg=True)
@@ -948,7 +953,6 @@ for i in range(5):
 
     def test_stdout_callback_kill(self):
         import signal
-        import sh
 
         py = create_tmp_test("""
 import sys
@@ -968,6 +972,7 @@ for i in range(5):
                 process.kill()
                 return True
 
+        import sh
         caught_signal = False
         try:
             p = python(py.name, _out=agg, u=True, _bg=True)
@@ -1217,13 +1222,6 @@ else:
 
     def test_stringio_output(self):
         from sh import echo
-        if IS_PY3:
-            from io import StringIO
-            from io import BytesIO as cStringIO
-        else:
-            from StringIO import StringIO
-            from cStringIO import StringIO as cStringIO
-
         out = StringIO()
         echo("-n", "testing 123", _out=out)
         self.assertEqual(out.getvalue(), "testing 123")
@@ -1235,14 +1233,6 @@ else:
 
     def test_stringio_input(self):
         from sh import cat
-
-        if IS_PY3:
-            from io import StringIO
-            from io import BytesIO as cStringIO
-        else:
-            from StringIO import StringIO
-            from cStringIO import StringIO as cStringIO
-
         input = StringIO()
         input.write("herpderp")
         input.seek(0)
@@ -1317,7 +1307,7 @@ sys.stdin.read(1)
 
 
     def test_timeout(self):
-        from sh import sleep
+        import sh
         from time import time
 
         # check that a normal sleep is more or less how long the whole process
@@ -1499,24 +1489,6 @@ else:
         self.assertEqual(p, "test")
 
 
-    def test_shared_secial_args(self):
-        import sh
-
-        if IS_PY3:
-            from io import StringIO
-            from io import BytesIO as cStringIO
-        else:
-            from StringIO import StringIO
-            from cStringIO import StringIO as cStringIO
-
-        out1 = sh.ls('.')
-        out2 = StringIO()
-        sh_new = sh(_out=out2)
-        sh_new.ls('.')
-        self.assertEqual(out1, out2.getvalue())
-        out2.close()
-
-
     def test_signal_exception(self):
         from sh import SignalException_15
 
@@ -1589,7 +1561,7 @@ for i in range(5):
 
     def test_pushd(self):
         """ test that pushd is just a specialized form of sh.args """
-        import os
+        import os, sh
         old_wd = os.getcwd()
         with sh.pushd(tempdir):
             new_wd = sh.pwd().strip()
@@ -1602,7 +1574,7 @@ for i in range(5):
     def test_args_context(self):
         """ test that we can use the args with-context to temporarily override
         command settings """
-        import os
+        import os, sh
 
         old_wd = os.getcwd()
         with sh.args(_cwd=tempdir):
@@ -1950,6 +1922,99 @@ class StreamBuffererTests(unittest.TestCase):
         self.assertEqual(b.process(b"\nthree\n"), [b"e\ntwo\nthre"])
         self.assertEqual(b.flush(), b"e\n")
 
+
+@requires_posix
+class CustomizingDefaultsTests(unittest.TestCase):
+    def test_defaults(self):
+        import sh
+        out = StringIO()
+        _sh = sh(_out=out)
+        _sh.echo('-n', 'TEST')
+        self.assertEqual('TEST', out.getvalue())
+
+    def test_defaults_with_import_from_after(self):
+        import sh
+        out = StringIO()
+        _sh = sh(_out=out)
+        from _sh import echo
+        echo('-n', 'TEST')
+        self.assertEqual('TEST', out.getvalue())
+
+        out.seek(0); out.truncate(0)  # Emptying the StringIO
+
+        sh.echo('-n', 'KO')
+        self.assertEqual('', out.getvalue())
+
+    def test_defaults_with_import_from_before(self):
+        import sh
+        out = StringIO()
+        from sh import echo
+        _sh = sh(_out=out)
+        echo('-n', 'TEST')
+        self.assertEqual('', out.getvalue())
+
+    def test_defaults_imported_as_sh(self):
+        import sh
+        out = StringIO()
+        sh = sh(_out=out)  # this is forbidden
+        from sh import echo  # hence this import the default 'echo'
+        echo('-n', 'TEST')
+        self.assertEqual('', out.getvalue())
+
+    def test_defaults_not_set_in_other_modules(self):
+        import sh
+        out = StringIO()
+        _sh = sh(_out=out)
+        from _sh import echo
+        from test_module_that_import_echo import echo
+        echo('-n', 'TEST')
+        self.assertEqual('', out.getvalue())
+
+    def test_defaults_set_in_parent_function(self):
+        import sh
+        out = StringIO()
+        _sh = sh(_out=out)
+        def nested1():
+            _sh.echo('-n', 'TEST1')
+        def nested2():
+            import sh
+            sh.echo('-n', 'TEST2')
+        nested1()
+        nested2()
+        self.assertEqual('TEST1', out.getvalue())
+
+    def test_defaults_with_reimport(self):
+        import sh
+        out = StringIO()
+        _sh = sh(_out=out)
+        import _sh  # this reimport '_sh' from the eponymous local variable
+        _sh.echo('-n', 'TEST')
+        self.assertEqual('TEST', out.getvalue())
+
+    def test_module_importer_from_variables_ok(self):
+        # Import from module in global scope
+        from _sh import echo
+        # Import from local module
+        _ = _sh
+        from _ import python
+
+    def test_module_importer_from_variables_ko(self):
+        def unallowed_import():
+            _os = os
+            from _os import path
+        self.assertRaises(ImportError, unallowed_import)
+
+    def test_defaults_with_global_module(self):
+        global _sh
+        old_sh = _sh
+        try:
+            out = StringIO()
+            _sh = _sh(_out=out)
+            from _sh import echo
+            echo('-n', 'TEST')
+            self.assertEqual('TEST', out.getvalue())
+        finally:
+            _sh = old_sh
 
 
 if __name__ == "__main__":
