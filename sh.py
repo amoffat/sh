@@ -49,6 +49,7 @@ from types import ModuleType
 from functools import partial
 import inspect
 from contextlib import contextmanager
+import errno
 
 from locale import getpreferredencoding
 DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
@@ -1598,7 +1599,16 @@ class OProc(object):
 
             if self.exit_code is None:
                 self.log.debug("exit code not set, waiting on pid")
-                pid, exit_code = os.waitpid(self.pid, 0) # blocks
+                while True:
+                    try:
+                        pid, exit_code = os.waitpid(self.pid, 0) # blocks
+                    except OSError as e:
+                        if e.errno == errno.EINTR:
+                            continue
+                        else:
+                            raise
+                    else:
+                        break
                 self.exit_code = handle_process_exit_code(exit_code)
             else:
                 self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
