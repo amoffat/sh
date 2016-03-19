@@ -12,6 +12,7 @@ print ifconfig("eth0")
 ```
 
 sh is not a collection of system commands implemented in Python.
+sh is an interface which works only for Linux and OSX machines.
 
 # Installation
 
