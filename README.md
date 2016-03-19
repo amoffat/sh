@@ -3,7 +3,7 @@
 [![Version](https://img.shields.io/pypi/v/sh.svg)](https://pypi.python.org/pypi/sh) [![Downloads](https://img.shields.io/pypi/dd/sh.svg)](https://pypi.python.org/pypi/sh)
 
 sh (previously [pbs](http://pypi.python.org/pypi/pbs)) is a full-fledged
-subprocess replacement for Python 2.6 - 3.4 on Linux and OSX machines,
+subprocess replacement for Python 2.6 - 3.4
 that allows you to call any program as if it were a function:
 
 ```python
@@ -12,6 +12,7 @@ print ifconfig("eth0")
 ```
 
 sh is not a collection of system commands implemented in Python.
+sh is an interface which works only for Linux and OSX machines.
 
 # Installation
 
