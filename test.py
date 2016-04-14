@@ -1515,6 +1515,7 @@ else:
 
     def test_stringio_output(self):
         from sh import echo
+
         out = StringIO()
         echo("-n", "testing 123", _out=out)
         self.assertEqual(out.getvalue(), "testing 123")
@@ -1526,6 +1527,7 @@ else:
 
     def test_stringio_input(self):
         from sh import cat
+
         input = StringIO()
         input.write("herpderp")
         input.seek(0)
