@@ -17,9 +17,12 @@ IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
     unicode = str
     python = sh.Command(sh.which("python%d.%d" % sys.version_info[:2]))
+    from io import StringIO
+    from io import BytesIO as cStringIO
 else:
     from sh import python
-
+    from StringIO import StringIO
+    from cStringIO import StringIO as cStringIO
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -1217,12 +1220,6 @@ else:
 
     def test_stringio_output(self):
         from sh import echo
-        if IS_PY3:
-            from io import StringIO
-            from io import BytesIO as cStringIO
-        else:
-            from StringIO import StringIO
-            from cStringIO import StringIO as cStringIO
 
         out = StringIO()
         echo("-n", "testing 123", _out=out)
@@ -1235,13 +1232,6 @@ else:
 
     def test_stringio_input(self):
         from sh import cat
-
-        if IS_PY3:
-            from io import StringIO
-            from io import BytesIO as cStringIO
-        else:
-            from StringIO import StringIO
-            from cStringIO import StringIO as cStringIO
 
         input = StringIO()
         input.write("herpderp")
@@ -1501,13 +1491,6 @@ else:
 
     def test_shared_secial_args(self):
         import sh
-
-        if IS_PY3:
-            from io import StringIO
-            from io import BytesIO as cStringIO
-        else:
-            from StringIO import StringIO
-            from cStringIO import StringIO as cStringIO
 
         out1 = sh.ls('.')
         out2 = StringIO()
