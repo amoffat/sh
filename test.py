@@ -4,6 +4,8 @@ import os
 from os.path import exists, join, realpath
 import unittest
 import tempfile
+import fnmatch
+import logging
 import sys
 import sh
 import platform
@@ -17,8 +19,26 @@ IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
     unicode = str
     python = sh.Command(sh.which("python%d.%d" % sys.version_info[:2]))
+    from io import StringIO
+    from io import BytesIO as cStringIO
 else:
     from sh import python
+    from StringIO import StringIO
+    from cStringIO import StringIO as cStringIO
+
+
+if hasattr(logging, 'NullHandler'):
+    NullHandler = logging.NullHandler
+else:
+    class NullHandler(logging.Handler):
+        def handle(self, record):
+            pass
+
+        def emit(self, record):
+            pass
+
+        def createLock(self):
+            self.lock = None
 
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -1217,12 +1237,6 @@ else:
 
     def test_stringio_output(self):
         from sh import echo
-        if IS_PY3:
-            from io import StringIO
-            from io import BytesIO as cStringIO
-        else:
-            from StringIO import StringIO
-            from cStringIO import StringIO as cStringIO
 
         out = StringIO()
         echo("-n", "testing 123", _out=out)
@@ -1235,13 +1249,6 @@ else:
 
     def test_stringio_input(self):
         from sh import cat
-
-        if IS_PY3:
-            from io import StringIO
-            from io import BytesIO as cStringIO
-        else:
-            from StringIO import StringIO
-            from cStringIO import StringIO as cStringIO
 
         input = StringIO()
         input.write("herpderp")
@@ -1501,13 +1508,6 @@ else:
 
     def test_shared_secial_args(self):
         import sh
-
-        if IS_PY3:
-            from io import StringIO
-            from io import BytesIO as cStringIO
-        else:
-            from StringIO import StringIO
-            from cStringIO import StringIO as cStringIO
 
         out1 = sh.ls('.')
         out2 = StringIO()
@@ -1923,6 +1923,31 @@ print("字")
 
         self.assertEqual(sig, SignalException_SIGQUIT)
 
+    def test_change_log_message(self):
+        py = create_tmp_test("""
+print("cool")
+""")
+        def log_msg(cmd, call_args):
+            return 'Hi! I ran <COMMAND %s>' % (cmd,)
+
+        buf     = StringIO()
+        handler = logging.StreamHandler(buf)
+        logger  = logging.getLogger('sh')
+        try:
+            logger.addHandler(handler)
+            with sh.args(log_msg=log_msg):
+                python(py.name, "meow", "bark")
+        finally:
+            logger.removeHandler(handler)
+
+        loglines = buf.getvalue().split('\n')
+        self.assertTrue(loglines, 'Log handler captured no messages?')
+        self.assertTrue(
+            fnmatch.fnmatch(loglines[0],
+                'Hi! I ran <COMMAND *python* meow bark>: starting process'),
+
+            'Log line did not match: %r' % (loglines[0],))
+
 
 class StreamBuffererTests(unittest.TestCase):
     def test_unbuffered(self):
@@ -1953,6 +1978,10 @@ class StreamBuffererTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+    root.addHandler(NullHandler())
+
     # if we're running a specific test, we can let unittest framework figure out
     # that test and run it itself.  it will also handle setting the return code
     # of the process if any tests error or fail

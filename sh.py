@@ -397,6 +397,17 @@ def friendly_truncate(s, max_len):
     return s
 
 
+def default_logger_str(cmd, call_args):
+    friendly_cmd = friendly_truncate(cmd, 20)
+    friendly_call_args = friendly_truncate(str(call_args), 20)
+
+    # we're setting up the logger string here, instead of __repr__ because
+    # we reserve __repr__ to behave as if it was evaluating the child
+    # process's output
+    return "<Command %r call_args %s>" % (friendly_cmd, friendly_call_args)
+
+
+
 class RunningCommand(object):
     """ this represents an executing Command object.  it is returned as the
     result of __call__() being executed on a Command instance.  this creates a
@@ -420,17 +431,10 @@ class RunningCommand(object):
         else:
             self.ran = " ".join(cmd)
 
-
-        friendly_cmd = friendly_truncate(self.ran, 20)
-        friendly_call_args = friendly_truncate(str(call_args), 20)
-
-        # we're setting up the logger string here, instead of __repr__ because
-        # we reserve __repr__ to behave as if it was evaluating the child
-        # process's output
-        logger_str = "<Command %r call_args %s>" % (friendly_cmd,
-                friendly_call_args)
-
+        log_msg_cmd = call_args.get('log_msg') or default_logger_str
+        logger_str = log_msg_cmd(self.ran, call_args)
         self.log = Logger("command", logger_str)
+
         self.call_args = call_args
         self.cmd = cmd
 
@@ -745,6 +749,10 @@ class Command(object):
         # a tuple (rows, columns) of the desired size of both the stdout and
         # stdin ttys, if ttys are being used
         "tty_size": (20, 80),
+
+        # a callable that produces a log message from an argument tuple of the
+        # command and the args
+        "log_msg": None
     }
 
     # these are arguments that cannot be called together, because they wouldn't
