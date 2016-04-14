@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   added `_log_msg` for advanced configuration of log message [#311](https://github.com/amoffat/sh/pull/311)
 *   added `sh.contrib.sudo`
 *   added `_arg_preprocess` for advanced command wrapping
 *   alter callable `_in` arguments to signify completion with falsy chunk

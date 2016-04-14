@@ -33,6 +33,9 @@ if not is_crappy_python:
 from os.path import exists, join, realpath, dirname, split
 import unittest
 import tempfile
+import fnmatch
+import logging
+import sys
 import sh
 import signal
 import errno
@@ -92,6 +95,20 @@ THIS_DIR = dirname(os.path.abspath(__file__))
 baked_env = os.environ.copy()
 append_module_path(baked_env, sh)
 python = python.bake(_env=baked_env)
+
+
+if hasattr(logging, 'NullHandler'):
+    NullHandler = logging.NullHandler
+else:
+    class NullHandler(logging.Handler):
+        def handle(self, record):
+            pass
+
+        def emit(self, record):
+            pass
+
+        def createLock(self):
+            self.lock = None
 
 
 skipUnless = getattr(unittest, "skipUnless", None)
@@ -2470,6 +2487,30 @@ print("字")
         self.assertEqual(sig, SignalException_SIGQUIT)
 
 
+    def test_change_log_message(self):
+        py = create_tmp_test("""
+print("cool")
+""")
+
+        def log_msg(cmd, call_args, pid=None):
+            return "Hi! I ran something"
+
+        buf = StringIO()
+        handler = logging.StreamHandler(buf)
+        logger = logging.getLogger("sh")
+        logger.setLevel(logging.INFO)
+
+        try:
+            logger.addHandler(handler)
+            python(py.name, "meow", "bark", _log_msg=log_msg)
+        finally:
+            logger.removeHandler(handler)
+
+        loglines = buf.getvalue().split("\n")
+        self.assertTrue(loglines, "Log handler captured no messages?")
+        self.assertTrue(loglines[0].startswith("Hi! I ran something"))
+
+
     # https://github.com/amoffat/sh/issues/273
     def test_stop_iteration_doesnt_block(self):
         """ proves that calling calling next() on a stopped iterator doesn't
@@ -2648,6 +2689,10 @@ class ExecutionContextTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+    root.addHandler(NullHandler())
+
     try:
         # if we're running a specific test, we can let unittest framework figure out
         # that test and run it itself.  it will also handle setting the return code

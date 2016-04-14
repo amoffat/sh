@@ -512,6 +512,15 @@ def friendly_truncate(s, max_len):
     return s
 
 
+def default_logger_str(cmd, call_args, pid=None):
+    if pid:
+        s = "<Command %r, pid %d>" % (cmd, pid)
+    else:
+        s = "<Command %r>" % cmd
+    return s
+
+
+
 class RunningCommand(object):
     """ this represents an executing Command object.  it is returned as the
     result of __call__() being executed on a Command instance.  this creates a
@@ -610,11 +619,10 @@ class RunningCommand(object):
         # process, and that's if we're using a with-context with our command
         self._spawned_and_waited = False
         if spawn_process:
-            # we're setting up the logger string here, instead of __repr__ because
-            # we reserve __repr__ to behave as if it was evaluating the child
-            # process's output
-            logger_str = "<Command %r>" % self.ran
+            log_str_factory = call_args["log_msg"]
+            logger_str = log_str_factory(self.ran, call_args)
             self.log = Logger("command", logger_str)
+
             self.log.info("starting process")
 
             if should_wait:
@@ -623,7 +631,7 @@ class RunningCommand(object):
             self.process = OProc(self, self.log, cmd, stdin, stdout, stderr,
                     self.call_args, pipe)
 
-            logger_str = "<Command %r, pid %d>" % (self.ran, self.process.pid)
+            logger_str = log_str_factory(self.ran, call_args, self.process.pid)
             self.log.set_context(logger_str)
             self.log.info("process started")
 
@@ -925,6 +933,10 @@ class Command(object):
         # pre-process args passed into __call__.  only really useful when used
         # in .bake()
         "arg_preprocess": None,
+
+        # a callable that produces a log message from an argument tuple of the
+        # command and the args
+        "log_msg": default_logger_str,
     }
 
     # these are arguments that cannot be called together, because they wouldn't
