@@ -3,8 +3,10 @@ import os
 import sys
 import sh
 
-try: from distutils.core import setup
-except ImportError: from setuptools import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 
 setup(

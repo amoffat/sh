@@ -15,7 +15,9 @@ env:
     - LC_ALL=C
     - LC_ALL=en_US.UTF-8
 
-before_script: pip install coverage coveralls
+before_script:
+    - if [[ $TRAVIS_PYTHON_VERSION == 3.2 ]]; then pip install 'coverage<4'; fi
+    - pip install coverage coveralls
 
 script:
     - coverage run --source sh test.py
