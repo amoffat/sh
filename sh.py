@@ -2031,15 +2031,6 @@ class StreamBufferer(object):
         self._buffering_lock.acquire()
         self.log.debug("got buffering lock to process chunk (buffering: %d)", self.type)
         try:
-            # we've encountered binary, permanently switch to N size buffering
-            # since matching on newline doesn't make sense anymore
-            if self.type == 1:
-                try:
-                    chunk.decode(self.encoding, self.decode_errors)
-                except:
-                    self.log.debug("detected binary data, changing buffering")
-                    self.change_buffering(1024)
-
             # unbuffered
             if self.type == 0:
                 if self._use_up_buffer_first:
