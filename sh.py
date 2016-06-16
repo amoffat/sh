@@ -2052,34 +2052,26 @@ class StreamBufferer(object):
                 return [chunk]
 
             # line buffered
-            # we must decode the bytes before we try to match on newline
             elif self.type == 1:
                 total_to_write = []
-                chunk = chunk.decode(self.encoding, self.decode_errors)
+                nl = "\n".encode(self.encoding)
                 while True:
-                    newline = chunk.find("\n")
+                    newline = chunk.find(nl)
                     if newline == -1:
                         break
 
                     chunk_to_write = chunk[:newline + 1]
                     if self.buffer:
-                        # this is ugly, but it's designed to take the existing
-                        # bytes buffer, join it together, tack on our latest
-                        # chunk, then convert the whole thing to a string.
-                        # it's necessary, i'm sure.  read the whole block to
-                        # see why.
-                        chunk_to_write = "".encode(self.encoding).join(self.buffer) \
-                            + chunk_to_write.encode(self.encoding)
-                        chunk_to_write = chunk_to_write.decode(self.encoding)
+                        chunk_to_write = b"".join(self.buffer) + chunk_to_write
 
                         self.buffer = []
                         self.n_buffer_count = 0
 
                     chunk = chunk[newline + 1:]
-                    total_to_write.append(chunk_to_write.encode(self.encoding))
+                    total_to_write.append(chunk_to_write)
 
                 if chunk:
-                    self.buffer.append(chunk.encode(self.encoding))
+                    self.buffer.append(chunk)
                     self.n_buffer_count += len(chunk)
                 return total_to_write
 
