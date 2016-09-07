@@ -674,6 +674,7 @@ class Command(object):
         # ignore SIGHUP and do not automatically exit when the parent process
         # ends
         "bg": False,
+        "append": False, # append to output file
 
         "with": False, # prepend the command to every command after it
         "in": None,
@@ -1010,12 +1011,12 @@ If you're using glob.glob(), please use sh.glob() instead." % self._path, stackl
         # stdout redirection
         stdout = call_args["out"]
         if output_redirect_is_filename(stdout):
-            stdout = open(str(stdout), "wb")
+            stdout = open(str(stdout), "awb" if call_args["append"] else "wb")
 
         # stderr redirection
         stderr = call_args["err"]
         if output_redirect_is_filename(stderr):
-            stderr = open(str(stderr), "wb")
+            stderr = open(str(stderr), "awb" if call_args["append"] else "wb")
 
 
         return RunningCommand(cmd, call_args, stdin, stdout, stderr)
