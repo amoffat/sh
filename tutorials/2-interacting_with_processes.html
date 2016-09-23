@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Tutorial 2: Entering an SSH password &mdash; sh 1.11 documentation</title>
+    <title>Tutorial 2: Entering an SSH password &#8212; sh 1.11 documentation</title>
     
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -36,7 +36,7 @@
         <li class="right" >
           <a href="1-real_time_output.html" title="Tutorial 1: Tailing a real-time log file"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">sh 1.11 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">sh 1.11 documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -53,21 +53,21 @@ SSH is notoriously difficult.  It is recommended that you just <code class="docu
 to copy your public key to the server so you don&#8217;t need to enter your password,
 but for the purposes of this demonstration, we try to enter a password.</p>
 <p>To interact with a process, we need to assign a callback to STDOUT.  See
-<a class="reference internal" href="1-real_time_output.html#tutorial1"><span>Tutorial 1: Tailing a real-time log file</span></a> for in-depth explanation of callbacks.  Unlike Tutorial 1,
+<a class="reference internal" href="1-real_time_output.html#tutorial1"><span class="std std-ref">Tutorial 1: Tailing a real-time log file</span></a> for in-depth explanation of callbacks.  Unlike Tutorial 1,
 this callback
 will take 2 arguments: the STDOUT chunk
 and a STDIN <a class="reference external" href="http://docs.python.org/library/queue.html#queue-objects">Queue</a>
 object that we will <code class="docutils literal"><span class="pre">.put()</span></code> input on to send back to the process.</p>
 <p>Here&#8217;s our first attempt:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="k">import</span> <span class="n">ssh</span>
 
 <span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
     <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&quot;password:&quot;</span><span class="p">):</span>
-        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password:&quot;</span><span class="p">):</span>
+        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
 
-<span class="n">p</span> <span class="o">=</span> <span class="n">ssh</span><span class="p">(</span><span class="s">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">)</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -76,62 +76,62 @@ nothing is printed.  The problem has to do with STDOUT buffering.  By default,
 sh line-buffers STDOUT, which means that <code class="docutils literal"><span class="pre">ssh_interact</span></code> will only receive output when
 sh encounters a newline in the output.  This is a problem because the password
 prompt has no newline:</p>
-<div class="highlight-python"><div class="highlight"><pre>amoffat@10.10.10.100&#39;s password:
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">amoffat</span><span class="nd">@10</span><span class="o">.</span><span class="mf">10.10</span><span class="o">.</span><span class="mi">100</span><span class="s1">&#39;s password:</span>
 </pre></div>
 </div>
 <p>Because a newline is never encountered, nothing is sent to <code class="docutils literal"><span class="pre">ssh_interact</span></code>.
 So we need to change
 the STDOUT buffering.  We do this with the <code class="docutils literal"><span class="pre">_out_bufsize</span></code>
-<a class="reference internal" href="../special_arguments.html#special-arguments"><span>special keyword argument</span></a>.  We&#8217;ll set it to 0 for
+<a class="reference internal" href="../special_arguments.html#special-arguments"><span class="std std-ref">special keyword argument</span></a>.  We&#8217;ll set it to 0 for
 unbuffered output, so we&#8217;ll receive each character as the process writes it
-(also see <a class="reference internal" href="../index.html#buffer-sizes"><span>Buffer sizes</span></a>):</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
+(also see <a class="reference internal" href="../index.html#buffer-sizes"><span class="std std-ref">Buffer sizes</span></a>):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="k">import</span> <span class="n">ssh</span>
 
 <span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
     <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&quot;password:&quot;</span><span class="p">):</span>
-        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password:&quot;</span><span class="p">):</span>
+        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
 
-<span class="n">p</span> <span class="o">=</span> <span class="n">ssh</span><span class="p">(</span><span class="s">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>If you run this updated version, you&#8217;ll notice a new problem.  The output looks
 like this:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="s">&#39;a&#39;</span>
-<span class="s">&#39;m&#39;</span>
-<span class="s">&#39;o&#39;</span>
-<span class="s">&#39;f&#39;</span>
-<span class="s">&#39;f&#39;</span>
-<span class="s">&#39;a&#39;</span>
-<span class="s">&#39;t&#39;</span>
-<span class="s">&#39;@&#39;</span>
-<span class="s">&#39;1&#39;</span>
-<span class="s">&#39;0&#39;</span>
-<span class="s">&#39;.&#39;</span>
-<span class="s">&#39;1&#39;</span>
-<span class="s">&#39;0&#39;</span>
-<span class="s">&#39;.&#39;</span>
-<span class="s">&#39;1&#39;</span>
-<span class="s">&#39;0&#39;</span>
-<span class="s">&#39;.&#39;</span>
-<span class="s">&#39;1&#39;</span>
-<span class="s">&#39;0&#39;</span>
-<span class="s">&#39;0&#39;</span>
-<span class="s">&quot;&#39;&quot;</span>
-<span class="s">&#39;s&#39;</span>
-<span class="s">&#39; &#39;</span>
-<span class="s">&#39;p&#39;</span>
-<span class="s">&#39;a&#39;</span>
-<span class="s">&#39;s&#39;</span>
-<span class="s">&#39;s&#39;</span>
-<span class="s">&#39;w&#39;</span>
-<span class="s">&#39;o&#39;</span>
-<span class="s">&#39;r&#39;</span>
-<span class="s">&#39;d&#39;</span>
-<span class="s">&#39;:&#39;</span>
-<span class="s">&#39; &#39;</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="s1">&#39;a&#39;</span>
+<span class="s1">&#39;m&#39;</span>
+<span class="s1">&#39;o&#39;</span>
+<span class="s1">&#39;f&#39;</span>
+<span class="s1">&#39;f&#39;</span>
+<span class="s1">&#39;a&#39;</span>
+<span class="s1">&#39;t&#39;</span>
+<span class="s1">&#39;@&#39;</span>
+<span class="s1">&#39;1&#39;</span>
+<span class="s1">&#39;0&#39;</span>
+<span class="s1">&#39;.&#39;</span>
+<span class="s1">&#39;1&#39;</span>
+<span class="s1">&#39;0&#39;</span>
+<span class="s1">&#39;.&#39;</span>
+<span class="s1">&#39;1&#39;</span>
+<span class="s1">&#39;0&#39;</span>
+<span class="s1">&#39;.&#39;</span>
+<span class="s1">&#39;1&#39;</span>
+<span class="s1">&#39;0&#39;</span>
+<span class="s1">&#39;0&#39;</span>
+<span class="s2">&quot;&#39;&quot;</span>
+<span class="s1">&#39;s&#39;</span>
+<span class="s1">&#39; &#39;</span>
+<span class="s1">&#39;p&#39;</span>
+<span class="s1">&#39;a&#39;</span>
+<span class="s1">&#39;s&#39;</span>
+<span class="s1">&#39;s&#39;</span>
+<span class="s1">&#39;w&#39;</span>
+<span class="s1">&#39;o&#39;</span>
+<span class="s1">&#39;r&#39;</span>
+<span class="s1">&#39;d&#39;</span>
+<span class="s1">&#39;:&#39;</span>
+<span class="s1">&#39; &#39;</span>
 </pre></div>
 </div>
 <p>This is because the chunks of STDOUT our callback is receiving are unbuffered,
@@ -142,21 +142,21 @@ that SSH is ready for input.
 It would make sense to encapsulate the
 variable we&#8217;ll use for aggregating into some kind of closure or class, but to keep it simple,
 we&#8217;ll just use a global:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="k">import</span> <span class="n">ssh</span>
 <span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span>
 
-<span class="c"># open stdout in unbuffered mode</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="s">&quot;wb&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="c1"># open stdout in unbuffered mode</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="s2">&quot;wb&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
-<span class="n">aggregated</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+<span class="n">aggregated</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 <span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
     <span class="k">global</span> <span class="n">aggregated</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">char</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
     <span class="n">aggregated</span> <span class="o">+=</span> <span class="n">char</span>
-    <span class="k">if</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&quot;password: &quot;</span><span class="p">):</span>
-        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password: &quot;</span><span class="p">):</span>
+        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
 
-<span class="n">p</span> <span class="o">=</span> <span class="n">ssh</span><span class="p">(</span><span class="s">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -168,30 +168,30 @@ receive it, without adding a newline, and without us needing to <code class="doc
 The first is that your password must end with a newline, as if you had typed
 it and hit the return key.  This is because SSH has no idea how long your
 password is, and is line-buffering STDIN.  The second problem lies
-deeper in SSH.  Long story short, SSH needs a <a class="reference internal" href="../index.html#ttys"><span>TTY</span></a> attached
+deeper in SSH.  Long story short, SSH needs a <a class="reference internal" href="../index.html#ttys"><span class="std std-ref">TTY</span></a> attached
 to its STDIN in order to work properly.  This &#8220;tricks&#8221; SSH into believing that
 it is interacting with a real user in a real terminal session.
-To enable TTY, we can add the <code class="docutils literal"><span class="pre">_tty_in</span></code> <a class="reference internal" href="../special_arguments.html#special-arguments"><span>special keyword argument</span></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
+To enable TTY, we can add the <code class="docutils literal"><span class="pre">_tty_in</span></code> <a class="reference internal" href="../special_arguments.html#special-arguments"><span class="std std-ref">special keyword argument</span></a>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="k">import</span> <span class="n">ssh</span>
 <span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">sys</span>
 
-<span class="c"># open stdout in unbuffered mode</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="s">&quot;wb&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="c1"># open stdout in unbuffered mode</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="s2">&quot;wb&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
-<span class="n">aggregated</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+<span class="n">aggregated</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 <span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
     <span class="k">global</span> <span class="n">aggregated</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">char</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
     <span class="n">aggregated</span> <span class="o">+=</span> <span class="n">char</span>
-    <span class="k">if</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&quot;password: &quot;</span><span class="p">):</span>
-        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s">&quot;correcthorsebatterystaple</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password: &quot;</span><span class="p">):</span>
+        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="n">p</span> <span class="o">=</span> <span class="n">ssh</span><span class="p">(</span><span class="s">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_tty_in</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_tty_in</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Voilà our remote login script works!:</p>
-<div class="highlight-python"><div class="highlight"><pre>amoffat@10.10.10.100&#39;s password:
+<div class="highlight-default"><div class="highlight"><pre><span></span>amoffat@10.10.10.100&#39;s password:
 Linux 10.10.10.100 testhost #1 SMP Tue Jun 21 10:29:24 EDT 2011 i686 GNU/Linux
 Ubuntu 10.04.2 LTS
 
@@ -223,33 +223,33 @@ simplifies things greatly for sh.</p>
 <p>The second thing we want to do is use SSH&#8217;s ability to pass a command to run
 to the server you&#8217;re SSHing to.  Here&#8217;s how you can run <code class="docutils literal"><span class="pre">ifconfig</span></code> on a server
 without having to use that server&#8217;s shell:</p>
-<div class="highlight-python"><div class="highlight"><pre>ssh amoffat@10.10.10.100 ifconfig
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">ssh</span> <span class="n">amoffat</span><span class="nd">@10</span><span class="o">.</span><span class="mf">10.10</span><span class="o">.</span><span class="mi">100</span> <span class="n">ifconfig</span>
 </pre></div>
 </div>
 <p>Translating this to sh, it becomes:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
-<span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="p">(</span><span class="s">&quot;amoffat@10.10.10.100&quot;</span><span class="p">,</span> <span class="s">&quot;ifconfig&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">,</span> <span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>However there is more room for improvement.  We can take advantage of sh&#8217;s
-<a class="reference internal" href="../index.html#baking"><span>Baking</span></a> to bind our server username/ip to a command object:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
+<a class="reference internal" href="../index.html#baking"><span class="std std-ref">Baking</span></a> to bind our server username/ip to a command object:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
-<span class="n">my_server</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s">&quot;amoffat@10.10.10.100&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s">&quot;ifconfig&quot;</span><span class="p">))</span>
-<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s">&quot;whoami&quot;</span><span class="p">))</span>
+<span class="n">my_server</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;whoami&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Now we have a reusable command object that we can use to call remote commands.
 But there is room for one more improvement.  We can also use sh&#8217;s
-<a class="reference internal" href="../index.html#subcommands"><span>Sub-commands</span></a> feature which expands attribute access into command
+<a class="reference internal" href="../index.html#subcommands"><span class="std std-ref">Sub-commands</span></a> feature which expands attribute access into command
 arguments:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
-<span class="n">my_server</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s">&quot;amoffat@10.10.10.100&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">ifconfig</span><span class="p">())</span>
-<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">whoami</span><span class="p">())</span>
+<span class="n">my_server</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">ifconfig</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">whoami</span><span class="p">())</span>
 </pre></div>
 </div>
 <p>The above example is the same as passing in the arguments explicitly, but it
@@ -260,8 +260,8 @@ looks syntactically cleaner.</p>
 <p>sh (previously <a class="reference external" href="http://pypi.python.org/pypi/pbs">pbs</a>) is a full-fledged
 subprocess interface for Python that
 allows you to call any program as if it were a function:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ifconfig</span>
-<span class="k">print</span><span class="p">(</span><span class="n">ifconfig</span><span class="p">(</span><span class="s">&quot;wlan0&quot;</span><span class="p">))</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="k">import</span> <span class="n">ifconfig</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ifconfig</span><span class="p">(</span><span class="s2">&quot;wlan0&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -299,14 +299,11 @@ allows you to call any program as if it were a function:</p>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -322,12 +319,12 @@ allows you to call any program as if it were a function:</p>
         <li class="right" >
           <a href="1-real_time_output.html" title="Tutorial 1: Tailing a real-time log file"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">sh 1.11 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">sh 1.11 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
-        &copy; Copyright 2013, Andrew Moffat.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+        &#169; Copyright 2013, Andrew Moffat.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.6.
     </div>
   </body>
 </html>
