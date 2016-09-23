@@ -48,7 +48,7 @@ every command, but some may not be used together.
 		
 	_iter
 		May be ``True``, ``"out"``, or ``"err"``.
-		Puts a command in interable mode.  In this mode, you can use a
+		Puts a command in iterable mode.  In this mode, you can use a
 		``for`` or ``while`` loop to iterate over a command's output in
 		real-time.  See :ref:`iterable`.
 		
