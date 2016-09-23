@@ -9,6 +9,7 @@ compose the final output html after being compiled.
 After editing the `.rst` files, run `python compile_docs.py` and pass in the
 sh version number to be embedded in the docs:
 
+    pip install -r requirements-docs.txt
     python compile_docs.py 1.08
     
 Then commit all of the `.html` files, all `.js` and `.css` files,
