@@ -1725,6 +1725,10 @@ def determine_how_to_read_input(input_obj):
         log_msg = "string"
         get_chunk = get_iter_string_reader(input_obj)
 
+    elif isinstance(input_obj, bytes):
+        log_msg = "bytes"
+        get_chunk = get_iter_string_reader(input_obj)
+
     else:
         log_msg = "general iterable"
         get_chunk = get_iter_chunk_reader(iter(input_obj))

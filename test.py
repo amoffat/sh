@@ -640,6 +640,16 @@ if options.opt:
         self.assertTrue(out == "")
 
 
+    def test_binary_input(self):
+        py = create_tmp_test("""
+import sys
+data = sys.stdin.read()
+sys.stdout.write(data)
+""")
+        data = b'1234'
+        out = python(py.name, _in=data)
+        self.assertEqual(out, "1234")
+
 
     def test_err_to_out(self):
         py = create_tmp_test("""
@@ -652,7 +662,7 @@ sys.stderr.write("stderr")
 sys.stderr.flush()
 """)
         stdout = python(py.name, _err_to_out=True)
-        self.assertTrue(stdout == "stdoutstderr")
+        self.assertEqual(stdout, "stdoutstderr")
 
 
     def test_err_piped(self):
