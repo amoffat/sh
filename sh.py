@@ -396,15 +396,18 @@ class Logger(object):
     appended to it via the context, eg: "ls -l /tmp" """
     def __init__(self, name, context=None):
         self.name = name
-        if context:
-            context = context.replace("%", "%%")
-        self.context = context 
         self.log = logging.getLogger("%s.%s" % (SH_LOGGER_NAME, name))
+        self.set_context(context)
 
     def _format_msg(self, msg, *args):
         if self.context:
             msg = "%s: %s" % (self.context, msg)
         return msg % args
+
+    def set_context(self, context):
+        if context:
+            context = context.replace("%", "%%")
+        self.context = context 
 
     def get_child(self, name, context):
         new_name = self.name + "." + name
@@ -455,16 +458,6 @@ class RunningCommand(object):
             self.ran = " ".join(cmd)
 
 
-        friendly_cmd = friendly_truncate(self.ran, 20)
-        friendly_call_args = friendly_truncate(str(call_args), 20)
-
-        # we're setting up the logger string here, instead of __repr__ because
-        # we reserve __repr__ to behave as if it was evaluating the child
-        # process's output
-        logger_str = "<Command %r call_args %s>" % (friendly_cmd,
-                friendly_call_args)
-
-        self.log = Logger("command", logger_str)
         self.call_args = call_args
         self.cmd = cmd
 
@@ -520,9 +513,19 @@ class RunningCommand(object):
         # there's currently only one case where we wouldn't spawn a child
         # process, and that's if we're using a with-context with our command
         if spawn_process:
+            # we're setting up the logger string here, instead of __repr__ because
+            # we reserve __repr__ to behave as if it was evaluating the child
+            # process's output
+            logger_str = "<Command %r>" % self.ran
+            self.log = Logger("command", logger_str)
             self.log.info("starting process")
+
             self.process = OProc(self.log, cmd, stdin, stdout, stderr,
                     self.call_args, pipe)
+
+            logger_str = "<Command %r, pid %d>" % (self.ran, self.process.pid)
+            self.log.set_context(logger_str)
+            self.log.info("process started")
 
             if should_wait:
                 self.wait()
@@ -541,6 +544,7 @@ class RunningCommand(object):
             else:
                 self.handle_command_exit_code(exit_code)
 
+        self.log.info("process completed")
         return self
 
 
@@ -1415,7 +1419,6 @@ class OProc(object):
                     os.close(self._slave_stderr_fd)
 
             self.log.debug("started process")
-
 
             if self.call_args["tty_in"]:
                 attr = termios.tcgetattr(self._stdin_fd)
