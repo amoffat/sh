@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   Introduced execution contexts which allow baking of common special keyword arguments into all commands [#269](https://github.com/amoffat/sh/issues/269)
 *   `Command` and `which` now can take an optional `paths` parameter which specifies the search paths [#226](https://github.com/amoffat/sh/issues/226)
 *   `_preexec_fn` option for executing a function after the child process forks but before it execs [#260](https://github.com/amoffat/sh/issues/260)
 *   `_fg` reintroduced, with limited functionality.  hurrah! [#92](https://github.com/amoffat/sh/issues/92)
