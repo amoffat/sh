@@ -47,6 +47,7 @@ import time
 from types import ModuleType
 from functools import partial
 import inspect
+import ast
 from contextlib import contextmanager
 
 from locale import getpreferredencoding
@@ -70,7 +71,7 @@ else:
 
 IS_OSX = platform.system() == "Darwin"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
-SH_LOGGER_NAME = "sh"
+SH_LOGGER_NAME = __name__
 
 
 import errno
@@ -147,7 +148,23 @@ def encode_to_py3bytes_or_py2str(s):
     return s
 
 
+
+class ErrorReturnCodeMeta(type):
+    """ a metaclass which provides the ability for an ErrorReturnCode (or
+    derived) instance, imported from one sh module, to be considered the
+    subclass of ErrorReturnCode from another module.  this is mostly necessary
+    in the tests, where we do assertRaises, but the ErrorReturnCode that the
+    program we're testing throws may not be the same class that we pass to
+    assertRaises
+    """
+    def __subclasscheck__(self, o):
+        other_bases = set([b.__name__ for b in o.__bases__])
+        return self.__name__ in other_bases or o.__name__ == self.__name__
+
+
 class ErrorReturnCode(Exception):
+    __metaclass__ = ErrorReturnCodeMeta
+
     """ base class for all exceptions as a result of a command's exit status
     being deemed an error.  this base class is dynamically subclassed into
     derived classes with the format: ErrorReturnCode_NNN where NNN is the exit
@@ -298,7 +315,7 @@ def get_rc_exc(rc_or_sig_name):
         name = "SignalException_%d" % abs(rc)
         base = SignalException
 
-    exc = type(name, (base,), {"exit_code": rc})
+    exc = ErrorReturnCodeMeta(name, (base,), {"exit_code": rc})
     rc_exc_cache[rc] = exc
     return exc
 
@@ -963,7 +980,7 @@ output"),
 
         # aggregate any 'with' contexts
         call_args = Command._call_args.copy()
-        for prepend in self._prepend_stack:
+        for prepend in Command._prepend_stack:
             # don't pass the 'with' call arg
             pcall_args = prepend.call_args.copy()
             try:
@@ -2228,7 +2245,7 @@ class Environment(dict):
     module's scope, we consider it a system program and try to find it.
 
     we use a dict instead of just a regular object as the base class because the
-    exec() statement used in this file requires the "globals" argument to be a
+    exec() statement used in the run_repl requires the "globals" argument to be a
     dictionary """
 
 
@@ -2255,6 +2272,13 @@ class Environment(dict):
     ])
 
     def __init__(self, globs, baked_args={}):
+        """ baked_args are defaults for the 'sh' execution context.  for
+        example:
+            
+            tmp = sh(_out=StringIO())
+
+        'out' would end up in here as an entry in the baked_args dict """
+
         self.globs = globs
         self.baked_args = baked_args
         self.disable_whitelist = False
@@ -2378,14 +2402,14 @@ class SelfWrapper(ModuleType):
         # but it seems to be the only way to make reload() behave
         # nicely.  if i make these attributes dynamic lookups in
         # __getattr__, reload sometimes chokes in weird ways...
-        for attr in ["__builtins__", "__doc__", "__name__", "__package__"]:
+        for attr in ["__builtins__", "__doc__", "__file__", "__name__", "__package__"]:
             setattr(self, attr, getattr(self_module, attr, None))
 
         # python 3.2 (2.7 and 3.3 work fine) breaks on osx (not ubuntu)
         # if we set this to None.  and 3.3 needs a value for __path__
         self.__path__ = []
         self.__self_module = self_module
-        self.__env = Environment(globals(), baked_args)
+        self.__env = Environment(globals(), baked_args=baked_args)
 
     def __setattr__(self, name, value):
         if hasattr(self, "__env"):
@@ -2398,11 +2422,122 @@ class SelfWrapper(ModuleType):
             raise AttributeError
         return self.__env[name]
 
-    # accept special keywords argument to define defaults for all operations
-    # that will be processed with given by return SelfWrapper
     def __call__(self, **kwargs):
-        return SelfWrapper(self.__self_module, kwargs)
+        """ returns a new SelfWrapper object, where all commands spawned from it
+        have the baked_args kwargs set on them by default """
+        baked_args = self.__env.baked_args.copy()
+        baked_args.update(kwargs)
+        new_mod = self.__class__(self.__self_module, baked_args)
 
+        # inspect the line in the parent frame that calls and assigns the new sh
+        # variable, and get the name of the new variable we're assigning to.
+        # this is very brittle and pretty much a sin.  but it works in 99% of
+        # the time and the tests pass
+        #
+        # the reason we need to do this is because we need to remove the old
+        # cached module from sys.modules.  if we don't, it gets re-used, and any
+        # old baked params get used, which is not what we want
+        parent = inspect.stack()[1]
+        code = parent[4][0].strip()
+        parsed = ast.parse(code)
+        module_name = parsed.body[0].targets[0].id
+
+        if module_name == __name__:
+            raise RuntimeError("Cannot use the name 'sh' as an execution context")
+
+        sys.modules.pop(module_name, None)
+
+        return new_mod
+
+
+def in_importlib(frame):
+    """ helper for checking if a filename is in importlib guts """
+    return frame.f_code.co_filename == "<frozen importlib._bootstrap>"
+
+
+def register_importer():
+    """ registers our fancy importer that can let us import from a module name,
+    like:
+
+        import sh
+        tmp = sh()
+        from tmp import ls
+    """
+
+    def test(importer):
+        return importer.__class__.__name__ == ModuleImporterFromVariables.__name__
+    already_registered = any([True for i in sys.meta_path if test(i)])
+
+    if not already_registered:
+        importer = ModuleImporterFromVariables(
+            restrict_to=["SelfWrapper"],
+        )
+        sys.meta_path.insert(0, importer)
+
+    return not already_registered
+
+def fetch_module_from_frame(name, frame):
+    mod = frame.f_locals.get(name, frame.f_globals.get(name, None))
+    return mod
+
+class ModuleImporterFromVariables(object):
+    """ a fancy importer that allows us to import from a variable that was
+    recently set in either the local or global scope, like this:
+
+        sh2 = sh(_timeout=3)
+        from sh2 import ls
+    
+    """
+
+    def __init__(self, restrict_to=None):
+        self.restrict_to = set(restrict_to or set())
+
+
+    def find_module(self, mod_fullname, path=None):
+        """ mod_fullname doubles as the name of the VARIABLE holding our new sh
+        context.  for example:
+
+            derp = sh()
+            from derp import ls
+
+        here, mod_fullname will be "derp".  keep that in mind as we go throug
+        the rest of this function """
+
+        parent_frame = inspect.currentframe().f_back
+        while in_importlib(parent_frame):
+            parent_frame = parent_frame.f_back
+
+        # this line is saying "hey, does mod_fullname exist as a name we've
+        # defind previously?"  the purpose of this is to ensure that
+        # mod_fullname is really a thing we've defined.  if we haven't defined
+        # it before, then we "can't" import from it
+        module = fetch_module_from_frame(mod_fullname, parent_frame)
+        if not module:
+            return None
+
+        # make sure it's a class we're allowed to import from
+        if module.__class__.__name__ not in self.restrict_to:
+            return None
+
+        return self
+
+
+    def load_module(self, mod_fullname):
+        parent_frame = inspect.currentframe().f_back
+
+        while in_importlib(parent_frame):
+            parent_frame = parent_frame.f_back
+
+        module = fetch_module_from_frame(mod_fullname, parent_frame)
+
+        # we HAVE to include the module in sys.modules, per the import PEP.
+        # older verions of python were more lenient about this being set, but
+        # not in >= python3.3, unfortunately.  this requirement necessitates the
+        # ugly code in SelfWrapper.__call__
+        sys.modules[mod_fullname] = module
+        module.__loader__ = self
+
+        return module
 
 
 # we're being run as a stand-alone script
@@ -2448,3 +2583,5 @@ if __name__ == "__main__": # pragma: no cover
 else:
     self = sys.modules[__name__]
     sys.modules[__name__] = SelfWrapper(self)
+    register_importer()
+
