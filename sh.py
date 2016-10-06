@@ -532,6 +532,8 @@ class RunningCommand(object):
 
 
     def wait(self):
+        """ waits for the running command to finish.  this is called on all
+        running commands, eventually """
         if not self._process_completed:
             self._process_completed = True
 
