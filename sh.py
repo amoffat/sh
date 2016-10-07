@@ -509,7 +509,6 @@ class RunningCommand(object):
         elif call_args["iter_noblock"] == "err":
             pipe = OProc.STDERR
 
-
         # there's currently only one case where we wouldn't spawn a child
         # process, and that's if we're using a with-context with our command
         if spawn_process:
@@ -1209,7 +1208,6 @@ class OProc(object):
             call_args is a mapping of all the special keyword arguments to apply
             to the child process
         """
-
         self.call_args = call_args
 
         # I had issues with getting 'Input/Output error reading stdin' from dd,
@@ -1470,7 +1468,7 @@ class OProc(object):
 
             # if stderr is going to one place (because it's grouped with stdout,
             # or we're dealing with a single tty), then we don't actually need a
-            # stream reader for stdout, because we've already set one up for
+            # stream reader for stderr, because we've already set one up for
             # stdout above
             self._stderr_stream = None
             if stderr is not OProc.STDOUT and not self._single_tty \
@@ -1963,6 +1961,7 @@ def determine_how_to_feed_output(handler, encoding, decode_errors):
 
     elif hasattr(handler, "write"):
         process, finish = get_file_chunk_consumer(handler)
+
     else:
         process = lambda chunk: False
         finish = lambda: None
