@@ -407,7 +407,7 @@ class Logger(object):
     def set_context(self, context):
         if context:
             context = context.replace("%", "%%")
-        self.context = context 
+        self.context = context or ""
 
     def get_child(self, name, context):
         new_name = self.name + "." + name
