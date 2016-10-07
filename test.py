@@ -372,11 +372,12 @@ print("hi")
 
 
     def test_exception(self):
-        from sh import ls, ErrorReturnCode_1, ErrorReturnCode_2
+        from sh import ErrorReturnCode_2
 
-        exc_to_test = ErrorReturnCode_2
-        if IS_OSX: exc_to_test = ErrorReturnCode_1
-        self.assertRaises(exc_to_test, ls, "/aofwje/garogjao4a/eoan3on")
+        py = create_tmp_test("""
+exit(2)
+""")
+        self.assertRaises(ErrorReturnCode_2, python, py.name)
 
 
     def test_command_not_found(self):
