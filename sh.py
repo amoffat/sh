@@ -1689,8 +1689,7 @@ def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
                 readers.remove(stream)
 
         for stream in err:
-            log.debug("%r received an error reading", stream)
-            readers.remove(stream)
+            pass
 
         # test if the process has been running too long
         if timeout:
