@@ -1493,17 +1493,29 @@ class OProc(object):
                     save_data=save_stderr)
 
 
-            # start the main io threads
-            # stdin thread is not needed if we are connecting from another process's stdout pipe
+            # start the main io threads. stdin thread is not needed if we are
+            # connecting from another process's stdout pipe
             self._input_thread = None
             if self._stdin_stream:
-                self._input_thread = _start_thread(self.input_thread,
-                        self._stdin_stream)
+                self._input_thread = _start_thread(input_thread, self.log,
+                        self._stdin_stream, self.is_alive)
 
-            self._output_thread = _start_thread(self.output_thread,
+
+            # this event is for cases where the subprocess that we launch
+            # launches its OWN subprocess and dups the stdout/stderr fds to that
+            # new subprocess.  in that case, stdout and stderr will never EOF,
+            # so our output_thread will never finish and will hang.  this event
+            # prevents that hanging
+            self._force_done_event = threading.Event()
+
+            def timeout_fn():
+                self.timed_out = True
+                self.signal(self.call_args["timeout_signal"])
+
+            self._output_thread = _start_thread(output_thread, self.log,
                     self._stdout_stream, self._stderr_stream,
-                    self.call_args["timeout"], self.started,
-                    self.call_args["timeout_signal"])
+                    self.call_args["timeout"], self.started, timeout_fn,
+                    self.is_alive, self._force_done_event)
 
 
     def __repr__(self):
@@ -1519,80 +1531,6 @@ class OProc(object):
     def change_err_bufsize(self, buf):
         self._stderr_stream.stream_bufferer.change_buffering(buf)
 
-
-    def input_thread(self, stdin):
-        """ this is run in a separate thread.  it writes into our process's
-        stdin (a streamwriter) and waits the process to end AND everything that
-        can be written to be written """
-        done = False
-        while not done and self.is_alive():
-            self.log.debug("%r ready for more input", stdin)
-            done = stdin.write()
-
-        stdin.close()
-
-
-    def output_thread(self, stdout, stderr, timeout, started, timeout_exc):
-        """ this function is run in a separate thread.  it reads from the
-        process's stdout stream (a streamreader), and waits for it to claim that
-        its done """
-
-        readers = []
-        errors = []
-
-        if stdout is not None:
-            readers.append(stdout)
-            errors.append(stdout)
-        if stderr is not None:
-            readers.append(stderr)
-            errors.append(stderr)
-
-        # this is our select loop for polling stdout or stderr that is ready to
-        # be read and processed.  if one of those streamreaders indicate that it
-        # is done altogether being read from, we remove it from our list of
-        # things to poll.  when no more things are left to poll, we leave this
-        # loop and clean up
-        while readers:
-            outputs, inputs, err = select.select(readers, [], errors, 0.1)
-
-            # stdout and stderr
-            for stream in outputs:
-                self.log.debug("%r ready to be read from", stream)
-                done = stream.read()
-                if done:
-                    readers.remove(stream)
-
-            for stream in err:
-                pass
-
-            # test if the process has been running too long
-            if timeout:
-                now = time.time()
-                if now - started > timeout:
-                    self.log.debug("we've been running too long")
-                    self.timed_out = True
-                    self.signal(timeout_exc)
-
-        # this is here because stdout may be the controlling TTY, and
-        # we can't close it until the process has ended, otherwise the
-        # child will get SIGHUP.  typically, if we've broken out of
-        # the above loop, and we're here, the process is just about to
-        # end, so it's probably ok to aggressively poll self.is_alive()
-        #
-        # the other option to this would be to do the CTTY close from
-        # the method that does the actual os.waitpid() call, but the
-        # problem with that is that the above loop might still be
-        # running, and closing the fd will cause some operation to
-        # fail.  this is less complex than wrapping all the ops
-        # in the above loop with out-of-band fd-close exceptions
-        while self.is_alive():
-            time.sleep(0.001)
-
-        if stdout:
-            stdout.close()
-
-        if stderr:
-            stderr.close()
 
 
     @property
@@ -1686,12 +1624,97 @@ class OProc(object):
             if self._input_thread:
                 self._input_thread.join()
 
+            # wait, then signal to our output thread that the child process is
+            # done, and we should have finished reading all the stdout/stderr
+            # data that we can by now
+            threading.Timer(0.5, self._force_done_event.set).start()
+
             # wait for our stdout and stderr streamreaders to finish reading and
             # aggregating the process output
             self._output_thread.join()
 
             return self.exit_code
 
+
+
+def input_thread(log, stdin, is_alive):
+    """ this is run in a separate thread.  it writes into our process's
+    stdin (a streamwriter) and waits the process to end AND everything that
+    can be written to be written """
+    done = False
+    while not done and is_alive():
+        log.debug("%r ready for more input", stdin)
+        done = stdin.write()
+
+    stdin.close()
+
+
+
+def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
+        force_done_event):
+    """ this function is run in a separate thread.  it reads from the
+    process's stdout stream (a streamreader), and waits for it to claim that
+    its done """
+
+    readers = []
+    errors = []
+
+    if stdout is not None:
+        readers.append(stdout)
+        errors.append(stdout)
+    if stderr is not None:
+        readers.append(stderr)
+        errors.append(stderr)
+
+    # this is our select loop for polling stdout or stderr that is ready to
+    # be read and processed.  if one of those streamreaders indicate that it
+    # is done altogether being read from, we remove it from our list of
+    # things to poll.  when no more things are left to poll, we leave this
+    # loop and clean up
+    while readers:
+        outputs, inputs, err = select.select(readers, [], errors, 0.1)
+
+        # stdout and stderr
+        for stream in outputs:
+            log.debug("%r ready to be read from", stream)
+            done = stream.read()
+            if done:
+                readers.remove(stream)
+
+        for stream in err:
+            log.debug("%r received an error reading", stream)
+            readers.remove(stream)
+
+        # test if the process has been running too long
+        if timeout:
+            now = time.time()
+            if now - started > timeout:
+                log.debug("we've been running too long")
+                timeout_fn()
+
+        if force_done_event.is_set():
+            break
+
+    # this is here because stdout may be the controlling TTY, and
+    # we can't close it until the process has ended, otherwise the
+    # child will get SIGHUP.  typically, if we've broken out of
+    # the above loop, and we're here, the process is just about to
+    # end, so it's probably ok to aggressively poll is_alive()
+    #
+    # the other option to this would be to do the CTTY close from
+    # the method that does the actual os.waitpid() call, but the
+    # problem with that is that the above loop might still be
+    # running, and closing the fd will cause some operation to
+    # fail.  this is less complex than wrapping all the ops
+    # in the above loop with out-of-band fd-close exceptions
+    while is_alive():
+        time.sleep(0.001)
+
+    if stdout:
+        stdout.close()
+
+    if stderr:
+        stderr.close()
 
 
 
