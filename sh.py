@@ -542,6 +542,7 @@ class RunningCommand(object):
                 # negative, so let's make it positive to store in our
                 # TimeoutException
                 raise TimeoutException(-exit_code)
+
             else:
                 self.handle_command_exit_code(exit_code)
 
@@ -1165,7 +1166,7 @@ def get_exc_exit_code_would_raise(exit_code, ok_codes):
     return exc
 
 
-def handle_process_exit_code(exit_code, done_callback):
+def handle_process_exit_code(exit_code):
     """ this should only ever be called once for each child process """
     # if we exited from a signal, let our exit code reflect that
     if os.WIFSIGNALED(exit_code):
@@ -1175,10 +1176,6 @@ def handle_process_exit_code(exit_code, done_callback):
         exit_code = os.WEXITSTATUS(exit_code)
     else:
         raise RuntimeError("Unknown child exit status!")
-
-    # should we call our done callback?
-    if done_callback:
-        done_callback(exit_code)
 
     return exit_code
 
@@ -1587,8 +1584,12 @@ class OProc(object):
             # in order to determine how to proceed
             pid, exit_code = os.waitpid(self.pid, os.WNOHANG)
             if pid == self.pid:
-                self.exit_code = handle_process_exit_code(exit_code,
-                        self.call_args["done"])
+                self.exit_code = handle_process_exit_code(exit_code)
+
+                done_callback = self.call_args["done"]
+                if done_callback:
+                    done_callback(self.exit_code)
+
                 return False
 
         # no child process
@@ -1608,14 +1609,17 @@ class OProc(object):
         # we're running wait()
         with self._wait_lock:
             self.log.debug("got wait lock")
+            call_done_callback = False
 
             if self.exit_code is None:
                 self.log.debug("exit code not set, waiting on pid")
                 pid, exit_code = os.waitpid(self.pid, 0) # blocks
-                self.exit_code = handle_process_exit_code(exit_code,
-                        self.call_args["done"])
+                self.exit_code = handle_process_exit_code(exit_code)
+                call_done_callback = True
             else:
-                self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
+                self.log.debug("exit code already set (%d), no need to wait",
+                        self.exit_code)
+
 
             # we may not have a thread for stdin, if the pipe has been connected
             # via _piped="direct"
@@ -1630,6 +1634,11 @@ class OProc(object):
             # wait for our stdout and stderr streamreaders to finish reading and
             # aggregating the process output
             self._output_thread.join()
+
+
+            done_callback = self.call_args["done"]
+            if call_done_callback and done_callback:
+                done_callback(self.exit_code)
 
             return self.exit_code
 
