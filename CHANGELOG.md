@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   bugfix where processes that dupd their stdout/stderr to a long running child process would cause sh to hang [#310](https://github.com/amoffat/sh/issues/310)
 *   improved logging output [#323](https://github.com/amoffat/sh/issues/323)
 *   bugfix for python3+ where binary data was passed into a process's stdin [#325](https://github.com/amoffat/sh/issues/325)
 *   Introduced execution contexts which allow baking of common special keyword arguments into all commands [#269](https://github.com/amoffat/sh/issues/269)
