@@ -843,16 +843,24 @@ output"),
 
     def __init__(self, path, search_paths=None):
         found = which(path, search_paths)
-        if not found:
-            raise CommandNotFound(path)
 
-        self._path = encode_to_py3bytes_or_py2str(found) 
-
+        self._path = encode_to_py3bytes_or_py2str("")
         self._partial = False
         self._partial_baked_args = []
         self._partial_call_args = {}
 
         # bugfix for functools.wraps.  issue #121
+        self.__name__ = str(self)
+
+        if not found:
+            raise CommandNotFound(path)
+
+        # the reason why we set the values early in the constructor, and again
+        # here, is for people who have tools that inspect the stack on
+        # exception.  if CommandNotFound is raised, we need self._path and the
+        # other attributes to be set correctly, so repr() works when they're
+        # inspecting the stack.  issue #304
+        self._path = encode_to_py3bytes_or_py2str(found) 
         self.__name__ = str(self)
 
 
