@@ -94,6 +94,24 @@ class FunctionalTests(unittest.TestCase):
         output = p.strip()
         self.assertEqual(test, output)
 
+    def test_unicode_exception(self):
+        from sh import ErrorReturnCode
+        py = create_tmp_test("exit(1)")
+
+        arg = "漢字"
+        if not IS_PY3:
+            arg = arg.decode("utf8")
+
+        try:
+            python(py.name, arg, _encoding="utf8")
+        except ErrorReturnCode as e:
+            if IS_PY3:
+                self.assertTrue(arg in str(e))
+            else:
+                self.assertTrue(arg in unicode(e))
+        else:
+            self.fail("exception wasn't raised")
+
 
     def test_number_arg(self):
         py = create_tmp_test("""
@@ -378,6 +396,41 @@ print("hi")
 exit(2)
 """)
         self.assertRaises(ErrorReturnCode_2, python, py.name)
+
+
+    def test_piped_exception1(self):
+        from sh import ErrorReturnCode_2
+
+        py = create_tmp_test("""
+import sys
+sys.stdout.write("line1\\n")
+sys.stdout.write("line2\\n")
+exit(2)
+""")
+
+        py2 = create_tmp_test("") 
+
+        def fn():
+            list(python(python(py.name, _piped=True), "-u", py2.name, _iter=True))
+
+        self.assertRaises(ErrorReturnCode_2, fn)
+
+    def test_piped_exception2(self):
+        from sh import ErrorReturnCode_2
+
+        py = create_tmp_test("""
+import sys
+sys.stdout.write("line1\\n")
+sys.stdout.write("line2\\n")
+exit(2)
+""")
+
+        py2 = create_tmp_test("") 
+
+        def fn():
+            python(python(py.name, _piped=True), "-u", py2.name)
+
+        self.assertRaises(ErrorReturnCode_2, fn)
 
 
     def test_command_not_found(self):

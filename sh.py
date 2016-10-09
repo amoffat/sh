@@ -144,7 +144,7 @@ def encode_to_py3bytes_or_py2str(s):
         try:
             s = s.encode(DEFAULT_ENCODING)
         except:
-            s = s.encode(fallback_encoding)
+            s = s.encode(fallback_encoding, "replace")
     return s
 
 
@@ -212,13 +212,19 @@ class ErrorReturnCode(Exception):
                 if err_delta:
                     exc_stderr += ("... (%d more, please see e.stderr)" % err_delta).encode()
 
-        msg = "\n\n  RAN: %r\n\n  STDOUT:\n%s\n\n  STDERR:\n%s" % \
-            (self.full_cmd, exc_stdout.decode(DEFAULT_ENCODING, "replace"),
-             exc_stderr.decode(DEFAULT_ENCODING, "replace"))
 
-        # one final encoding.  we do this because python exceptions apparently
-        # shit the bed if they see a unicode character they don't understand
-        msg = msg.encode(DEFAULT_ENCODING, "replace")
+        # this is a little clunky how we set up msg_tmpl, but the reason is, is
+        # that only python < 3.0 and python > 3.1 include specifying strings with
+        # u'stuff', which is what we would like to do here
+        msg_tmpl = "\n\n  RAN: {cmd}\n\n  STDOUT:\n{stdout}\n\n STDERR:\n{stderr}"
+        if not IS_PY3:
+            msg_tmpl = unicode(msg_tmpl)
+
+        msg = msg_tmpl.format(
+            cmd=self.full_cmd,
+            stdout=exc_stdout.decode(DEFAULT_ENCODING, "replace"),
+            stderr=exc_stderr.decode(DEFAULT_ENCODING, "replace")
+        )
 
         super(ErrorReturnCode, self).__init__(msg)
 
@@ -449,14 +455,21 @@ class RunningCommand(object):
     exceptions. """
 
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
+        """
+            cmd is an array, where each element is encoded as bytes (PY3) or str
+            (PY2)
+        """
+
         # self.ran is used for auditing what actually ran.  for example, in
         # exceptions, or if you just want to know what was ran after the
         # command ran
-        if IS_PY3:
-            self.ran = " ".join([arg.decode(DEFAULT_ENCODING, "ignore") for arg in cmd])
-        else:
-            self.ran = " ".join(cmd)
-
+        #
+        # here we're making a consistent unicode string out if our cmd.
+        # we're also assuming (correctly, i think) that the command and its
+        # arguments are the encoding we pass into _encoding, which falls back to
+        # the system's encoding
+        enc = call_args["encoding"]
+        self.ran = " ".join([arg.decode(enc, "ignore") for arg in cmd])
 
         self.call_args = call_args
         self.cmd = cmd
@@ -511,6 +524,7 @@ class RunningCommand(object):
 
         # there's currently only one case where we wouldn't spawn a child
         # process, and that's if we're using a with-context with our command
+        self._spawned_and_waited = False
         if spawn_process:
             # we're setting up the logger string here, instead of __repr__ because
             # we reserve __repr__ to behave as if it was evaluating the child
@@ -519,7 +533,10 @@ class RunningCommand(object):
             self.log = Logger("command", logger_str)
             self.log.info("starting process")
 
-            self.process = OProc(self.log, cmd, stdin, stdout, stderr,
+            if should_wait:
+                self._spawned_and_waited = True
+
+            self.process = OProc(self, self.log, cmd, stdin, stdout, stderr,
                     self.call_args, pipe)
 
             logger_str = "<Command %r, pid %d>" % (self.ran, self.process.pid)
@@ -532,7 +549,8 @@ class RunningCommand(object):
 
     def wait(self):
         """ waits for the running command to finish.  this is called on all
-        running commands, eventually """
+        running commands, eventually, except for ones that run in the background
+        """
         if not self._process_completed:
             self._process_completed = True
 
@@ -545,6 +563,13 @@ class RunningCommand(object):
 
             else:
                 self.handle_command_exit_code(exit_code)
+        
+                # if an iterable command is using an instance of OProc for its stdin,
+                # wait on it.  the process is probably set to "piped", which means it
+                # won't be waited on, which means exceptions won't propagate up to the
+                # main thread.  this allows them to bubble up
+                if self.process._stdin_process:
+                    self.process._stdin_process.command.wait()
 
         self.log.info("process completed")
         return self
@@ -618,6 +643,7 @@ class RunningCommand(object):
                         self.call_args["decode_errors"])
                 except UnicodeDecodeError:
                     return chunk
+
 
     # python 3
     __next__ = next
@@ -1194,7 +1220,8 @@ class OProc(object):
     STDOUT = -1
     STDERR = -2
 
-    def __init__(self, parent_log, cmd, stdin, stdout, stderr, call_args, pipe):
+    def __init__(self, command, parent_log, cmd, stdin, stdout, stderr,
+            call_args, pipe):
         """
             cmd is the full string that will be exec'd.  it includes the program
             name and all its arguments
@@ -1205,6 +1232,7 @@ class OProc(object):
             call_args is a mapping of all the special keyword arguments to apply
             to the child process
         """
+        self.command = command
         self.call_args = call_args
 
         # I had issues with getting 'Input/Output error reading stdin' from dd,
@@ -1212,6 +1240,7 @@ class OProc(object):
         if self.call_args["piped"]:
             self.call_args["tty_out"] = False
 
+        self._stdin_process = None
         self._single_tty = self.call_args["tty_in"] and self.call_args["tty_out"]
 
         # this logic is a little convoluted, but basically this top-level
@@ -1239,6 +1268,7 @@ class OProc(object):
 
                 self._slave_stdin_fd = fd_to_use
                 self._stdin_fd = None
+                self._stdin_process = stdin
 
             elif self.call_args["tty_in"]:
                 self._slave_stdin_fd, self._stdin_fd = pty.openpty()
@@ -1503,6 +1533,17 @@ class OProc(object):
             # prevents that hanging
             self._force_done_event = threading.Event()
 
+            # this is for cases where we know that the RunningCommand that was
+            # launched was not .wait()ed on to complete.  in those unique cases,
+            # we allow the thread that processes output to report exceptions in
+            # that thread.  it's important that we only allow reporting of the
+            # exception, and nothing else (like the additional stuff that
+            # RunningCommand.wait() does), because we want the exception to be
+            # re-raised in the future, if we DO call .wait()
+            handle_exit_code = None
+            if not self.command._spawned_and_waited:
+                handle_exit_code = self.command.handle_command_exit_code
+
             def timeout_fn():
                 self.timed_out = True
                 self.signal(self.call_args["timeout_signal"])
@@ -1510,7 +1551,7 @@ class OProc(object):
             self._output_thread = _start_thread(output_thread, self.log,
                     self._stdout_stream, self._stderr_stream,
                     self.call_args["timeout"], self.started, timeout_fn,
-                    self.is_alive, self._force_done_event)
+                    self.is_alive, self._force_done_event, handle_exit_code)
 
 
     def __repr__(self):
@@ -1559,7 +1600,7 @@ class OProc(object):
         see our child exit while this is running """
 
         if self.exit_code is not None:
-            return False
+            return False, self.exit_code
 
         # what we're doing here essentially is making sure that the main thread
         # (or another thread), isn't calling .wait() on the process.  because
@@ -1574,8 +1615,8 @@ class OProc(object):
         acquired = self._wait_lock.acquire(False)
         if not acquired:
             if self.exit_code is not None:
-                return False
-            return True
+                return False, self.exit_code
+            return True, self.exit_code
 
         try:
             # WNOHANG is just that...we're calling waitpid without hanging...
@@ -1590,13 +1631,13 @@ class OProc(object):
                 if done_callback:
                     done_callback(self.exit_code)
 
-                return False
+                return False, self.exit_code
 
         # no child process
         except OSError:
-            return False
+            return False, self.exit_code
         else:
-            return True
+            return True, self.exit_code
         finally:
             self._wait_lock.release()
 
@@ -1635,7 +1676,6 @@ class OProc(object):
             # aggregating the process output
             self._output_thread.join()
 
-
             done_callback = self.call_args["done"]
             if call_done_callback and done_callback:
                 done_callback(self.exit_code)
@@ -1649,7 +1689,11 @@ def input_thread(log, stdin, is_alive):
     stdin (a streamwriter) and waits the process to end AND everything that
     can be written to be written """
     done = False
-    while not done and is_alive():
+    while True:
+        alive, exit_code = is_alive()
+        if done or not alive:
+            break
+
         log.debug("%r ready for more input", stdin)
         done = stdin.write()
 
@@ -1658,7 +1702,7 @@ def input_thread(log, stdin, is_alive):
 
 
 def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
-        force_done_event):
+        force_done_event, handle_exit_code):
     """ this function is run in a separate thread.  it reads from the
     process's stdout stream (a streamreader), and waits for it to claim that
     its done """
@@ -1688,6 +1732,9 @@ def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
             if done:
                 readers.remove(stream)
 
+        # for some reason, we have to just ignore streams that have had an
+        # error.  i'm not exactly sure why, but don't remove this until we
+        # figure that out, and create a test for it
         for stream in err:
             pass
 
@@ -1713,7 +1760,12 @@ def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
     # running, and closing the fd will cause some operation to
     # fail.  this is less complex than wrapping all the ops
     # in the above loop with out-of-band fd-close exceptions
-    while is_alive():
+    pid = None 
+    while True:
+        alive, exit_code = is_alive()
+        if not alive:
+            break
+
         time.sleep(0.001)
 
     if stdout:
@@ -1722,6 +1774,8 @@ def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
     if stderr:
         stderr.close()
 
+    if handle_exit_code:
+        handle_exit_code(exit_code)
 
 
 class DoneReadingForever(Exception): pass
