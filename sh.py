@@ -2360,8 +2360,10 @@ def args(*args, **kwargs):
         key = key.lstrip("_")
         call_args[key] = value
 
-    yield
-    call_args.update(old_args)
+    try:
+        yield
+    finally:
+        call_args.update(old_args)
 
 
 
