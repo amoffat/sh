@@ -1154,6 +1154,13 @@ for i in range(42):
             out.append(int(line.strip()))
         self.assertTrue(len(out) == 42 and sum(out) == 861)
 
+    def test_iter_unicode(self):
+        # issue https://github.com/amoffat/sh/issues/224
+        test_string = "\xe4\xbd\x95\xe4\xbd\x95\n" * 150 # len > buffer_s
+        txt = create_tmp_test(test_string)
+        for line in sh.cat(txt.name, _iter=True):
+            break
+        self.assertTrue(len(line) < 1024)
 
     def test_nonblocking_iter(self):
         from errno import EWOULDBLOCK
