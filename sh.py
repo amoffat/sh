@@ -47,6 +47,7 @@ import time
 from types import ModuleType
 from functools import partial
 import inspect
+import glob as glob_module
 import ast
 from contextlib import contextmanager
 
@@ -324,6 +325,35 @@ def get_rc_exc(rc_or_sig_name):
     exc = ErrorReturnCodeMeta(name, (base,), {"exit_code": rc})
     rc_exc_cache[rc] = exc
     return exc
+
+
+
+# we monkey patch glob.  i'm normally generally against monkey patching, but i
+# decided to do this really un-intrusive patch because we need a way to detect
+# if a list that we pass into an sh command was generated from glob.  the reason
+# being that glob returns an empty list if a pattern is not found, and so
+# commands will treat the empty list as no arguments, which can be a problem,
+# ie:
+#
+#   ls(glob("*.ojfawe"))
+#
+# ^ will show the contents of your home directory, because it's essentially
+# running ls([]) which, as a process, is just "ls".
+#
+# so we subclass list and monkey patch the glob function.  nobody should be the
+# wiser, but we'll have results that we can make some determinations on
+_old_glob = glob_module.glob
+
+class GlobResults(list):
+    def __init__(self, path, results):
+        self.path = path
+        list.__init__(self, results)
+
+def glob(path):
+    expanded = GlobResults(path, _old_glob(path))
+    return expanded
+
+glob_module.glob = glob
 
 
 
@@ -938,6 +968,9 @@ output"),
         # aggregate positional args
         for arg in args:
             if isinstance(arg, (list, tuple)):
+                if isinstance(arg, GlobResults) and not arg:
+                    arg = [arg.path]
+
                 for sub_arg in arg:
                     processed_args.append(encode_to_py3bytes_or_py2str(sub_arg))
             elif isinstance(arg, dict):
@@ -2360,8 +2393,8 @@ class Environment(dict):
         "__version__",
         "__file__",
         "args",
-        "glob",
         "pushd",
+        "glob",
     ])
 
     def __init__(self, globs, baked_args={}):

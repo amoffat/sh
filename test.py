@@ -132,6 +132,17 @@ exit(3)
 """)
         self.assertRaises(ErrorReturnCode, python, py.name)
 
+    def test_patched_glob(self):
+        from glob import glob
+        
+        py = create_tmp_test("""
+import sys
+print(sys.argv[1:])
+""")
+        files = glob("*.faowjefoajweofj")
+        out = python(py.name, files).strip()
+        self.assertEqual(out, "['*.faowjefoajweofj']")
+
 
     def test_exit_code_with_hasattr(self):
         from sh import ErrorReturnCode
