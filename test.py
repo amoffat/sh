@@ -1954,7 +1954,46 @@ for i in range(10):
         self.assertEqual(output, [("hello", i) for i in range(10)])
 
 
+    # https://github.com/amoffat/sh/issues/266
+    def test_grandchild_no_sighup(self):
+        import time
 
+        # child process that will write to a file if it receives a SIGHUP
+        child = create_tmp_test("""
+import signal
+import sys
+import time
+
+output_file = sys.argv[1]
+with open(output_file, "w") as f:
+    def handle_sighup(signum, frame):
+        f.write("got signal %d" % signum)
+        sys.exit(signum)
+    signal.signal(signal.SIGHUP, handle_sighup)
+    time.sleep(2)
+    f.write("made it!\\n")
+""")
+
+        # the parent that will terminate before the child writes to the output
+        # file, potentially causing a SIGHUP
+        parent = create_tmp_test("""
+import os
+import time
+import sys
+
+child_file = sys.argv[1]
+output_file = sys.argv[2]
+
+os.spawnlp(os.P_NOWAIT, "python", "python", child_file, output_file)
+time.sleep(1) # give child a chance to set up
+""")
+
+        output_file = tempfile.NamedTemporaryFile(delete=True)
+        python(parent.name, child.name, output_file.name)
+        time.sleep(3)
+
+        out = output_file.readlines()[0]
+        self.assertEqual(out, b"made it!\n")
 
 
 
