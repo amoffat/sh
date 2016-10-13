@@ -1368,6 +1368,9 @@ class OProc(object):
                 if IS_OSX:
                     time.sleep(0.01)
 
+                # always put our forked process in a new session.  this will
+                # relinquish any control of our inherited CTTY and also make our
+                # parent process init
                 os.setsid()
 
                 if self.call_args["tty_out"]:
