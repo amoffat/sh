@@ -1412,12 +1412,11 @@ class OProc(object):
                 max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
                 os.closerange(3, max_fd)
 
-
-                # set our controlling terminal.  tty_out defaults to true
-                if self.call_args["tty_out"]:
-                    tmp_fd = os.open(os.ttyname(1), os.O_RDWR)
+                # set our controlling terminal, but only if we're using a tty
+                # for stdin.  it doesn't make sense to have a ctty otherwise
+                if self.call_args["tty_in"]:
+                    tmp_fd = os.open(os.ttyname(0), os.O_RDWR)
                     os.close(tmp_fd)
-
 
                 if self.call_args["tty_out"]:
                     setwinsize(1, self.call_args["tty_size"])

@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   bugfix where grandchild processes received SIGHUP when parent process closed, due to parent and child sharing CTTY [#266](https://github.com/amoffat/sh/issues/266)
 *   bugfix where exceptions were swallowed by processes that weren't waited on [#309](https://github.com/amoffat/sh/issues/309)
 *   bugfix where processes that dupd their stdout/stderr to a long running child process would cause sh to hang [#310](https://github.com/amoffat/sh/issues/310)
 *   improved logging output [#323](https://github.com/amoffat/sh/issues/323)
