@@ -50,6 +50,7 @@ import inspect
 import glob as glob_module
 import ast
 from contextlib import contextmanager
+import pwd
 
 from locale import getpreferredencoding
 DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
@@ -855,6 +856,10 @@ class Command(object):
 
         # a function to call after the child forks but before the process execs
         "preexec_fn": None,
+
+        # UID to set after forking. Requires root privileges. Not supported on
+        # Windows.
+        "uid": None,
     }
 
     # these are arguments that cannot be called together, because they wouldn't
@@ -1276,6 +1281,15 @@ class OProc(object):
         self.command = command
         self.call_args = call_args
 
+        if self.call_args["uid"] is not None:
+            if os.getuid() != 0:
+                raise RuntimeError("UID setting requires root privileges")
+
+            target_uid = self.call_args["uid"]
+
+            pwrec = pwd.getpwuid(self.call_args["uid"])
+            target_gid = pwrec.pw_gid
+
         # I had issues with getting 'Input/Output error reading stdin' from dd,
         # until I set _tty_out=False
         if self.call_args["piped"]:
@@ -1345,7 +1359,6 @@ class OProc(object):
         cwd = self.call_args["cwd"]
         if cwd is not None and not os.path.exists(cwd):
             os.chdir(cwd)
-
 
         gc_enabled = gc.isenabled()
         if gc_enabled:
@@ -1420,6 +1433,10 @@ class OProc(object):
 
                 if self.call_args["tty_out"]:
                     setwinsize(1, self.call_args["tty_size"])
+
+                if call_args["uid"] is not None:
+                    os.setgid(target_gid)
+                    os.setuid(target_uid)
 
                 preexec_fn = self.call_args["preexec_fn"]
                 if callable(preexec_fn):
