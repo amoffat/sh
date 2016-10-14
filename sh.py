@@ -94,16 +94,6 @@ import logging
 import weakref
 
 
-# TODO remove with contexts in next version
-def with_context_warning():
-    warnings.warn("""
-with contexts are deprecated because they are not thread safe.  they will be \
-removed in the next version.  use subcommands instead \
-http://amoffat.github.io/sh/#sub-commands. see \
-https://github.com/amoffat/sh/issues/195
-""".strip(), stacklevel=3)
-
-
 
 if IS_PY3:
     raw_input = input
@@ -519,7 +509,7 @@ class RunningCommand(object):
         # to every command in the context
         if call_args["with"]:
             spawn_process = False
-            Command._prepend_stack.append(self)
+            get_prepend_stack().append(self)
 
 
         if call_args["piped"] or call_args["iter"] or call_args["iter_noblock"]:
@@ -645,7 +635,7 @@ class RunningCommand(object):
         been done would have been done in the Command.__call__ call.
         essentially all that has to happen is the comand be pushed on the
         prepend stack. """
-        with_context_warning()
+        pass
 
     def __iter__(self):
         return self
@@ -680,8 +670,8 @@ class RunningCommand(object):
     __next__ = next
 
     def __exit__(self, typ, value, traceback):
-        if self.call_args["with"] and Command._prepend_stack:
-            Command._prepend_stack.pop()
+        if self.call_args["with"] and get_prepend_stack():
+            get_prepend_stack().pop()
 
     def __str__(self):
         """ in python3, should return unicode.  in python2, should return a
@@ -757,6 +747,11 @@ def output_redirect_is_filename(out):
         and not isinstance(out, (cStringIO, StringIO))
 
 
+def get_prepend_stack():
+    tl = Command.thread_local
+    if not hasattr(tl, "_prepend_stack"):
+        tl._prepend_stack = []
+    return tl._prepend_stack
 
 
 
@@ -770,7 +765,7 @@ class Command(object):
     when a Command object is called, the result that is returned is a
     RunningCommand object, which represents the Command put into an execution
     state. """
-    _prepend_stack = []
+    thread_local = threading.local()
 
     _call_args = {
         "fg": False, # run command in foreground
@@ -1043,11 +1038,10 @@ output"),
         return self._path.decode(DEFAULT_ENCODING) + baked_args
 
     def __enter__(self):
-        with_context_warning()
         self(_with=True)
 
     def __exit__(self, typ, value, traceback):
-        Command._prepend_stack.pop()
+        get_prepend_stack().pop()
 
 
     def __call__(self, *args, **kwargs):
@@ -1058,7 +1052,7 @@ output"),
 
         # aggregate any 'with' contexts
         call_args = Command._call_args.copy()
-        for prepend in Command._prepend_stack:
+        for prepend in get_prepend_stack():
             # don't pass the 'with' call arg
             pcall_args = prepend.call_args.copy()
             try:

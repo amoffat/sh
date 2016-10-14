@@ -2074,6 +2074,47 @@ print("cool")
             except StopIteration:
                 pass
 
+    # https://github.com/amoffat/sh/issues/195
+    def test_threaded_with_contexts(self):
+        import sh
+        import threading
+        import time
+
+        py = create_tmp_test("""
+import sys
+a = sys.argv
+res = (a[1], a[3])
+sys.stdout.write(repr(res))
+""")
+
+        p1 = python.bake("-u", py.name, 1)
+        p2 = python.bake("-u", py.name, 2)
+        results = [None, None]
+
+        def f1():
+            with p1:
+                time.sleep(1)
+                results[0] = str(sh.python("one"))
+
+        def f2():
+            with p2:
+                results[1] = str(sh.python("two"))
+
+        t1 = threading.Thread(target=f1)
+        t1.start()
+
+        t2 = threading.Thread(target=f2)
+        t2.start()
+
+        t1.join()
+        t2.join()
+
+        correct = [
+            "('1', 'one')",
+            "('2', 'two')",
+        ]
+        self.assertEqual(results, correct)
+
 
 class StreamBuffererTests(unittest.TestCase):
     def test_unbuffered(self):
