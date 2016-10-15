@@ -2116,6 +2116,23 @@ sys.stdout.write(repr(res))
         self.assertEqual(results, correct)
 
 
+    # https://github.com/amoffat/sh/pull/292
+    def test_eintr(self):
+        import signal
+
+        def handler(num, frame): pass
+        signal.signal(signal.SIGALRM, handler)
+
+        py = create_tmp_test("""
+import time
+time.sleep(2)
+""")
+        p = python(py.name, _bg=True)
+        signal.alarm(1)
+        p.wait()
+
+
+
 class StreamBuffererTests(unittest.TestCase):
     def test_unbuffered(self):
         from sh import _disable_whitelist, StreamBufferer

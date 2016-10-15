@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   bugfix better handling for EINTR on system calls [#292](https://github.com/amoffat/sh/pull/292)
 *   bugfix where with-contexts were not threadsafe [#247](https://github.com/amoffat/sh/issues/195)
 *   `_uid` new special keyword param for specifying the user id of the process [#133](https://github.com/amoffat/sh/issues/133)
 *   bugfix where grandchild processes received SIGHUP when parent process closed, due to parent and child sharing CTTY [#266](https://github.com/amoffat/sh/issues/266)
