@@ -1247,6 +1247,22 @@ def handle_process_exit_code(exit_code):
     return exit_code
 
 
+def no_interrupt(syscall, *args, **kwargs):
+    """ a helper for making system calls immune to EINTR """
+    ret = None
+
+    while True:
+        try:
+            ret = syscall(*args, **kwargs)
+        except OSError as e:
+            if e.errno == errno.EINTR:
+                continue
+            else:
+                raise
+        else:
+            break
+
+    return ret
 
 
 class OProc(object):
@@ -1678,7 +1694,7 @@ class OProc(object):
             # essentially polling the process.  the return result is (0, 0) if
             # there's no process status, so we check that pid == self.pid below
             # in order to determine how to proceed
-            pid, exit_code = os.waitpid(self.pid, os.WNOHANG)
+            pid, exit_code = no_interrupt(os.waitpid, self.pid, os.WNOHANG)
             if pid == self.pid:
                 self.exit_code = handle_process_exit_code(exit_code)
 
@@ -1709,16 +1725,7 @@ class OProc(object):
 
             if self.exit_code is None:
                 self.log.debug("exit code not set, waiting on pid")
-                while True:
-                    try:
-                        pid, exit_code = os.waitpid(self.pid, 0) # blocks
-                    except OSError as e:
-                        if e.errno == errno.EINTR:
-                            continue
-                        else:
-                            raise
-                    else:
-                        break
+                pid, exit_code = no_interrupt(os.waitpid, self.pid, 0) # blocks
                 self.exit_code = handle_process_exit_code(exit_code)
                 call_done_callback = True
             else:
@@ -1787,7 +1794,8 @@ def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
     # things to poll.  when no more things are left to poll, we leave this
     # loop and clean up
     while readers:
-        outputs, inputs, err = select.select(readers, [], errors, 0.1)
+        outputs, inputs, err = no_interrupt(select.select, readers, [], errors,
+                0.1)
 
         # stdout and stderr
         for stream in outputs:

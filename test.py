@@ -2119,7 +2119,8 @@ sys.stdout.write(repr(res))
     def test_eintr(self):
         import signal
 
-        signal.signal(signal.SIGALRM, lambda *args: None)
+        def handler(num, frame): pass
+        signal.signal(signal.SIGALRM, handler)
 
         py = create_tmp_test("""
 import time
