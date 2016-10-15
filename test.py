@@ -2116,6 +2116,7 @@ sys.stdout.write(repr(res))
         self.assertEqual(results, correct)
 
 
+    # https://github.com/amoffat/sh/pull/292
     def test_eintr(self):
         import signal
 
