@@ -2230,7 +2230,7 @@ class StreamReader(object):
         # if we're PY3, we're reading bytes, otherwise we're reading
         # str
         try:
-            chunk = os.read(self.stream, self.bufsize)
+            chunk = no_interrupt(os.read, self.stream, self.bufsize)
         except OSError as e:
             self.log.debug("got errno %d, done reading", e.errno)
             return True
