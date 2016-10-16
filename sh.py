@@ -608,6 +608,9 @@ class RunningCommand(object):
             raise exc
 
 
+    @property
+    def ctty(self):
+        return self.process.ctty
 
     @property
     def stdout(self):
@@ -1360,6 +1363,11 @@ class OProc(object):
                 self._stderr_fd, self._slave_stderr_fd = os.pipe()
 
 
+        needs_ctty = self.call_args["tty_in"]
+        self.ctty = None
+        if needs_ctty:
+            self.ctty = os.ttyname(self._slave_stdin_fd)
+
         # this is a hack, but what we're doing here is intentionally throwing an
         # OSError exception if our child processes's directory doesn't exist,
         # but we're doing it BEFORE we fork.  the reason for before the fork is
@@ -1438,7 +1446,7 @@ class OProc(object):
 
                 # set our controlling terminal, but only if we're using a tty
                 # for stdin.  it doesn't make sense to have a ctty otherwise
-                if self.call_args["tty_in"]:
+                if needs_ctty:
                     tmp_fd = os.open(os.ttyname(0), os.O_RDWR)
                     os.close(tmp_fd)
 
