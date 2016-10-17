@@ -1384,10 +1384,15 @@ class OProc(object):
             gc.disable()
         self.pid = os.fork()
 
-
         # child
         if self.pid == 0: # pragma: no cover
             try:
+                # set our controlling terminal, but only if we're using a tty
+                # for stdin.  it doesn't make sense to have a ctty otherwise
+                if needs_ctty:
+                    tmp_fd = os.open(os.ttyname(self._stdin_fd), os.O_RDWR)
+                    os.close(tmp_fd)
+
                 # ignoring SIGHUP lets us persist even after the parent process
                 # exits.  only ignore if we're backgrounded
                 if self.call_args["bg"] is True:
@@ -1443,12 +1448,6 @@ class OProc(object):
                 # don't inherit file descriptors
                 max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
                 os.closerange(3, max_fd)
-
-                # set our controlling terminal, but only if we're using a tty
-                # for stdin.  it doesn't make sense to have a ctty otherwise
-                if needs_ctty:
-                    tmp_fd = os.open(os.ttyname(0), os.O_RDWR)
-                    os.close(tmp_fd)
 
                 if self.call_args["tty_out"]:
                     setwinsize(1, self.call_args["tty_size"])
