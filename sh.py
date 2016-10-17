@@ -608,6 +608,9 @@ class RunningCommand(object):
             raise exc
 
 
+    @property
+    def ctty(self):
+        return self.process.ctty
 
     @property
     def stdout(self):
@@ -1360,6 +1363,11 @@ class OProc(object):
                 self._stderr_fd, self._slave_stderr_fd = os.pipe()
 
 
+        needs_ctty = self.call_args["tty_in"]
+        self.ctty = None
+        if needs_ctty:
+            self.ctty = os.ttyname(self._slave_stdin_fd)
+
         # this is a hack, but what we're doing here is intentionally throwing an
         # OSError exception if our child processes's directory doesn't exist,
         # but we're doing it BEFORE we fork.  the reason for before the fork is
@@ -1376,10 +1384,15 @@ class OProc(object):
             gc.disable()
         self.pid = os.fork()
 
-
         # child
         if self.pid == 0: # pragma: no cover
             try:
+                # set our controlling terminal, but only if we're using a tty
+                # for stdin.  it doesn't make sense to have a ctty otherwise
+                if needs_ctty:
+                    tmp_fd = os.open(os.ttyname(self._stdin_fd), os.O_RDWR)
+                    os.close(tmp_fd)
+
                 # ignoring SIGHUP lets us persist even after the parent process
                 # exits.  only ignore if we're backgrounded
                 if self.call_args["bg"] is True:
@@ -1435,12 +1448,6 @@ class OProc(object):
                 # don't inherit file descriptors
                 max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
                 os.closerange(3, max_fd)
-
-                # set our controlling terminal, but only if we're using a tty
-                # for stdin.  it doesn't make sense to have a ctty otherwise
-                if self.call_args["tty_in"]:
-                    tmp_fd = os.open(os.ttyname(0), os.O_RDWR)
-                    os.close(tmp_fd)
 
                 if self.call_args["tty_out"]:
                     setwinsize(1, self.call_args["tty_size"])
@@ -2222,7 +2229,7 @@ class StreamReader(object):
         # if we're PY3, we're reading bytes, otherwise we're reading
         # str
         try:
-            chunk = os.read(self.stream, self.bufsize)
+            chunk = no_interrupt(os.read, self.stream, self.bufsize)
         except OSError as e:
             self.log.debug("got errno %d, done reading", e.errno)
             return True
