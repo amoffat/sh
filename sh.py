@@ -1143,9 +1143,9 @@ output"),
 
 
 
-def _start_thread(fn, *args):
+def _start_daemon_thread(fn, *args):
     thrd = threading.Thread(target=fn, args=args)
-    thrd.daemon = False
+    thrd.daemon = True
     thrd.start()
     return thrd
 
@@ -1600,7 +1600,7 @@ class OProc(object):
             # connecting from another process's stdout pipe
             self._input_thread = None
             if self._stdin_stream:
-                self._input_thread = _start_thread(input_thread, self.log,
+                self._input_thread = _start_daemon_thread(input_thread, self.log,
                         self._stdin_stream, self.is_alive)
 
 
@@ -1626,7 +1626,7 @@ class OProc(object):
                 self.timed_out = True
                 self.signal(self.call_args["timeout_signal"])
 
-            self._output_thread = _start_thread(output_thread, self.log,
+            self._output_thread = _start_daemon_thread(output_thread, self.log,
                     self._stdout_stream, self._stderr_stream,
                     self.call_args["timeout"], self.started, timeout_fn,
                     self.is_alive, self._force_done_event, handle_exit_code)
