@@ -1827,24 +1827,14 @@ def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
         if force_done_event.is_set():
             break
 
-    # this is here because stdout may be the controlling TTY, and
-    # we can't close it until the process has ended, otherwise the
-    # child will get SIGHUP.  typically, if we've broken out of
-    # the above loop, and we're here, the process is just about to
-    # end, so it's probably ok to aggressively poll is_alive()
-    #
-    # the other option to this would be to do the CTTY close from
-    # the method that does the actual os.waitpid() call, but the
-    # problem with that is that the above loop might still be
-    # running, and closing the fd will cause some operation to
-    # fail.  this is less complex than wrapping all the ops
-    # in the above loop with out-of-band fd-close exceptions
-    pid = None 
+    # here we spin until the process is dead, then handle the exit code.  we do
+    # this because some processes, which are not waited on, may have exceptions,
+    # and we need some way to report them, even if they're uncatchable
+    # exceptions in threads.
     while True:
         alive, exit_code = is_alive()
         if not alive:
             break
-
         time.sleep(0.001)
 
     if stdout:
