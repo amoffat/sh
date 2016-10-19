@@ -47,6 +47,7 @@ import time
 from types import ModuleType
 from functools import partial
 import inspect
+import tempfile
 import glob as glob_module
 import ast
 from contextlib import contextmanager
@@ -1467,15 +1468,23 @@ class OProc(object):
                 else:
                     os.execve(cmd[0], cmd, self.call_args["env"])
 
-            # we must ensure that we ALWAYS exit the child process, otherwise
-            # the parent process code will be executed twice on exception
-            # https://github.com/amoffat/sh/issues/202
+            # we must ensure that we carefully exit the child process on
+            # exception, otherwise the parent process code will be executed
+            # twice on exception https://github.com/amoffat/sh/issues/202
             #
             # if your parent process experiences an exit code 255, it is most
             # likely that an exception occurred between the fork of the child
             # and the exec.  this should be reported.
-            finally:
-                os._exit(255)
+            except:
+                # some helpful debugging
+                try:
+                    tb = traceback.format_exc()
+                    prefix = "sh_exc-" + str(os.getpid()) + "-"
+                    h = tempfile.NamedTemporaryFile(prefix=prefix, delete=False)
+                    h.write(tb)
+                    h.close()
+                finally:
+                    os._exit(255)
 
         # parent
         else:
