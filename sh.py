@@ -1320,23 +1320,19 @@ class OProc(object):
         if self._single_tty:
             self._stdin_fd, self._slave_stdin_fd = pty.openpty()
 
-            self._stdout_fd = self._stdin_fd
-            self._slave_stdout_fd = self._slave_stdin_fd
+            self._stdout_fd = os.dup(self._stdin_fd)
+            self._slave_stdout_fd = os.dup(self._slave_stdin_fd)
 
-            self._stderr_fd = self._stdin_fd
-            self._slave_stderr_fd = self._slave_stdin_fd
+            self._stderr_fd = os.dup(self._stdin_fd)
+            self._slave_stderr_fd = os.dup(self._slave_stdin_fd)
 
         # do not consolidate stdin and stdout.  this is the most common use-
         # case
         else:
             # this check here is because we may be doing piping and so our stdin
             # might be an instance of OProc
-            if isinstance(stdin, OProc):
-                fd_to_use = stdin._stdout_fd
-                if stdin.call_args["piped"] == "err":
-                    fd_to_use = stdin._stderr_fd
-
-                self._slave_stdin_fd = fd_to_use
+            if isinstance(stdin, OProc) and stdin.call_args["piped"]:
+                self._slave_stdin_fd = stdin._pipe_fd
                 self._stdin_fd = None
                 self._stdin_process = stdin
 
@@ -1360,8 +1356,20 @@ class OProc(object):
             # CTTY (because STDOUT is), the STDERR buffer won't always flush
             # by the time the process exits, and the data will be lost.
             # i've only seen this on OSX.
-            if stderr is not OProc.STDOUT:
+            if stderr is OProc.STDOUT:
+                self._stderr_fd = os.dup(self._stdout_fd)
+                self._slave_stderr_fd = os.dup(self._slave_stdout_fd)
+            else:
                 self._stderr_fd, self._slave_stderr_fd = os.pipe()
+
+
+        piped = self.call_args["piped"]
+        self._pipe_fd = None
+        if piped:
+            fd_to_use = self._stdout_fd
+            if piped == "err":
+                fd_to_use = self._stderr_fd
+            self._pipe_fd = os.dup(fd_to_use)
 
 
         needs_ctty = self.call_args["tty_in"]
@@ -1422,10 +1430,8 @@ class OProc(object):
                 if self._stdin_fd:
                     os.close(self._stdin_fd)
 
-                if not self._single_tty:
-                    os.close(self._stdout_fd)
-                    if stderr is not OProc.STDOUT:
-                        os.close(self._stderr_fd)
+                os.close(self._stdout_fd)
+                os.close(self._stderr_fd)
 
 
                 if cwd:
@@ -1433,13 +1439,7 @@ class OProc(object):
 
                 os.dup2(self._slave_stdin_fd, 0)
                 os.dup2(self._slave_stdout_fd, 1)
-
-                # we're not directing stderr to stdout?  then set self._slave_stderr_fd to
-                # fd 2, the common stderr fd
-                if stderr is OProc.STDOUT:
-                    os.dup2(self._slave_stdout_fd, 2)
-                else:
-                    os.dup2(self._slave_stderr_fd, 2)
+                os.dup2(self._slave_stderr_fd, 2)
 
                 # don't inherit file descriptors
                 max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
@@ -1528,10 +1528,8 @@ class OProc(object):
             self.log = parent_log.get_child("process", repr(self))
 
             os.close(self._slave_stdin_fd)
-            if not self._single_tty:
-                os.close(self._slave_stdout_fd)
-                if stderr is not OProc.STDOUT:
-                    os.close(self._slave_stderr_fd)
+            os.close(self._slave_stdout_fd)
+            os.close(self._slave_stderr_fd)
 
             self.log.debug("started process")
 
@@ -1579,6 +1577,8 @@ class OProc(object):
                             self.call_args["encoding"],
                             self.call_args["decode_errors"], stdout_pipe,
                             save_data=save_stdout)
+            else:
+                os.close(self._stdout_fd)
 
 
             # if stderr is going to one place (because it's grouped with stdout,
@@ -1604,6 +1604,9 @@ class OProc(object):
                     self.call_args["err_bufsize"], self.call_args["encoding"],
                     self.call_args["decode_errors"], stderr_pipe,
                     save_data=save_stderr)
+
+            else:
+                os.close(self._stderr_fd)
 
 
             # start the main io threads. stdin thread is not needed if we are
@@ -2077,13 +2080,10 @@ class StreamWriter(object):
             if chunk:
                 os.write(self.stream, chunk)
 
-            if not self.tty_in:
-                self.log.debug("we used a TTY, so closing the stream")
-                os.close(self.stream)
-
         except OSError:
             pass
 
+        os.close(self.stream)
 
 
 def determine_how_to_feed_output(handler, encoding, decode_errors):
@@ -2204,10 +2204,7 @@ class StreamReader(object):
         if self.pipe_queue and self.save_data:
             self.pipe_queue().put(None)
 
-        try:
-            os.close(self.stream)
-        except OSError:
-            pass
+        os.close(self.stream)
 
 
     def write_chunk(self, chunk):
