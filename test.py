@@ -17,6 +17,7 @@ IS_OSX = platform.system() == "Darwin"
 IS_PY3 = sys.version_info[0] == 3
 
 if IS_PY3:
+    xrange = range
     unicode = str
     from io import StringIO
     from io import BytesIO as cStringIO
@@ -2007,6 +2008,64 @@ print("cool")
         out = python(py.name, "%")
         out = python(py.name, "%%")
         out = python(py.name, "%%%")
+
+    def test_no_fd_leak(self):
+        import sh
+        import os
+        from itertools import product
+        
+        # options whose combinations can possibly cause fd leaks
+        kwargs = {
+            "_tty_out": (True, False),
+            "_tty_in": (True, False),
+            "_err_to_out": (True, False),
+        }
+
+        def get_opts(possible_values):
+            all_opts = []
+            for opt, values in possible_values.items():
+                opt_collection = []
+                all_opts.append(opt_collection)
+
+                for val in values:
+                    pair = (opt, val)
+                    opt_collection.append(pair)
+
+            for combo in product(*all_opts):
+                opt_dict = {}
+                for key, val in combo:
+                    opt_dict[key] = val
+                yield opt_dict
+
+
+        test_pid = os.getpid()
+        def get_num_fds():
+            lines = sh.lsof(p=test_pid).strip().split("\n")
+            def test(line):
+                return "CHR" in line or "PIPE" in line
+
+            lines = [line for line in lines if test(line)]
+            return len(lines) - 1
+
+        py = create_tmp_test("")
+        def test_command(**opts):
+            python(py.name, **opts)
+
+        # make sure our baseline is stable.. we can remove this
+        test_command()
+        baseline = get_num_fds()
+        for i in xrange(10):
+            test_command()
+            num_fds = get_num_fds()
+            self.assertEqual(baseline, num_fds)
+
+
+        for opts in get_opts(kwargs):
+            for i in xrange(2):
+                test_command(**opts)
+                num_fds = get_num_fds()
+                self.assertEqual(baseline, num_fds, (baseline, num_fds, opts))
+
 
     @requires_utf8
     def test_unicode_path(self):
