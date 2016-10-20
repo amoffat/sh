@@ -1337,7 +1337,7 @@ class OProc(object):
                 self._stdin_process = stdin
 
             elif self.call_args["tty_in"]:
-                self._slave_stdin_fd, self._stdin_fd = pty.openpty()
+                self._stdin_fd, self._slave_stdin_fd = pty.openpty()
 
             # tty_in=False is the default
             else:
