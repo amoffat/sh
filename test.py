@@ -1196,6 +1196,43 @@ for i in range(42):
         self.assertTrue(len(out) == 0)
 
 
+    def test_sigpipe(self):
+        import sh
+
+        py1 = create_tmp_test("""
+import sys
+import os
+import time
+import signal
+
+# by default, python disables SIGPIPE, in favor of using IOError exceptions, so
+# let's put that back to the system default where we terminate with a signal
+# exit code
+signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
+for letter in "andrew":
+    time.sleep(0.6)
+    print(letter)
+        """)
+
+        py2 = create_tmp_test("""
+import sys
+import os
+import time
+
+while True:
+    line = sys.stdin.readline()
+    if not line:
+        break
+    print(line.strip().upper())
+    exit(0)
+        """)
+
+        def fn():
+            python(python("-u", py1.name, _piped="out"), "-u", py2.name)
+
+        self.assertRaises(sh.SignalException_SIGPIPE, fn)
+
 
     def test_piped_generator(self):
         from sh import tr
