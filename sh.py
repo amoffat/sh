@@ -39,6 +39,7 @@ support." % __version__)
 
 import sys
 IS_PY3 = sys.version_info[0] == 3
+MINOR_VER = sys.version_info[1]
 
 import traceback
 import os
@@ -1281,7 +1282,7 @@ def no_interrupt(check, syscall, *args, **kwargs):
 def ignore_eaccess(syscall, *args, **kwargs):
     to_catch = OSError
 
-    if IS_PY3:
+    if IS_PY3 and MINOR_VER > 2:
         to_catch = PermissionError
 
     ret = None
@@ -1570,7 +1571,7 @@ class OProc(object):
                 try:
                     tb = traceback.format_exc()
                     prefix = "sh_exc-" + str(os.getpid()) + "-"
-                    h = tempfile.NamedTemporaryFile(prefix=prefix, delete=False)
+                    h = tempfile.NamedTemporaryFile(mode="w", prefix=prefix, delete=False)
                     h.write(tb)
                     h.close()
                 finally:
