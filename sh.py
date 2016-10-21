@@ -1251,7 +1251,7 @@ def handle_process_exit_code(exit_code):
     return exit_code
 
 
-def no_interrupt(syscall, *args, **kwargs):
+def no_interrupt(check, syscall, *args, **kwargs):
     """ a helper for making system calls immune to EINTR """
     ret = None
 
@@ -1260,11 +1260,37 @@ def no_interrupt(syscall, *args, **kwargs):
             ret = syscall(*args, **kwargs)
         except OSError as e:
             if e.errno == errno.EINTR:
-                continue
+
+                done = False
+                if callable(check):
+                    done = check()
+
+                if done:
+                    break
+                else:
+                    continue
+
             else:
                 raise
         else:
             break
+
+    return ret
+
+
+def ignore_eaccess(syscall, *args, **kwargs):
+    to_catch = OSError
+
+    if IS_PY3:
+        to_catch = PermissionError
+
+    ret = None
+    try:
+        ret = syscall(*args, **kwargs)
+    except to_catch as e:
+        if insinstance(e, OSError):
+            if e.errno != errno.EACCES:
+                raise
 
     return ret
 
@@ -1377,6 +1403,7 @@ class OProc(object):
         if needs_ctty:
             self.ctty = os.ttyname(self._slave_stdin_fd)
 
+
         # this is a hack, but what we're doing here is intentionally throwing an
         # OSError exception if our child processes's directory doesn't exist,
         # but we're doing it BEFORE we fork.  the reason for before the fork is
@@ -1388,6 +1415,7 @@ class OProc(object):
         if cwd is not None and not os.path.exists(cwd):
             os.chdir(cwd)
 
+        # http://bugs.python.org/issue1336
         gc_enabled = gc.isenabled()
         if gc_enabled:
             gc.disable()
@@ -1410,8 +1438,7 @@ class OProc(object):
                     time.sleep(0.01)
 
                 # always put our forked process in a new session.  this will
-                # relinquish any control of our inherited CTTY and also make our
-                # parent process init
+                # relinquish any control of our inherited CTTY
                 os.setsid()
 
                 if self.call_args["tty_out"]:
@@ -1462,11 +1489,74 @@ class OProc(object):
                 if callable(preexec_fn):
                     preexec_fn()
 
-                # actually execute the process
-                if self.call_args["env"] is None:
-                    os.execv(cmd[0], cmd)
+
+                def actually_exec():
+                    if self.call_args["env"] is None:
+                        os.execv(cmd[0], cmd)
+                    else:
+                        os.execve(cmd[0], cmd, self.call_args["env"])
+
+
+
+                # this branch requires some explaining.  basically, we'll do
+                # another fork and set up a separate (background) process group,
+                # if we need a TTY AND we're not going to use stdin to feed data
+                # to the process.
+                #
+                # the reason for this is that some programs are incredibly
+                # finicky about the environment that they're run in, if they
+                # think they have a TTY on stdin.  ssh is one of those programs.
+                # if you give ssh a TTY, and you pass it "-f" and tell it to run
+                # a command on a remote server, it does a very interesting
+                # thing:
+                #
+                # it essentially behaves as if we're running inside of a shell,
+                # with a controlling terminal.  as such, ssh forks a process
+                # (because of -f) into a new session and exits.  HOWEVER,
+                # because it exits, there is a race where the parent ssh process
+                # exits before the new process can setsid, and so the child
+                # process receives a SIGHUP.  normally, in a normal shell, none
+                # of this would happen because the shell has an fd to the ctty,
+                # and so ssh exiting would not cause a SIGHUP to be sent to its
+                # child
+                #
+                # so because of that, we need to basically emulate a "shell",
+                # who has an fd to the ctty, so that when ssh exits with -f, the
+                # child doesn't receive a SIGHUP
+                #
+                # unfortunately, we can't just do this with all processes that
+                # are using a ctty on stdin because the process might try to
+                # read on stdin, and if it did, it would receive a SIGTTIN and
+                # then hang.  so we use a heuristic of "not_gonna_use_stdin" to
+                # reasonably determine if we plan on writing to stdin.  if we do
+                # plan to write the stdin, we don't allow the double fork,
+                # because that would cause the process to hang.  if we don't
+                # plan on writing, we do allow the double fork, to emulate a
+                # more accurate session/group/process structure
+                not_gonna_use_stdin = stdin is None and stdout is None
+                if needs_ctty and not_gonna_use_stdin:
+
+                    grandchild_pid = os.fork()
+
+                    if grandchild_pid == 0:
+                        no_interrupt(None, os.setpgrp)
+                        actually_exec()
+                            
+                    else:
+                        # we ignore EACCES because setpgid can fail if the child
+                        # has already exec'd
+                        ignore_eaccess(no_interrupt, None, os.setpgid,
+                                grandchild_pid, grandchild_pid)
+
+                        child_pid, code = no_interrupt(None, os.waitpid,
+                                grandchild_pid, 0)
+
+                        code = handle_process_exit_code(code)
+                        os._exit(code)
+
+
                 else:
-                    os.execve(cmd[0], cmd, self.call_args["env"])
+                    actually_exec()
 
             # we must ensure that we carefully exit the child process on
             # exception, otherwise the parent process code will be executed
@@ -1714,7 +1804,7 @@ class OProc(object):
             # essentially polling the process.  the return result is (0, 0) if
             # there's no process status, so we check that pid == self.pid below
             # in order to determine how to proceed
-            pid, exit_code = no_interrupt(os.waitpid, self.pid, os.WNOHANG)
+            pid, exit_code = no_interrupt(None, os.waitpid, self.pid, os.WNOHANG)
             if pid == self.pid:
                 self.exit_code = handle_process_exit_code(exit_code)
 
@@ -1745,7 +1835,7 @@ class OProc(object):
 
             if self.exit_code is None:
                 self.log.debug("exit code not set, waiting on pid")
-                pid, exit_code = no_interrupt(os.waitpid, self.pid, 0) # blocks
+                pid, exit_code = no_interrupt(None, os.waitpid, self.pid, 0) # blocks
                 self.exit_code = handle_process_exit_code(exit_code)
                 call_done_callback = True
             else:
@@ -1761,7 +1851,7 @@ class OProc(object):
             # wait, then signal to our output thread that the child process is
             # done, and we should have finished reading all the stdout/stderr
             # data that we can by now
-            threading.Timer(0.5, self._force_done_event.set).start()
+            threading.Timer(1.0, self._force_done_event.set).start()
 
             # wait for our stdout and stderr streamreaders to finish reading and
             # aggregating the process output
@@ -1814,8 +1904,8 @@ def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
     # things to poll.  when no more things are left to poll, we leave this
     # loop and clean up
     while readers:
-        outputs, inputs, err = no_interrupt(select.select, readers, [], errors,
-                0.1)
+        outputs, inputs, err = no_interrupt(None, select.select, readers, [],
+                errors, 0.1)
 
         # stdout and stderr
         for stream in outputs:
@@ -2226,7 +2316,7 @@ class StreamReader(object):
         # if we're PY3, we're reading bytes, otherwise we're reading
         # str
         try:
-            chunk = no_interrupt(os.read, self.stream, self.bufsize)
+            chunk = no_interrupt(None, os.read, self.stream, self.bufsize)
         except OSError as e:
             self.log.debug("got errno %d, done reading", e.errno)
             return True
