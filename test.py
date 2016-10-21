@@ -5,10 +5,13 @@ from os.path import exists, join, realpath, dirname
 import unittest
 import tempfile
 import sh
+import signal
+import errno
 import sys
 import stat
 import platform
 from functools import wraps
+import time
 
 # we have to use the real path because on osx, /tmp is a symlink to
 # /private/tmp, and so assertions that gettempdir() == sh.pwd() will fail
@@ -67,9 +70,16 @@ def create_tmp_test(code, prefix="tmp", delete=True):
     return py
 
 
+class BaseTests(unittest.TestCase):
+    def assert_oserror(self, num, fn, *args, **kwargs):
+        try:
+            fn(*args, **kwargs)
+        except OSError as e:
+            self.assertEqual(e.errno, num)
+
 
 @requires_posix
-class FunctionalTests(unittest.TestCase):
+class FunctionalTests(BaseTests):
 
     def setUp(self):
         self._environ = os.environ.copy()
@@ -2035,7 +2045,7 @@ time.sleep(1) # give child a chance to set up
 
 
 
-class MiscTests(unittest.TestCase):
+class MiscTests(BaseTests):
     def test_percent_doesnt_fail_logging(self):
         """ test that a command name doesn't interfere with string formatting in
         the internal loggers """
