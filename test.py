@@ -1829,6 +1829,75 @@ print(time())
         self.assertEqual(callback.exit_code, 0)
 
 
+    def test_new_session(self):
+        from threading import Event
+
+        py = create_tmp_test("""
+import os
+import time
+pid = os.getpid()
+pgid = os.getpgid(pid)
+sid = os.getsid(pid)
+stuff = [pid, pgid, sid]
+
+print(",".join([str(el) for el in stuff]))
+""")
+
+
+        event = Event()
+
+        def handle(line, stdin, p):
+            pid, pgid, sid = line.strip().split(",")
+            pid = int(pid)
+            pgid = int(pgid)
+            sid = int(sid)
+
+            self.assertEqual(p.pid, pid)
+            self.assertEqual(pid, pgid)
+            self.assertEqual(p.pgid, pgid)
+            self.assertEqual(pgid, p.get_pgid())
+            self.assertEqual(pid, sid)
+            self.assertEqual(sid, pgid)
+            self.assertEqual(p.sid, sid)
+            self.assertEqual(sid, p.get_sid())
+
+            event.set()
+
+        # new session
+        p = python(py.name, _out=handle)
+        p.wait()
+        self.assertTrue(event.is_set())
+
+
+        event.clear()
+
+
+        def handle(line, stdin, p):
+            pid, pgid, sid = line.strip().split(",")
+            pid = int(pid)
+            pgid = int(pgid)
+            sid = int(sid)
+
+            test_pid = os.getpid()
+
+            self.assertEqual(p.pid, pid)
+            self.assertEqual(test_pid, pgid)
+            self.assertEqual(p.pgid, pgid)
+            self.assertEqual(pgid, p.get_pgid())
+            self.assertNotEqual(pid, sid)
+            self.assertNotEqual(sid, pgid)
+            self.assertEqual(p.sid, sid)
+            self.assertEqual(sid, p.get_sid())
+
+            event.set()
+
+        # no new session
+        p = python(py.name, _out=handle, _new_session=False)
+        p.wait()
+        self.assertTrue(event.is_set())
+
+
+
     def test_done_cb_exc(self):
         from sh import ErrorReturnCode
 
@@ -2112,31 +2181,6 @@ print("cool")
                 test_command(**opts)
                 num_fds = get_num_fds()
                 self.assertEqual(baseline, num_fds, (baseline, num_fds, opts))
-
-
-    def test_tty_in_signal(self):
-        py = create_tmp_test("""
-import time
-import sys
-import signal
-import os
-
-signal.signal(signal.SIGHUP, signal.SIG_DFL)
-pid = os.getpid()
-print(pid)
-time.sleep(10)
-""")
-        p = python(py.name, "-u", _iter=True, _tty_in=True)
-        # give it a chance to double fork
-        time.sleep(0.1)
-
-        for line in p:
-            pid = int(line.strip())
-            p.kill()
-            break
-
-        time.sleep(0.1)
-        self.assert_oserror(errno.ESRCH, os.kill, pid, 0)
 
 
     @requires_utf8

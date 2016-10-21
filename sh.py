@@ -633,6 +633,15 @@ class RunningCommand(object):
     def pid(self):
         return self.process.pid
 
+    @property
+    def sid(self):
+        return self.process.sid
+
+    @property
+    def pgid(self):
+        return self.process.pgid
+
+
     def __len__(self):
         return len(str(self))
 
@@ -861,6 +870,9 @@ class Command(object):
         # UID to set after forking. Requires root privileges. Not supported on
         # Windows.
         "uid": None,
+
+        # put the forked process in its own process session?
+        "new_session": True,
     }
 
     # these are arguments that cannot be called together, because they wouldn't
@@ -1390,7 +1402,9 @@ class OProc(object):
             self._pipe_fd = os.dup(fd_to_use)
 
 
-        needs_ctty = self.call_args["tty_in"]
+        new_session = self.call_args["new_session"]
+        needs_ctty = self.call_args["tty_in"] and new_session
+
         self.ctty = None
         if needs_ctty:
             self.ctty = os.ttyname(self._slave_stdin_fd)
@@ -1409,6 +1423,14 @@ class OProc(object):
         gc_enabled = gc.isenabled()
         if gc_enabled:
             gc.disable()
+
+        # for synchronizing
+        session_pipe_read, session_pipe_write = os.pipe()
+
+
+        # session id, group id, process id
+        self.sid = None
+        self.pgid = None
         self.pid = os.fork()
 
 
@@ -1430,7 +1452,12 @@ class OProc(object):
                 # always put our forked process in a new session.  this will
                 # relinquish any control of our inherited CTTY and also make our
                 # parent process init
-                os.setsid()
+                if new_session:
+                    os.setsid()
+
+                pid = os.getpid()
+                sid = os.getsid(pid)
+                os.write(session_pipe_write, str(sid))
 
                 if self.call_args["tty_out"]:
                     # set raw mode, so there isn't any weird translation of
@@ -1451,6 +1478,7 @@ class OProc(object):
                 os.close(self._stdout_fd)
                 os.close(self._stderr_fd)
 
+                os.close(session_pipe_read)
 
                 if cwd:
                     os.chdir(cwd)
@@ -1459,9 +1487,6 @@ class OProc(object):
                 os.dup2(self._slave_stdout_fd, 1)
                 os.dup2(self._slave_stderr_fd, 2)
 
-                # don't inherit file descriptors
-                max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-                os.closerange(3, max_fd)
 
                 # set our controlling terminal, but only if we're using a tty
                 # for stdin.  it doesn't make sense to have a ctty otherwise
@@ -1479,6 +1504,11 @@ class OProc(object):
                 preexec_fn = self.call_args["preexec_fn"]
                 if callable(preexec_fn):
                     preexec_fn()
+
+
+                # don't inherit file descriptors
+                max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
+                os.closerange(3, max_fd)
 
                 # actually execute the process
                 if self.call_args["env"] is None:
@@ -1508,6 +1538,13 @@ class OProc(object):
         else:
             if gc_enabled:
                 gc.enable()
+
+
+            os.close(session_pipe_write)
+            self.sid = int(os.read(session_pipe_read, 1024))
+            os.close(session_pipe_read)
+
+            self.pgid = os.getpgid(self.pid)
 
             # used to determine what exception to raise.  if our process was
             # killed via a timeout counter, we'll raise something different than
@@ -1686,6 +1723,17 @@ class OProc(object):
     def stderr(self):
         return "".encode(self.call_args["encoding"]).join(self._stderr)
 
+    def get_pgid(self):
+        """ return the CURRENT group id of the process. this differs from
+        self.pgid in that this refects the current state of the process, where
+        self.pgid is the group id at launch """
+        return os.getpgid(self.pid)
+
+    def get_sid(self):
+        """ return the CURRENT session id of the process. this differs from
+        self.sid in that this refects the current state of the process, where
+        self.sid is the session id at launch """
+        return os.getsid(self.pid)
 
     def signal(self, sig):
         self.log.debug("sending signal %d", sig)
