@@ -2114,6 +2114,31 @@ print("cool")
                 self.assertEqual(baseline, num_fds, (baseline, num_fds, opts))
 
 
+    def test_tty_in_signal(self):
+        py = create_tmp_test("""
+import time
+import sys
+import signal
+import os
+
+signal.signal(signal.SIGHUP, signal.SIG_DFL)
+pid = os.getpid()
+print(pid)
+time.sleep(10)
+""")
+        p = python(py.name, "-u", _iter=True, _tty_in=True)
+        # give it a chance to double fork
+        time.sleep(0.1)
+
+        for line in p:
+            pid = int(line.strip())
+            p.kill()
+            break
+
+        time.sleep(0.1)
+        self.assert_oserror(errno.ESRCH, os.kill, pid, 0)
+
+
     @requires_utf8
     def test_unicode_path(self):
         from sh import Command
