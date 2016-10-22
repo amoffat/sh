@@ -1829,6 +1829,16 @@ print(time())
         self.assertEqual(callback.exit_code, 0)
 
 
+    def test_fork_exc(self):
+        from sh import ForkException
+
+        py = create_tmp_test("")
+        def fail():
+            raise RuntimeError("nooo")
+
+        self.assertRaises(ForkException, python, py.name, _preexec_fn=fail)
+
+
     def test_new_session(self):
         from threading import Event
 

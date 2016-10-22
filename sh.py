@@ -143,6 +143,26 @@ def encode_to_py3bytes_or_py2str(s):
     return s
 
 
+def _indent_text(text, num=4):
+    lines = []
+    for line in text.split("\n"):
+        line = (" " * num) + line
+        lines.append(line)
+    return "\n".join(lines)
+
+
+class ForkException(Exception):
+    def __init__(self, orig_exc):
+        tmpl = """
+
+Original exception:
+===================
+
+%s
+"""
+        msg = tmpl % _indent_text(orig_exc)
+        Exception.__init__(self, msg)
+
 
 class ErrorReturnCodeMeta(type):
     """ a metaclass which provides the ability for an ErrorReturnCode (or
@@ -1426,6 +1446,7 @@ class OProc(object):
 
         # for synchronizing
         session_pipe_read, session_pipe_write = os.pipe()
+        exc_pipe_read, exc_pipe_write = os.pipe()
 
 
         # session id, group id, process id
@@ -1482,6 +1503,7 @@ class OProc(object):
                 os.close(self._stderr_fd)
 
                 os.close(session_pipe_read)
+                os.close(exc_pipe_read)
 
                 if cwd:
                     os.chdir(cwd)
@@ -1530,10 +1552,7 @@ class OProc(object):
                 # some helpful debugging
                 try:
                     tb = traceback.format_exc()
-                    prefix = "sh_exc-" + str(os.getpid()) + "-"
-                    h = tempfile.NamedTemporaryFile(mode="w", prefix=prefix, delete=False)
-                    h.write(tb)
-                    h.close()
+                    os.write(exc_pipe_write, tb)
                 finally:
                     os._exit(255)
 
@@ -1542,6 +1561,12 @@ class OProc(object):
             if gc_enabled:
                 gc.enable()
 
+
+            os.close(exc_pipe_write)
+            fork_exc = os.read(exc_pipe_read, 1024**2)
+            os.close(exc_pipe_read)
+            if fork_exc:
+                raise ForkException(fork_exc)
 
             os.close(session_pipe_write)
             self.sid = int(os.read(session_pipe_read, 1024))
@@ -2485,6 +2510,7 @@ class Environment(dict):
         "ErrorReturnCode",
         "NotYetReadyToRead",
         "SignalException",
+        "ForkException",
         "TimeoutException",
         "__project_url__",
         "__version__",
