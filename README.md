@@ -26,14 +26,10 @@ First install the development requirements:
 
     $> pip install -r requirements-dev.txt
 
-Then use [tox](http://tox.readthedocs.org/en/latest/index.html) test runner:
+Then run the tests like this:
 
-    $> tox
+    $> python sh.py test
 
 To run a single test for all environments:
 
-    $> tox FunctionalTests.test_unicode_arg
-
-To run a single test for a single environment:
-
-    $> tox -e py34 FunctionalTests.test_unicode_arg
+    $> python sh.py test FunctionalTests.test_unicode_arg

@@ -1,13 +1,32 @@
 # -*- coding: utf8 -*-
-
+import sys
 import os
+
+IS_PY3 = sys.version_info[0] == 3
+MINOR_VER = sys.version_info[1]
+
+# coverage doesn't work in python 3.1, 3.2 due to it just being a shit
+# python
+is_crappy_python = IS_PY3 and MINOR_VER in (1, 2)
+
+cov = None
+if not is_crappy_python:
+    run_idx = int(os.environ.pop("SH_TEST_RUN_IDX", "0"))
+    import coverage
+    cov = coverage.Coverage(auto_data=True)
+
+    if run_idx == 0:
+        cov.erase()
+
+    cov.start()
+
+
 from os.path import exists, join, realpath, dirname
 import unittest
 import tempfile
 import sh
 import signal
 import errno
-import sys
 import stat
 import platform
 from functools import wraps
@@ -17,7 +36,6 @@ import time
 # /private/tmp, and so assertions that gettempdir() == sh.pwd() will fail
 tempdir = realpath(tempfile.gettempdir())
 IS_OSX = platform.system() == "Darwin"
-IS_PY3 = sys.version_info[0] == 3
 
 if IS_PY3:
     xrange = range
@@ -2421,16 +2439,22 @@ class ExecutionContextTests(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    # if we're running a specific test, we can let unittest framework figure out
-    # that test and run it itself.  it will also handle setting the return code
-    # of the process if any tests error or fail
-    if len(sys.argv) > 1:
-        unittest.main()
+    try:
+        # if we're running a specific test, we can let unittest framework figure out
+        # that test and run it itself.  it will also handle setting the return code
+        # of the process if any tests error or fail
+        if len(sys.argv) > 1:
+            unittest.main()
 
-    # otherwise, it looks like we want to run all the tests
-    else:
-        suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
-        result = unittest.TextTestRunner(verbosity=2).run(suite)
+        # otherwise, it looks like we want to run all the tests
+        else:
+            suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
+            result = unittest.TextTestRunner(verbosity=2).run(suite)
 
-        if not result.wasSuccessful():
-            exit(1)
+            if not result.wasSuccessful():
+                exit(1)
+
+    finally:
+        if cov:
+            cov.stop()
+            cov.save()

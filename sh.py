@@ -2800,8 +2800,21 @@ if __name__ == "__main__": # pragma: no cover
 
     if arg == "test":
         import subprocess
+        import coverage
 
-        def run_test(version, locale):
+        pypath = [p for p in os.environ.get("PYTHONPATH", "").split(":") if p]
+        coverage_file = inspect.getsourcefile(coverage)
+        coverage_dir = os.path.dirname(coverage_file)
+        is_package = "__init__.py" in coverage_file
+
+        if is_package:
+            coverage_dir, _ = os.path.split(coverage_dir)
+
+        pypath.append(coverage_dir)
+        pypath = ":".join(pypath)
+
+
+        def run_test(version, locale, **extra_env):
             py_version = "python%s" % version
             py_bin = which(py_version)
 
@@ -2810,21 +2823,29 @@ if __name__ == "__main__": # pragma: no cover
                     locale))
 
                 env = os.environ.copy()
+                env["PYTHONPATH"] = pypath
                 env["LANG"] = locale
-                p = subprocess.Popen([py_bin, os.path.join(THIS_DIR, "test.py")]
-                    + sys.argv[1:], env=env)
-                return_code = p.wait()
+
+                for k,v in extra_env.items():
+                    env[k] = str(v)
+
+                cmd = [py_bin, os.path.join(THIS_DIR, "test.py")] + sys.argv[1:]
+                launch = lambda: os.spawnve(os.P_WAIT, cmd[0], cmd, env)
+                return_code = launch()
 
                 if return_code != 0:
                     exit(1)
             else:
                 print("Couldn't find %s, skipping" % py_version.capitalize())
 
-        versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4")
+
+        versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5")
         locales = ("en_US.UTF-8", "C")
+        i = 0
         for locale in locales:
             for version in versions:
-                run_test(version, locale)
+                run_test(version, locale, SH_TEST_RUN_IDX=i)
+                i += 1
 
     else:
         env = Environment(globals())
