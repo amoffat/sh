@@ -6,17 +6,14 @@ language: python
 python:
     - 2.6
     - 2.7
+    - 3.2
     - 3.3
     - 3.4
+    - 3.5
 
-env:
-    - LC_ALL=C
-    - LC_ALL=en_US.UTF-8
-
-before_script: pip install coverage coveralls
+before_script: pip install -r requirements-dev.txt
 
 script:
-    - coverage run --source sh test.py
-    - coverage report
+    - python sh.py test
 
 after_success: coveralls
