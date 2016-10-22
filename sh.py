@@ -1481,7 +1481,7 @@ class OProc(object):
 
                 pid = os.getpid()
                 sid = os.getsid(pid)
-                os.write(session_pipe_write, str(sid))
+                os.write(session_pipe_write, str(sid).encode(DEFAULT_ENCODING))
 
                 if self.call_args["tty_out"]:
                     # set raw mode, so there isn't any weird translation of
@@ -1551,8 +1551,9 @@ class OProc(object):
             except:
                 # some helpful debugging
                 try:
-                    tb = traceback.format_exc()
+                    tb = traceback.format_exc().encode("utf8", "ignore")
                     os.write(exc_pipe_write, tb)
+
                 finally:
                     os._exit(255)
 
@@ -1566,6 +1567,7 @@ class OProc(object):
             fork_exc = os.read(exc_pipe_read, 1024**2)
             os.close(exc_pipe_read)
             if fork_exc:
+                fork_exc = fork_exc.decode(DEFAULT_ENCODING)
                 raise ForkException(fork_exc)
 
             os.close(session_pipe_write)

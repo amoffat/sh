@@ -1888,7 +1888,7 @@ print(",".join([str(el) for el in stuff]))
             pgid = int(pgid)
             sid = int(sid)
 
-            test_pid = os.getpid()
+            test_pid = os.getpgid(os.getpid())
 
             self.assertEqual(p.pid, pid)
             self.assertEqual(test_pid, pgid)
