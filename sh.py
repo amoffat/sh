@@ -503,6 +503,8 @@ class RunningCommand(object):
         "signal",
         "terminate",
         "kill",
+        "kill_group",
+        "signal_group",
         "pid",
         "sid",
         "pgid",
@@ -1763,10 +1765,17 @@ class OProc(object):
         self.sid is the session id at launch """
         return os.getsid(self.pid)
 
+    def signal_group(self, sig):
+        self.log.debug("sending signal %d to group", sig)
+        os.killpg(self.get_pgid(), sig)
+
     def signal(self, sig):
         self.log.debug("sending signal %d", sig)
         os.kill(self.pid, sig)
 
+    def kill_group(self):
+        self.log.debug("killing group")
+        self.signal_group(signal.SIGKILL)
 
     def kill(self):
         self.log.debug("killing")

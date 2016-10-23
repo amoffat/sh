@@ -1736,6 +1736,66 @@ while True: time.sleep(1)
         self.assertRaises(SignalException_15, throw_terminate_signal)
 
 
+    def test_signal_group(self):
+        child = create_tmp_test("""
+import time
+time.sleep(3)
+""")
+
+        parent = create_tmp_test("""
+import sh
+p = sh.python("{child_file}", _bg=True, _new_session=False)
+print(p.pid)
+print(p.process.pgid)
+p.wait()
+""", child_file=child.name)
+
+        def launch():
+            p = python(parent.name, _bg=True, _iter=True)
+            child_pid = int(next(p).strip())
+            child_pgid = int(next(p).strip())
+            parent_pid = p.pid
+            parent_pgid = p.process.pgid
+
+            return p, child_pid, child_pgid, parent_pid, parent_pgid
+
+        def assert_alive(pid):
+            os.kill(pid, 0)
+
+        def assert_dead(pid):
+            self.assert_oserror(errno.ESRCH, os.kill, pid, 0)
+
+
+        # first let's prove that calling regular SIGKILL on the parent does
+        # nothing to the child, since the child was launched in the same process
+        # group (_new_session=False) and the parent is not a controlling process
+        p, child_pid, child_pgid, parent_pid, parent_pgid = launch()
+
+        assert_alive(parent_pid)
+        assert_alive(child_pid)
+
+        p.kill()
+        time.sleep(0.1)
+        assert_dead(parent_pid)
+        assert_alive(child_pid)
+
+        self.assertRaises(sh.SignalException_SIGKILL, p.wait)
+        assert_dead(child_pid)
+
+
+        # now let's prove that killing the process group kills both the parent
+        # and the child
+        p, child_pid, child_pgid, parent_pid, parent_pgid = launch()
+
+        assert_alive(parent_pid)
+        assert_alive(child_pid)
+
+        p.kill_group()
+        time.sleep(0.1)
+        assert_dead(parent_pid)
+        assert_dead(child_pid)
+
+
     def test_file_output_isnt_buffered(self):
         # https://github.com/amoffat/sh/issues/147
 
