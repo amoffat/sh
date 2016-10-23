@@ -1765,10 +1765,8 @@ class OProc(object):
 
     def signal(self, sig):
         self.log.debug("sending signal %d", sig)
-        try:
-            os.kill(self.pid, sig)
-        except OSError:
-            pass
+        os.kill(self.pid, sig)
+
 
     def kill(self):
         self.log.debug("killing")
