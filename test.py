@@ -2171,6 +2171,20 @@ time.sleep(3)
             self.fail("we should have handled a TimeoutException")
 
 
+    def test_append_stdout(self):
+        py = create_tmp_test("""
+import sys
+num = sys.stdin.read()
+sys.stdout.write(num)
+""")
+        append_file = tempfile.NamedTemporaryFile(mode="a+b")
+        python(py.name, _in="1", _out=append_file)
+        python(py.name, _in="2", _out=append_file)
+        append_file.seek(0)
+        output = append_file.read()
+        self.assertEqual(b"12", output)
+
+
     def test_partially_applied_callback(self):
         from functools import partial
 
