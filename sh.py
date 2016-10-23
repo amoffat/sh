@@ -1177,8 +1177,8 @@ output"),
 
 
 
-def _start_daemon_thread(fn, *args):
-    thrd = threading.Thread(target=fn, args=args)
+def _start_daemon_thread(fn, name, *args):
+    thrd = threading.Thread(target=fn, name=name, args=args)
     thrd.daemon = True
     thrd.start()
     return thrd
@@ -1698,8 +1698,10 @@ class OProc(object):
             # connecting from another process's stdout pipe
             self._input_thread = None
             if self._stdin_stream:
-                self._input_thread = _start_daemon_thread(input_thread, self.log,
-                        self._stdin_stream, self.is_alive)
+                thread_name = "STDIN thread for pid %d" % self.pid
+                self._input_thread = _start_daemon_thread(input_thread,
+                        thread_name, self.log, self._stdin_stream,
+                        self.is_alive)
 
 
             # this event is for cases where the subprocess that we launch
@@ -1724,10 +1726,12 @@ class OProc(object):
                 self.timed_out = True
                 self.signal(self.call_args["timeout_signal"])
 
-            self._output_thread = _start_daemon_thread(output_thread, self.log,
-                    self._stdout_stream, self._stderr_stream,
-                    self.call_args["timeout"], self.started, timeout_fn,
-                    self.is_alive, self._force_done_event, handle_exit_code)
+            thread_name = "STDOUT/ERR thread for pid %d" % self.pid
+            self._output_thread = _start_daemon_thread(output_thread,
+                    thread_name, self.log, self._stdout_stream,
+                    self._stderr_stream, self.call_args["timeout"],
+                    self.started, timeout_fn, self.is_alive,
+                    self._force_done_event, handle_exit_code)
 
 
     def __repr__(self):
