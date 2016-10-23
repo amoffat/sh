@@ -498,6 +498,16 @@ class RunningCommand(object):
     finishes, RunningCommand is smart enough to translate exit codes to
     exceptions. """
 
+    # these are attributes that we allow to passthrough to OProc for
+    _OProc_attr_whitelist = set((
+        "signal",
+        "terminate",
+        "kill",
+        "pid",
+        "sid",
+        "pgid",
+    ))
+
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
         """
             cmd is an array, where each element is encoded as bytes (PY3) or str
@@ -649,18 +659,6 @@ class RunningCommand(object):
         self.wait()
         return self.process.exit_code
 
-    @property
-    def pid(self):
-        return self.process.pid
-
-    @property
-    def sid(self):
-        return self.process.sid
-
-    @property
-    def pgid(self):
-        return self.process.pgid
-
 
     def __len__(self):
         return len(str(self))
@@ -736,7 +734,7 @@ class RunningCommand(object):
 
     def __getattr__(self, p):
         # let these three attributes pass through to the OProc object
-        if p in ("signal", "terminate", "kill"):
+        if p in self._OProc_attr_whitelist:
             if self.process:
                 return getattr(self.process, p)
             else:
