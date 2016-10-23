@@ -1913,6 +1913,8 @@ def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
         readers.append(stderr)
         errors.append(stderr)
 
+    timeout_called = False
+
     # this is our select loop for polling stdout or stderr that is ready to
     # be read and processed.  if one of those streamreaders indicate that it
     # is done altogether being read from, we remove it from our list of
@@ -1936,10 +1938,11 @@ def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
             pass
 
         # test if the process has been running too long
-        if timeout:
+        if timeout and not timeout_called:
             now = time.time()
             if now - started > timeout:
                 log.debug("we've been running too long")
+                timeout_called = True
                 timeout_fn()
 
         if force_done_event.is_set():
