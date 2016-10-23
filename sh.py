@@ -58,6 +58,12 @@ import errno
 from locale import getpreferredencoding
 DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
 
+# normally i would hate this idea of using a global to signify whether we are
+# running tests, because it breaks the assumption that what is running in the
+# tests is what will run live, but we ONLY use this in a place that has no
+# serious side-effects that could change anything.  as long as we do that, it
+# should be ok
+RUNNING_TESTS = bool(int(os.environ.get("SH_TESTS_RUNNING", "0")))
 
 
 if IS_PY3:
@@ -1964,7 +1970,10 @@ def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
     if stderr:
         stderr.close()
 
-    if handle_exit_code:
+    # this reports the exit code exception in our thread.  it's purely for the
+    # user's awareness, and cannot be caught or used in any way, so it's ok to
+    # suppress this during the tests
+    if handle_exit_code and not RUNNING_TESTS: # pragma: no cover
         handle_exit_code(exit_code)
 
 
@@ -2830,6 +2839,7 @@ if __name__ == "__main__": # pragma: no cover
         import test
 
         env = os.environ.copy()
+        env["SH_TESTS_RUNNING"] = "1"
         test.append_module_path(env, coverage)
         
         def run_test(version, locale, **extra_env):
