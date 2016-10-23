@@ -2789,29 +2789,35 @@ class ModuleImporterFromVariables(object):
         return module
 
 
+
+
 # we're being run as a stand-alone script
 if __name__ == "__main__": # pragma: no cover
-    try:
-        arg = sys.argv.pop(1)
-    except:
-        arg = None
+    def parse_args():
+        from optparse import OptionParser
 
-    if arg == "test":
+        parser = OptionParser()
+        parser.add_option("-e", "--envs", dest="envs", action="append")
+        parser.add_option("-l", "--locales", dest="locales", action="append")
+        options, args = parser.parse_args()
+
+        envs = options.envs or []
+        locales = options.locales or []
+
+        return args, envs, locales
+
+    # these are essentially restrictions on what envs/locales to restrict to for
+    # the tests.  if they're empty lists, it means use all available
+    args, py_envs, locales = parse_args()
+
+    if args and args[0] == "test":
         import subprocess
         import coverage
+        import test
 
-        pypath = [p for p in os.environ.get("PYTHONPATH", "").split(":") if p]
-        coverage_file = inspect.getsourcefile(coverage)
-        coverage_dir = os.path.dirname(coverage_file)
-        is_package = "__init__.py" in coverage_file
-
-        if is_package:
-            coverage_dir, _ = os.path.split(coverage_dir)
-
-        pypath.append(coverage_dir)
-        pypath = ":".join(pypath)
-
-
+        env = os.environ.copy()
+        test.append_module_path(env, coverage)
+        
         def run_test(version, locale, **extra_env):
             py_version = "python%s" % version
             py_bin = which(py_version)
@@ -2820,14 +2826,12 @@ if __name__ == "__main__": # pragma: no cover
                 print("Testing %s, locale %r" % (py_version.capitalize(),
                     locale))
 
-                env = os.environ.copy()
-                env["PYTHONPATH"] = pypath
                 env["LANG"] = locale
 
                 for k,v in extra_env.items():
                     env[k] = str(v)
 
-                cmd = [py_bin, os.path.join(THIS_DIR, "test.py")] + sys.argv[1:]
+                cmd = [py_bin, os.path.join(THIS_DIR, "test.py")] + args[1:]
                 launch = lambda: os.spawnve(os.P_WAIT, cmd[0], cmd, env)
                 return_code = launch()
 
@@ -2836,11 +2840,17 @@ if __name__ == "__main__": # pragma: no cover
             else:
                 print("Couldn't find %s, skipping" % py_version.capitalize())
 
-        versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5")
-        locales = ("en_US.UTF-8", "C")
+        all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5")
+        all_locales = ("en_US.UTF-8", "C")
         i = 0
-        for locale in locales:
-            for version in versions:
+        for locale in all_locales:
+            if locales and locale not in locales:
+                continue
+
+            for version in all_versions:
+                if py_envs and version not in py_envs:
+                    continue
+
                 run_test(version, locale, SH_TEST_RUN_IDX=i)
                 i += 1
 

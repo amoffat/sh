@@ -21,7 +21,7 @@ if not is_crappy_python:
     cov.start()
 
 
-from os.path import exists, join, realpath, dirname
+from os.path import exists, join, realpath, dirname, split
 import unittest
 import tempfile
 import sh
@@ -31,11 +31,38 @@ import stat
 import platform
 from functools import wraps
 import time
+import inspect
 
 # we have to use the real path because on osx, /tmp is a symlink to
 # /private/tmp, and so assertions that gettempdir() == sh.pwd() will fail
 tempdir = realpath(tempfile.gettempdir())
 IS_OSX = platform.system() == "Darwin"
+
+
+
+# these 3 functions are helpers for modifying PYTHONPATH with a module's main
+# directory
+
+def append_pythonpath(env, path):
+    key = "PYTHONPATH"
+    pypath = [p for p in env.get(key, "").split(":") if p]
+    pypath.insert(0, path)
+    pypath = ":".join(pypath)
+    env[key] = pypath
+
+def get_module_import_dir(m):
+    mod_file = inspect.getsourcefile(m)
+    is_package = mod_file.endswith("__init__.py")
+
+    mod_dir = dirname(mod_file)
+    if is_package:
+        mod_dir, _ = split(mod_dir)
+    return mod_dir
+
+def append_module_path(env, m):
+    append_pythonpath(env, get_module_import_dir(m))
+
+
 
 if IS_PY3:
     xrange = range
@@ -49,6 +76,14 @@ else:
     python = sh.python
 
 THIS_DIR = dirname(os.path.abspath(__file__))
+
+
+# this is to ensure that our `python` helper here is able to import our local sh
+# module, and not the system one
+baked_env = os.environ.copy()
+append_module_path(baked_env, sh)
+python = python.bake(_env=baked_env)
+
 
 skipUnless = getattr(unittest, "skipUnless", None)
 if not skipUnless:
@@ -68,13 +103,16 @@ requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
 requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
 
 
-def create_tmp_test(code, prefix="tmp", delete=True):
+def create_tmp_test(code, prefix="tmp", delete=True, **kwargs):
     """ creates a temporary test file that lives on disk, on which we can run
     python with sh """
 
     py = tempfile.NamedTemporaryFile(prefix=prefix, delete=delete)
+
+    code = code.format(**kwargs)
     if IS_PY3:
-        code = bytes(code, "UTF-8")
+        code = code.encode("UTF-8")
+
     py.write(code)
     py.flush()
 
