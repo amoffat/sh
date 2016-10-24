@@ -64,7 +64,6 @@ DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
 # should be ok
 RUNNING_TESTS = bool(int(os.environ.get("SH_TESTS_RUNNING", "0")))
 
-
 if IS_PY3:
     from io import StringIO, UnsupportedOperation
     from io import BytesIO as cStringIO
@@ -101,6 +100,11 @@ from collections import deque
 import logging
 import weakref
 
+
+# a re-entrant lock for pushd.  this way, multiple threads that happen to use
+# pushd will all see the current working directory for the duration of the
+# with-context
+PUSHD_LOCK = threading.RLock()
 
 
 if IS_PY3:
@@ -2483,15 +2487,29 @@ class StreamBufferer(object):
 
 
 
-@contextmanager
+def with_lock(lock):
+    def wrapped(fn):
+        fn = contextmanager(fn)
+        @contextmanager
+        def wrapped2(*args, **kwargs):
+            with lock:
+                with fn(*args, **kwargs):
+                    yield
+        return wrapped2
+    return wrapped
+
+
+@with_lock(PUSHD_LOCK)
 def pushd(path):
     """ pushd changes the actual working directory for the duration of the
     context, unlike the _cwd arg this will work with other built-ins such as
     sh.glob correctly """
     orig_path = os.getcwd()
     os.chdir(path)
-    yield
-    os.chdir(orig_path)
+    try:
+        yield
+    finally:
+        os.chdir(orig_path)
 
 
 @contextmanager

@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   made `sh.pushd` thread safe
 *   added `.kill_group()` and `.signal_group()` methods for better process control [#237](https://github.com/amoffat/sh/pull/237)
 *   added `new_session` special keyword argument for controlling spawned process session [#266](https://github.com/amoffat/sh/issues/266)
 *   bugfix better handling for EINTR on system calls [#292](https://github.com/amoffat/sh/pull/292)

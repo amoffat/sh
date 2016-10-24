@@ -1853,41 +1853,24 @@ for i in range(5):
 
     def test_pushd(self):
         """ test basic pushd functionality """
-        import os
-        old_wd = sh.pwd().strip()
+        old_wd1 = sh.pwd().strip()
+        old_wd2 = os.getcwd()
+
+        self.assertEqual(old_wd1, old_wd2)
+        self.assertNotEqual(old_wd1, tempdir)
 
         with sh.pushd(tempdir):
-            new_wd = sh.pwd().strip()
+            new_wd1 = sh.pwd().strip()
+            new_wd2 = os.getcwd()
 
-        self.assertNotEqual(old_wd, tempdir)
-        self.assertEqual(old_wd, sh.pwd().strip())
-        self.assertEqual(new_wd, tempdir)
+        old_wd3 = sh.pwd().strip()
+        old_wd4 = os.getcwd()
+        self.assertEqual(old_wd3, old_wd4)
+        self.assertEqual(old_wd1, old_wd3)
 
+        self.assertEqual(new_wd1, tempdir)
+        self.assertEqual(new_wd2, tempdir)
 
-    def test_pushd_glob(self):
-        """ test that pushd works with glob correctly """
-        import sh
-        from sh import mkdir, rm, touch, ls
-
-        child = join(tempdir, 'glob_test_dir')
-        mkdir('-p', child)
-
-        touch(join(tempdir, 'glob-test-root'))
-        touch(join(child, 'glob-test-child'))
-
-        old_wd = os.getcwd()
-        try:
-            os.chdir(tempdir)
-            self.assertEqual('glob-test-root', ls(sh.glob('glob-test-*')).strip())
-
-            with sh.pushd('glob_test_dir'):
-                self.assertEqual('glob-test-child', ls(sh.glob('glob-test-*')).strip())
-
-            self.assertEqual('glob-test-root', ls(sh.glob('glob-test-*')).strip())
-        finally:
-            rm('-r', '-f', 'glob_test_dir')
-            rm('-f', 'glob-test-root')
-            os.chdir(old_wd)
 
 
     def test_pushd_cd(self):
@@ -2363,6 +2346,37 @@ print("cool")
                 test_command(**opts)
                 num_fds = get_num_fds()
                 self.assertEqual(baseline, num_fds, (baseline, num_fds, opts))
+
+
+    def test_pushd_thread_safety(self):
+        import threading
+        import time
+
+        temp1 = tempfile.mkdtemp()
+        temp2 = tempfile.mkdtemp()
+        results = [None, None]
+
+        def fn1():
+            with sh.pushd(temp1):
+                time.sleep(0.2)
+                results[0] = os.getcwd()
+
+        def fn2():
+            time.sleep(0.1)
+            with sh.pushd(temp2):
+                results[1] = os.getcwd()
+                time.sleep(0.3)
+
+        t1 = threading.Thread(name="t1", target=fn1)
+        t2 = threading.Thread(name="t2", target=fn2)
+
+        t1.start()
+        t2.start()
+
+        t1.join()
+        t2.join()
+
+        self.assertEqual(results, [temp1, temp2])
 
 
     @requires_utf8
