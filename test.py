@@ -1889,37 +1889,6 @@ for i in range(5):
         self.assertEqual(old_wd, os.getcwd())
 
 
-    def test_args_context(self):
-        """ test that we can use the args with-context to temporarily override
-        command settings """
-        import os, sh
-
-        old_wd = sh.pwd().strip()
-        with sh.args(_cwd=tempdir):
-            new_wd = sh.pwd().strip()
-
-        # sanity
-        self.assertNotEqual(old_wd, tempdir)
-        self.assertEqual(old_wd, sh.pwd().strip())
-        self.assertEqual(new_wd, tempdir)
-
-
-    def test_args_context_exception(self):
-        """ test that args with-context will revert command settings
-        if an exception is thrown """
-        import os
-
-        old_wd = os.getcwd()
-        try:
-            with sh.args(_cwd=tempdir):
-                new_wd = sh.pwd().strip()
-                raise Exception()
-        except Exception:
-            self.assertNotEqual(old_wd, tempdir)
-            self.assertEqual(old_wd, sh.pwd().strip())
-            self.assertEqual(new_wd, tempdir)
-
-
     def test_non_existant_cwd(self):
         from sh import ls
 

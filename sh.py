@@ -2513,20 +2513,27 @@ def pushd(path):
 
 
 @contextmanager
-def args(*args, **kwargs):
+def args(**kwargs):
     """ allows us to temporarily override all the special keyword parameters in
     a with context """
-    call_args = Command._call_args
-    old_args = call_args.copy()
 
-    for key,value in kwargs.items():
-        key = key.lstrip("_")
-        call_args[key] = value
+    kwargs_str = ",".join(["%s=%r" % (k,v) for k,v in kwargs.items()])
 
-    try:
-        yield
-    finally:
-        call_args.update(old_args)
+    raise DeprecationWarning("""
+
+sh.args() has been deprecated because it was never thread safe.  use the
+following instead:
+
+    sh2 = sh({kwargs})
+    sh2.your_command()
+
+or
+
+    sh2 = sh({kwargs})
+    from sh2 import your_command
+    your_command()
+
+""".format(kwargs=kwargs_str))
 
 
 

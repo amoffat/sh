@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   deprecated `with sh.args(**kwargs)` in favor of `sh2 = sh(**kwargs)`
 *   made `sh.pushd` thread safe
 *   added `.kill_group()` and `.signal_group()` methods for better process control [#237](https://github.com/amoffat/sh/pull/237)
 *   added `new_session` special keyword argument for controlling spawned process session [#266](https://github.com/amoffat/sh/issues/266)
