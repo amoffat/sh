@@ -682,11 +682,19 @@ else:
 import sys
 print(sys.argv[1])
 """)
-        self.assertEqual(python(py.name,
-            {"long-option": "underscore"}, _long_sep="=custom=").strip(), "--long-option=custom=underscore")
+
+        opt = {"long-option": "underscore"}
+        correct = "--long-option=custom=underscore"
+
+        out = python(py.name, opt, _long_sep="=custom=").strip()
+        self.assertEqual(out, correct)
+
         # test baking too
-        python_baked = python.bake(py.name, {"long-option": "underscore"}, _long_sep="=baked=")
-        self.assertEqual(python_baked().strip(), "--long-option=baked=underscore")
+        correct = "--long-option=baked=underscore"
+        python_baked = python.bake(py.name, opt, _long_sep="=baked=")
+        out = python_baked().strip()
+        self.assertEqual(out, correct)
+
 
     def test_command_wrapper(self):
         from sh import Command, which
