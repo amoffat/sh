@@ -1852,47 +1852,41 @@ for i in range(5):
 
 
     def test_pushd(self):
-        """ test that pushd is just a specialized form of sh.args """
-        import os
-        old_wd = sh.pwd().strip()
+        """ test basic pushd functionality """
+        old_wd1 = sh.pwd().strip()
+        old_wd2 = os.getcwd()
+
+        self.assertEqual(old_wd1, old_wd2)
+        self.assertNotEqual(old_wd1, tempdir)
 
         with sh.pushd(tempdir):
-            new_wd = sh.pwd().strip()
+            new_wd1 = sh.pwd().strip()
+            new_wd2 = os.getcwd()
 
-        self.assertNotEqual(old_wd, tempdir)
-        self.assertEqual(old_wd, sh.pwd().strip())
-        self.assertEqual(new_wd, tempdir)
+        old_wd3 = sh.pwd().strip()
+        old_wd4 = os.getcwd()
+        self.assertEqual(old_wd3, old_wd4)
+        self.assertEqual(old_wd1, old_wd3)
 
-
-    def test_args_context(self):
-        """ test that we can use the args with-context to temporarily override
-        command settings """
-        import os, sh
-
-        old_wd = sh.pwd().strip()
-        with sh.args(_cwd=tempdir):
-            new_wd = sh.pwd().strip()
-
-        # sanity
-        self.assertNotEqual(old_wd, tempdir)
-        self.assertEqual(old_wd, sh.pwd().strip())
-        self.assertEqual(new_wd, tempdir)
+        self.assertEqual(new_wd1, tempdir)
+        self.assertEqual(new_wd2, tempdir)
 
 
-    def test_args_context_exception(self):
-        """ test that args with-context will revert command settings
-        if an exception is thrown """
-        import os
+
+    def test_pushd_cd(self):
+        """ test that pushd works like pushd/popd with built-in cd correctly """
+        import sh
+        from sh import mkdir
+
+        child = join(tempdir, 'pushd_cd_test_dir')
+        mkdir('-p', child)
 
         old_wd = os.getcwd()
-        try:
-            with sh.args(_cwd=tempdir):
-                new_wd = sh.pwd().strip()
-                raise Exception()
-        except Exception:
-            self.assertNotEqual(old_wd, tempdir)
-            self.assertEqual(old_wd, sh.pwd().strip())
-            self.assertEqual(new_wd, tempdir)
+        with sh.pushd(tempdir):
+            self.assertEqual(tempdir, os.getcwd())
+            sh.cd(child)
+            self.assertEqual(child, os.getcwd())
+        self.assertEqual(old_wd, os.getcwd())
 
 
     def test_non_existant_cwd(self):
@@ -2321,6 +2315,37 @@ print("cool")
                 test_command(**opts)
                 num_fds = get_num_fds()
                 self.assertEqual(baseline, num_fds, (baseline, num_fds, opts))
+
+
+    def test_pushd_thread_safety(self):
+        import threading
+        import time
+
+        temp1 = tempfile.mkdtemp()
+        temp2 = tempfile.mkdtemp()
+        results = [None, None]
+
+        def fn1():
+            with sh.pushd(temp1):
+                time.sleep(0.2)
+                results[0] = os.getcwd()
+
+        def fn2():
+            time.sleep(0.1)
+            with sh.pushd(temp2):
+                results[1] = os.getcwd()
+                time.sleep(0.3)
+
+        t1 = threading.Thread(name="t1", target=fn1)
+        t2 = threading.Thread(name="t2", target=fn2)
+
+        t1.start()
+        t2.start()
+
+        t1.join()
+        t2.join()
+
+        self.assertEqual(results, [temp1, temp2])
 
 
     @requires_utf8

@@ -28,7 +28,6 @@ __version__ = "1.11"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
-
 import platform
 
 if "windows" in platform.system().lower():
@@ -64,7 +63,6 @@ DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
 # serious side-effects that could change anything.  as long as we do that, it
 # should be ok
 RUNNING_TESTS = bool(int(os.environ.get("SH_TESTS_RUNNING", "0")))
-
 
 if IS_PY3:
     from io import StringIO, UnsupportedOperation
@@ -102,6 +100,11 @@ from collections import deque
 import logging
 import weakref
 
+
+# a re-entrant lock for pushd.  this way, multiple threads that happen to use
+# pushd will all see the current working directory for the duration of the
+# with-context
+PUSHD_LOCK = threading.RLock()
 
 
 if IS_PY3:
@@ -2484,29 +2487,53 @@ class StreamBufferer(object):
 
 
 
-@contextmanager
+def with_lock(lock):
+    def wrapped(fn):
+        fn = contextmanager(fn)
+        @contextmanager
+        def wrapped2(*args, **kwargs):
+            with lock:
+                with fn(*args, **kwargs):
+                    yield
+        return wrapped2
+    return wrapped
+
+
+@with_lock(PUSHD_LOCK)
 def pushd(path):
-    """ pushd is just a specialized form of args, where we're passing in the
-    current working directory """
-    with args(_cwd=path):
-        yield
-
-
-@contextmanager
-def args(*args, **kwargs):
-    """ allows us to temporarily override all the special keyword parameters in
-    a with context """
-    call_args = Command._call_args
-    old_args = call_args.copy()
-
-    for key,value in kwargs.items():
-        key = key.lstrip("_")
-        call_args[key] = value
-
+    """ pushd changes the actual working directory for the duration of the
+    context, unlike the _cwd arg this will work with other built-ins such as
+    sh.glob correctly """
+    orig_path = os.getcwd()
+    os.chdir(path)
     try:
         yield
     finally:
-        call_args.update(old_args)
+        os.chdir(orig_path)
+
+
+@contextmanager
+def args(**kwargs):
+    """ allows us to temporarily override all the special keyword parameters in
+    a with context """
+
+    kwargs_str = ",".join(["%s=%r" % (k,v) for k,v in kwargs.items()])
+
+    raise DeprecationWarning("""
+
+sh.args() has been deprecated because it was never thread safe.  use the
+following instead:
+
+    sh2 = sh({kwargs})
+    sh2.your_command()
+
+or
+
+    sh2 = sh({kwargs})
+    from sh2 import your_command
+    your_command()
+
+""".format(kwargs=kwargs_str))
 
 
 
