@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   bugfix where pipes passed into `_out` or `_err` were not flushed on process end [#252](https://github.com/amoffat/sh/pull/252)
 *   deprecated `with sh.args(**kwargs)` in favor of `sh2 = sh(**kwargs)`
 *   made `sh.pushd` thread safe
 *   added `.kill_group()` and `.signal_group()` methods for better process control [#237](https://github.com/amoffat/sh/pull/237)

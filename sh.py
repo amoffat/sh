@@ -48,6 +48,7 @@ from types import ModuleType
 from functools import partial
 import inspect
 import tempfile
+import stat
 import glob as glob_module
 import ast
 from contextlib import contextmanager
@@ -2242,6 +2243,11 @@ def get_file_chunk_consumer(handler):
     def finish():
         if hasattr(handler, "flush"):
             handler.flush()
+
+        if hasattr(handler, "fileno"):
+            fd_stat = os.fstat(handler.fileno())
+            if stat.S_ISFIFO(fd_stat.st_mode):
+                handler.close()
 
     return process, finish
 
