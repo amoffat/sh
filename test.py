@@ -12,10 +12,19 @@ is_crappy_python = IS_PY3 and MINOR_VER in (1, 2)
 cov = None
 if not is_crappy_python:
     run_idx = int(os.environ.pop("SH_TEST_RUN_IDX", "0"))
-    import coverage
-    cov = coverage.Coverage(auto_data=True)
+    first_run = run_idx == 0
 
-    if run_idx == 0:
+    import coverage
+
+    # for some reason, we can't run auto_data on the first run, or the coverage
+    # numbers get really screwed up
+    auto_data = True
+    if first_run:
+        auto_data = False
+
+    cov = coverage.Coverage(auto_data=auto_data)
+
+    if first_run:
         cov.erase()
 
     cov.start()
