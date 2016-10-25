@@ -30,7 +30,7 @@ __project_url__ = "https://github.com/amoffat/sh"
 
 import platform
 
-if "windows" in platform.system().lower():
+if "windows" in platform.system().lower(): # pragma: no cover
     raise ImportError("sh %s is currently only supported on linux and osx. \
 please install pbs 0.110 (http://pypi.python.org/pypi/pbs) for windows \
 support." % __version__)
