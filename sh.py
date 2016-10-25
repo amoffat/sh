@@ -1934,11 +1934,13 @@ class OProc(object):
             # wait, then signal to our output thread that the child process is
             # done, and we should have finished reading all the stdout/stderr
             # data that we can by now
-            threading.Timer(0.5, self._force_done_event.set).start()
+            timer = threading.Timer(2.0, self._force_done_event.set)
+            timer.start()
 
             # wait for our stdout and stderr streamreaders to finish reading and
             # aggregating the process output
             self._output_thread.join()
+            timer.cancel()
 
             done_callback = self.call_args["done"]
             if call_done_callback and done_callback:
