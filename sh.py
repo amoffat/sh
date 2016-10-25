@@ -44,7 +44,7 @@ import traceback
 import os
 import re
 import time
-from types import ModuleType
+from types import ModuleType, GeneratorType
 from functools import partial
 import inspect
 import tempfile
@@ -2021,9 +2021,18 @@ def determine_how_to_read_input(input_obj):
         log_msg = "bytes"
         get_chunk = get_iter_string_reader(input_obj)
 
-    else:
-        log_msg = "general iterable"
+    elif isinstance(input_obj, GeneratorType):
+        log_msg = "generator"
         get_chunk = get_iter_chunk_reader(iter(input_obj))
+
+    else:
+        try:
+            it = iter(input_obj)
+        except TypeError:
+            raise Exception("unknown input object")
+        else:
+            log_msg = "general iterable"
+            get_chunk = get_iter_chunk_reader(it)
 
     return get_chunk, log_msg
 
