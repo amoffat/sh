@@ -421,7 +421,7 @@ def which(program, paths=None):
     return found_path
 
 
-def resolve_program(program):
+def resolve_command_path(program):
     path = which(program)
     if not path:
         # our actual command might have a dash in it, but we can't call
@@ -2642,11 +2642,8 @@ Please import sh or import programs individually.")
 
 
         # is it a command?
-        path = resolve_program(k)
-        if path:
-            cmd = Command(path)
-            if self.baked_args:
-                cmd = cmd.bake(**self.baked_args)
+        cmd = self.resolve_command(k)
+        if cmd:
             return cmd
 
 
@@ -2664,6 +2661,15 @@ Please import sh or import programs individually.")
         # nothing found, raise an exception
         raise CommandNotFound(k)
 
+
+    def resolve_command(self, name):
+        path = resolve_command_path(name)
+        cmd = None
+        if path:
+            cmd = Command(path)
+            if self.baked_args:
+                cmd = cmd.bake(**self.baked_args)
+        return cmd
 
 
     # methods that begin with "b_" are custom builtins and will override any
