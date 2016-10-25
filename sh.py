@@ -983,110 +983,6 @@ output"),
         return call_args, kwargs
 
 
-    def _aggregate_keywords(self, keywords, sep, raw=False):
-        """ take our keyword arguments, and a separator, and compose the list of
-        flat long (and short) arguments.  example
-
-            {'color': 'never', 't': True, 'something': True} with sep '='
-
-        becomes
-
-            ['--color=never', '-t', '--something']
-
-        the `raw` argument indicates whether or not we should leave the argument
-        name alone, or whether we should replace "_" with "-".  if we pass in a
-        dictionary, like this:
-
-            sh.command({"some_option": 12})
-
-        then `raw` gets set to True, because we want to leave the key as-is, to
-        produce:
-
-            ['--some_option=12']
-
-        but if we just use a command's kwargs, `raw` is False, which means this:
-
-            sh.command(some_option=12)
-
-        becomes:
-
-            ['--some-option=12']
-
-        eessentially, using kwargs is a convenience, but it lacks the ability to
-        put a '-' in the name, so we do the replacement of '_' to '-' for you.
-        but when you really don't want that to happen, you should use a
-        dictionary instead with the exact names you want
-        """
-
-        processed = []
-        encode = encode_to_py3bytes_or_py2str
-
-        for k, v in keywords.items():
-            # we're passing a short arg as a kwarg, example:
-            # cut(d="\t")
-            if len(k) == 1:
-                if v is not False:
-                    processed.append(encode("-" + k))
-                    if v is not True:
-                        processed.append(encode(v))
-
-            # we're doing a long arg
-            else:
-                if not raw:
-                    k = k.replace("_", "-")
-
-                if v is True:
-                    processed.append(encode("--" + k))
-                elif v is False:
-                    pass
-                elif sep is None or sep == " ":
-                    processed.append(encode("--" + k))
-                    processed.append(encode(v))
-                else:
-                    arg = encode("--%s%s%s" % (k, sep, v))
-                    processed.append(arg)
-
-        return processed
-
-
-    def _compile_args(self, args, kwargs, sep):
-        """ takes args and kwargs, as they were passed into the command instance
-        being executed with __call__, and compose them into a flat list that
-        will eventually be fed into exec.  example:
-
-        with this call:
-
-            sh.ls("-l", "/tmp", color="never")
-
-        this function receives
-
-            args = ['-l', '/tmp']
-            kwargs = {'color': 'never'}
-
-        and produces
-
-            ['-l', '/tmp', '--color=never']
-            
-        """
-        processed_args = []
-
-        # aggregate positional args
-        for arg in args:
-            if isinstance(arg, (list, tuple)):
-                if isinstance(arg, GlobResults) and not arg:
-                    arg = [arg.path]
-
-                for sub_arg in arg:
-                    processed_args.append(encode_to_py3bytes_or_py2str(sub_arg))
-            elif isinstance(arg, dict):
-                processed_args += self._aggregate_keywords(arg, sep, raw=True)
-            else:
-                processed_args.append(encode_to_py3bytes_or_py2str(arg))
-
-        # aggregate the keyword arguments
-        processed_args += self._aggregate_keywords(kwargs, sep)
-
-        return processed_args
 
 
     # TODO needs documentation
@@ -1108,7 +1004,7 @@ output"),
         fn._partial_call_args.update(pruned_call_args)
         fn._partial_baked_args.extend(self._partial_baked_args)
         sep = pruned_call_args.get("long_sep", self._call_args["long_sep"])
-        fn._partial_baked_args.extend(self._compile_args(args, kwargs, sep))
+        fn._partial_baked_args.extend(compile_args(args, kwargs, sep))
         return fn
 
     def __str__(self):
@@ -1198,7 +1094,7 @@ output"),
             else:
                 args.insert(0, first_arg)
 
-        processed_args = self._compile_args(args, kwargs, call_args["long_sep"])
+        processed_args = compile_args(args, kwargs, call_args["long_sep"])
 
         # makes sure our arguments are broken up correctly
         split_args = self._partial_baked_args + processed_args
@@ -1242,6 +1138,111 @@ output"),
         return RunningCommand(cmd, call_args, stdin, stdout, stderr)
 
 
+def compile_args(args, kwargs, sep):
+    """ takes args and kwargs, as they were passed into the command instance
+    being executed with __call__, and compose them into a flat list that
+    will eventually be fed into exec.  example:
+
+    with this call:
+
+        sh.ls("-l", "/tmp", color="never")
+
+    this function receives
+
+        args = ['-l', '/tmp']
+        kwargs = {'color': 'never'}
+
+    and produces
+
+        ['-l', '/tmp', '--color=never']
+        
+    """
+    processed_args = []
+    encode = encode_to_py3bytes_or_py2str
+
+    # aggregate positional args
+    for arg in args:
+        if isinstance(arg, (list, tuple)):
+            if isinstance(arg, GlobResults) and not arg:
+                arg = [arg.path]
+
+            for sub_arg in arg:
+                processed_args.append(encode(sub_arg))
+        elif isinstance(arg, dict):
+            processed_args += aggregate_keywords(arg, sep, raw=True)
+        else:
+            processed_args.append(encode(arg))
+
+    # aggregate the keyword arguments
+    processed_args += aggregate_keywords(kwargs, sep)
+
+    return processed_args
+
+
+def aggregate_keywords(keywords, sep, raw=False):
+    """ take our keyword arguments, and a separator, and compose the list of
+    flat long (and short) arguments.  example
+
+        {'color': 'never', 't': True, 'something': True} with sep '='
+
+    becomes
+
+        ['--color=never', '-t', '--something']
+
+    the `raw` argument indicates whether or not we should leave the argument
+    name alone, or whether we should replace "_" with "-".  if we pass in a
+    dictionary, like this:
+
+        sh.command({"some_option": 12})
+
+    then `raw` gets set to True, because we want to leave the key as-is, to
+    produce:
+
+        ['--some_option=12']
+
+    but if we just use a command's kwargs, `raw` is False, which means this:
+
+        sh.command(some_option=12)
+
+    becomes:
+
+        ['--some-option=12']
+
+    eessentially, using kwargs is a convenience, but it lacks the ability to
+    put a '-' in the name, so we do the replacement of '_' to '-' for you.
+    but when you really don't want that to happen, you should use a
+    dictionary instead with the exact names you want
+    """
+
+    processed = []
+    encode = encode_to_py3bytes_or_py2str
+
+    for k, v in keywords.items():
+        # we're passing a short arg as a kwarg, example:
+        # cut(d="\t")
+        if len(k) == 1:
+            if v is not False:
+                processed.append(encode("-" + k))
+                if v is not True:
+                    processed.append(encode(v))
+
+        # we're doing a long arg
+        else:
+            if not raw:
+                k = k.replace("_", "-")
+
+            if v is True:
+                processed.append(encode("--" + k))
+            elif v is False:
+                pass
+            elif sep is None or sep == " ":
+                processed.append(encode("--" + k))
+                processed.append(encode(v))
+            else:
+                arg = encode("--%s%s%s" % (k, sep, v))
+                processed.append(arg)
+
+    return processed
 
 
 def _start_daemon_thread(fn, name, *args):
