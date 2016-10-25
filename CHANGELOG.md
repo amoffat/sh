@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   alter callable `_in` arguments to signify completion with falsy chunk
 *   bugfix where pipes passed into `_out` or `_err` were not flushed on process end [#252](https://github.com/amoffat/sh/pull/252)
 *   deprecated `with sh.args(**kwargs)` in favor of `sh2 = sh(**kwargs)`
 *   made `sh.pushd` thread safe

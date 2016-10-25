@@ -2053,9 +2053,15 @@ def get_queue_chunk_reader(stdin):
 def get_callable_chunk_reader(stdin):
     def fn():
         try:
-            return stdin()
-        except:
+            data = stdin()
+        except DoneReadingForever:
+            raise
+
+        if not data:
             raise DoneReadingForever
+
+        return data
+
     return fn
 
 
