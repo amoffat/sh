@@ -2392,6 +2392,14 @@ print("cool")
         self.assertEqual(results, [temp1, temp2])
 
 
+    def test_stdin_nohang(self):
+        py = create_tmp_test("""
+print("hi")
+""")
+        read, write = os.pipe()
+        stdin = os.fdopen(read, "r")
+        python(py.name, _in=stdin)
+
     @requires_utf8
     def test_unicode_path(self):
         from sh import Command
