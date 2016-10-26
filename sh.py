@@ -108,6 +108,13 @@ import weakref
 PUSHD_LOCK = threading.RLock()
 
 
+if hasattr(inspect, "signature"):
+    def get_num_args(fn):
+        return len(inspect.signature(fn).parameters)
+else:
+    def get_num_args(fn):
+        return len(inspect.getargspec(fn).args)
+
 if IS_PY3:
     raw_input = input
     unicode = str
@@ -1305,16 +1312,16 @@ def construct_streamreader_callback(process, handler):
 
     if inspect.ismethod(handler_to_inspect):
         implied_arg = 1
-        num_args = len(inspect.getargspec(handler_to_inspect).args)
+        num_args = get_num_args(handler_to_inspect)
 
     else:
         if inspect.isfunction(handler_to_inspect):
-            num_args = len(inspect.getargspec(handler_to_inspect).args)
+            num_args = get_num_args(handler_to_inspect)
 
         # is an object instance with __call__ method
         else:
             implied_arg = 1
-            num_args = len(inspect.getargspec(handler_to_inspect.__call__).args)
+            num_args = get_num_args(handler_to_inspect.__call__)
 
 
     net_args = num_args - implied_arg - partial_args
