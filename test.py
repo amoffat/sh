@@ -2022,6 +2022,7 @@ sid = os.getsid(pid)
 stuff = [pid, pgid, sid]
 
 print(",".join([str(el) for el in stuff]))
+time.sleep(0.5)
 """)
 
 
