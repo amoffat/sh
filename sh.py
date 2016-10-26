@@ -903,6 +903,10 @@ class Command(object):
 
         # put the forked process in its own process session?
         "new_session": True,
+
+        # pre-process args passed into __call__.  only really useful when used
+        # in .bake()
+        "arg_preprocess": None,
     }
 
     # these are arguments that cannot be called together, because they wouldn't
@@ -959,7 +963,11 @@ output"),
 
 
     @staticmethod
-    def _extract_call_args(kwargs, to_override={}):
+    def _extract_call_args(kwargs):
+        """ takes kwargs that were passed to a command's __call__ and extracts
+        out the special keyword arguments, we return a tuple of special keyword
+        args, and kwargs that will go to the execd command """
+
         kwargs = kwargs.copy()
         call_args = {}
         for parg, default in Command._call_args.items():
@@ -968,8 +976,6 @@ output"),
             if key in kwargs:
                 call_args[parg] = kwargs[key]
                 del kwargs[key]
-            elif parg in to_override:
-                call_args[parg] = to_override[parg]
 
         # test for incompatible call args
         s1 = set(call_args.keys())
@@ -1046,30 +1052,42 @@ output"),
 
 
     def __call__(self, *args, **kwargs):
+
         kwargs = kwargs.copy()
         args = list(args)
 
+        # this will hold our final command, including arguments, that will be
+        # execd
         cmd = []
 
-        # aggregate any 'with' contexts
+        # this will hold a complete mapping of all our special keyword arguments
+        # and their values
         call_args = Command._call_args.copy()
+
+        # aggregate any 'with' contexts
         for prepend in get_prepend_stack():
-            # don't pass the 'with' call arg
             pcall_args = prepend.call_args.copy()
-            try:
-                del pcall_args["with"]
-            except:
-                pass
+            # don't pass the 'with' call arg
+            pcall_args.pop("with", None)
 
             call_args.update(pcall_args)
             cmd.extend(prepend.cmd)
 
         cmd.append(self._path)
 
+        # do we have an argument pre-processor?  if so, run it.  we need to do
+        # this early, so that args, kwargs are accurate
+        preprocessor = self._partial_call_args.get("arg_preprocess", None)
+        if preprocessor:
+            args, kwargs = preprocessor(args, kwargs)
+
         # here we extract the special kwargs and override any
         # special kwargs from the possibly baked command
-        tmp_call_args, kwargs = self._extract_call_args(kwargs, self._partial_call_args)
-        call_args.update(tmp_call_args)
+        extracted_call_args, kwargs = self._extract_call_args(kwargs)
+
+        call_args.update(self._partial_call_args)
+        call_args.update(extracted_call_args)
+
 
         if not getattr(call_args["ok_code"], "__iter__", None):
             call_args["ok_code"] = [call_args["ok_code"]]
@@ -1094,6 +1112,7 @@ output"),
             else:
                 args.insert(0, first_arg)
 
+
         processed_args = compile_args(args, kwargs, call_args["long_sep"])
 
         # makes sure our arguments are broken up correctly
@@ -1102,7 +1121,6 @@ output"),
         final_args = split_args
 
         cmd.extend(final_args)
-
 
         # if we're running in foreground mode, we need to completely bypass
         # launching a RunningCommand and OProc and just do a spawn
@@ -1133,8 +1151,7 @@ output"),
         stderr = call_args["err"]
         if output_redirect_is_filename(stderr):
             stderr = open(str(stderr), "wb")
-
-
+    
         return RunningCommand(cmd, call_args, stdin, stdout, stderr)
 
 

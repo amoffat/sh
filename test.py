@@ -962,6 +962,19 @@ sys.stdout.write(str(sys.argv[1:]))
         out = python.bake(py.name).bake("bake1").bake("bake2")()
         self.assertEqual("['bake1', 'bake2']", out)
 
+    def test_arg_preprocessor(self):
+        py = create_tmp_test("""
+import sys
+sys.stdout.write(str(sys.argv[1:]))
+""")
+        def arg_preprocess(args, kwargs):
+            args.insert(0, "preprocessed")
+            kwargs["a-kwarg"] = 123
+            return args, kwargs
+
+        cmd = python.bake(py.name, _arg_preprocess=arg_preprocess)
+        out = cmd("arg")
+        self.assertEqual("['preprocessed', 'arg', '--a-kwarg=123']", out)
 
     def test_bake_args_come_first(self):
         from sh import ls
