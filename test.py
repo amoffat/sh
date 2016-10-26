@@ -954,18 +954,13 @@ subprocess.Popen(sys.argv[1:], shell=False).wait()
 
 
     def test_multiple_bakes(self):
-        from sh import whoami
-        import getpass
-
         py = create_tmp_test("""
 import sys
-import subprocess
-subprocess.Popen(sys.argv[1:], shell=False).wait()
+sys.stdout.write(str(sys.argv[1:]))
 """)
 
-        out = python.bake(py.name).bake("whoami")()
-        self.assertTrue(getpass.getuser() == out.strip())
-
+        out = python.bake(py.name).bake("bake1").bake("bake2")()
+        self.assertEqual("['bake1', 'bake2']", out)
 
 
     def test_bake_args_come_first(self):
