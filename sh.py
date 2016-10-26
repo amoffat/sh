@@ -44,6 +44,7 @@ import traceback
 import os
 import re
 import time
+import getpass
 from types import ModuleType, GeneratorType
 from functools import partial
 import inspect
@@ -2683,6 +2684,7 @@ class Environment(dict):
         "args",
         "pushd",
         "glob",
+        "contrib",
     ])
 
     def __init__(self, globs, baked_args={}):
@@ -2775,6 +2777,43 @@ Please import sh or import programs individually.")
     def b_which(self, program, paths=None):
         return which(program, paths)
 
+
+
+class Contrib(object):
+    """ methods on Contrib are essentially modified Command objects that are
+    made to be more intuitive versions of the base Command. """
+
+    @property
+    def sudo(self):
+        """ a nicer version of sudo that uses getpass to ask for a password, or
+        allows the first argument to be a string password """
+
+        sudo = resolve_command("sudo")
+        if not sudo:
+            return None
+
+        prompt = "[sudo] password for %s: " % getpass.getuser()
+
+        def stdin():
+            pw = getpass.getpass(prompt=prompt) + "\n"
+            yield pw
+
+
+        def process(args, kwargs):
+            password = kwargs.pop("password", None)
+
+            if password is None:
+                pass_getter = stdin()
+            else:
+                pass_getter = password.rstrip("\n") + "\n"
+
+            kwargs["_in"] = pass_getter
+            return args, kwargs
+
+        sudo = sudo.bake("-S", _arg_preprocess=process)
+        return sudo
+
+contrib = Contrib()
 
 
 

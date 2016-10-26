@@ -2,6 +2,7 @@
 
 ## 1.2 -
 
+*   added `sh.contrib.sudo`
 *   added `_arg_preprocess` for advanced command wrapping
 *   alter callable `_in` arguments to signify completion with falsy chunk
 *   bugfix where pipes passed into `_out` or `_err` were not flushed on process end [#252](https://github.com/amoffat/sh/pull/252)
