@@ -2,7 +2,7 @@
 http://amoffat.github.io/sh/
 """
 #===============================================================================
-# Copyright (C) 2011-2015 by Andrew Moffat
+# Copyright (C) 2011-2017 by Andrew Moffat
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@ http://amoffat.github.io/sh/
 #===============================================================================
 
 
-__version__ = "1.11"
+__version__ = "1.2.0"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
