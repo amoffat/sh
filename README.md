@@ -10,8 +10,12 @@ After editing the `.rst` files, run `python compile_docs.py` and pass in the
 sh version number to be embedded in the docs:
 
     python compile_docs.py 1.08
-    
-Then commit all of the `.html` files, all `.js` and `.css` files,
-and the `_static`, `_docs_sources`, `_sources` directories.
 
-Finally, submit a pull request with your changes.
+This will allow you to preview your docs before submitting a pull request.
+    
+# Submitting a PR
+
+When submitting a pull request *only commit the files in `/_docs_sources`*  Do
+not commit `.js`, `.css`, `.html`, or any other generated files.  Only the raw
+`.rst` files please.  I will then re-generate the regenerated files from the
+`.rst` changes.
