@@ -1024,7 +1024,7 @@ output"),
 
     # TODO needs documentation
     def bake(self, *args, **kwargs):
-        fn = Command(self._path)
+        fn = type(self)(self._path)
         fn._partial = True
 
         call_args, kwargs = self._extract_call_args(kwargs)
