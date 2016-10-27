@@ -442,6 +442,16 @@ def resolve_command_path(program):
     return path
 
 
+def resolve_command(name, baked_args=None):
+    path = resolve_command_path(name)
+    cmd = None
+    if path:
+        cmd = Command(path)
+        if baked_args:
+            cmd = cmd.bake(**baked_args)
+    return cmd
+
+
 
 
 class Logger(object):
@@ -2731,7 +2741,7 @@ Please import sh or import programs individually.")
 
 
         # is it a command?
-        cmd = self.resolve_command(k)
+        cmd = resolve_command(k, self.baked_args)
         if cmd:
             return cmd
 
@@ -2749,16 +2759,6 @@ Please import sh or import programs individually.")
 
         # nothing found, raise an exception
         raise CommandNotFound(k)
-
-
-    def resolve_command(self, name):
-        path = resolve_command_path(name)
-        cmd = None
-        if path:
-            cmd = Command(path)
-            if self.baked_args:
-                cmd = cmd.bake(**self.baked_args)
-        return cmd
 
 
     # methods that begin with "b_" are custom builtins and will override any
