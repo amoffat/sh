@@ -1591,11 +1591,20 @@ class OProc(object):
                 if IS_OSX:
                     time.sleep(0.01)
 
-                # always put our forked process in a new session.  this will
-                # relinquish any control of our inherited CTTY and also make our
-                # parent process init
+                # put our forked process in a new session?  this will relinquish
+                # any control of our inherited CTTY and also make our parent
+                # process init
                 if new_session:
                     os.setsid()
+                # if we're not going in a new session, we should go in a new
+                # process group.  this way, our process, and any children it
+                # spawns, are alone, contained entirely in one group.  if we
+                # didn't do this, and didn't use a new session, then our exec'd
+                # process *could* exist in the same group as our python process,
+                # depending on how we launch the process (from a shell, or some
+                # other way)
+                else:
+                    os.setpgrp()
 
                 pid = os.getpid()
                 sid = os.getsid(pid)

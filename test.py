@@ -2098,7 +2098,7 @@ time.sleep(0.5)
             test_pid = os.getpgid(os.getpid())
 
             self.assertEqual(p.pid, pid)
-            self.assertEqual(test_pid, pgid)
+            self.assertNotEqual(test_pid, pgid)
             self.assertEqual(p.pgid, pgid)
             self.assertEqual(pgid, p.get_pgid())
             self.assertNotEqual(pid, sid)
