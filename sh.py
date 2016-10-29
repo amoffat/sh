@@ -3062,12 +3062,15 @@ if __name__ == "__main__": # pragma: no cover
 
     if action in ("test", "travis"):
         import subprocess
-        import coverage
         import test
+        coverage = None
+        if test.HAS_UNICODE_LITERAL:
+            import coverage
 
         env = os.environ.copy()
         env["SH_TESTS_RUNNING"] = "1"
-        test.append_module_path(env, coverage)
+        if coverage:
+            test.append_module_path(env, coverage)
         
 
         # if we're testing locally, run all versions of python on the system

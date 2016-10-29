@@ -7,10 +7,10 @@ MINOR_VER = sys.version_info[1]
 
 # coverage doesn't work in python 3.1, 3.2 due to it just being a shit
 # python
-is_crappy_python = IS_PY3 and MINOR_VER in (1, 2)
+HAS_UNICODE_LITERAL = not (IS_PY3 and MINOR_VER in (1, 2))
 
 cov = None
-if not is_crappy_python:
+if HAS_UNICODE_LITERAL:
     run_idx = int(os.environ.pop("SH_TEST_RUN_IDX", "0"))
     first_run = run_idx == 0
 
