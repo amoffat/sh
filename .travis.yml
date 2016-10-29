@@ -16,6 +16,4 @@ python:
 before_script: pip install -r requirements-dev.txt
 
 script:
-    - python sh.py test
-
-after_success: coveralls
+    - python sh.py travis

@@ -3004,6 +3004,29 @@ class ModuleImporterFromVariables(object):
         return module
 
 
+def run_tests(env, locale, version=None, **extra_env):
+    py_version = "python"
+    if version:
+        py_version += str(version)
+
+    py_bin = which(py_version)
+    return_code = None
+
+    if py_bin:
+        print("Testing %s, locale %r" % (py_version.capitalize(),
+            locale))
+
+        env["LANG"] = locale
+
+        for k,v in extra_env.items():
+            env[k] = str(v)
+
+        cmd = [py_bin, os.path.join(THIS_DIR, "test.py")] + args[1:]
+        launch = lambda: os.spawnve(os.P_WAIT, cmd[0], cmd, env)
+        return_code = launch()
+
+    return return_code
+
 
 
 # we're being run as a stand-alone script
@@ -3013,19 +3036,22 @@ if __name__ == "__main__": # pragma: no cover
 
         parser = OptionParser()
         parser.add_option("-e", "--envs", dest="envs", action="append")
-        parser.add_option("-l", "--locales", dest="locales", action="append")
+        parser.add_option("-l", "--locales", dest="constrain_locales", action="append")
         options, args = parser.parse_args()
 
         envs = options.envs or []
-        locales = options.locales or []
+        constrain_locales = options.constrain_locales or []
 
-        return args, envs, locales
+        return args, envs, constrain_locales
 
-    # these are essentially restrictions on what envs/locales to restrict to for
+    # these are essentially restrictions on what envs/constrain_locales to restrict to for
     # the tests.  if they're empty lists, it means use all available
-    args, py_envs, locales = parse_args()
+    args, constrain_versions, constrain_locales = parse_args()
+    action = None
+    if args:
+        action = args[0]
 
-    if args and args[0] == "test":
+    if action in ("test", "travis"):
         import subprocess
         import coverage
         import test
@@ -3034,40 +3060,37 @@ if __name__ == "__main__": # pragma: no cover
         env["SH_TESTS_RUNNING"] = "1"
         test.append_module_path(env, coverage)
         
-        def run_test(version, locale, **extra_env):
-            py_version = "python%s" % version
-            py_bin = which(py_version)
 
-            if py_bin:
-                print("Testing %s, locale %r" % (py_version.capitalize(),
-                    locale))
+        # if we're testing locally, run all versions of python on the system
+        if action == "test":
+            all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5")
 
-                env["LANG"] = locale
+        # if we're testing on travis, just use the system's default python,
+        # since travis will spawn a vm per python version in our .travis.yml
+        # file
+        elif action == "travis":
+            all_versions = (None,)
 
-                for k,v in extra_env.items():
-                    env[k] = str(v)
-
-                cmd = [py_bin, os.path.join(THIS_DIR, "test.py")] + args[1:]
-                launch = lambda: os.spawnve(os.P_WAIT, cmd[0], cmd, env)
-                return_code = launch()
-
-                if return_code != 0:
-                    exit(1)
-            else:
-                print("Couldn't find %s, skipping" % py_version.capitalize())
-
-        all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5")
         all_locales = ("en_US.UTF-8", "C")
         i = 0
         for locale in all_locales:
-            if locales and locale not in locales:
+            if constrain_locales and locale not in constrain_locales:
                 continue
 
             for version in all_versions:
-                if py_envs and version not in py_envs:
+                if constrain_versions and version not in constrain_versions:
                     continue
 
-                run_test(version, locale, SH_TEST_RUN_IDX=i)
+                env_copy = env.copy()
+                exit_code = run_tests(env_copy, locale, version,
+                        SH_TEST_RUN_IDX=i)
+
+                if exit_code is None:
+                    print("Couldn't find %s, skipping" % version)
+
+                elif exit_code != 0:
+                    exit(1)
+
                 i += 1
 
     else:
