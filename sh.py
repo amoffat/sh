@@ -2210,7 +2210,6 @@ def get_file_chunk_reader(stdin):
     bufsize = 1024
 
     def fn():
-
         # python 3.* includes a fileno on stringios, but accessing it throws an
         # exception.  that exception is how we'll know we can't do a select on
         # stdin
@@ -2233,6 +2232,7 @@ def get_file_chunk_reader(stdin):
             raise DoneReadingForever
         else:
             return chunk
+
     return fn
 
 
@@ -2287,7 +2287,7 @@ class StreamWriter(object):
         stdin, then write it.  the return value answers the questions "are we
         done writing forever?" """
 
-        # get_chunk may sometimes return bytes, and sometimes returns trings
+        # get_chunk may sometimes return bytes, and sometimes return strings
         # because of the nature of the different types of STDIN objects we
         # support
         try:
@@ -2367,8 +2367,12 @@ def determine_how_to_feed_output(handler, encoding, decode_errors):
 
 
 def get_file_chunk_consumer(handler):
+    encode = lambda chunk: chunk
+    if getattr(handler, "encoding", None):
+        encode = lambda chunk: chunk.decode(handler.encoding)
+
     def process(chunk):
-        handler.write(chunk)
+        handler.write(encode(chunk))
         # we should flush on an fd.  chunk is already the correctly-buffered
         # size, so we don't need the fd buffering as well
         handler.flush()
