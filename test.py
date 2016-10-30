@@ -1660,15 +1660,15 @@ sys.stdin.read(1)
 
 
     def test_binary_pipe(self):
-        binary = b'\xec;\xedr\xdbF\x92\xf9\x8d\xa7\x98\x02/\x15\xd2K\xc3\x94d\xc9'
+        binary = b'\xec;\xedr\xdbF'
 
         py1 = create_tmp_test("""
 import sys
 import os
 
 sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
-sys.stdout.write(%r)
-""" % binary)
+sys.stdout.write(b'\\xec;\\xedr\\xdbF')
+""")
 
         py2 = create_tmp_test("""
 import sys
@@ -1680,29 +1680,6 @@ sys.stdout.write(sys.stdin.read())
 """)
         out = python(python(py1.name), py2.name)
         self.assertEqual(out.stdout, binary)
-
-
-    def test_auto_change_buffering(self):
-        binary = b'\xec;\xedr\xdbF\x92\xf9\x8d\xa7\x98\x02/\x15\xd2K\xc3\x94d\xc9'
-        py1 = create_tmp_test("""
-import sys
-import os
-import time
-
-sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
-sys.stdout.write(b"testing")
-sys.stdout.flush()
-# to ensure that sh's select loop picks up the write before we write again
-time.sleep(0.5)
-sys.stdout.write(b"again\\n")
-sys.stdout.flush()
-time.sleep(0.5)
-sys.stdout.write(%r)
-sys.stdout.flush()
-""" % binary)
-
-        out = python(py1.name, _out_bufsize=1)
-        self.assertTrue(out.stdout == b'testingagain\n\xec;\xedr\xdbF\x92\xf9\x8d\xa7\x98\x02/\x15\xd2K\xc3\x94d\xc9')
 
 
     # designed to trigger the "... (%d more, please see e.stdout)" output
