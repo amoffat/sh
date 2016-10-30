@@ -425,6 +425,7 @@ def which(program, paths=None):
             exe_file = os.path.join(path, program)
             if is_exe(exe_file):
                 found_path = exe_file
+                break
 
     return found_path
 
