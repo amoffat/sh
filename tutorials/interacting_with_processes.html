@@ -1,0 +1,569 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Entering an SSH password &mdash; sh 1.12.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="sh 1.12.0 documentation" href="../index.html"/>
+        <link rel="up" title="Tutorials" href="../tutorials.html"/>
+        <link rel="next" title="FAQ" href="../sections/faq.html"/>
+        <link rel="prev" title="Tailing a real-time log file" href="real_time_output.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> sh
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../sections/passing_arguments.html">Passing Arguments</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sections/passing_arguments.html#keyword-arguments">Keyword Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/exit_codes.html">Exit Codes &amp; Exceptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sections/exit_codes.html#signals">Signals</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/redirection.html">Redirection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sections/redirection.html#filename">Filename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/redirection.html#file-like-object">File-like Object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/redirection.html#function-callback">Function Callback</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/asynchronous_execution.html">Asynchronous Execution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sections/asynchronous_execution.html#incremental-iteration">Incremental Iteration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/asynchronous_execution.html#background-processes">Background Processes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sections/asynchronous_execution.html#output-callbacks">Output Callbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/asynchronous_execution.html#interactive-callbacks">Interactive callbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/asynchronous_execution.html#done-callbacks">Done Callbacks</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/baking.html">Baking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/piping.html">Piping</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sections/piping.html#basic">Basic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/piping.html#advanced">Advanced</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/subcommands.html">Sub-commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/default_arguments.html">Default Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/envs.html">Environments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/stdin.html">Input via STDIN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/with.html">&#8216;With&#8217; Contexts</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../sections/special_arguments.html">Special Kwargs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#controlling-output">Controlling Output</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#out">_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#err">_err</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#err-to-out">_err_to_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#encoding">_encoding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#decode-errors">_decode_errors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#tee">_tee</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#execution">Execution</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#fg">_fg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#bg">_bg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#env">_env</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#timeout">_timeout</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#timeout-signal">_timeout_signal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#cwd">_cwd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#ok-code">_ok_code</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#new-session">_new_session</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#uid">_uid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#preexec-fn">_preexec_fn</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#communication">Communication</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#in">_in</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#piped">_piped</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#iter">_iter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#iter-noblock">_iter_noblock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#with">_with</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#done">_done</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#ttys">TTYs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#tty-in">_tty_in</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#tty-out">_tty_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#tty-size">_tty_size</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#performance-optimization">Performance &amp; Optimization</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#in-bufsize">_in_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#out-bufsize">_out_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#internal-bufsize">_internal_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#no-out">_no_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#no-err">_no_err</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#no-pipe">_no_pipe</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#program-arguments">Program Arguments</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#long-sep">_long_sep</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#long-prefix">_long_prefix</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#arg-preprocess">_arg_preprocess</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#misc">Misc</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#log-msg">_log_msg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/architecture.html">Architecture Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sections/architecture.html#launch">Launch</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sections/architecture.html#child">Child</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/architecture.html#parent">Parent</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/architecture.html#running">Running</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sections/architecture.html#buffers">Buffers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/architecture.html#exit">Exit</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sections/architecture.html#stdin-thread-shutdown">STDIN Thread Shutdown</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/architecture.html#stdout-err-thread-shutdown">STDOUT/ERR Thread Shutdown</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/architecture.html#exit-code-processing">Exit Code Processing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/architecture.html#done-callback">Done Callback</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/command_class.html">API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sections/command_class.html#command-class">Command Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/command_class.html#runningcommand-class">RunningCommand Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/command_class.html#oproc-class">OProc Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/command_class.html#exceptions">Exceptions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../sections/command_class.html#errorreturncode">ErrorReturnCode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/command_class.html#signalexception">SignalException</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/command_class.html#timeoutexception">TimeoutException</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/command_class.html#helper-functions">Helper Functions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../sections/contrib.html">Contrib Commands</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../sections/contrib.html#commands">Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sections/contrib.html#sudo">Sudo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/contrib.html#git">Git</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/contrib.html#extending">Extending</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../sections/sudo.html">Using Sudo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../sections/sudo.html#sh-contrib-sudo">sh.contrib.sudo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../sections/sudo.html#terminal-input">Terminal Input</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/sudo.html#string-input">String Input</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/sudo.html#etc-sudoers-nopasswd">/etc/sudoers NOPASSWD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/sudo.html#sh-sudo">sh.sudo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/sudo.html#fg-true">_fg=True</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="real_time_output.html">Tailing a real-time log file</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Entering an SSH password</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-you-should-really-be-using-ssh">How you should REALLY be using SSH</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../sections/faq.html">FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#will-windows-be-supported">Will Windows be supported?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-append-output-to-a-file">How do I append output to a file?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-does-my-command-s-output-have-color">Why does my command&#8217;s output have color?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-is-tty-out-true-the-default">Why is _tty_out=True the default?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-run-a-program-with-dashes-in-its-name">How do I run a program with dashes in its name?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-doesn-t-work-as-a-command-argument">Why doesn&#8217;t &#8220;*&#8221; work as a command argument?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn&#8217;t in <code class="docutils literal"><span class="pre">$PATH</span></code>?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-execute-a-program-with-a-dash-in-its-name">How do I execute a program with a dash in its name?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-not-use-to-pipe-commands">Why not use <code class="docutils literal"><span class="pre">|</span></code> to pipe commands?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-isn-t-piping-asynchronous-by-default">Why isn&#8217;t piping asynchronous by default?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-run-a-command-and-connect-it-to-sys-stdout-and-sys-stdin">How do I run a command and connect it to sys.stdout and sys.stdin?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-do-my-arguments-need-to-be-separate-strings">Why do my arguments need to be separate strings?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-order-keyword-arguments">How do I order keyword arguments?</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">sh</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
+      
+    <li>Entering an SSH password</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/tutorials/interacting_with_processes.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="entering-an-ssh-password">
+<span id="tutorial2"></span><h1>Entering an SSH password<a class="headerlink" href="#entering-an-ssh-password" title="Permalink to this headline">¶</a></h1>
+<p>Here we will attempt to SSH into a server and enter a password programmatically.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">It is recommended that you just <code class="docutils literal"><span class="pre">ssh-copy-id</span></code> to copy your public key to
+the server so you don&#8217;t need to enter your password, but for the purposes of
+this demonstration, we try to enter a password.</p>
+</div>
+<p>To interact with a process, we need to assign a callback to STDOUT.  The
+callback signature we&#8217;ll use will take a <a class="reference external" href="https://docs.python.org/3.5/library/queue.html#queue.Queue" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">queue.Queue</span></code></a> object for the
+second argument, and we&#8217;ll use that to send STDIN back to the process.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="../sections/redirection.html#red-func"><span class="std std-ref">Function Callback</span></a></p>
+</div>
+<p>Here&#8217;s our first attempt:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
+
+<span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password:&quot;</span><span class="p">):</span>
+        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
+
+<span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you run this (substituting an IP that you can SSH to), you&#8217;ll notice that
+nothing is printed from within the callback.  The problem has to do with STDOUT
+buffering.  By default, sh line-buffers STDOUT, which means that
+<code class="docutils literal"><span class="pre">ssh_interact</span></code> will only receive output when sh encounters a newline in the
+output.  This is a problem because the password prompt has no newline:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>amoffat@10.10.10.100&#39;s password:
+</pre></div>
+</div>
+<p>Because a newline is never encountered, nothing is sent to the <code class="docutils literal"><span class="pre">ssh_interact</span></code>
+callback.  So we need to change the STDOUT buffering.  We do this with the
+<a class="reference internal" href="../sections/special_arguments.html#out-bufsize"><span class="std std-ref">_out_bufsize</span></a> special kwarg.  We&#8217;ll set
+it to 0 for unbuffered output:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
+
+<span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
+    <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password:&quot;</span><span class="p">):</span>
+        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
+
+<span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you run this updated version, you&#8217;ll notice a new problem.  The output looks
+like this:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>a
+m
+o
+f
+f
+a
+t
+@
+1
+0
+.
+1
+0
+.
+1
+0
+.
+1
+0
+0
+&#39;
+s
+
+p
+a
+s
+s
+w
+o
+r
+d
+:
+</pre></div>
+</div>
+<p>This is because the chunks of STDOUT our callback is receiving are unbuffered,
+and are therefore individual characters, instead of entire lines.  What we need
+to do now is aggregate this character-by-character data into something more
+meaningful for us to test if the pattern <code class="docutils literal"><span class="pre">password:</span></code> has been sent, signifying
+that SSH is ready for input.</p>
+<p>It would make sense to encapsulate the variable we&#8217;ll use for aggregating into
+some kind of closure or class, but to keep it simple, we&#8217;ll just use a global:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="n">aggregated</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">aggregated</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">char</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="n">aggregated</span> <span class="o">+=</span> <span class="n">char</span>
+    <span class="k">if</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password: &quot;</span><span class="p">):</span>
+        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
+
+<span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You&#8217;ll also notice that the example still doesn&#8217;t work.  There are two problems:
+The first is that your password must end with a newline, as if you had typed it
+and hit the return key.  This is because SSH has no idea how long your password
+is, and is line-buffering STDIN.</p>
+<p>The second problem lies deeper in SSH.  SSH needs a TTY attached to its STDIN in
+order to work properly.  This tricks SSH into believing that it is interacting
+with a real user in a real terminal session.  To enable TTY, we can add the
+<a class="reference internal" href="../sections/special_arguments.html#tty-in"><span class="std std-ref">_tty_in</span></a> special kwarg:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="n">aggregated</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+<span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">aggregated</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">char</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="n">aggregated</span> <span class="o">+=</span> <span class="n">char</span>
+    <span class="k">if</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password: &quot;</span><span class="p">):</span>
+        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_tty_in</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And now our remote login script works!</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>amoffat@10.10.10.100&#39;s password:
+Linux 10.10.10.100 testhost #1 SMP Tue Jun 21 10:29:24 EDT 2011 i686 GNU/Linux
+Ubuntu 10.04.2 LTS
+
+Welcome to Ubuntu!
+ * Documentation:  https://help.ubuntu.com/
+
+66 packages can be updated.
+53 updates are security updates.
+
+Ubuntu 10.04.2 LTS
+
+Welcome to Ubuntu!
+ * Documentation:  https://help.ubuntu.com/
+You have new mail.
+Last login: Thu Sep 13 03:53:00 2012 from some.ip.address
+amoffat@10.10.10.100:~$
+</pre></div>
+</div>
+<div class="section" id="how-you-should-really-be-using-ssh">
+<h2>How you should REALLY be using SSH<a class="headerlink" href="#how-you-should-really-be-using-ssh" title="Permalink to this headline">¶</a></h2>
+<p>Many people want to learn how to enter an SSH password by script because they
+want to execute remote commands on a server.  Instead of trying to log in
+through SSH and then sending terminal input of the command to run, let&#8217;s see how
+we can do it another way.</p>
+<p>First, open a terminal and run <code class="docutils literal"><span class="pre">ssh-copy-id</span> <span class="pre">yourservername</span></code>.  You&#8217;ll be asked
+to enter your password for the server.  After entering your password, you&#8217;ll be
+able to SSH into the server without needing a password again.  This simplifies
+things greatly for sh.</p>
+<p>The second thing we want to do is use SSH&#8217;s ability to pass a command to run
+to the server you&#8217;re SSHing to.  Here&#8217;s how you can run <code class="docutils literal"><span class="pre">ifconfig</span></code> on a server
+without having to use that server&#8217;s shell directly:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>ssh amoffat@10.10.10.100 ifconfig
+</pre></div>
+</div>
+<p>Translating this to sh, it becomes:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">,</span> <span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>We can make this even nicer by taking advantage of sh&#8217;s <a class="reference internal" href="../sections/baking.html#baking"><span class="std std-ref">Baking</span></a> to bind
+our server username/ip to a command object:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+
+<span class="n">my_server</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;whoami&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Now we have a reusable command object that we can use to call remote commands.
+But there is room for one more improvement.  We can also use sh&#8217;s
+<a class="reference internal" href="../sections/subcommands.html#subcommands"><span class="std std-ref">Sub-commands</span></a> feature which expands attribute access into command
+arguments:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+
+<span class="n">my_server</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">ifconfig</span><span class="p">())</span>
+<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">whoami</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../sections/faq.html" class="btn btn-neutral float-right" title="FAQ" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="real_time_output.html" class="btn btn-neutral" title="Tailing a real-time log file" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Andrew Moffat.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.12.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
