@@ -2829,7 +2829,10 @@ class Contrib(object):
 
 
         def process(args, kwargs):
-            password = kwargs.pop("password", None)
+            try:
+                password = args.pop(0)
+            except IndexError:
+                password = None
 
             if password is None:
                 pass_getter = stdin()
