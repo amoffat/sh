@@ -2807,45 +2807,59 @@ Please import sh or import programs individually.")
         return which(program, paths)
 
 
-
 class Contrib(object):
-    """ methods on Contrib are essentially modified Command objects that are
-    made to be more intuitive versions of the base Command. """
+    @classmethod
+    def __call__(cls, name):
+        def wrapper1(fn):
 
-    @property
-    def sudo(self):
-        """ a nicer version of sudo that uses getpass to ask for a password, or
-        allows the first argument to be a string password """
+            @property
+            def cmd_getter(self):
+                cmd = resolve_command(name)
 
-        sudo = resolve_command("sudo")
-        if not sudo:
-            return None
+                if not cmd:
+                    raise CommandNotFound(name)
 
-        prompt = "[sudo] password for %s: " % getpass.getuser()
+                new_cmd = fn(cmd)
+                return new_cmd
 
-        def stdin():
-            pw = getpass.getpass(prompt=prompt) + "\n"
-            yield pw
+            setattr(cls, name, cmd_getter)
+            return fn
 
-
-        def process(args, kwargs):
-            try:
-                password = args.pop(0)
-            except IndexError:
-                password = None
-
-            if password is None:
-                pass_getter = stdin()
-            else:
-                pass_getter = password.rstrip("\n") + "\n"
-
-            kwargs["_in"] = pass_getter
-            return args, kwargs
-
-        sudo = sudo.bake("-S", _arg_preprocess=process)
-        return sudo
+        return wrapper1
 
 contrib = Contrib()
+
+
+
+@contrib("sudo")
+def sudo(orig):
+    """ a nicer version of sudo that uses getpass to ask for a password, or
+    allows the first argument to be a string password """
+
+    prompt = "[sudo] password for %s: " % getpass.getuser()
+
+    def stdin():
+        pw = getpass.getpass(prompt=prompt) + "\n"
+        yield pw
+
+
+    def process(args, kwargs):
+        try:
+            password = args.pop(0)
+        except IndexError:
+            password = None
+
+        if password is None:
+            pass_getter = stdin()
+        else:
+            pass_getter = password.rstrip("\n") + "\n"
+
+        kwargs["_in"] = pass_getter
+        return args, kwargs
+
+    sudo = orig.bake("-S", _arg_preprocess=process)
+    return sudo
+
 
 
 
