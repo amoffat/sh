@@ -2807,7 +2807,7 @@ Please import sh or import programs individually.")
         return which(program, paths)
 
 
-class Contrib(object):
+class Contrib(ModuleType):
     @classmethod
     def __call__(cls, name):
         def wrapper1(fn):
@@ -2827,7 +2827,10 @@ class Contrib(object):
 
         return wrapper1
 
-contrib = Contrib()
+
+mod_name = __name__ + ".contrib"
+contrib = Contrib(mod_name)
+sys.modules[mod_name] = contrib
 
 
 
