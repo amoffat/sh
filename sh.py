@@ -2844,10 +2844,7 @@ def sudo(orig):
 
 
     def process(args, kwargs):
-        try:
-            password = args.pop(0)
-        except IndexError:
-            password = None
+        password = kwargs.pop("password", None)
 
         if password is None:
             pass_getter = stdin()
