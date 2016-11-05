@@ -893,7 +893,7 @@ class Command(object):
         "decode_errors": "strict",
 
         # how long the process should run before it is auto-killed
-        "timeout": 0,
+        "timeout": None,
         "timeout_signal": signal.SIGKILL,
 
         # TODO write some docs on "long-running processes"
