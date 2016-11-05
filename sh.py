@@ -621,7 +621,7 @@ class RunningCommand(object):
         # process, and that's if we're using a with-context with our command
         self._spawned_and_waited = False
         if spawn_process:
-            log_str_factory = call_args["log_msg"]
+            log_str_factory = call_args["log_msg"] or default_logger_str
             logger_str = log_str_factory(self.ran, call_args)
             self.log = Logger("command", logger_str)
 
@@ -937,7 +937,7 @@ class Command(object):
 
         # a callable that produces a log message from an argument tuple of the
         # command and the args
-        "log_msg": default_logger_str,
+        "log_msg": None,
     }
 
     # these are arguments that cannot be called together, because they wouldn't
