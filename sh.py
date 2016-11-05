@@ -546,6 +546,7 @@ class RunningCommand(object):
         "pid",
         "sid",
         "pgid",
+        "ctty",
     ))
 
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
@@ -678,10 +679,6 @@ class RunningCommand(object):
                     self.call_args["truncate_exc"])
             raise exc
 
-
-    @property
-    def ctty(self):
-        return self.process.ctty
 
     @property
     def stdout(self):
