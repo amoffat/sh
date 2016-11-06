@@ -1869,61 +1869,6 @@ p.wait()
         assert_dead(child_pid)
 
 
-    def test_file_output_isnt_buffered(self):
-        # https://github.com/amoffat/sh/issues/147
-
-        import time
-
-        expected_time_increment = 0.2
-        py = create_tmp_test("""
-from time import sleep
-import sys
-
-for i in range(5):
-    print(i)
-    i += 1
-    sleep(%.2f)
-""" % expected_time_increment)
-
-        file_obj = tempfile.TemporaryFile()
-        p = python(py.name, _out=file_obj, _bg=True)
-
-        # now we're going to test that the output file receives a chunk of
-        # data roughly every expected_time_increment seconds, to prove that
-        # output is being flushed
-
-        last_pos = 0
-        last_pos_time = 0
-        times = []
-        timeout = 5
-        started = time.time()
-        for i in range(5):
-            while True:
-                now = time.time()
-                if now - started > timeout:
-                    self.fail("test timed out")
-
-                # check if the end of our file has grown
-                file_obj.seek(0, 2)
-                cur_pos = file_obj.tell()
-                if cur_pos > last_pos:
-                    last_pos = cur_pos
-                    if last_pos_time == 0:
-                        delta = 0
-                    else:
-                        delta = now - last_pos_time
-
-                    if last_pos_time > 0:
-                        self.assertTrue(abs(delta - expected_time_increment) <=
-                                expected_time_increment * 0.5)
-
-                    last_pos_time = now
-                    break
-
-        p.wait()
-        file_obj.close()
-
-
     def test_pushd(self):
         """ test basic pushd functionality """
         old_wd1 = sh.pwd().strip()
