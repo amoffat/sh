@@ -2833,6 +2833,11 @@ contrib = Contrib(mod_name)
 sys.modules[mod_name] = contrib
 
 
+@contrib("git")
+def git(orig):
+    """ most git commands play nicer without a TTY """
+    cmd = orig.bake(_tty_out=False)
+    return cmd
 
 @contrib("sudo")
 def sudo(orig):
@@ -2857,8 +2862,8 @@ def sudo(orig):
         kwargs["_in"] = pass_getter
         return args, kwargs
 
-    sudo = orig.bake("-S", _arg_preprocess=process)
-    return sudo
+    cmd = orig.bake("-S", _arg_preprocess=process)
+    return cmd
 
 
 
