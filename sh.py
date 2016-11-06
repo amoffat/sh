@@ -2368,16 +2368,19 @@ def get_file_chunk_consumer(handler):
     if getattr(handler, "encoding", None):
         encode = lambda chunk: chunk.decode(handler.encoding)
 
+    flush = lambda: None
+    if hasattr(handler, "flush"):
+        flush = handler.flush
+
     def process(chunk):
         handler.write(encode(chunk))
         # we should flush on an fd.  chunk is already the correctly-buffered
         # size, so we don't need the fd buffering as well
-        handler.flush()
+        flush()
         return False
 
     def finish():
-        if hasattr(handler, "flush"):
-            handler.flush()
+        flush()
 
         if hasattr(handler, "fileno"):
             fd_stat = os.fstat(handler.fileno())
