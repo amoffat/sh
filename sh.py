@@ -823,6 +823,53 @@ def get_prepend_stack():
     return tl._prepend_stack
 
 
+def special_kwarg_validator(kwargs, invalid_list):
+    s1 = set(kwargs.keys())
+    invalid_args = []
+
+    for args in invalid_list:
+
+        if callable(args):
+            fn = args
+            ret = fn(kwargs)
+            invalid_args.extend(ret)
+
+        else:
+            args, error_msg = args
+
+            if s1.issuperset(args):
+                invalid_args.append((args, error_msg))
+
+    return invalid_args
+
+def ob_is_tty(ob):
+    """ checks if an object (like a file-like object) is a tty.  """
+
+    fileno_meth = getattr(ob, "fileno", None)
+    is_tty = False
+
+    if fileno_meth:
+        # StringIO objects will report a fileno, but calling it will raise an
+        # exception
+        try:
+            fileno = fileno_meth()
+        except UnsupportedOperation:
+            pass
+        else:
+            is_tty = os.isatty(fileno)
+    return is_tty
+
+def tty_in_validator(kwargs):
+    pairs = (("tty_in", "in"), ("tty_out", "out"))
+    invalid = []
+    for tty, std in pairs:
+        if tty in kwargs and ob_is_tty(kwargs.get(std, None)):
+            args = (tty, std)
+            error = "`_%s` is a TTY already, so so it doesn't make sense \
+to set up a TTY with `_%s`" % (std, tty)
+            invalid.append((args, error))
+
+    return invalid
 
 
 class Command(object):
@@ -940,18 +987,18 @@ class Command(object):
         "log_msg": None,
     }
 
-    # these are arguments that cannot be called together, because they wouldn't
-    # make any sense
-    _incompatible_call_args = (
-        #("fg", "bg", "Command can't be run in the foreground and background"),
-        ("err", "err_to_out", "Stderr is already being redirected"),
-        ("piped", "iter", "You cannot iterate when this command is being piped"),
-        ("piped", "no_pipe", "Using a pipe doesn't make sense if you've \
+    # this is a collection of validators to make sure the special kwargs make
+    # sense
+    _kwarg_validators = (
+        (("fg", "bg"), "Command can't be run in the foreground and background"),
+        (("err", "err_to_out"), "Stderr is already being redirected"),
+        (("piped", "iter"), "You cannot iterate when this command is being piped"),
+        (("piped", "no_pipe"), "Using a pipe doesn't make sense if you've \
 disabled the pipe"),
-        ("no_out", "iter", "You cannot iterate over output if there is no \
+        (("no_out", "iter"), "You cannot iterate over output if there is no \
 output"),
+        tty_in_validator,
     )
-
 
 
     def __init__(self, path, search_paths=None):
@@ -1008,14 +1055,15 @@ output"),
                 call_args[parg] = kwargs[key]
                 del kwargs[key]
 
-        # test for incompatible call args
-        s1 = set(call_args.keys())
-        for args in Command._incompatible_call_args:
-            args = list(args)
-            error = args.pop()
+        invalid_kwargs = special_kwarg_validator(call_args,
+                Command._kwarg_validators)
 
-            if s1.issuperset(args):
-                raise TypeError("Invalid special arguments %r: %s" % (args, error))
+        if invalid_kwargs:
+            exc_msg = []
+            for args, error_msg in invalid_kwargs:
+                exc_msg.append("  %r: %s" % (args, error_msg))
+            exc_msg = "\n".join(exc_msg)
+            raise TypeError("Invalid special arguments:\n\n%s\n" % exc_msg)
 
         return call_args, kwargs
 
