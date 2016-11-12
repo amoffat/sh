@@ -1,7 +1,8 @@
 # Changelog
 
-## 1.2 -
+## 1.12.0 -
 
+*   better support for using `sys.stdin` and `sys.stdout` for `_in` and `_out`
 *   bugfix where `which()` would not stop searching at the first valid executable found in PATH
 *   added `_long_prefix` for programs whose long arguments start with something other than `--` [#278](https://github.com/amoffat/sh/pull/278)
 *   added `_log_msg` for advanced configuration of log message [#311](https://github.com/amoffat/sh/pull/311)
