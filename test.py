@@ -2388,19 +2388,19 @@ print("cool")
         import threading
         import time
 
-        temp1 = tempfile.mkdtemp()
-        temp2 = tempfile.mkdtemp()
+        temp1 = realpath(tempfile.mkdtemp())
+        temp2 = realpath(tempfile.mkdtemp())
         results = [None, None]
 
         def fn1():
             with sh.pushd(temp1):
                 time.sleep(0.2)
-                results[0] = os.getcwd()
+                results[0] = realpath(os.getcwd())
 
         def fn2():
             time.sleep(0.1)
             with sh.pushd(temp2):
-                results[1] = os.getcwd()
+                results[1] = realpath(os.getcwd())
                 time.sleep(0.3)
 
         t1 = threading.Thread(name="t1", target=fn1)
