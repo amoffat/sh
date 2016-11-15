@@ -127,6 +127,7 @@ if not skipUnless:
 
 requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
 requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
+not_osx = skipUnless(not IS_OSX, "Doesn't work on OSX")
 
 
 def create_tmp_test(code, prefix="tmp", delete=True, **kwargs):
@@ -2326,6 +2327,11 @@ print("cool")
         out = python(py.name, "%%")
         out = python(py.name, "%%%")
 
+
+    # TODO
+    # for some reason, i can't get a good stable baseline measured in this test
+    # on osx.  so skip it for now if osx
+    @not_osx
     def test_no_fd_leak(self):
         import sh
         import os
