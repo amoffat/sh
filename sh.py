@@ -1639,30 +1639,32 @@ class OProc(object):
         session_pipe_read, session_pipe_write = os.pipe()
         exc_pipe_read, exc_pipe_write = os.pipe()
 
+        # this pipe is for synchronzing with the child that the parent has
+        # closed its in/out/err fds.  this is a bug on OSX (but not linux),
+        # where we can lose output sometimes, due to a race, if we do
+        # os.close(self._stdout_write_fd) in the parent after the child starts
+        # writing.
+        if IS_OSX:
+            close_pipe_read, close_pipe_write = os.pipe()
+
 
         # session id, group id, process id
         self.sid = None
         self.pgid = None
         self.pid = os.fork()
 
-
         # child
         if self.pid == 0: # pragma: no cover
+            if IS_OSX:
+                os.read(close_pipe_read, 1)
+                os.close(close_pipe_read)
+                os.close(close_pipe_write)
+
             try:
                 # ignoring SIGHUP lets us persist even after the parent process
                 # exits.  only ignore if we're backgrounded
                 if ca["bg"] is True:
                     signal.signal(signal.SIGHUP, signal.SIG_IGN)
-
-                # this piece of ugliness is due to a bug where we can lose output
-                # if we do os.close(self._stdout_write_fd) in the parent after
-                # the child starts writing.
-                # see http://bugs.python.org/issue15898
-                #
-                # TODO is this still necessary or was it a bug in sh's process
-                # model?
-                if IS_OSX:
-                    time.sleep(0.01)
 
                 # put our forked process in a new session?  this will relinquish
                 # any control of our inherited CTTY and also make our parent
@@ -1765,6 +1767,17 @@ class OProc(object):
             if gc_enabled:
                 gc.enable()
 
+            os.close(self._stdin_write_fd)
+            os.close(self._stdout_write_fd)
+            os.close(self._stderr_write_fd)
+
+            # tell our child process that we've closed our write_fds, so it is
+            # ok to proceed towards exec.  see the comment where this pipe is
+            # opened, for why this is necessary
+            if IS_OSX:
+                os.close(close_pipe_read)
+                os.write(close_pipe_write, str(1).encode(DEFAULT_ENCODING))
+                os.close(close_pipe_write)
 
             os.close(exc_pipe_write)
             fork_exc = os.read(exc_pipe_read, 1024**2)
@@ -1775,7 +1788,6 @@ class OProc(object):
 
             os.close(session_pipe_write)
             self.sid = int(os.read(session_pipe_read, 1024))
-            os.close(session_pipe_read)
 
             self.pgid = os.getpgid(self.pid)
 
@@ -1815,9 +1827,6 @@ class OProc(object):
 
             self.log = parent_log.get_child("process", repr(self))
 
-            os.close(self._stdin_write_fd)
-            os.close(self._stdout_write_fd)
-            os.close(self._stderr_write_fd)
 
             self.log.debug("started process")
 
