@@ -2086,31 +2086,21 @@ sys.stdout.flush()
 """)
 
         def create_stdin():
-            data = {"counter": 0}
-            def stdin():
-                if data["counter"] == 0:
-                    data["counter"] += 1
-                    return "test"
-                elif data["counter"] == 1:
-                    data["counter"] += 1
-                    sleep(1)
-                    return "ing"
-                elif data["counter"] == 2:
-                    data["counter"] += 1
-                    sleep(1)
-                    return "done"
-                else:
-                    raise sh.DoneReadingForever
-            return stdin
+            yield "test"
+            sleep(1)
+            yield "ing"
+            sleep(1)
+            yield "done"
+
 
         out = python(py.name, _in=create_stdin(), _in_bufsize=0)
         word1, time1, word2, time2, _ = out.split("\n")
         time1 = float(time1)
         time2 = float(time2)
         self.assertEqual(word1, "testing")
-        self.assertTrue(abs(1-time1) < 0.1)
+        self.assertTrue(abs(1-time1) < 0.5)
         self.assertEqual(word2, "done")
-        self.assertTrue(abs(1-time2) < 0.1)
+        self.assertTrue(abs(1-time2) < 0.5)
 
 
     def test_stdin_newline_bufsize(self):
@@ -2143,30 +2133,21 @@ sys.stdout.flush()
         # sending a newline.  we then measure the amount that we slept
         # indirectly in the child process
         def create_stdin():
-            data = {"counter": 0}
-            def stdin():
-                if data["counter"] == 0:
-                    data["counter"] += 1
-                    return "test"
-                elif data["counter"] == 1:
-                    sleep(1)
-                    data["counter"] += 1
-                    return "ing\n"
-                elif data["counter"] == 2:
-                    sleep(1)
-                    return "done\n"
-                else:
-                    raise sh.DoneReadingForever
-            return stdin
+            yield "test"
+            sleep(1)
+            yield "ing\n"
+            sleep(1)
+            yield "done\n"
+
 
         out = python(py.name, _in=create_stdin(), _in_bufsize=1)
         word1, time1, word2, time2, _ = out.split("\n")
         time1 = float(time1)
         time2 = float(time2)
         self.assertEqual(word1, "testing")
-        self.assertTrue(abs(1-time1) < 0.1)
+        self.assertTrue(abs(1-time1) < 0.5)
         self.assertEqual(word2, "done")
-        self.assertTrue(abs(1-time2) < 0.1)
+        self.assertTrue(abs(1-time2) < 0.5)
 
 
     def test_custom_timeout_signal(self):
