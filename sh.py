@@ -1681,9 +1681,10 @@ class OProc(object):
                 else:
                     os.setpgrp()
 
-                pid = os.getpid()
-                sid = os.getsid(pid)
-                os.write(session_pipe_write, str(sid).encode(DEFAULT_ENCODING))
+                sid = os.getsid(0)
+                pgid = os.getpgid(0)
+                payload = ("%d,%d" % (sid, pgid)).encode(DEFAULT_ENCODING)
+                os.write(session_pipe_write, payload)
 
                 if ca["tty_out"] and not stdout_is_tty:
                     # set raw mode, so there isn't any weird translation of
@@ -1787,9 +1788,10 @@ class OProc(object):
                 raise ForkException(fork_exc)
 
             os.close(session_pipe_write)
-            self.sid = int(os.read(session_pipe_read, 1024))
-
-            self.pgid = os.getpgid(self.pid)
+            sid, pgid = os.read(session_pipe_read,
+                    1024).decode(DEFAULT_ENCODING).split(",")
+            self.sid = int(sid)
+            self.pgid = int(pgid)
 
             # used to determine what exception to raise.  if our process was
             # killed via a timeout counter, we'll raise something different than
