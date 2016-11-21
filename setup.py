@@ -1,16 +1,33 @@
 from __future__ import print_function
 import os
+from os.path import dirname, abspath, join
 import sys
 import sh
+import codecs
 from setuptools import setup
 
+
+HERE = dirname(abspath(__file__))
+
+author = "Andrew Moffat"
+author_email = "andrew.robert.moffat@gmail.com"
+keywords = ["subprocess", "process", "shell", "launch", "program"]
+
+
+def read(*parts):
+    with codecs.open(join(HERE, *parts), "rb", "utf-8") as f:
+        return f.read()
 
 setup(
     name="sh",
     version=sh.__version__,
-    description="Python subprocess interface",
-    author="Andrew Moffat",
-    author_email="andrew.robert.moffat@gmail.com",
+    description="Python subprocess replacement",
+    long_description=read("README.rst"),
+    author=author,
+    author_email=author_email,
+    maintainer=author,
+    maintainer_email=author_email,
+    keywords=keywords,
     url="https://github.com/amoffat/sh",
     license="MIT",
     py_modules=["sh"],

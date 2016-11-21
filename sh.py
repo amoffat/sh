@@ -24,7 +24,7 @@ http://amoffat.github.io/sh/
 #===============================================================================
 
 
-__version__ = "1.2.0"
+__version__ = "1.12.0"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
