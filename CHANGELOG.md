@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.12.0 -
+## 1.12.0 - 11/21/16
 
 *   better support for using `sys.stdin` and `sys.stdout` for `_in` and `_out`
 *   bugfix where `which()` would not stop searching at the first valid executable found in PATH
