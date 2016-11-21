@@ -23,7 +23,6 @@ that allows you to call any program as if it were a function:
 
 sh is *not* a collection of system commands implemented in Python.
 
-============
 Installation
 ============
 
@@ -31,34 +30,44 @@ Installation
 
     $> pip install sh
 
-=====================================================
 Complete documentation @ http://amoffat.github.com/sh
 =====================================================
 
-=======
+Developers
+==========
+
 Testing
-=======
+-------
 
-First install the development requirements:
-
-::
+First install the development requirements::
 
     $> pip install -r requirements-dev.txt
 
-The run the tests:
-
-::
+The run the tests for all Python versions on your system::
 
     $> python sh.py test
 
-To run a single test for all environments:
-
-::
+To run a single test for all environments::
 
     $> python sh.py test FunctionalTests.test_unicode_arg
 
-To run a single test for a single environment:
-
-::
+To run a single test for a single environment::
 
     $> python sh.py test -e 3.4 FunctionalTests.test_unicode_arg
+
+Coverage
+--------
+
+First run all of the tests::
+
+    $> python sh.py test
+
+This will aggregate a ``.coverage``.  You may then visualize the report with::
+
+    $> coverage report
+
+Or generate visual html files with::
+
+    $> coverage html
+
+Which will create ``./htmlcov/index.html`` that you may open in a web browser.
