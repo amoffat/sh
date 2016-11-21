@@ -2043,7 +2043,8 @@ class OProc(object):
 
                 done_callback = self.call_args["done"]
                 if done_callback:
-                    done_callback(self.exit_code)
+                    success = self.exit_code in self.call_args["ok_code"]
+                    done_callback(success, self.exit_code)
 
                 return False, self.exit_code
 
@@ -2094,7 +2095,8 @@ class OProc(object):
 
             done_callback = self.call_args["done"]
             if call_done_callback and done_callback:
-                done_callback(self.exit_code)
+                success = self.exit_code in self.call_args["ok_code"]
+                done_callback(success, self.exit_code)
 
             return self.exit_code
 

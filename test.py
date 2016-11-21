@@ -1934,9 +1934,12 @@ p.wait()
             def __init__(self):
                 self.called = False
                 self.exit_code = None
-            def __call__(self, p, exit_code):
+                self.success = None
+
+            def __call__(self, p, success, exit_code):
                 self.called = True
                 self.exit_code = exit_code
+                self.success = success
 
         py = create_tmp_test("""
 from time import time, sleep
@@ -1956,6 +1959,7 @@ print(time())
         self.assertTrue(callback.called)
         self.assertTrue(abs(wait_elapsed - 1.0) < 0.1)
         self.assertEqual(callback.exit_code, 0)
+        self.assertTrue(callback.success)
 
 
     def test_fork_exc(self):
@@ -2044,7 +2048,9 @@ time.sleep(0.5)
         class Callback(object):
             def __init__(self):
                 self.called = False
-            def __call__(self, p, exit_code):
+                self.success = None
+            def __call__(self, p, success, exit_code):
+                self.success = success
                 self.called = True
 
         py = create_tmp_test("exit(1)")
@@ -2055,6 +2061,7 @@ time.sleep(0.5)
             p.wait()
         except ErrorReturnCode:
             self.assertTrue(callback.called)
+            self.assertFalse(callback.success)
         else:
             self.fail("command should've thrown an exception")
 
