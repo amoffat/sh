@@ -225,33 +225,21 @@ class ErrorReturnCode(Exception):
         self.stdout = stdout
         self.stderr = stderr
 
-        if self.stdout is None:
-            exc_stdout = "<redirected>"
-        else:
-            exc_stdout = self.stdout
-            if truncate:
-                exc_stdout = exc_stdout[:self.truncate_cap]
-                out_delta = len(self.stdout) - len(exc_stdout)
-                if out_delta:
-                    exc_stdout += ("... (%d more, please see e.stdout)" % out_delta).encode()
+        exc_stdout = self.stdout
+        if truncate:
+            exc_stdout = exc_stdout[:self.truncate_cap]
+            out_delta = len(self.stdout) - len(exc_stdout)
+            if out_delta:
+                exc_stdout += ("... (%d more, please see e.stdout)" % out_delta).encode()
 
-        if self.stderr is None:
-            exc_stderr = "<redirected>"
-        else:
-            exc_stderr = self.stderr
-            if truncate:
-                exc_stderr = exc_stderr[:self.truncate_cap]
-                err_delta = len(self.stderr) - len(exc_stderr)
-                if err_delta:
-                    exc_stderr += ("... (%d more, please see e.stderr)" % err_delta).encode()
+        exc_stderr = self.stderr
+        if truncate:
+            exc_stderr = exc_stderr[:self.truncate_cap]
+            err_delta = len(self.stderr) - len(exc_stderr)
+            if err_delta:
+                exc_stderr += ("... (%d more, please see e.stderr)" % err_delta).encode()
 
-
-        # this is a little clunky how we set up msg_tmpl, but the reason is, is
-        # that only python < 3.0 and python > 3.1 include specifying strings with
-        # u'stuff', which is what we would like to do here
-        msg_tmpl = "\n\n  RAN: {cmd}\n\n  STDOUT:\n{stdout}\n\n STDERR:\n{stderr}"
-        if not IS_PY3:
-            msg_tmpl = unicode(msg_tmpl)
+        msg_tmpl = unicode("\n\n  RAN: {cmd}\n\n  STDOUT:\n{stdout}\n\n  STDERR:\n{stderr}")
 
         msg = msg_tmpl.format(
             cmd=self.full_cmd,
