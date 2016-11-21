@@ -1428,8 +1428,10 @@ def construct_streamreader_callback(process, handler):
 
 def get_exc_exit_code_would_raise(exit_code, ok_codes):
     exc = None
-    if (exit_code not in ok_codes and (exit_code > 0 or -exit_code in
-        SIGNALS_THAT_SHOULD_THROW_EXCEPTION)):
+    success = exit_code in ok_codes
+    bad_sig = -exit_code in SIGNALS_THAT_SHOULD_THROW_EXCEPTION
+
+    if not success or bad_sig:
         exc = get_rc_exc(exit_code)
     return exc
 
