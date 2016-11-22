@@ -317,18 +317,13 @@ def get_exc_from_name(name):
     return exc
 
 
-def get_rc_exc(rc_or_sig_name):
-    """ takes a exit code, signal number, or signal name, and produces an
-    exception that corresponds to that return code.  positive return codes yield
+def get_rc_exc(rc):
+    """ takes a exit code or negative signal number and produces an exception
+    that corresponds to that return code.  positive return codes yield
     ErrorReturnCode exception, negative return codes yield SignalException
 
     we also cache the generated exception so that only one signal of that type
     exists, preserving identity """
-
-    try:
-        rc = int(rc_or_sig_name)
-    except ValueError:
-        rc = -getattr(signal, rc_or_sig_name)
 
     try:
         return rc_exc_cache[rc]
