@@ -1094,10 +1094,8 @@ output"),
 
 
     def __eq__(self, other):
-        try:
-            return str(self) == str(other)
-        except:
-            return False
+        return str(self) == str(other)
+
     __hash__ = None  # Avoid DeprecationWarning in Python < 3
 
 
