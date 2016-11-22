@@ -280,8 +280,13 @@ class CommandNotFound(AttributeError): pass
 
 
 
-rc_exc_regex = re.compile("(ErrorReturnCode|SignalException)_((\d+)|SIG\w+)")
+rc_exc_regex = re.compile("(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z]+)")
 rc_exc_cache = {}
+
+SIGNAL_MAPPING = {}
+for k,v in signal.__dict__.items():
+    if re.match(r"SIG[a-zA-Z]+", k):
+        SIGNAL_MAPPING[v] = k
 
 
 def get_exc_from_name(name):
@@ -333,7 +338,8 @@ def get_rc_exc(rc):
         name = "ErrorReturnCode_%d" % rc
         base = ErrorReturnCode
     else:
-        name = "SignalException_%d" % abs(rc)
+        signame = SIGNAL_MAPPING[abs(rc)]
+        name = "SignalException_" + signame
         base = SignalException
 
     exc = ErrorReturnCodeMeta(name, (base,), {"exit_code": rc})
