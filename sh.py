@@ -1194,7 +1194,7 @@ output"),
                     ran = " ".join([arg.decode(DEFAULT_ENCODING, "ignore") for arg in cmd])
                 else:
                     ran = " ".join(cmd)
-                exc = exc_class(ran, None, None, call_args["truncate_exc"])
+                exc = exc_class(ran, b"", b"", call_args["truncate_exc"])
                 raise exc
             return None
 
