@@ -2321,6 +2321,12 @@ sys.stdout.write(sys.argv[1])
         out = python.bake(py.name).bake_()
         self.assertEqual("bake", out)
 
+
+    def test_no_proc_no_attr(self):
+        py = create_tmp_test("")
+        with python(py.name) as p:
+            self.assertRaises(AttributeError, getattr, p, "exit_code")
+
     def test_partially_applied_callback(self):
         from functools import partial
 
