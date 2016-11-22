@@ -1012,15 +1012,24 @@ output"),
     def __getattribute__(self, name):
         # convenience
         getattr = partial(object.__getattribute__, self)
+        val = None
 
         if name.startswith("_"):
-            return getattr(name)
-        if name == "bake":
-            return getattr("bake")
-        if name.endswith("_"):
+            val = getattr(name)
+
+        elif name == "bake":
+            val = getattr("bake")
+
+        # here we have a way of getting past shadowed subcommands.  for example,
+        # if "git bake" was a thing, we wouldn't be able to do `git.bake()`
+        # because `.bake()` is already a method.  so we allow `git.bake_()`
+        elif name.endswith("_"):
             name = name[:-1]
 
-        return getattr("bake")(name)
+        if val is None:
+            val = getattr("bake")(name)
+
+        return val
 
 
     @staticmethod

@@ -2313,6 +2313,13 @@ sys.stdout.write(num)
         output = append_file.read()
         self.assertEqual(b"12", output)
 
+    def test_shadowed_subcommand(self):
+        py = create_tmp_test("""
+import sys
+sys.stdout.write(sys.argv[1])
+""")
+        out = python.bake(py.name).bake_()
+        self.assertEqual("bake", out)
 
     def test_partially_applied_callback(self):
         from functools import partial
