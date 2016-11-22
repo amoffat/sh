@@ -490,12 +490,6 @@ class Logger(object):
         self.log.exception(self._format_msg(msg, *args))
 
 
-def friendly_truncate(s, max_len):
-    if len(s) > max_len:
-        s = "%s...(%d more)" % (s[:max_len], len(s) - max_len)
-    return s
-
-
 def default_logger_str(cmd, call_args, pid=None):
     if pid:
         s = "<Command %r, pid %d>" % (cmd, pid)
@@ -1448,23 +1442,6 @@ def no_interrupt(syscall, *args, **kwargs):
                 raise
         else:
             break
-
-    return ret
-
-
-def ignore_eaccess(syscall, *args, **kwargs):
-    to_catch = OSError
-
-    if IS_PY3 and MINOR_VER > 2:
-        to_catch = PermissionError
-
-    ret = None
-    try:
-        ret = syscall(*args, **kwargs)
-    except to_catch as e:
-        if insinstance(e, OSError):
-            if e.errno != errno.EACCES:
-                raise
 
     return ret
 
