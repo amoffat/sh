@@ -1167,12 +1167,6 @@ output"),
         if args:
             first_arg = args.pop(0)
             if isinstance(first_arg, RunningCommand):
-                # it makes sense that if the input pipe of a command is running
-                # in the background, then this command should run in the
-                # background as well
-                if first_arg.call_args["bg"]:
-                    call_args["bg"] = True
-
                 if first_arg.call_args["piped"]:
                     stdin = first_arg.process
                 else:
