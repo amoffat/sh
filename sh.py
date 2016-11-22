@@ -1654,7 +1654,7 @@ class OProc(object):
                 payload = ("%d,%d" % (sid, pgid)).encode(DEFAULT_ENCODING)
                 os.write(session_pipe_write, payload)
 
-                if ca["tty_out"] and not stdout_is_tty:
+                if ca["tty_out"] and not stdout_is_tty and not single_tty:
                     # set raw mode, so there isn't any weird translation of
                     # newlines to \r\n and other oddities.  we're not outputting
                     # to a terminal anyways
@@ -1800,6 +1800,7 @@ class OProc(object):
 
             self.log.debug("started process")
 
+            # disable echoing, but only if it's a tty that we created ourselves
             if ca["tty_in"] and not stdin_is_tty:
                 attr = termios.tcgetattr(self._stdin_read_fd)
                 attr[3] &= ~termios.ECHO
