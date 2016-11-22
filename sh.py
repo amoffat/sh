@@ -1883,10 +1883,11 @@ class OProc(object):
             # connecting from another process's stdout pipe
             self._input_thread = None
             if self._stdin_stream:
+                close_before_term = not needs_ctty
                 thread_name = "STDIN thread for pid %d" % self.pid
                 self._input_thread = _start_daemon_thread(input_thread,
                         thread_name, self.log, self._stdin_stream,
-                        self.is_alive)
+                        self.is_alive, close_before_term)
 
 
             # this event is for cases where the subprocess that we launch
@@ -2069,20 +2070,27 @@ class OProc(object):
 
 
 
-def input_thread(log, stdin, is_alive):
+def input_thread(log, stdin, is_alive, close_before_term):
     """ this is run in a separate thread.  it writes into our process's
     stdin (a streamwriter) and waits the process to end AND everything that
     can be written to be written """
     done = False
-    while True:
+    alive = True
+    closed = False
+
+    while alive:
         alive, exit_code = is_alive()
-        if done or not alive:
-            break
-
         log.debug("%r ready for more input", stdin)
-        done = stdin.write()
 
-    stdin.close()
+        if not done:
+            done = stdin.write()
+
+            if done and close_before_term:
+                stdin.close()
+                closed = True
+
+    if not closed:
+        stdin.close()
 
 
 
@@ -2321,13 +2329,13 @@ class StreamWriter(object):
     the "read" method, a string, or an iterable """
 
     def __init__(self, log, stream, stdin, bufsize_type, encoding, tty_in):
+
         self.stream = stream
         self.stdin = stdin
 
         self.log = log
         self.encoding = encoding
         self.tty_in = tty_in
-
 
         self.stream_bufferer = StreamBufferer(bufsize_type, self.encoding)
         self.get_chunk, log_msg = determine_how_to_read_input(stdin)

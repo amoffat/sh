@@ -1809,6 +1809,16 @@ sys.stderr.write("stderr")
         self.assertFalse(p.process._pipe_queue.empty())
 
 
+    def test_tty_stdin(self):
+        py = create_tmp_test("""
+import sys
+sys.stdout.write(sys.stdin.read())
+sys.stdout.flush()
+""")
+        out = python(py.name, _in="test\n", _tty_in=True)
+        self.assertEqual("test\r\n", out)
+
+
     def test_no_err(self):
         py = create_tmp_test("""
 import sys
