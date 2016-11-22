@@ -1523,6 +1523,20 @@ sys.stdout.write(sys.argv[1])
         py = create_tmp_test("exit(0)")
         python(py.name, _fg=True)
 
+    def test_fg_env(self):
+        py = create_tmp_test("""
+import os
+code = int(os.environ.get("EXIT", "0"))
+exit(code)
+""")
+        env = {"EXIT": "3"}
+        self.assertRaises(sh.ErrorReturnCode_3, python, py.name, _fg=True,
+                _env=env)
+
+    def test_fg_alternative(self):
+        py = create_tmp_test("exit(0)")
+        python(py.name, _in=sys.stdin, _out=sys.stdout, _err=sys.stderr)
+
     def test_fg_exc(self):
         py = create_tmp_test("exit(1)")
         self.assertRaises(sh.ErrorReturnCode_1, python, py.name, _fg=True)
