@@ -207,6 +207,16 @@ class FunctionalTests(BaseTests):
             self.fail("exception wasn't raised")
 
 
+    def test_trunc_exc(self):
+        py = create_tmp_test("""
+import sys
+sys.stdout.write("a" * 1000)
+sys.stderr.write("b" * 1000)
+exit(1)
+""")
+        self.assertRaises(sh.ErrorReturnCode, python, py.name)
+
+
     def test_number_arg(self):
         py = create_tmp_test("""
 from optparse import OptionParser
