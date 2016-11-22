@@ -2371,6 +2371,23 @@ class StreamWriter(object):
                     char = termios.tcgetattr(self.stream)[6][termios.VEOF]
                 except:
                     char = chr(4).encode()
+
+                # normally, one EOF should be enough to signal to an program
+                # that is read()ing, to return 0 and be on your way.  however,
+                # some programs are misbehaved, like python3.1 and python3.2.
+                # they don't stop reading sometimes after read() returns 0.
+                # this can be demonstrated with the following program:
+                #
+                # import sys
+                # sys.stdout.write(sys.stdin.read())
+                #
+                # then type 'a' followed by ctrl-d 3 times.  in python
+                # 2.6,2.7,3.3,3.4,3.5, it only takes 2 ctrl-d to terminate.
+                # however, in python 3.1 and 3.2, it takes all 3.
+                #
+                # so here we send an extra EOF along, just in case.  i don't
+                # believe it can hurt anything
+                os.write(self.stream, char)
                 os.write(self.stream, char)
 
             return True
