@@ -51,7 +51,6 @@ tempdir = realpath(tempfile.gettempdir())
 IS_OSX = platform.system() == "Darwin"
 
 
-
 # these 3 functions are helpers for modifying PYTHONPATH with a module's main
 # directory
 
@@ -79,6 +78,7 @@ def append_module_path(env, m):
 if IS_PY3:
     xrange = range
     unicode = str
+    long = int
     from io import StringIO
     from io import BytesIO as cStringIO
     python = sh.Command(sh.which("python%d.%d" % sys.version_info[:2]))
@@ -215,7 +215,6 @@ sys.stderr.write("b" * 1000)
 exit(1)
 """)
         self.assertRaises(sh.ErrorReturnCode, python, py.name)
-
 
     def test_number_arg(self):
         py = create_tmp_test("""
@@ -631,7 +630,8 @@ parser.add_option("-l", "--long-option", dest="long_option")
 options, args = parser.parse_args()
 print(len(options.long_option.split()))
 """)
-        num_args = int(python(py.name, long_option="one two three"))
+        num_args = int(python(py.name, long_option="one two three",
+            nothing=False))
         self.assertEqual(num_args, 3)
 
         num_args = int(python(py.name, "--long-option", "one's two's three's"))
@@ -1339,11 +1339,38 @@ for i in range(42):
 
         py = create_tmp_test("""
 import time
-time.sleep(3)
+import sys
+time.sleep(1)
+sys.stdout.write("stdout")
 """)
+        count = 0
+        value = None
         for line in python(py.name, _iter_noblock=True):
-            break
-        self.assertEqual(line, EWOULDBLOCK)
+            if line == EWOULDBLOCK:
+                count += 1
+            else:
+                value = line
+        self.assertTrue(count > 0)
+        self.assertEqual(value, "stdout")
+
+        py = create_tmp_test("""
+import time
+import sys
+time.sleep(1)
+sys.stderr.write("stderr")
+""")
+
+        count = 0
+        value = None
+        for line in python(py.name, _iter_noblock="err"):
+            if line == EWOULDBLOCK:
+                count += 1
+            else:
+                value = line
+        self.assertTrue(count > 0)
+        self.assertEqual(value, "stderr")
+
+
 
 
     def test_for_generator_to_err(self):
@@ -1471,11 +1498,50 @@ for i in range(42):
         self.assertTrue(sum(stderr) == 1722)
 
 
-    def test_bg_to_int(self):
-        from sh import echo
-        # bugs with background might cause the following error:
-        #   ValueError: invalid literal for int() with base 10: ''
-        self.assertEqual(int(echo("123", _bg=True)), 123)
+    def test_cast_bg(self):
+        py = create_tmp_test("""
+import sys
+import time
+time.sleep(0.5)
+sys.stdout.write(sys.argv[1])
+""")
+        self.assertEqual(int(python(py.name, "123", _bg=True)), 123)
+        self.assertEqual(long(python(py.name, "456", _bg=True)), 456)
+        self.assertEqual(float(python(py.name, "789", _bg=True)), 789.0)
+
+    def test_cmd_eq(self):
+        py = create_tmp_test("")
+
+        cmd1 = python.bake(py.name, "-u")
+        cmd2 = python.bake(py.name, "-u")
+        cmd3 = python.bake(py.name)
+
+        self.assertEqual(cmd1, cmd2)
+        self.assertNotEqual(cmd1, cmd3)
+
+    def test_fg(self):
+        py = create_tmp_test("exit(0)")
+        python(py.name, _fg=True)
+
+    def test_fg_exc(self):
+        py = create_tmp_test("exit(1)")
+        self.assertRaises(sh.ErrorReturnCode_1, python, py.name, _fg=True)
+
+    def test_out_filename(self):
+        outfile = tempfile.NamedTemporaryFile()
+        py = create_tmp_test("print('output')")
+        python(py.name, _out=outfile.name)
+        outfile.seek(0)
+        self.assertEqual(b"output\n", outfile.read())
+
+    def test_bg_exit_code(self):
+        py = create_tmp_test("""
+import time
+time.sleep(1)
+exit(49)
+""")
+        p = python(py.name, _ok_code=49, _bg=True)
+        self.assertEqual(49, p.exit_code)
 
     def test_cwd(self):
         from sh import pwd
@@ -1907,16 +1973,23 @@ p.wait()
         import sh
         from sh import mkdir
 
-        child = join(tempdir, 'pushd_cd_test_dir')
-        mkdir('-p', child)
+        child = realpath(tempfile.mkdtemp())
 
         old_wd = os.getcwd()
         with sh.pushd(tempdir):
             self.assertEqual(tempdir, os.getcwd())
             sh.cd(child)
             self.assertEqual(child, os.getcwd())
+
         self.assertEqual(old_wd, os.getcwd())
 
+    def test_cd_homedir(self):
+        orig = os.getcwd()
+        my_dir = os.path.expanduser("~")
+        sh.cd()
+
+        self.assertNotEqual(orig, os.getcwd())
+        self.assertEqual(my_dir, os.getcwd())
 
     def test_non_existant_cwd(self):
         from sh import ls
@@ -2075,6 +2148,26 @@ time.sleep(0.5)
         else:
             self.fail("command should've thrown an exception")
 
+    def test_callable_stdin(self):
+        py = create_tmp_test("""
+import sys
+sys.stdout.write(sys.stdin.read())
+""")
+
+        def create_stdin():
+            state = {"count": 0}
+
+            def stdin():
+                count = state["count"]
+                if count == 4:
+                    return None
+                state["count"] += 1
+                return str(count)
+
+            return stdin
+
+        out = python(py.name, _in=create_stdin())
+        self.assertEqual("0123", out)
 
     def test_stdin_unbuffered_bufsize(self):
         import sh
@@ -2315,6 +2408,14 @@ for line in sys.stdin:
 
 
 class MiscTests(BaseTests):
+
+    def test_cant_import_all(self):
+        def go():
+            # we have to use exec, because in py3, this syntax raises a
+            # SyntaxError upon compilation
+            exec("from sh import *")
+        self.assertRaises(RuntimeError, go)
+
     def test_percent_doesnt_fail_logging(self):
         """ test that a command name doesn't interfere with string formatting in
         the internal loggers """

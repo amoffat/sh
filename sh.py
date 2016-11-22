@@ -86,8 +86,6 @@ SH_LOGGER_NAME = __name__
 
 
 import errno
-import warnings
-
 import pty
 import termios
 import signal
@@ -120,6 +118,7 @@ if IS_PY3:
     raw_input = input
     unicode = str
     basestring = str
+    long = int
 
 
 _unicode_methods = set(dir(unicode()))
@@ -2772,6 +2771,7 @@ class Environment(dict):
         "contrib",
     ])
 
+
     def __init__(self, globs, baked_args={}):
         """ baked_args are defaults for the 'sh' execution context.  for
         example:
@@ -2798,14 +2798,11 @@ class Environment(dict):
         # we're trying to import something real (maybe), see if it's in our
         # global scope
         if k in self.whitelist or self.disable_whitelist:
-            try:
-                return self.globs[k]
-            except KeyError:
-                pass
+            return self.globs[k]
 
         # somebody tried to be funny and do "from sh import *"
         if k == "__all__":
-            raise AttributeError("Cannot import * from sh. \
+            raise RuntimeError("Cannot import * from sh. \
 Please import sh or import programs individually.")
 
 
@@ -2863,7 +2860,7 @@ Please import sh or import programs individually.")
         return which(program, paths)
 
 
-class Contrib(ModuleType):
+class Contrib(ModuleType): # pragma: no cover
     @classmethod
     def __call__(cls, name):
         def wrapper1(fn):
@@ -2890,13 +2887,13 @@ sys.modules[mod_name] = contrib
 
 
 @contrib("git")
-def git(orig):
+def git(orig): # pragma: no cover
     """ most git commands play nicer without a TTY """
     cmd = orig.bake(_tty_out=False)
     return cmd
 
 @contrib("sudo")
-def sudo(orig):
+def sudo(orig): # pragma: no cover
     """ a nicer version of sudo that uses getpass to ask for a password, or
     allows the first argument to be a string password """
 
@@ -2966,12 +2963,6 @@ class SelfWrapper(ModuleType):
         self.__path__ = []
         self.__self_module = self_module
         self.__env = Environment(globals(), baked_args=baked_args)
-
-    def __setattr__(self, name, value):
-        if hasattr(self, "__env"):
-            self.__env[name] = value
-        else:
-            ModuleType.__setattr__(self, name, value)
 
     def __getattr__(self, name):
         if name == "__env":
@@ -3096,7 +3087,7 @@ class ModuleImporterFromVariables(object):
         return module
 
 
-def run_tests(env, locale, version=None, **extra_env):
+def run_tests(env, locale, args, version=None, **extra_env): # pragma: no cover
     py_version = "python"
     if version:
         py_version += str(version)
@@ -3113,7 +3104,7 @@ def run_tests(env, locale, version=None, **extra_env):
         for k,v in extra_env.items():
             env[k] = str(v)
 
-        cmd = [py_bin, os.path.join(THIS_DIR, "test.py")] + args[1:]
+        cmd = [py_bin, "-W", "ignore", os.path.join(THIS_DIR, "test.py")] + args[1:]
         launch = lambda: os.spawnve(os.P_WAIT, cmd[0], cmd, env)
         return_code = launch()
 
@@ -3177,7 +3168,7 @@ if __name__ == "__main__": # pragma: no cover
                     continue
 
                 env_copy = env.copy()
-                exit_code = run_tests(env_copy, locale, version,
+                exit_code = run_tests(env_copy, locale, args, version,
                         SH_TEST_RUN_IDX=i)
 
                 if exit_code is None:
