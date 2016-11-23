@@ -2475,6 +2475,9 @@ for line in sys.stdin:
 
 class MiscTests(BaseTests):
 
+    def test_args_deprecated(self):
+        self.assertRaises(DeprecationWarning, sh.args, _env={})
+
     def test_cant_import_all(self):
         def go():
             # we have to use exec, because in py3, this syntax raises a
