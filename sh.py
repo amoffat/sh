@@ -2083,7 +2083,9 @@ def input_thread(log, stdin, is_alive, close_before_term):
         alive, exit_code = is_alive()
         log.debug("%r ready for more input", stdin)
 
-        if not done:
+        if done:
+            time.sleep(0.01)
+        else:
             done = stdin.write()
 
             if done and close_before_term:
