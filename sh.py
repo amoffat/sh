@@ -2998,8 +2998,6 @@ class SelfWrapper(ModuleType):
         self.__env = Environment(globals(), baked_args=baked_args)
 
     def __getattr__(self, name):
-        if name == "__env":
-            raise AttributeError
         return self.__env[name]
 
     def __call__(self, **kwargs):
