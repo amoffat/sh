@@ -34,6 +34,7 @@ from os.path import exists, join, realpath, dirname, split
 import unittest
 import tempfile
 import fnmatch
+import warnings
 import logging
 import sys
 import sh
@@ -159,6 +160,13 @@ class BaseTests(unittest.TestCase):
             fn(*args, **kwargs)
         except OSError as e:
             self.assertEqual(e.errno, num)
+
+    def assert_deprecated(self, fn, *args, **kwargs):
+        with warnings.catch_warnings(record=True) as w:
+            fn(*args, **kwargs)
+
+            assert len(w) == 1
+            assert issubclass(w[-1].category, DeprecationWarning)
 
 
 @requires_posix
