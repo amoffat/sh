@@ -1723,6 +1723,22 @@ sys.stdin.read(1)
         self.assertTrue(d["unbuffered_success"])
 
 
+    def test_callable_interact(self):
+        py = create_tmp_test("""
+import sys
+sys.stdout.write("line1")
+""")
+
+        class Callable(object):
+            def __init__(self):
+                self.line = None
+            def __call__(self, line):
+                self.line = line
+
+        cb = Callable()
+        python(py.name, _out=cb)
+        self.assertEqual(cb.line, "line1")
+
 
     def test_encoding(self):
         return
