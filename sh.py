@@ -2817,9 +2817,6 @@ class Environment(dict):
         self.baked_args = baked_args
         self.disable_whitelist = False
 
-    def __setitem__(self, k, v):
-        self.globs[k] = v
-
     def __getitem__(self, k):
         # if we first import "_disable_whitelist" from sh, we can import
         # anything defined in the global scope of sh.py.  this is useful for our
