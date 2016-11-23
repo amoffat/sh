@@ -1521,7 +1521,10 @@ sys.stdout.write(sys.argv[1])
 
     def test_fg(self):
         py = create_tmp_test("exit(0)")
-        python(py.name, _fg=True)
+        # notice we're using `sh.python`, and not `python`.  this is because
+        # `python` has an env baked into it, and we want `_env` to be None for
+        # coverage
+        sh.python(py.name, _fg=True)
 
     def test_fg_env(self):
         py = create_tmp_test("""
@@ -1529,7 +1532,9 @@ import os
 code = int(os.environ.get("EXIT", "0"))
 exit(code)
 """)
-        env = {"EXIT": "3"}
+
+        env = os.environ.copy()
+        env["EXIT"] = "3"
         self.assertRaises(sh.ErrorReturnCode_3, python, py.name, _fg=True,
                 _env=env)
 
