@@ -1549,11 +1549,11 @@ class OProc(object):
                 self._stdin_write_fd, self._stdin_read_fd = os.pipe()
 
 
-            # tty_out=True is the default
             if stdout_is_tty:
                 self._stdout_write_fd = os.dup(stdout.fileno())
                 self._stdout_read_fd = None
 
+            # tty_out=True is the default
             elif ca["tty_out"]:
                 self._stdout_read_fd, self._stdout_write_fd = pty.openpty()
 
