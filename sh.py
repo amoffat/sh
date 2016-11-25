@@ -1880,6 +1880,20 @@ class OProc(object):
                 os.close(self._stderr_read_fd)
 
 
+            def timeout_fn():
+                self.timed_out = True
+                self.signal(ca["timeout_signal"])
+
+            self._timeout_event = threading.Event()
+            self._timeout_cancel_event = threading.Event()
+
+            if ca["timeout"]:
+                thread_name = "Timeout thread for pid %d" % self.pid
+                self._timeout_thread = _start_daemon_thread(timeout_thread,
+                        thread_name, ca["timeout"], timeout_fn, self._timeout_event,
+                        self._timeout_cancel_event)
+
+
             # start the main io threads. stdin thread is not needed if we are
             # connecting from another process's stdout pipe
             self._input_thread = None
@@ -1909,15 +1923,10 @@ class OProc(object):
             if not self.command._spawned_and_waited:
                 handle_exit_code = self.command.handle_command_exit_code
 
-            def timeout_fn():
-                self.timed_out = True
-                self.signal(ca["timeout_signal"])
-
             thread_name = "STDOUT/ERR thread for pid %d" % self.pid
             self._output_thread = _start_daemon_thread(output_thread,
                     thread_name, self.log, self._stdout_stream,
-                    self._stderr_stream, ca["timeout"],
-                    self.started, timeout_fn, self.is_alive,
+                    self._stderr_stream, self._timeout_event, self.is_alive,
                     self._force_done_event, handle_exit_code)
 
 
@@ -2009,11 +2018,7 @@ class OProc(object):
             pid, exit_code = no_interrupt(os.waitpid, self.pid, os.WNOHANG)
             if pid == self.pid:
                 self.exit_code = handle_process_exit_code(exit_code)
-
-                done_callback = self.call_args["done"]
-                if done_callback:
-                    success = self.exit_code in self.call_args["ok_code"]
-                    done_callback(success, self.exit_code)
+                self._process_just_ended()
 
                 return False, self.exit_code
 
@@ -2026,6 +2031,15 @@ class OProc(object):
             self._wait_lock.release()
 
 
+    def _process_just_ended(self):
+        self._timeout_cancel_event.set()
+
+        done_callback = self.call_args["done"]
+        if done_callback:
+            success = self.exit_code in self.call_args["ok_code"]
+            done_callback(success, self.exit_code)
+
+
     def wait(self):
         """ waits for the process to complete, handles the exit code """
 
@@ -2034,13 +2048,14 @@ class OProc(object):
         # we're running wait()
         with self._wait_lock:
             self.log.debug("got wait lock")
-            call_done_callback = False
+            witnessed_end = False
 
             if self.exit_code is None:
                 self.log.debug("exit code not set, waiting on pid")
                 pid, exit_code = no_interrupt(os.waitpid, self.pid, 0) # blocks
                 self.exit_code = handle_process_exit_code(exit_code)
-                call_done_callback = True
+                witnessed_end = True
+
             else:
                 self.log.debug("exit code already set (%d), no need to wait",
                         self.exit_code)
@@ -2062,10 +2077,8 @@ class OProc(object):
             self._output_thread.join()
             timer.cancel()
 
-            done_callback = self.call_args["done"]
-            if call_done_callback and done_callback:
-                success = self.exit_code in self.call_args["ok_code"]
-                done_callback(success, self.exit_code)
+            if witnessed_end:
+                self._process_just_ended()
 
             return self.exit_code
 
@@ -2096,8 +2109,21 @@ def input_thread(log, stdin, is_alive, close_before_term):
         stdin.close()
 
 
+def timeout_thread(timeout, timeout_fn, timeout_event, cancel_event):
+    started = time.time()
 
-def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
+    while True:
+        time.sleep(0.1)
+        elapsed = time.time() - started
+        if elapsed > timeout or cancel_event.is_set():
+            break
+
+    if not cancel_event.is_set():
+        timeout_event.set()
+        timeout_fn()
+
+
+def output_thread(log, stdout, stderr, timeout_event, is_alive,
         force_done_event, handle_exit_code):
     """ this function is run in a separate thread.  it reads from the
     process's stdout stream (a streamreader), and waits for it to claim that
@@ -2112,8 +2138,6 @@ def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
     if stderr is not None:
         readers.append(stderr)
         errors.append(stderr)
-
-    timeout_called = False
 
     # this is our select loop for polling stdout or stderr that is ready to
     # be read and processed.  if one of those streamreaders indicate that it
@@ -2137,13 +2161,8 @@ def output_thread(log, stdout, stderr, timeout, started, timeout_fn, is_alive,
         for stream in err:
             pass
 
-        # test if the process has been running too long
-        if timeout and not timeout_called:
-            now = time.time()
-            if now - started > timeout:
-                log.debug("we've been running too long")
-                timeout_called = True
-                timeout_fn()
+        if timeout_event.is_set():
+            break
 
         if force_done_event.is_set():
             break
