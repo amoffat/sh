@@ -2093,7 +2093,7 @@ print(time())
         wait_elapsed = time.time() - wait_start
 
         self.assertTrue(callback.called)
-        self.assertTrue(abs(wait_elapsed - 1.0) < 0.1)
+        self.assertTrue(abs(wait_elapsed - 1.0) < 1.0)
         self.assertEqual(callback.exit_code, 0)
         self.assertTrue(callback.success)
 
