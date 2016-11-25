@@ -2192,10 +2192,9 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive,
     # this because some processes, which are not waited on, may have exceptions,
     # and we need some way to report them, even if they're uncatchable
     # exceptions in threads.
-    while True:
+    alive = True
+    while alive:
         alive, exit_code = is_alive()
-        if not alive:
-            break
         time.sleep(0.001)
 
     if stdout:
