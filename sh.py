@@ -612,8 +612,13 @@ class RunningCommand(object):
             if should_wait:
                 self._spawned_and_waited = True
 
-            self.process = OProc(self, self.log, cmd, stdin, stdout, stderr,
-                    self.call_args, pipe)
+            # this lock is needed because of a race condition where a background
+            # thread, created in the OProc constructor, may try to access
+            # self.process, but it has not been assigned yet
+            process_assign_lock = threading.Lock()
+            with process_assign_lock:
+                self.process = OProc(self, self.log, cmd, stdin, stdout, stderr,
+                        self.call_args, pipe, process_assign_lock)
 
             logger_str = log_str_factory(self.ran, call_args, self.process.pid)
             self.log.set_context(logger_str)
@@ -1465,7 +1470,7 @@ class OProc(object):
     STDERR = -2
 
     def __init__(self, command, parent_log, cmd, stdin, stdout, stderr,
-            call_args, pipe):
+            call_args, pipe, process_assign_lock):
         """
             cmd is the full string that will be exec'd.  it includes the program
             name and all its arguments
@@ -1887,11 +1892,24 @@ class OProc(object):
             self._timeout_event = threading.Event()
             self._timeout_cancel_event = threading.Event()
 
-            if ca["timeout"]:
-                thread_name = "Timeout thread for pid %d" % self.pid
-                self._timeout_thread = _start_daemon_thread(timeout_thread,
-                        thread_name, ca["timeout"], timeout_fn, self._timeout_event,
-                        self._timeout_cancel_event)
+            # this is for cases where we know that the RunningCommand that was
+            # launched was not .wait()ed on to complete.  in those unique cases,
+            # we allow the thread that processes output to report exceptions in
+            # that thread.  it's important that we only allow reporting of the
+            # exception, and nothing else (like the additional stuff that
+            # RunningCommand.wait() does), because we want the exception to be
+            # re-raised in the future, if we DO call .wait()
+            handle_exit_code = None
+            if not self.command._spawned_and_waited:
+                def fn(exit_code):
+                    with process_assign_lock:
+                        return self.command.handle_command_exit_code(exit_code)
+                handle_exit_code = fn
+
+            thread_name = "background thread for pid %d" % self.pid
+            self._background_thread = _start_daemon_thread(background_thread,
+                    thread_name, ca["timeout"], timeout_fn, self._timeout_event,
+                    self._timeout_cancel_event, handle_exit_code, self.is_alive)
 
 
             # start the main io threads. stdin thread is not needed if we are
@@ -1912,22 +1930,11 @@ class OProc(object):
             # prevents that hanging
             self._force_done_event = threading.Event()
 
-            # this is for cases where we know that the RunningCommand that was
-            # launched was not .wait()ed on to complete.  in those unique cases,
-            # we allow the thread that processes output to report exceptions in
-            # that thread.  it's important that we only allow reporting of the
-            # exception, and nothing else (like the additional stuff that
-            # RunningCommand.wait() does), because we want the exception to be
-            # re-raised in the future, if we DO call .wait()
-            handle_exit_code = None
-            if not self.command._spawned_and_waited:
-                handle_exit_code = self.command.handle_command_exit_code
-
             thread_name = "STDOUT/ERR thread for pid %d" % self.pid
             self._output_thread = _start_daemon_thread(output_thread,
                     thread_name, self.log, self._stdout_stream,
                     self._stderr_stream, self._timeout_event, self.is_alive,
-                    self._force_done_event, handle_exit_code)
+                    self._force_done_event)
 
 
     def __repr__(self):
@@ -2109,22 +2116,36 @@ def input_thread(log, stdin, is_alive, close_before_term):
         stdin.close()
 
 
-def timeout_thread(timeout, timeout_fn, timeout_event, cancel_event):
-    started = time.time()
+def background_thread(timeout, timeout_fn, timeout_event, cancel_event,
+        handle_exit_code, is_alive):
+    """ handles the timeout logic """
 
-    while True:
-        time.sleep(0.1)
-        elapsed = time.time() - started
-        if elapsed > timeout or cancel_event.is_set():
-            break
+    if timeout:
+        started = time.time()
 
-    if not cancel_event.is_set():
-        timeout_event.set()
-        timeout_fn()
+        while True:
+            time.sleep(0.1)
+            elapsed = time.time() - started
+            if elapsed > timeout or cancel_event.is_set():
+                break
+
+        if not cancel_event.is_set():
+            timeout_event.set()
+            timeout_fn()
+
+    # this reports the exit code exception in our thread.  it's purely for the
+    # user's awareness, and cannot be caught or used in any way, so it's ok to
+    # suppress this during the tests
+    if handle_exit_code and not RUNNING_TESTS: # pragma: no cover
+        alive = True
+        while alive:
+            alive, exit_code = is_alive()
+
+        handle_exit_code(exit_code)
 
 
 def output_thread(log, stdout, stderr, timeout_event, is_alive,
-        force_done_event, handle_exit_code):
+        force_done_event):
     """ this function is run in a separate thread.  it reads from the
     process's stdout stream (a streamreader), and waits for it to claim that
     its done """
@@ -2182,12 +2203,6 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive,
 
     if stderr:
         stderr.close()
-
-    # this reports the exit code exception in our thread.  it's purely for the
-    # user's awareness, and cannot be caught or used in any way, so it's ok to
-    # suppress this during the tests
-    if handle_exit_code and not RUNNING_TESTS: # pragma: no cover
-        handle_exit_code(exit_code)
 
 
 class DoneReadingForever(Exception): pass
