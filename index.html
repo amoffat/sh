@@ -1,61 +1,319 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>sh 1.11 &mdash; sh 1.11 documentation</title>
-    
-    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '1.11',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="sh 1.11 documentation" href="#" />
-    <link rel="next" title="Tutorial 1: Tailing a real-time log file" href="tutorials/1-real_time_output.html" /> 
-  </head>
-  <body role="document">
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="tutorials/1-real_time_output.html" title="Tutorial 1: Tailing a real-time log file"
-             accesskey="N">next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">sh 1.11 documentation</a> &raquo;</li> 
-      </ul>
-    </div>  
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>sh 1.12.0 &mdash; sh 1.12.0 documentation</title>
+  
 
-    <div class="document">
-      <div class="documentwrapper">
-        <div class="bodywrapper">
-          <div class="body" role="main">
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="sh 1.12.0 documentation" href="#"/>
+        <link rel="next" title="Usage" href="usage.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="#" class="icon icon-home"> sh
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sections/passing_arguments.html">Passing Arguments</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sections/passing_arguments.html#keyword-arguments">Keyword Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sections/exit_codes.html">Exit Codes &amp; Exceptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sections/exit_codes.html#signals">Signals</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sections/redirection.html">Redirection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sections/redirection.html#filename">Filename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sections/redirection.html#file-like-object">File-like Object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sections/redirection.html#function-callback">Function Callback</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sections/asynchronous_execution.html">Asynchronous Execution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sections/asynchronous_execution.html#incremental-iteration">Incremental Iteration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sections/asynchronous_execution.html#background-processes">Background Processes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sections/asynchronous_execution.html#output-callbacks">Output Callbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/asynchronous_execution.html#interactive-callbacks">Interactive callbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/asynchronous_execution.html#done-callbacks">Done Callbacks</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sections/baking.html">Baking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/piping.html">Piping</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sections/piping.html#basic">Basic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sections/piping.html#advanced">Advanced</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sections/subcommands.html">Sub-commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/default_arguments.html">Default Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/envs.html">Environments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/stdin.html">Input via STDIN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/with.html">&#8216;With&#8217; Contexts</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sections/special_arguments.html">Special Kwargs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sections/special_arguments.html#controlling-output">Controlling Output</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#out">_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#err">_err</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#err-to-out">_err_to_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#encoding">_encoding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#decode-errors">_decode_errors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#tee">_tee</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sections/special_arguments.html#execution">Execution</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#fg">_fg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#bg">_bg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#env">_env</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#timeout">_timeout</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#timeout-signal">_timeout_signal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#cwd">_cwd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#ok-code">_ok_code</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#new-session">_new_session</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#uid">_uid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#preexec-fn">_preexec_fn</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sections/special_arguments.html#communication">Communication</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#in">_in</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#piped">_piped</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#iter">_iter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#iter-noblock">_iter_noblock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#with">_with</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#done">_done</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sections/special_arguments.html#ttys">TTYs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#tty-in">_tty_in</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#tty-out">_tty_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#tty-size">_tty_size</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sections/special_arguments.html#performance-optimization">Performance &amp; Optimization</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#in-bufsize">_in_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#out-bufsize">_out_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#internal-bufsize">_internal_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#no-out">_no_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#no-err">_no_err</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#no-pipe">_no_pipe</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sections/special_arguments.html#program-arguments">Program Arguments</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#long-sep">_long_sep</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#long-prefix">_long_prefix</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#arg-preprocess">_arg_preprocess</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sections/special_arguments.html#misc">Misc</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#log-msg">_log_msg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sections/architecture.html">Architecture Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sections/architecture.html#launch">Launch</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sections/architecture.html#child">Child</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/architecture.html#parent">Parent</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sections/architecture.html#running">Running</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sections/architecture.html#buffers">Buffers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sections/architecture.html#exit">Exit</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sections/architecture.html#stdin-thread-shutdown">STDIN Thread Shutdown</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/architecture.html#stdout-err-thread-shutdown">STDOUT/ERR Thread Shutdown</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/architecture.html#exit-code-processing">Exit Code Processing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/architecture.html#done-callback">Done Callback</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sections/command_class.html">API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sections/command_class.html#command-class">Command Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sections/command_class.html#runningcommand-class">RunningCommand Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sections/command_class.html#oproc-class">OProc Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sections/command_class.html#exceptions">Exceptions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sections/command_class.html#errorreturncode">ErrorReturnCode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/command_class.html#signalexception">SignalException</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/command_class.html#timeoutexception">TimeoutException</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sections/command_class.html#helper-functions">Helper Functions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sections/contrib.html">Contrib Commands</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sections/contrib.html#commands">Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sections/contrib.html#sudo">Sudo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sections/contrib.html#git">Git</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sections/contrib.html#extending">Extending</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sections/sudo.html">Using Sudo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sections/sudo.html#sh-contrib-sudo">sh.contrib.sudo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sections/sudo.html#terminal-input">Terminal Input</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sections/sudo.html#string-input">String Input</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sections/sudo.html#etc-sudoers-nopasswd">/etc/sudoers NOPASSWD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/sudo.html#sh-sudo">sh.sudo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/sudo.html#fg-true">_fg=True</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/real_time_output.html">Tailing a real-time log file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorials/interacting_with_processes.html">Entering an SSH password</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/interacting_with_processes.html#how-you-should-really-be-using-ssh">How you should REALLY be using SSH</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sections/faq.html">FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#will-windows-be-supported">Will Windows be supported?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-append-output-to-a-file">How do I append output to a file?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#why-does-my-command-s-output-have-color">Why does my command&#8217;s output have color?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#why-is-tty-out-true-the-default">Why is _tty_out=True the default?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-run-a-program-with-dashes-in-its-name">How do I run a program with dashes in its name?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#why-doesn-t-work-as-a-command-argument">Why doesn&#8217;t &#8220;*&#8221; work as a command argument?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn&#8217;t in <code class="docutils literal"><span class="pre">$PATH</span></code>?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-execute-a-program-with-a-dash-in-its-name">How do I execute a program with a dash in its name?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#why-not-use-to-pipe-commands">Why not use <code class="docutils literal"><span class="pre">|</span></code> to pipe commands?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#why-isn-t-piping-asynchronous-by-default">Why isn&#8217;t piping asynchronous by default?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-run-a-command-and-connect-it-to-sys-stdout-and-sys-stdin">How do I run a command and connect it to sys.stdout and sys.stdin?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#why-do-my-arguments-need-to-be-separate-strings">Why do my arguments need to be separate strings?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-order-keyword-arguments">How do I order keyword arguments?</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="#">sh</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="#">Docs</a> &raquo;</li>
+      
+    <li>sh 1.12.0</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
             
   <div class="section" id="sh-version">
-<h1>sh 1.11<a class="headerlink" href="#sh-version" title="Permalink to this headline">¶</a></h1>
-<p>sh (previously <a class="reference external" href="http://pypi.python.org/pypi/pbs">pbs</a>) is a full-fledged
-subprocess interface for Python that
-allows you to call any program as if it were a function:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ifconfig</span>
-<span class="k">print</span><span class="p">(</span><span class="n">ifconfig</span><span class="p">(</span><span class="s">&quot;wlan0&quot;</span><span class="p">))</span>
+<h1>sh 1.12.0<a class="headerlink" href="#sh-version" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<a class="reference external image-reference" href="https://pypi.python.org/pypi/sh"><img alt="Version" src="https://img.shields.io/pypi/v/sh.svg?style=flat-square" /></a>
+<a class="reference external image-reference" href="https://pypi.python.org/pypi/sh"><img alt="Python Versions" src="https://img.shields.io/pypi/pyversions/sh.svg?style=flat-square" /></a>
+<a class="reference external image-reference" href="https://travis-ci.org/amoffat/sh"><img alt="Build Status" src="https://img.shields.io/travis/amoffat/sh.svg?style=flat-square" /></a>
+<a class="reference external image-reference" href="https://coveralls.io/r/amoffat/sh?branch=master"><img alt="Coverage Status" src="https://img.shields.io/coveralls/amoffat/sh.svg?style=flat-square" /></a>
+<a class="reference external image-reference" href="https://github.com/amoffat/sh"><img alt="Github" src="https://img.shields.io/github/stars/amoffat/sh.svg?style=social&amp;label=Star" /></a>
+<p>sh is a full-fledged subprocess replacement for Python 2.6 - 3.5, PyPy and PyPy3
+that allows you to call any program as if it were a function:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ifconfig</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ifconfig</span><span class="p">(</span><span class="s2">&quot;wlan0&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Output:</p>
-<div class="highlight-python"><div class="highlight"><pre>wlan0   Link encap:Ethernet  HWaddr 00:00:00:00:00:00
+<div class="highlight-none"><div class="highlight"><pre><span></span>wlan0   Link encap:Ethernet  HWaddr 00:00:00:00:00:00
         inet addr:192.168.1.100  Bcast:192.168.1.255  Mask:255.255.255.0
         inet6 addr: ffff::ffff:ffff:ffff:fff/64 Scope:Link
         UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
@@ -65,671 +323,152 @@ allows you to call any program as if it were a function:</p>
         RX bytes:0 (0 GB)  TX bytes:0 (0 GB)
 </pre></div>
 </div>
-<p>More examples:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># checkout master branch</span>
-<span class="n">git</span><span class="o">.</span><span class="n">checkout</span><span class="p">(</span><span class="s">&quot;master&quot;</span><span class="p">)</span>
+<p>Note that these aren&#8217;t Python functions, these are running the binary commands
+on your system by dynamically resolving your <code class="docutils literal"><span class="pre">$PATH</span></code>, much like Bash does, and
+then wrapping the binary in a function.  In this way, all the programs on your
+system are easily available to you from within Python.</p>
+</div>
+<div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="highlight-none"><div class="highlight"><pre><span></span>pip install sh
+</pre></div>
+</div>
+</div>
+<div class="section" id="quick-reference">
+<h1>Quick Reference<a class="headerlink" href="#quick-reference" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="passing-arguments">
+<h2>Passing Arguments<a class="headerlink" href="#passing-arguments" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;never&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="sections/passing_arguments.html#passing-arguments"><span class="std std-ref">Read More</span></a></p>
+</div>
+<div class="section" id="exit-codes">
+<h2>Exit Codes<a class="headerlink" href="#exit-codes" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/doesnt/exist&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">sh</span><span class="o">.</span><span class="n">ErrorReturnCode_2</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;directory doesn&#39;t exist&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="sections/exit_codes.html#exit-codes"><span class="std std-ref">Read More</span></a></p>
+</div>
+<div class="section" id="redirection">
+<h2>Redirection<a class="headerlink" href="#redirection" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="s2">&quot;/tmp/dir_contents&quot;</span><span class="p">)</span>
 
-<span class="c"># print(the contents of this directory</span>
-<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;-l&quot;</span><span class="p">))</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/tmp/dir_contents&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="n">h</span><span class="p">)</span>
 
-<span class="c"># get the longest line of this file</span>
-<span class="n">longest_line</span> <span class="o">=</span> <span class="n">wc</span><span class="p">(</span><span class="n">__file__</span><span class="p">,</span> <span class="s">&quot;-L&quot;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">StringIO</span>
+<span class="n">buf</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="n">buf</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Note that these aren&#8217;t Python functions, these are running the binary
-commands on your system dynamically by resolving your $PATH, much like Bash does.
-In this way, all the programs on your system are easily available to you
-from within Python.</p>
-<p>To install:</p>
-<div class="highlight-python"><div class="highlight"><pre>pip install sh
-</pre></div>
+<p><a class="reference internal" href="sections/redirection.html#redirection"><span class="std std-ref">Read More</span></a></p>
 </div>
-<p>Follow it on Github: <a class="reference external" href="http://github.com/amoffat/sh">http://github.com/amoffat/sh</a></p>
-</div>
-<div class="section" id="tutorials">
-<h1>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this headline">¶</a></h1>
-<blockquote>
-<div><div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/1-real_time_output.html">Tutorial 1: Tailing a real-time log file</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/2-interacting_with_processes.html">Tutorial 2: Entering an SSH password</a></li>
-</ul>
-</div>
-</div></blockquote>
-</div>
-<div class="section" id="basic-features">
-<h1>Basic Features<a class="headerlink" href="#basic-features" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="command-execution">
-<h2>Command execution<a class="headerlink" href="#command-execution" title="Permalink to this headline">¶</a></h2>
-<p>Commands are called just like functions.  They may be executed on the sh
-namespace, or imported directly from sh:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
-<span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/&quot;</span><span class="p">))</span>
+<div class="section" id="baking">
+<h2>Baking<a class="headerlink" href="#baking" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">my_ls</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">)</span>
 
-<span class="c"># same thing as above</span>
-<span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ls</span>
-<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/&quot;</span><span class="p">))</span>
+<span class="c1"># equivalent</span>
+<span class="n">my_ls</span><span class="p">(</span><span class="s2">&quot;/tmp&quot;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>For commands that have dashes in their names, for example <code class="docutils literal"><span class="pre">/usr/bin/google-chrome</span></code>,
-substitute the dash for an underscore:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">google_chrome</span><span class="p">(</span><span class="s">&quot;http://google.com&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p>For commands with more exotic characters in their names, like <code class="docutils literal"><span class="pre">.</span></code>, or
-if you just don&#8217;t like the &#8220;magic&#8221;-ness of dynamic lookups, you
-may use sh&#8217;s <code class="docutils literal"><span class="pre">Command</span></code> wrapper and pass in the command name or
-the absolute path of the executable:</p>
-<div class="last highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
-<span class="n">run</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s">&quot;/home/amoffat/run.sh&quot;</span><span class="p">)</span> <span class="c"># Absolute path</span>
-<span class="n">run</span><span class="p">()</span>
-<span class="n">lscmd</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s">&quot;ls&quot;</span><span class="p">)</span>  <span class="c"># Absolute path not needed</span>
-<span class="n">lscmd</span><span class="p">()</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="section" id="multiple-arguments">
-<h2>Multiple arguments<a class="headerlink" href="#multiple-arguments" title="Permalink to this headline">¶</a></h2>
-<p>Commands that take multiple arguments, need to be invoked using separate
-string for each argument rather than single string for all the arguments
-together. One might expect the following to work, the way it works in
-<a href="#id1"><span class="problematic" id="id2">*</span></a>nix shell, but it doesn&#8217;t:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tar</span>
-<span class="n">tar</span><span class="p">(</span><span class="s">&quot;cvf /tmp/test.tar /my/home/directory&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>You will run into error that may seem baffling:</p>
-<div class="highlight-python"><div class="highlight"><pre>RAN: &#39;/bin/tar cvf /tmp/test.tar /my/home/directory&#39;
-
-STDOUT:
-
-STDERR:
-/bin/tar: Old option &#39;f&#39; requires an argument.
-Try &#39;/bin/tar --help&#39; or &#39;/bin/tar --usage&#39; for more information.
-</pre></div>
-</div>
-<p>Right way to do this is to break up your arguments before passing them into a program.
-A shell (bash) typically does this for you. It turns &#8220;tar cvf /tmp/test.tar /my/home/directory/&#8221;
-into 4 strings: &#8220;tar&#8221;, &#8220;cvf&#8221;, &#8220;/tmp/test.tar&#8221; and &#8220;/my/home/directory/&#8221; before
-passing them into the binary. You have to do this manually with sh.py.:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tar</span>
-<span class="n">tar</span><span class="p">(</span><span class="s">&quot;cvf&quot;</span><span class="p">,</span> <span class="s">&quot;/tmp/test.tar&quot;</span><span class="p">,</span> <span class="s">&quot;/my/home/directory/&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="arguments-to-sh-s-command-wrapper">
-<h2>Arguments to sh&#8217;s <code class="docutils literal"><span class="pre">Command</span></code> wrapper<a class="headerlink" href="#arguments-to-sh-s-command-wrapper" title="Permalink to this headline">¶</a></h2>
-<p>Similar to the above, arguments to the <code class="docutils literal"><span class="pre">sh.Command</span></code> must be separate.
-e.g. the following does not work:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">lscmd</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s">&quot;/bin/ls -l&quot;</span><span class="p">)</span>
-<span class="n">tarcmd</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s">&quot;/bin/tar cvf /tmp/test.tar /my/home/directory/&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>You will run into <code class="docutils literal"><span class="pre">CommandNotFound(path)</span></code> exception even when correct full path is specified.
-The correct way to do this is to :</p>
-<ol class="arabic simple">
-<li>build <code class="docutils literal"><span class="pre">Command</span></code> object using <em>only</em> the binary</li>
-<li>pass the arguments to the object <em>when invoking</em></li>
-</ol>
-<p>as follows:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">lscmd</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s">&quot;/bin/ls&quot;</span><span class="p">)</span>
-<span class="n">lscmd</span><span class="p">(</span><span class="s">&quot;-l&quot;</span><span class="p">)</span>
-<span class="n">tarcmd</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s">&quot;/bin/tar&quot;</span><span class="p">)</span>
-<span class="n">tarcmd</span><span class="p">(</span><span class="s">&quot;cvf&quot;</span><span class="p">,</span> <span class="s">&quot;/tmp/test.tar&quot;</span><span class="p">,</span> <span class="s">&quot;/my/home/directory/&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="keyword-arguments">
-<h2>Keyword arguments<a class="headerlink" href="#keyword-arguments" title="Permalink to this headline">¶</a></h2>
-<p>Commands support short-form <code class="docutils literal"><span class="pre">-a</span></code> and long-form <code class="docutils literal"><span class="pre">--arg</span></code> arguments as
-keyword arguments:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># resolves to &quot;curl http://duckduckgo.com/ -o page.html --silent&quot;</span>
-<span class="n">curl</span><span class="p">(</span><span class="s">&quot;http://duckduckgo.com/&quot;</span><span class="p">,</span> <span class="n">o</span><span class="o">=</span><span class="s">&quot;page.html&quot;</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-
-<span class="c"># or if you prefer not to use keyword arguments, this does the same thing:</span>
-<span class="n">curl</span><span class="p">(</span><span class="s">&quot;http://duckduckgo.com/&quot;</span><span class="p">,</span> <span class="s">&quot;-o&quot;</span><span class="p">,</span> <span class="s">&quot;page.html&quot;</span><span class="p">,</span> <span class="s">&quot;--silent&quot;</span><span class="p">)</span>
-
-<span class="c"># resolves to &quot;adduser amoffat --system --shell=/bin/bash --no-create-home&quot;</span>
-<span class="n">adduser</span><span class="p">(</span><span class="s">&quot;amoffat&quot;</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="s">&quot;/bin/bash&quot;</span><span class="p">,</span> <span class="n">no_create_home</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-
-<span class="c"># or</span>
-<span class="n">adduser</span><span class="p">(</span><span class="s">&quot;amoffat&quot;</span><span class="p">,</span> <span class="s">&quot;--system&quot;</span><span class="p">,</span> <span class="s">&quot;--shell&quot;</span><span class="p">,</span> <span class="s">&quot;/bin/bash&quot;</span><span class="p">,</span> <span class="s">&quot;--no-create-home&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="background-processes">
-<span id="background"></span><h2>Background processes<a class="headerlink" href="#background-processes" title="Permalink to this headline">¶</a></h2>
-<p>By default, each command runs and completes its process before returning.  If
-you have a long-running command, you can put it in the background with the
-<code class="docutils literal"><span class="pre">_bg=True</span></code> <a class="reference internal" href="special_arguments.html#special-arguments"><span>special keyword argument</span></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># blocks</span>
-<span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&quot;...3 seconds later&quot;</span><span class="p">)</span>
-
-<span class="c"># doesn&#39;t block</span>
-<span class="n">p</span> <span class="o">=</span> <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&quot;prints immediately!&quot;</span><span class="p">)</span>
-<span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&quot;...and 3 seconds later&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
+<p><a class="reference internal" href="sections/baking.html#baking"><span class="std std-ref">Read More</span></a></p>
 </div>
 <div class="section" id="piping">
 <h2>Piping<a class="headerlink" href="#piping" title="Permalink to this headline">¶</a></h2>
-<p>Bash style piping is performed using function composition.  Just pass
-one command as the input to another, and sh will create a pipe between the two:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># sort this directory by biggest file</span>
-<span class="k">print</span><span class="p">(</span><span class="n">sort</span><span class="p">(</span><span class="n">du</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s">&quot;*&quot;</span><span class="p">),</span> <span class="s">&quot;-sb&quot;</span><span class="p">),</span> <span class="s">&quot;-rn&quot;</span><span class="p">))</span>
-
-<span class="c"># print(the number of folders and files in /etc</span>
-<span class="k">print</span><span class="p">(</span><span class="n">wc</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/etc&quot;</span><span class="p">,</span> <span class="s">&quot;-1&quot;</span><span class="p">),</span> <span class="s">&quot;-l&quot;</span><span class="p">))</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">sh</span><span class="o">.</span><span class="n">wc</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;-1&quot;</span><span class="p">),</span> <span class="s2">&quot;-l&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>By default, any command that is piping another command in waits for it to
-complete.  This behavior can be changed with the <code class="docutils literal"><span class="pre">_piped</span></code>
-<a class="reference internal" href="special_arguments.html#special-arguments"><span>special keyword argument</span></a> on the command being
-piped, which tells it not to complete before sending its data, but to send
-its data incrementally.  See <a class="reference internal" href="#advanced-piping"><span>Advanced piping</span></a> for examples of this.</p>
+<p><a class="reference internal" href="sections/piping.html#piping"><span class="std std-ref">Read More</span></a></p>
 </div>
-<div class="section" id="redirection">
-<span id="id3"></span><h2>Redirection<a class="headerlink" href="#redirection" title="Permalink to this headline">¶</a></h2>
-<p>sh can redirect the standard and error output streams of a process to a file
-or file-like object.  This is done with the special <code class="docutils literal"><span class="pre">_out</span></code> and <code class="docutils literal"><span class="pre">_err</span></code>
-<a class="reference internal" href="special_arguments.html#special-arguments"><span>special keyword argument</span></a>. You can pass a filename
-or a file object as the argument value.
-When the name of an already existing file is passed, the contents of the file
-will be overwritten:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">ls</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="s">&quot;files.list&quot;</span><span class="p">)</span>
-<span class="n">ls</span><span class="p">(</span><span class="s">&quot;nonexistent&quot;</span><span class="p">,</span> <span class="n">_err</span><span class="o">=</span><span class="s">&quot;error.txt&quot;</span><span class="p">)</span>
+<div class="section" id="subcommands">
+<h2>Subcommands<a class="headerlink" href="#subcommands" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># equivalent</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">git</span><span class="p">(</span><span class="s2">&quot;show&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">git</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="s2">&quot;HEAD&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>You can also redirect to a function.  See <a class="reference internal" href="#callbacks"><span>STDOUT/ERR callbacks</span></a>.</p>
+<p><a class="reference internal" href="sections/subcommands.html#subcommands"><span class="std std-ref">Read More</span></a></p>
 </div>
-<div class="section" id="stdin-processing">
-<span id="stdin"></span><h2>STDIN Processing<a class="headerlink" href="#stdin-processing" title="Permalink to this headline">¶</a></h2>
-<p>STDIN is sent to a process directly by using a command&#8217;s <code class="docutils literal"><span class="pre">_in</span></code>
-<a class="reference internal" href="special_arguments.html#special-arguments"><span>special keyword argument</span></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">print</span><span class="p">(</span><span class="n">cat</span><span class="p">(</span><span class="n">_in</span><span class="o">=</span><span class="s">&quot;test&quot;</span><span class="p">))</span> <span class="c"># prints &quot;test&quot;</span>
-</pre></div>
-</div>
-<p>Any command that takes input from STDIN can be used this way:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">print</span><span class="p">(</span><span class="n">tr</span><span class="p">(</span><span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="s">&quot;sh is awesome&quot;</span><span class="p">))</span> <span class="c"># SH IS AWESOME</span>
-</pre></div>
-</div>
-<p>You&#8217;re also not limited to using just strings.  You may use a file object,
-a <a class="reference external" href="http://docs.python.org/library/queue.html#queue-objects">Queue</a>, or any iterable
-(list, set, dictionary, etc):</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">stdin</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;sh&quot;</span><span class="p">,</span> <span class="s">&quot;is&quot;</span><span class="p">,</span> <span class="s">&quot;awesome&quot;</span><span class="p">]</span>
-<span class="n">out</span> <span class="o">=</span> <span class="n">tr</span><span class="p">(</span><span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="n">stdin</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="sub-commands">
-<span id="subcommands"></span><h2>Sub-commands<a class="headerlink" href="#sub-commands" title="Permalink to this headline">¶</a></h2>
-<p>Many programs have their own command subsets, like git (branch, checkout),
-svn (update, status), and sudo (where any command following sudo is considered
-a sub-command).  sh handles subcommands through attribute access:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">git</span><span class="p">,</span> <span class="n">sudo</span>
-
-<span class="c"># resolves to &quot;git branch -v&quot;</span>
-<span class="k">print</span><span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">branch</span><span class="p">(</span><span class="s">&quot;-v&quot;</span><span class="p">))</span>
-<span class="k">print</span><span class="p">(</span><span class="n">git</span><span class="p">(</span><span class="s">&quot;branch&quot;</span><span class="p">,</span> <span class="s">&quot;-v&quot;</span><span class="p">))</span> <span class="c"># the same command</span>
-
-<span class="c"># resolves to &quot;sudo /bin/ls /root&quot;</span>
-<span class="k">print</span><span class="p">(</span><span class="n">sudo</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/root&quot;</span><span class="p">))</span>
-<span class="k">print</span><span class="p">(</span><span class="n">sudo</span><span class="p">(</span><span class="s">&quot;/bin/ls&quot;</span><span class="p">,</span> <span class="s">&quot;/root&quot;</span><span class="p">))</span> <span class="c"># the same command</span>
-</pre></div>
-</div>
-<p>Sub-commands are mainly syntax sugar that makes calling some programs look conceptually nicer.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">If you use sudo, the user executing the script must have the NOPASSWD option
-set for whatever command that user is running, otherwise <code class="docutils literal"><span class="pre">sudo</span></code> will hang.</p>
-</div>
-</div>
-<div class="section" id="exit-codes">
-<span id="id4"></span><h2>Exit codes<a class="headerlink" href="#exit-codes" title="Permalink to this headline">¶</a></h2>
-<p>Normal processes exit with exit code 0.  This can be seen through a
-command&#8217;s <code class="docutils literal"><span class="pre">exit_code</span></code> property:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">output</span> <span class="o">=</span> <span class="n">ls</span><span class="p">(</span><span class="s">&quot;/&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">exit_code</span><span class="p">)</span> <span class="c"># should be 0</span>
-</pre></div>
-</div>
-<p>If a process ends with an error, and the exit code is not 0, an exception
-is generated dynamically.
-This lets you catch a specific return code, or catch all error return codes
-through the base class ErrorReturnCode:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">try</span><span class="p">:</span> <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/some/non-existant/folder&quot;</span><span class="p">))</span>
-<span class="k">except</span> <span class="n">ErrorReturnCode_2</span><span class="p">:</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;folder doesn&#39;t exist!&quot;</span><span class="p">)</span>
-    <span class="n">create_the_folder</span><span class="p">()</span>
-<span class="k">except</span> <span class="n">ErrorReturnCode</span><span class="p">:</span>
-    <span class="k">print</span><span class="p">(</span><span class="s">&quot;unknown error&quot;</span><span class="p">)</span>
-    <span class="nb">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Signals <strong>will not</strong> raise an ErrorReturnCode.  The command will return
-as if it succeeded, but its <code class="docutils literal"><span class="pre">exit_code</span></code> property will be set to
--signal_num.  So, for example, if a command is killed with a SIGHUP, its
-return code will be -1.</p>
-</div>
-<p>Some programs return strange error codes even though they succeed.  If you know
-which code a program might returns and you don&#8217;t want to deal with doing
-no-op exception handling, you can use the <code class="docutils literal"><span class="pre">_ok_code</span></code>
-<a class="reference internal" href="special_arguments.html#special-arguments"><span>special keyword argument</span></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">weird_program</span><span class="p">(</span><span class="n">_ok_code</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
-</pre></div>
-</div>
-<p>This means that the command will not generate an exception if the process
-exits with 0, 3, or 5 exit code.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">If you use <code class="docutils literal"><span class="pre">_ok_code</span></code>, you must specify <strong>all</strong> the exit codes that are
-considered &#8220;ok&#8221;, like (typically) 0.</p>
-</div>
-</div>
-<div class="section" id="glob-expansion">
-<h2>Glob expansion<a class="headerlink" href="#glob-expansion" title="Permalink to this headline">¶</a></h2>
-<p>Glob expansion is not performed on your arguments, for example, this will
-not work:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;*.py&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>You&#8217;ll get an error to the effect of <code class="docutils literal"><span class="pre">cannot</span> <span class="pre">access</span> <span class="pre">'\*.py':</span> <span class="pre">No</span> <span class="pre">such</span> <span class="pre">file</span> <span class="pre">or</span> <span class="pre">directory</span></code>.
-This is because the <code class="docutils literal"><span class="pre">*.py</span></code> needs to be glob expanded, not passed in literally:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s">&quot;*.py&quot;</span><span class="p">))</span>
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Don&#8217;t use Python&#8217;s <code class="docutils literal"><span class="pre">glob.glob</span></code> function, use <code class="docutils literal"><span class="pre">sh.glob</span></code>.  Python&#8217;s
-has edge cases that break with sh.</p>
-</div>
-</div>
-</div>
-<div class="section" id="advanced-features">
-<h1>Advanced Features<a class="headerlink" href="#advanced-features" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="baking">
-<span id="id5"></span><h2>Baking<a class="headerlink" href="#baking" title="Permalink to this headline">¶</a></h2>
-<p>sh is capable of &#8220;baking&#8221; arguments into commands.  This is similar to the
-stdlib functools.partial wrapper.  Example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ls</span>
-
-<span class="n">ls</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s">&quot;-la&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span> <span class="c"># &quot;/usr/bin/ls -la&quot;</span>
-
-<span class="c"># resolves to &quot;ls -la /&quot;</span>
-<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/&quot;</span><span class="p">))</span>
-</pre></div>
-</div>
-<p>The idea here is that now every call to <code class="docutils literal"><span class="pre">ls</span></code> will have the &#8220;-la&#8221; arguments
-already specified.  This gets <em>really interesting</em> when you combine this with
-subcommand via attribute access:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
-
-<span class="c"># calling whoami on a server.  this is a lot to type out, especially if</span>
-<span class="c"># you wanted to call many commands (not just whoami) back to back on</span>
-<span class="c"># the same server</span>
-<span class="n">iam1</span> <span class="o">=</span> <span class="n">ssh</span><span class="p">(</span><span class="s">&quot;myserver.com&quot;</span><span class="p">,</span> <span class="s">&quot;-p 1393&quot;</span><span class="p">,</span> <span class="s">&quot;whoami&quot;</span><span class="p">)</span>
-
-<span class="c"># wouldn&#39;t it be nice to bake the common parameters into the ssh command?</span>
-<span class="n">myserver</span> <span class="o">=</span> <span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s">&quot;myserver.com&quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">1393</span><span class="p">)</span>
-
-<span class="k">print</span><span class="p">(</span><span class="n">myserver</span><span class="p">)</span> <span class="c"># &quot;/usr/bin/ssh myserver.com -p 1393&quot;</span>
-
-<span class="c"># resolves to &quot;/usr/bin/ssh myserver.com -p 1393 whoami&quot;</span>
-<span class="n">iam2</span> <span class="o">=</span> <span class="n">myserver</span><span class="o">.</span><span class="n">whoami</span><span class="p">()</span>
-
-<span class="k">assert</span><span class="p">(</span><span class="n">iam1</span> <span class="o">==</span> <span class="n">iam2</span><span class="p">)</span> <span class="c"># True!</span>
-</pre></div>
-</div>
-<p>Now that the &#8220;myserver&#8221; callable represents a baked ssh command, you
-can call anything on the server easily:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># resolves to &quot;/usr/bin/ssh myserver.com -p 1393 tail /var/log/dumb_daemon.log -n 100&quot;</span>
-<span class="k">print</span><span class="p">(</span><span class="n">myserver</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="s">&quot;/var/log/dumb_daemon.log&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
-</pre></div>
-</div>
-</div>
-<div class="section" id="with-contexts">
-<span id="id6"></span><h2>&#8216;With&#8217; contexts<a class="headerlink" href="#with-contexts" title="Permalink to this headline">¶</a></h2>
-<p>Commands can be run within a <code class="docutils literal"><span class="pre">with</span></code> context.  Popular commands using this
-might be <code class="docutils literal"><span class="pre">sudo</span></code> or <code class="docutils literal"><span class="pre">fakeroot</span></code>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">sudo</span><span class="p">:</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/root&quot;</span><span class="p">))</span>
-</pre></div>
-</div>
-<p>If you need
-to run a command in a with context and pass in arguments, for example, specifying
-a -p prompt with sudo, you need to use the <code class="docutils literal"><span class="pre">_with</span></code> <a class="reference internal" href="special_arguments.html#special-arguments"><span>special keyword argument</span></a>.
-This let&#8217;s the command know that it&#8217;s being run from a with context so
-it can behave correctly:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">with</span> <span class="n">sudo</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/root&quot;</span><span class="p">))</span>
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">If you use sudo, the user executing the script must have the NOPASSWD option
-set for whatever command that user is running, otherwise <code class="docutils literal"><span class="pre">sudo</span></code> will hang.</p>
-</div>
-</div>
-<div class="section" id="iterating-over-output">
-<span id="iterable"></span><h2>Iterating over output<a class="headerlink" href="#iterating-over-output" title="Permalink to this headline">¶</a></h2>
-<p>You can iterate over long-running commands with the <code class="docutils literal"><span class="pre">_iter</span></code>
-<a class="reference internal" href="special_arguments.html#special-arguments"><span>special keyword argument</span></a>.  This creates an iterator
-(technically, a generator) that you can
-loop over:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
-
-<span class="c"># runs forever</span>
-<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">(</span><span class="s">&quot;-f&quot;</span><span class="p">,</span> <span class="s">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>By default, <code class="docutils literal"><span class="pre">_iter</span></code> iterates over stdout, but you can change set this specifically
-by passing either &#8220;err&#8221; or &#8220;out&#8221; to <code class="docutils literal"><span class="pre">_iter</span></code> (instead of True).  Also by default,
-output is line-buffered, but you can change this by changing <a class="reference internal" href="#buffer-sizes"><span>Buffer sizes</span></a></p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">If you need a non-blocking iterator, use <code class="docutils literal"><span class="pre">_iter_noblock</span></code>.  If the current
-iteration would block, <code class="docutils literal"><span class="pre">errno.EWOULDBLOCK</span></code> will be returned, otherwise
-you&#8217;ll receive a chunk of output, as normal.</p>
-</div>
-</div>
-<div class="section" id="stdout-err-callbacks">
-<span id="callbacks"></span><h2>STDOUT/ERR callbacks<a class="headerlink" href="#stdout-err-callbacks" title="Permalink to this headline">¶</a></h2>
-<p>sh can use callbacks to process output incrementally.  This is done much like
-redirection: by passing an argument to either the <code class="docutils literal"><span class="pre">_out</span></code> or <code class="docutils literal"><span class="pre">_err</span></code> (or both)
-<a class="reference internal" href="special_arguments.html#special-arguments"><span>special keyword arguments</span></a>, <strong>except this time, you pass
-a callable.</strong>  This callable
-will be called for each line (or chunk) of data that your command outputs:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
-
-<span class="k">def</span> <span class="nf">process_output</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-
-<span class="n">p</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s">&quot;-f&quot;</span><span class="p">,</span> <span class="s">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_output</span><span class="p">)</span>
+<div class="section" id="background-processes">
+<h2>Background Processes<a class="headerlink" href="#background-processes" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;-name&quot;</span><span class="p">,</span> <span class="s2">&quot;sh.py&quot;</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="c1"># ... do other things ...</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>To control whether the callback receives a line or a chunk, please see
-<a class="reference internal" href="#buffer-sizes"><span>Buffer sizes</span></a>.  To &#8220;quit&#8221; your callback, simply return True.  This
-tells the command not to call your callback anymore.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Returning True does not kill the process, it only keeps the callback from being
-called again.  See <a class="reference internal" href="#interactive-callbacks"><span>Interactive callbacks</span></a> for how to kill a process
-from a callback.</p>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last"><code class="docutils literal"><span class="pre">_out</span></code> and <code class="docutils literal"><span class="pre">_err</span></code> don&#8217;t have to specify callables.  It can be a file-like
-object, a Queue, a StringIO instance, or a filename.  See <a class="reference internal" href="#redirection"><span>Redirection</span></a>
-for examples.</p>
-</div>
-</div>
-<div class="section" id="interactive-callbacks">
-<span id="id7"></span><h2>Interactive callbacks<a class="headerlink" href="#interactive-callbacks" title="Permalink to this headline">¶</a></h2>
-<p>Each command launched through sh has an internal STDIN
-<a class="reference external" href="http://docs.python.org/library/queue.html#queue-objects">Queue</a>
-that can be used from callbacks:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">interact</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s">&quot;What... is the air-speed velocity of an unladen swallow?&quot;</span><span class="p">:</span>
-        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s">&quot;What do you mean? An African or European swallow?&quot;</span><span class="p">)</span>
-
-    <span class="k">elif</span> <span class="n">line</span> <span class="o">==</span> <span class="s">&quot;Huh? I... I don&#39;t know that....AAAAGHHHHHH&quot;</span><span class="p">:</span>
-        <span class="n">cross_bridge</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">True</span>
-
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s">&quot;I don&#39;t know....AAGGHHHHH&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">True</span>
-
-<span class="n">sh</span><span class="o">.</span><span class="n">bridgekeeper</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="n">interact</span><span class="p">)</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>You can also kill or terminate your process (or send any signal, really) from
-your callback by adding a third argument to receive the process object:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">process_output</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">,</span> <span class="n">process</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-    <span class="k">if</span> <span class="s">&quot;ERROR&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
-        <span class="n">process</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">True</span>
-
-<span class="n">p</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s">&quot;-f&quot;</span><span class="p">,</span> <span class="s">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_output</span><span class="p">)</span>
-<span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-</pre></div>
-</div>
-<p>The above code will run, printing lines from <code class="docutils literal"><span class="pre">some_log_file.log</span></code> until the
-word &#8220;ERROR&#8221; appears in a line, at which point the tail process will be killed
-and the script will end.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">You may also use <code class="docutils literal"><span class="pre">.terminate()</span></code> to send a SIGTERM, or <code class="docutils literal"><span class="pre">.signal(sig)</span></code> to
-send a general <a class="reference external" href="http://docs.python.org/library/signal.html">signal</a>.</p>
-</div>
-</div>
-<div class="section" id="buffer-sizes">
-<span id="id9"></span><h2>Buffer sizes<a class="headerlink" href="#buffer-sizes" title="Permalink to this headline">¶</a></h2>
-<p>Buffer sizes are important to consider when you begin to use
-<a class="reference internal" href="#iterable"><span>iterators</span></a>,
-<a class="reference internal" href="#advanced-piping"><span>advanced piping</span></a>,
-or <a class="reference internal" href="#callbacks"><span>callbacks</span></a>.  <a class="reference internal" href="tutorials/2-interacting_with_processes.html#tutorial2"><span>Tutorial 2: Entering an SSH password</span></a> has a good example of why
-different buffering modes are needed.
-Buffer sizes control how STDIN is read and how STDOUT/ERR
-are written to.  Consider the following:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="s">&quot;testing&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>STDIN is, by default, unbuffered, so the string &#8220;testing&#8221; is read character
-by character.  But the result is still &#8220;TESTING&#8221;, not &#8220;T&#8221;, &#8220;E&#8221;, &#8220;S&#8221;, &#8220;T&#8221;, &#8220;I&#8221;,
-&#8220;N&#8221;, &#8220;G&#8221;.  Why?  Because although STDIN is unbuffered, STDOUT is not.  STDIN
-is being read character by character, but all of those single characters are
-being aggregated to STDOUT, whose default buffering is line buffering.  Try
-this instead:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="s">&quot;testing&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Because now we set STDOUT to also be unbuffered with <code class="docutils literal"><span class="pre">_out_bufsize=0</span></code> the result is
-&#8220;T&#8221;, &#8220;E&#8221;, &#8220;S&#8221;, &#8220;T&#8221;, &#8220;I&#8221;, &#8220;N&#8221;, &#8220;G&#8221;, as expected.</p>
-<p>There are 2 bufsize <a class="reference internal" href="special_arguments.html#special-arguments"><span>special keyword arguments</span></a>:
-<code class="docutils literal"><span class="pre">_in_bufsize</span></code> and <code class="docutils literal"><span class="pre">_out_bufsize</span></code>.  They may be set to the following values:</p>
-<dl class="glossary docutils">
-<dt id="term-">0</dt>
-<dd>Unbuffered.  For STDIN, strings and file objects will be read character-by-character,
-while Queues, callables, and iterables will be read item by item.</dd>
-<dt id="term-1">1</dt>
-<dd>Line buffered.  For STDIN, data will be passed into the process line-by-line.
-For STDOUT/ERR, data will be output line-by-line.  If any data is remaining
-in the STDOUT or STDIN buffers after all the lines have been consumed, it
-is also consumed/flushed.</dd>
-<dt id="term-n">N</dt>
-<dd>Buffered by N characters.  For STDIN, data will be passed into the process
-&lt;=N characters at a time.  For STDOUT/ERR, data will be output &lt;=N characters
-at a time.  If any data is remaining
-in the STDOUT or STDIN buffers after all the lines have been consumed, it
-is also consumed/flushed.</dd>
-</dl>
-</div>
-<div class="section" id="advanced-piping">
-<span id="id10"></span><h2>Advanced piping<a class="headerlink" href="#advanced-piping" title="Permalink to this headline">¶</a></h2>
-<p>By default, all piped commands execute sequentially.  What this means is that the
-inner command executes first, then sends its data to the outer command:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">print</span><span class="p">(</span><span class="n">wc</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s">&quot;/etc&quot;</span><span class="p">,</span> <span class="s">&quot;-1&quot;</span><span class="p">),</span> <span class="s">&quot;-l&quot;</span><span class="p">))</span>
-</pre></div>
-</div>
-<p>In the above example, <code class="docutils literal"><span class="pre">ls</span></code> executes, gathers its output, then sends that output
-to <code class="docutils literal"><span class="pre">wc</span></code>.  This is fine for simple commands, but for commands where you need
-parallelism, this isn&#8217;t good enough.  Take the following example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="n">tail</span><span class="p">(</span><span class="s">&quot;-f&quot;</span><span class="p">,</span> <span class="s">&quot;test.log&quot;</span><span class="p">),</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>This won&#8217;t work</strong> because the <code class="docutils literal"><span class="pre">tail</span> <span class="pre">-f</span></code> command never finishes.  What you
-need is for <code class="docutils literal"><span class="pre">tail</span></code> to send its output to <code class="docutils literal"><span class="pre">tr</span></code> as it receives it.  This is where
-the <code class="docutils literal"><span class="pre">_piped</span></code> <a class="reference internal" href="special_arguments.html#special-arguments"><span>special keyword argument</span></a> comes in handy:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="n">tail</span><span class="p">(</span><span class="s">&quot;-f&quot;</span><span class="p">,</span> <span class="s">&quot;test.log&quot;</span><span class="p">,</span> <span class="n">_piped</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span> <span class="s">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="s">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>This works by telling <code class="docutils literal"><span class="pre">tail</span> <span class="pre">-f</span></code> that it is being used in a pipeline, and that
-it should send its output line-by-line to <code class="docutils literal"><span class="pre">tr</span></code>.  By default, <code class="docutils literal"><span class="pre">_piped</span></code> sends
-stdout, but you can easily make it send stderr instead by using <code class="docutils literal"><span class="pre">_piped=&quot;err&quot;</span></code></p>
-</div>
-<div class="section" id="environments">
-<span id="id11"></span><h2>Environments<a class="headerlink" href="#environments" title="Permalink to this headline">¶</a></h2>
-<p>The <a class="reference internal" href="special_arguments.html#special-arguments"><span>special keyword argument</span></a> <code class="docutils literal"><span class="pre">_env</span></code> allows you
-to pass a dictionary of environement variables and their corresponding values:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">sh</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">google_chrome</span><span class="p">(</span><span class="n">_env</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;SOCKS_SERVER&quot;</span><span class="p">:</span> <span class="s">&quot;localhost:1234&quot;</span><span class="p">})</span>
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p><code class="docutils literal"><span class="pre">_env</span></code> replaces your process&#8217;s environment completely.  Only the key-value
-pairs in <code class="docutils literal"><span class="pre">_env</span></code> will be used for its environment.  If you want to add new
-environment variables for a process <em>in addition to</em> your existing environment,
-try something like this:</p>
-<div class="last highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">sh</span>
-
-<span class="n">new_env</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-<span class="n">new_env</span><span class="p">[</span><span class="s">&quot;SOCKS_SERVER&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;localhost:1234&quot;</span>
-
-<span class="n">sh</span><span class="o">.</span><span class="n">google_chrome</span><span class="p">(</span><span class="n">_env</span><span class="o">=</span><span class="n">new_env</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-</div>
-<div class="section" id="ttys">
-<span id="id12"></span><h2>TTYs<a class="headerlink" href="#ttys" title="Permalink to this headline">¶</a></h2>
-<p>Some applications behave differently depending on whether their standard file
-descriptors are attached to a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal#Applications">TTY</a> or not. For
-example, <a class="reference external" href="http://git-scm.com/">git</a> will disable features intended for humans
-such as colored and paged output when STDOUT is not attached to a TTY. Other
-programs may disable interactive input if a TTY is not attached to STDIN. Still
-other programs, such as SSH (without <code class="docutils literal"><span class="pre">-n</span></code>), <em>expect</em> their input to come from a
-TTY/terminal.</p>
-<p>By default, sh emulates a TTY for STDOUT but not for STDIN. You can change
-the default behavior by passing in extra
-<a class="reference internal" href="special_arguments.html#special-arguments"><span>special keyword arguments</span></a>, as such:</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="23%" />
-<col width="31%" />
-<col width="46%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">FD</th>
-<th class="head">KEYWORD</th>
-<th class="head">DEFAULT</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td>STDOUT</td>
-<td>_tty_out</td>
-<td>True (tty)</td>
-</tr>
-<tr class="row-odd"><td>STDIN</td>
-<td>_tty_in</td>
-<td>False (pipe)</td>
-</tr>
-</tbody>
-</table>
+<p><a class="reference internal" href="sections/asynchronous_execution.html#background"><span class="std std-ref">Read More</span></a></p>
 </div>
 </div>
 
 
+           </div>
           </div>
-        </div>
-      </div>
-      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
-        <div class="sphinxsidebarwrapper">
-  <h3><a href="#">Table Of Contents</a></h3>
-  <ul>
-<li><a class="reference internal" href="#">sh 1.11</a></li>
-<li><a class="reference internal" href="#tutorials">Tutorials</a></li>
-<li><a class="reference internal" href="#basic-features">Basic Features</a><ul>
-<li><a class="reference internal" href="#command-execution">Command execution</a></li>
-<li><a class="reference internal" href="#multiple-arguments">Multiple arguments</a></li>
-<li><a class="reference internal" href="#arguments-to-sh-s-command-wrapper">Arguments to sh&#8217;s <code class="docutils literal"><span class="pre">Command</span></code> wrapper</a></li>
-<li><a class="reference internal" href="#keyword-arguments">Keyword arguments</a></li>
-<li><a class="reference internal" href="#background-processes">Background processes</a></li>
-<li><a class="reference internal" href="#piping">Piping</a></li>
-<li><a class="reference internal" href="#redirection">Redirection</a></li>
-<li><a class="reference internal" href="#stdin-processing">STDIN Processing</a></li>
-<li><a class="reference internal" href="#sub-commands">Sub-commands</a></li>
-<li><a class="reference internal" href="#exit-codes">Exit codes</a></li>
-<li><a class="reference internal" href="#glob-expansion">Glob expansion</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#advanced-features">Advanced Features</a><ul>
-<li><a class="reference internal" href="#baking">Baking</a></li>
-<li><a class="reference internal" href="#with-contexts">&#8216;With&#8217; contexts</a></li>
-<li><a class="reference internal" href="#iterating-over-output">Iterating over output</a></li>
-<li><a class="reference internal" href="#stdout-err-callbacks">STDOUT/ERR callbacks</a></li>
-<li><a class="reference internal" href="#interactive-callbacks">Interactive callbacks</a></li>
-<li><a class="reference internal" href="#buffer-sizes">Buffer sizes</a></li>
-<li><a class="reference internal" href="#advanced-piping">Advanced piping</a></li>
-<li><a class="reference internal" href="#environments">Environments</a></li>
-<li><a class="reference internal" href="#ttys">TTYs</a></li>
-</ul>
-</li>
-</ul>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="usage.html" class="btn btn-neutral float-right" title="Usage" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+    </div>
+  
 
-  <h4>Next topic</h4>
-  <p class="topless"><a href="tutorials/1-real_time_output.html"
-                        title="next chapter">Tutorial 1: Tailing a real-time log file</a></p>
-  <div role="note" aria-label="source link">
-    <h3>This Page</h3>
-    <ul class="this-page-menu">
-      <li><a href="_sources/index.txt"
-            rel="nofollow">Show Source</a></li>
-    </ul>
-   </div>
-<div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
-    <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
-    </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Andrew Moffat.
+
     </p>
-</div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
         </div>
       </div>
-      <div class="clearer"></div>
-    </div>
-    <div class="related" role="navigation" aria-label="related navigation">
-      <h3>Navigation</h3>
-      <ul>
-        <li class="right" style="margin-right: 10px">
-          <a href="genindex.html" title="General Index"
-             >index</a></li>
-        <li class="right" >
-          <a href="tutorials/1-real_time_output.html" title="Tutorial 1: Tailing a real-time log file"
-             >next</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">sh 1.11 documentation</a> &raquo;</li> 
-      </ul>
-    </div>
-    <div class="footer" role="contentinfo">
-        &copy; Copyright 2013, Andrew Moffat.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
-    </div>
-  </body>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1.12.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
 </html>

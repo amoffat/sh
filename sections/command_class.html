@@ -1,0 +1,742 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>API &mdash; sh 1.12.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="sh 1.12.0 documentation" href="../index.html"/>
+        <link rel="up" title="Reference" href="../reference.html"/>
+        <link rel="next" title="Contrib Commands" href="contrib.html"/>
+        <link rel="prev" title="Architecture Overview" href="architecture.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> sh
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="passing_arguments.html">Passing Arguments</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="passing_arguments.html#keyword-arguments">Keyword Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="exit_codes.html">Exit Codes &amp; Exceptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="exit_codes.html#signals">Signals</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="redirection.html">Redirection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="redirection.html#filename">Filename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="redirection.html#file-like-object">File-like Object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="redirection.html#function-callback">Function Callback</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="asynchronous_execution.html">Asynchronous Execution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="asynchronous_execution.html#incremental-iteration">Incremental Iteration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="asynchronous_execution.html#background-processes">Background Processes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="asynchronous_execution.html#output-callbacks">Output Callbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asynchronous_execution.html#interactive-callbacks">Interactive callbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asynchronous_execution.html#done-callbacks">Done Callbacks</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="baking.html">Baking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="piping.html">Piping</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="piping.html#basic">Basic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="piping.html#advanced">Advanced</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="subcommands.html">Sub-commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="default_arguments.html">Default Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="envs.html">Environments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stdin.html">Input via STDIN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="with.html">&#8216;With&#8217; Contexts</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../reference.html">Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="special_arguments.html">Special Kwargs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#controlling-output">Controlling Output</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#out">_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#err">_err</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#err-to-out">_err_to_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#encoding">_encoding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#decode-errors">_decode_errors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tee">_tee</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#execution">Execution</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#fg">_fg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#bg">_bg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#env">_env</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#timeout">_timeout</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#timeout-signal">_timeout_signal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#cwd">_cwd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#ok-code">_ok_code</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#new-session">_new_session</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#uid">_uid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#preexec-fn">_preexec_fn</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#communication">Communication</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#in">_in</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#piped">_piped</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#iter">_iter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#iter-noblock">_iter_noblock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#with">_with</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#done">_done</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#ttys">TTYs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tty-in">_tty_in</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tty-out">_tty_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tty-size">_tty_size</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#performance-optimization">Performance &amp; Optimization</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#in-bufsize">_in_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#out-bufsize">_out_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#internal-bufsize">_internal_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#no-out">_no_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#no-err">_no_err</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#no-pipe">_no_pipe</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#program-arguments">Program Arguments</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#long-sep">_long_sep</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#long-prefix">_long_prefix</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#arg-preprocess">_arg_preprocess</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#misc">Misc</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#log-msg">_log_msg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html">Architecture Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#launch">Launch</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#child">Child</a></li>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#parent">Parent</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#running">Running</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#buffers">Buffers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#exit">Exit</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#stdin-thread-shutdown">STDIN Thread Shutdown</a></li>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#stdout-err-thread-shutdown">STDOUT/ERR Thread Shutdown</a></li>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#exit-code-processing">Exit Code Processing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#done-callback">Done Callback</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#command-class">Command Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#runningcommand-class">RunningCommand Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#oproc-class">OProc Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exceptions">Exceptions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#errorreturncode">ErrorReturnCode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#signalexception">SignalException</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#timeoutexception">TimeoutException</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#helper-functions">Helper Functions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contrib.html">Contrib Commands</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contrib.html#commands">Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="contrib.html#sudo">Sudo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contrib.html#git">Git</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="contrib.html#extending">Extending</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sudo.html">Using Sudo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sudo.html#sh-contrib-sudo">sh.contrib.sudo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sudo.html#terminal-input">Terminal Input</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sudo.html#string-input">String Input</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sudo.html#etc-sudoers-nopasswd">/etc/sudoers NOPASSWD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sudo.html#sh-sudo">sh.sudo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sudo.html#fg-true">_fg=True</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/real_time_output.html">Tailing a real-time log file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/interacting_with_processes.html">Entering an SSH password</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/interacting_with_processes.html#how-you-should-really-be-using-ssh">How you should REALLY be using SSH</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#will-windows-be-supported">Will Windows be supported?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-append-output-to-a-file">How do I append output to a file?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-does-my-command-s-output-have-color">Why does my command&#8217;s output have color?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-is-tty-out-true-the-default">Why is _tty_out=True the default?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-run-a-program-with-dashes-in-its-name">How do I run a program with dashes in its name?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-doesn-t-work-as-a-command-argument">Why doesn&#8217;t &#8220;*&#8221; work as a command argument?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn&#8217;t in <code class="docutils literal"><span class="pre">$PATH</span></code>?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-execute-a-program-with-a-dash-in-its-name">How do I execute a program with a dash in its name?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-not-use-to-pipe-commands">Why not use <code class="docutils literal"><span class="pre">|</span></code> to pipe commands?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-isn-t-piping-asynchronous-by-default">Why isn&#8217;t piping asynchronous by default?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-run-a-command-and-connect-it-to-sys-stdout-and-sys-stdin">How do I run a command and connect it to sys.stdout and sys.stdin?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-do-my-arguments-need-to-be-separate-strings">Why do my arguments need to be separate strings?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-order-keyword-arguments">How do I order keyword arguments?</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">sh</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../reference.html">Reference</a> &raquo;</li>
+      
+    <li>API</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/sections/command_class.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="api">
+<h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="command-class">
+<span id="id1"></span><h2>Command Class<a class="headerlink" href="#command-class" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">Command</span></code> class represents a program that exists on the system and can be
+run at some point in time.  An instance of <code class="docutils literal"><span class="pre">Command</span></code> is never running; an
+instance of <a class="reference internal" href="#running-command"><span class="std std-ref">RunningCommand</span></a> is spawned for that.</p>
+<p>An instance of <code class="docutils literal"><span class="pre">Command</span></code> can take the form of a manually instantiated object,
+or as an object instantiated by dynamic lookup:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+
+<span class="n">ls1</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s2">&quot;ls&quot;</span><span class="p">)</span>
+<span class="n">ls2</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ls</span>
+
+<span class="k">assert</span> <span class="n">ls1</span> <span class="o">==</span> <span class="n">ls2</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="Command">
+<em class="property">class </em><code class="descname">Command</code><span class="sig-paren">(</span><em>name</em>, <em>search_paths=None</em><span class="sig-paren">)</span><a class="headerlink" href="#Command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiates a Command instance, where <em>name</em> is the name of a program that
+exists on the user&#8217;s <code class="docutils literal"><span class="pre">$PATH</span></code>, or is a full path itself.  If <em>search_paths</em>
+is specified, it must be a list of all the paths to look for the program
+name.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">Command</span>
+
+<span class="n">ifconfig</span> <span class="o">=</span> <span class="n">Command</span><span class="p">(</span><span class="s2">&quot;ifconfig&quot;</span><span class="p">)</span>
+<span class="n">ifconfig</span> <span class="o">=</span> <span class="n">Command</span><span class="p">(</span><span class="s2">&quot;/sbin/ifconfig&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="Command.bake">
+<code class="descclassname">Command.</code><code class="descname">bake</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#Command.bake" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a new Command with <code class="docutils literal"><span class="pre">*args</span></code> and <code class="docutils literal"><span class="pre">**kwargs</span></code> baked in as
+positional and keyword arguments, respectively.  Any future calls to the
+returned Command will include <code class="docutils literal"><span class="pre">*args</span></code> and <code class="docutils literal"><span class="pre">**kwargs</span></code> automatically:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ls</span>
+
+<span class="n">long_ls</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/var&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/tmp&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="baking.html#baking"><span class="std std-ref">Baking</span></a></p>
+</div>
+</dd></dl>
+
+<p>Similar to the above, arguments to the <code class="docutils literal"><span class="pre">sh.Command</span></code> must be separate.
+e.g. the following does not work:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">lscmd</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s2">&quot;/bin/ls -l&quot;</span><span class="p">)</span>
+<span class="n">tarcmd</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s2">&quot;/bin/tar cvf /tmp/test.tar /my/home/directory/&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You will run into <code class="docutils literal"><span class="pre">CommandNotFound(path)</span></code> exception even when correct full path is specified.
+The correct way to do this is to :</p>
+<ol class="arabic simple">
+<li>build <code class="docutils literal"><span class="pre">Command</span></code> object using <em>only</em> the binary</li>
+<li>pass the arguments to the object <em>when invoking</em></li>
+</ol>
+<p>as follows:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">lscmd</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s2">&quot;/bin/ls&quot;</span><span class="p">)</span>
+<span class="n">lscmd</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">)</span>
+<span class="n">tarcmd</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s2">&quot;/bin/tar&quot;</span><span class="p">)</span>
+<span class="n">tarcmd</span><span class="p">(</span><span class="s2">&quot;cvf&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/test.tar&quot;</span><span class="p">,</span> <span class="s2">&quot;/my/home/directory/&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="runningcommand-class">
+<span id="running-command"></span><h2>RunningCommand Class<a class="headerlink" href="#runningcommand-class" title="Permalink to this headline">¶</a></h2>
+<p>This represents a <a class="reference internal" href="#command-class"><span class="std std-ref">Command</span></a> instance that has been
+or is being executed.  It exists as a wrapper around the low-level <a class="reference internal" href="#oproc-class"><span class="std std-ref">OProc</span></a>.  Most of your interaction with sh objects are with instances of
+this class</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>Objects of this class behave very much like strings.  This was an
+intentional design decision to make the &#8220;output&#8221; of an executing Command
+behave more intuitively.</p>
+<p class="last">Be aware that functions that accept real strings only, for example
+<code class="docutils literal"><span class="pre">json.dumps</span></code>, will not work on instances of RunningCommand, even though it
+look like a string.</p>
+</div>
+<dl class="method">
+<dt id="RunningCommand.wait">
+<code class="descclassname">RunningCommand.</code><code class="descname">wait</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#RunningCommand.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Block and wait for the command to finish execution and obtain an exit code.
+If the exit code represents a failure, we raise the appropriate exception.
+See <a class="reference external" href="https://docs.python.org/3.5/reference/executionmodel.html#exceptions" title="(in Python v3.5)"><span class="xref std std-ref">exceptions</span></a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Calling this method multiple times only yields an exception on the first
+call.</p>
+</div>
+<p>This is called automatically by sh unless your command is being executed
+<a class="reference internal" href="asynchronous_execution.html#async"><span class="std std-ref">asynchronously</span></a>, in which case, you may want to call this
+manually to ensure completion.</p>
+<p>If an instance of <a class="reference internal" href="#command-class"><span class="std std-ref">Command</span></a> is being used as the stdin
+argument (see <a class="reference internal" href="piping.html#piping"><span class="std std-ref">piping</span></a>), <a class="reference internal" href="#RunningCommand.wait" title="RunningCommand.wait"><code class="xref py py-meth docutils literal"><span class="pre">wait()</span></code></a> is also called on that
+instance, and any exceptions resulting from that process are propagated up.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="RunningCommand.stdout">
+<code class="descclassname">RunningCommand.</code><code class="descname">stdout</code><a class="headerlink" href="#RunningCommand.stdout" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <code class="docutils literal"><span class="pre">&#64;property</span></code> that calls <a class="reference internal" href="#RunningCommand.wait" title="RunningCommand.wait"><code class="xref py py-meth docutils literal"><span class="pre">wait()</span></code></a> and then returns the contents of
+what the process wrote to stdout.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="RunningCommand.stderr">
+<code class="descclassname">RunningCommand.</code><code class="descname">stderr</code><a class="headerlink" href="#RunningCommand.stderr" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <code class="docutils literal"><span class="pre">&#64;property</span></code> that calls <a class="reference internal" href="#RunningCommand.wait" title="RunningCommand.wait"><code class="xref py py-meth docutils literal"><span class="pre">wait()</span></code></a> and then returns the contents of
+what the process wrote to stderr.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="RunningCommand.exit_code">
+<code class="descclassname">RunningCommand.</code><code class="descname">exit_code</code><a class="headerlink" href="#RunningCommand.exit_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <code class="docutils literal"><span class="pre">&#64;property</span></code> that calls <a class="reference internal" href="#RunningCommand.wait" title="RunningCommand.wait"><code class="xref py py-meth docutils literal"><span class="pre">wait()</span></code></a> and then returns the process&#8217;s exit
+code.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="RunningCommand.pid">
+<code class="descclassname">RunningCommand.</code><code class="descname">pid</code><a class="headerlink" href="#RunningCommand.pid" title="Permalink to this definition">¶</a></dt>
+<dd><p>The process id of the process.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="RunningCommand.sid">
+<code class="descclassname">RunningCommand.</code><code class="descname">sid</code><a class="headerlink" href="#RunningCommand.sid" title="Permalink to this definition">¶</a></dt>
+<dd><p>The session id of the process.  This will typically be a different session
+than the current python process, unless <a class="reference internal" href="special_arguments.html#new-session"><span class="std std-ref">_new_session=False</span></a> was specified.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="RunningCommand.pgid">
+<code class="descclassname">RunningCommand.</code><code class="descname">pgid</code><a class="headerlink" href="#RunningCommand.pgid" title="Permalink to this definition">¶</a></dt>
+<dd><p>The process group id of the process.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="RunningCommand.ctty">
+<code class="descclassname">RunningCommand.</code><code class="descname">ctty</code><a class="headerlink" href="#RunningCommand.ctty" title="Permalink to this definition">¶</a></dt>
+<dd><p>The controlling terminal device, if there is one.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="RunningCommand.signal">
+<code class="descclassname">RunningCommand.</code><code class="descname">signal</code><span class="sig-paren">(</span><em>sig_num</em><span class="sig-paren">)</span><a class="headerlink" href="#RunningCommand.signal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends <em>sig_num</em> to the process.  Typically used with a value from the
+<a class="reference external" href="https://docs.python.org/3.5/library/signal.html#module-signal" title="(in Python v3.5)"><code class="xref py py-mod docutils literal"><span class="pre">signal</span></code></a> module, like <code class="xref py py-attr docutils literal"><span class="pre">signal.SIGHUP</span></code> (see <em class="manpage">signal(7)</em>).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="RunningCommand.signal_group">
+<code class="descclassname">RunningCommand.</code><code class="descname">signal_group</code><span class="sig-paren">(</span><em>sig_num</em><span class="sig-paren">)</span><a class="headerlink" href="#RunningCommand.signal_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends <em>sig_num</em> to every process in the process group.  Typically used with
+a value from the <a class="reference external" href="https://docs.python.org/3.5/library/signal.html#module-signal" title="(in Python v3.5)"><code class="xref py py-mod docutils literal"><span class="pre">signal</span></code></a> module, like <code class="xref py py-attr docutils literal"><span class="pre">signal.SIGHUP</span></code> (see
+<em class="manpage">signal(7)</em>).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="RunningCommand.terminate">
+<code class="descclassname">RunningCommand.</code><code class="descname">terminate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#RunningCommand.terminate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shortcut for <a class="reference internal" href="#RunningCommand.signal" title="RunningCommand.signal"><code class="xref py py-meth docutils literal"><span class="pre">RunningCommand.signal(signal.SIGTERM)</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="RunningCommand.kill">
+<code class="descclassname">RunningCommand.</code><code class="descname">kill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#RunningCommand.kill" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shortcut for <a class="reference internal" href="#RunningCommand.signal" title="RunningCommand.signal"><code class="xref py py-meth docutils literal"><span class="pre">RunningCommand.signal(signal.SIGKILL)</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="RunningCommand.kill_group">
+<code class="descclassname">RunningCommand.</code><code class="descname">kill_group</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#RunningCommand.kill_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shortcut for <a class="reference internal" href="#RunningCommand.signal_group" title="RunningCommand.signal_group"><code class="xref py py-meth docutils literal"><span class="pre">RunningCommand.signal_group(signal.SIGKILL)</span></code></a>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="oproc-class">
+<span id="id2"></span><h2>OProc Class<a class="headerlink" href="#oproc-class" title="Permalink to this headline">¶</a></h2>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Don&#8217;t use instances of this class directly.  It is being documented here for
+posterity, not for direct use.</p>
+</div>
+<dl class="method">
+<dt id="OProc.wait">
+<code class="descclassname">OProc.</code><code class="descname">wait</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OProc.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Block until the process completes, aggregate the output, and populate
+<a class="reference internal" href="#OProc.exit_code" title="OProc.exit_code"><code class="xref py py-attr docutils literal"><span class="pre">OProc.exit_code</span></code></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="OProc.stdout">
+<code class="descclassname">OProc.</code><code class="descname">stdout</code><a class="headerlink" href="#OProc.stdout" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference external" href="https://docs.python.org/3.5/library/collections.html#collections.deque" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">collections.deque</span></code></a>, sized to <a class="reference internal" href="special_arguments.html#internal-bufsize"><span class="std std-ref">_internal_bufsize</span></a> items, that contains the process&#8217;s STDOUT.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="OProc.stderr">
+<code class="descclassname">OProc.</code><code class="descname">stderr</code><a class="headerlink" href="#OProc.stderr" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference external" href="https://docs.python.org/3.5/library/collections.html#collections.deque" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">collections.deque</span></code></a>, sized to <a class="reference internal" href="special_arguments.html#internal-bufsize"><span class="std std-ref">_internal_bufsize</span></a> items, that contains the process&#8217;s STDERR.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="OProc.exit_code">
+<code class="descclassname">OProc.</code><code class="descname">exit_code</code><a class="headerlink" href="#OProc.exit_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains the process&#8217;s exit code, or <code class="docutils literal"><span class="pre">None</span></code> if the process has not yet
+exited.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="OProc.pid">
+<code class="descclassname">OProc.</code><code class="descname">pid</code><a class="headerlink" href="#OProc.pid" title="Permalink to this definition">¶</a></dt>
+<dd><p>The process id of the process.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="OProc.sid">
+<code class="descclassname">OProc.</code><code class="descname">sid</code><a class="headerlink" href="#OProc.sid" title="Permalink to this definition">¶</a></dt>
+<dd><p>The session id of the process.  This will typically be a different session
+than the current python process, unless <a class="reference internal" href="special_arguments.html#new-session"><span class="std std-ref">_new_session=False</span></a> was specified.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="OProc.pgid">
+<code class="descclassname">OProc.</code><code class="descname">pgid</code><a class="headerlink" href="#OProc.pgid" title="Permalink to this definition">¶</a></dt>
+<dd><p>The process group id of the process.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="OProc.ctty">
+<code class="descclassname">OProc.</code><code class="descname">ctty</code><a class="headerlink" href="#OProc.ctty" title="Permalink to this definition">¶</a></dt>
+<dd><p>The controlling terminal device, if there is one.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="OProc.signal">
+<code class="descclassname">OProc.</code><code class="descname">signal</code><span class="sig-paren">(</span><em>sig_num</em><span class="sig-paren">)</span><a class="headerlink" href="#OProc.signal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends <em>sig_num</em> to the process.  Typically used with a value from the
+<a class="reference external" href="https://docs.python.org/3.5/library/signal.html#module-signal" title="(in Python v3.5)"><code class="xref py py-mod docutils literal"><span class="pre">signal</span></code></a> module, like <code class="xref py py-attr docutils literal"><span class="pre">signal.SIGHUP</span></code> (see <em class="manpage">signal(7)</em>).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="OProc.signal_group">
+<code class="descclassname">OProc.</code><code class="descname">signal_group</code><span class="sig-paren">(</span><em>sig_num</em><span class="sig-paren">)</span><a class="headerlink" href="#OProc.signal_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends <em>sig_num</em> to every process in the process group.  Typically used with
+a value from the <a class="reference external" href="https://docs.python.org/3.5/library/signal.html#module-signal" title="(in Python v3.5)"><code class="xref py py-mod docutils literal"><span class="pre">signal</span></code></a> module, like <code class="xref py py-attr docutils literal"><span class="pre">signal.SIGHUP</span></code> (see
+<em class="manpage">signal(7)</em>).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="OProc.terminate">
+<code class="descclassname">OProc.</code><code class="descname">terminate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OProc.terminate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shortcut for <a class="reference internal" href="#OProc.signal" title="OProc.signal"><code class="xref py py-meth docutils literal"><span class="pre">OProc.signal(signal.SIGTERM)</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="OProc.kill">
+<code class="descclassname">OProc.</code><code class="descname">kill</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OProc.kill" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shortcut for <a class="reference internal" href="#OProc.signal" title="OProc.signal"><code class="xref py py-meth docutils literal"><span class="pre">OProc.signal(signal.SIGKILL)</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="OProc.kill_group">
+<code class="descclassname">OProc.</code><code class="descname">kill_group</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OProc.kill_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shortcut for <a class="reference internal" href="#OProc.signal_group" title="OProc.signal_group"><code class="xref py py-meth docutils literal"><span class="pre">OProc.signal_group(signal.SIGKILL)</span></code></a>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="exceptions">
+<h2>Exceptions<a class="headerlink" href="#exceptions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="errorreturncode">
+<span id="error-return-code"></span><h3>ErrorReturnCode<a class="headerlink" href="#errorreturncode" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="ErrorReturnCode">
+<em class="property">class </em><code class="descname">ErrorReturnCode</code><a class="headerlink" href="#ErrorReturnCode" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the base class for, as the name suggests, error return codes.  It
+subclasses <code class="xref py py-data docutils literal"><span class="pre">exceptions.Exception</span></code>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ErrorReturnCode.full_cmd">
+<code class="descclassname">ErrorReturnCode.</code><code class="descname">full_cmd</code><a class="headerlink" href="#ErrorReturnCode.full_cmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>The full command that was executed, as a string, so that you can try it on
+the commandline if you wish.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ErrorReturnCode.stdout">
+<code class="descclassname">ErrorReturnCode.</code><code class="descname">stdout</code><a class="headerlink" href="#ErrorReturnCode.stdout" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total aggregated STDERR for the process.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ErrorReturnCode.stderr">
+<code class="descclassname">ErrorReturnCode.</code><code class="descname">stderr</code><a class="headerlink" href="#ErrorReturnCode.stderr" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total aggregated STDERR for the process.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ErrorReturnCode.exit_code">
+<code class="descclassname">ErrorReturnCode.</code><code class="descname">exit_code</code><a class="headerlink" href="#ErrorReturnCode.exit_code" title="Permalink to this definition">¶</a></dt>
+<dd><p>The process&#8217;s adjusted exit code.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="architecture.html#arch-exit-code"><span class="std std-ref">Exit Code Processing</span></a></p>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="signalexception">
+<span id="signal-exc"></span><h3>SignalException<a class="headerlink" href="#signalexception" title="Permalink to this headline">¶</a></h3>
+<p>Subclasses <a class="reference internal" href="#error-return-code"><span class="std std-ref">ErrorReturnCode</span></a>.  Raised when a command
+receives a signal that causes it to exit.</p>
+</div>
+<div class="section" id="timeoutexception">
+<h3>TimeoutException<a class="headerlink" href="#timeoutexception" title="Permalink to this headline">¶</a></h3>
+<p>Subclasses <a class="reference internal" href="#error-return-code"><span class="std std-ref">ErrorReturnCode</span></a>.  Raised when a command
+specifies a non-null <a class="reference internal" href="special_arguments.html#timeout"><span class="std std-ref">_timeout</span></a> and the command times out:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">_timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">sh</span><span class="o">.</span><span class="n">TimeoutException</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;we timed out, as expected&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="helper-functions">
+<h2>Helper Functions<a class="headerlink" href="#helper-functions" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="which">
+<code class="descname">which</code><span class="sig-paren">(</span><em>name</em>, <em>search_paths=None</em><span class="sig-paren">)</span><a class="headerlink" href="#which" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolves <em>name</em> to program&#8217;s absolute path, or <code class="docutils literal"><span class="pre">None</span></code> if it cannot be
+found.  If <em>search_paths</em> is list of paths, use that list to look for the
+program, otherwise use the environment variable <code class="docutils literal"><span class="pre">$PATH</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pushd">
+<code class="descname">pushd</code><span class="sig-paren">(</span><em>directory</em><span class="sig-paren">)</span><a class="headerlink" href="#pushd" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function provides a <code class="docutils literal"><span class="pre">with</span></code> context that behaves similar to Bash&#8217;s
+<a class="reference external" href="https://www.gnu.org/software/bash/manual/html_node/Directory-Stack-Builtins.html">pushd</a>
+by pushing to the provided directory, and popping out of it at the end of
+the context.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+
+<span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">pushd</span><span class="p">(</span><span class="s2">&quot;/tmp&quot;</span><span class="p">):</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">touch</span><span class="p">(</span><span class="s2">&quot;a_file&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">It should be noted that we use a reentrant lock, so that different threads
+using this function will have the correct behavior inside of their <code class="docutils literal"><span class="pre">with</span></code>
+contexts.</p>
+</div>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="contrib.html" class="btn btn-neutral float-right" title="Contrib Commands" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="architecture.html" class="btn btn-neutral" title="Architecture Overview" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Andrew Moffat.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.12.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

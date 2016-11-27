@@ -1,0 +1,453 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Contrib Commands &mdash; sh 1.12.0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="sh 1.12.0 documentation" href="../index.html"/>
+        <link rel="next" title="Using Sudo" href="sudo.html"/>
+        <link rel="prev" title="API" href="command_class.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> sh
+          
+
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="passing_arguments.html">Passing Arguments</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="passing_arguments.html#keyword-arguments">Keyword Arguments</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="exit_codes.html">Exit Codes &amp; Exceptions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="exit_codes.html#signals">Signals</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="redirection.html">Redirection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="redirection.html#filename">Filename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="redirection.html#file-like-object">File-like Object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="redirection.html#function-callback">Function Callback</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="asynchronous_execution.html">Asynchronous Execution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="asynchronous_execution.html#incremental-iteration">Incremental Iteration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="asynchronous_execution.html#background-processes">Background Processes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="asynchronous_execution.html#output-callbacks">Output Callbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asynchronous_execution.html#interactive-callbacks">Interactive callbacks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="asynchronous_execution.html#done-callbacks">Done Callbacks</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="baking.html">Baking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="piping.html">Piping</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="piping.html#basic">Basic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="piping.html#advanced">Advanced</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="subcommands.html">Sub-commands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="default_arguments.html">Default Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="envs.html">Environments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stdin.html">Input via STDIN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="with.html">&#8216;With&#8217; Contexts</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="special_arguments.html">Special Kwargs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#controlling-output">Controlling Output</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#out">_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#err">_err</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#err-to-out">_err_to_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#encoding">_encoding</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#decode-errors">_decode_errors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tee">_tee</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#execution">Execution</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#fg">_fg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#bg">_bg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#env">_env</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#timeout">_timeout</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#timeout-signal">_timeout_signal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#cwd">_cwd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#ok-code">_ok_code</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#new-session">_new_session</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#uid">_uid</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#preexec-fn">_preexec_fn</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#communication">Communication</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#in">_in</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#piped">_piped</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#iter">_iter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#iter-noblock">_iter_noblock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#with">_with</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#done">_done</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#ttys">TTYs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tty-in">_tty_in</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tty-out">_tty_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tty-size">_tty_size</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#performance-optimization">Performance &amp; Optimization</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#in-bufsize">_in_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#out-bufsize">_out_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#internal-bufsize">_internal_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#no-out">_no_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#no-err">_no_err</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#no-pipe">_no_pipe</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#program-arguments">Program Arguments</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#long-sep">_long_sep</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#long-prefix">_long_prefix</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#arg-preprocess">_arg_preprocess</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="special_arguments.html#misc">Misc</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#log-msg">_log_msg</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html">Architecture Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#launch">Launch</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#child">Child</a></li>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#parent">Parent</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#running">Running</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#buffers">Buffers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="architecture.html#exit">Exit</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#stdin-thread-shutdown">STDIN Thread Shutdown</a></li>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#stdout-err-thread-shutdown">STDOUT/ERR Thread Shutdown</a></li>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#exit-code-processing">Exit Code Processing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="architecture.html#done-callback">Done Callback</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="command_class.html">API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="command_class.html#command-class">Command Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="command_class.html#runningcommand-class">RunningCommand Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="command_class.html#oproc-class">OProc Class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="command_class.html#exceptions">Exceptions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="command_class.html#errorreturncode">ErrorReturnCode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="command_class.html#signalexception">SignalException</a></li>
+<li class="toctree-l4"><a class="reference internal" href="command_class.html#timeoutexception">TimeoutException</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="command_class.html#helper-functions">Helper Functions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Contrib Commands</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#commands">Commands</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sudo">Sudo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#git">Git</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#extending">Extending</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sudo.html">Using Sudo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sudo.html#sh-contrib-sudo">sh.contrib.sudo</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="sudo.html#terminal-input">Terminal Input</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sudo.html#string-input">String Input</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sudo.html#etc-sudoers-nopasswd">/etc/sudoers NOPASSWD</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sudo.html#sh-sudo">sh.sudo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sudo.html#fg-true">_fg=True</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/real_time_output.html">Tailing a real-time log file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tutorials/interacting_with_processes.html">Entering an SSH password</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/interacting_with_processes.html#how-you-should-really-be-using-ssh">How you should REALLY be using SSH</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#will-windows-be-supported">Will Windows be supported?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-append-output-to-a-file">How do I append output to a file?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-does-my-command-s-output-have-color">Why does my command&#8217;s output have color?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-is-tty-out-true-the-default">Why is _tty_out=True the default?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-run-a-program-with-dashes-in-its-name">How do I run a program with dashes in its name?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-doesn-t-work-as-a-command-argument">Why doesn&#8217;t &#8220;*&#8221; work as a command argument?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn&#8217;t in <code class="docutils literal"><span class="pre">$PATH</span></code>?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-execute-a-program-with-a-dash-in-its-name">How do I execute a program with a dash in its name?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-not-use-to-pipe-commands">Why not use <code class="docutils literal"><span class="pre">|</span></code> to pipe commands?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-isn-t-piping-asynchronous-by-default">Why isn&#8217;t piping asynchronous by default?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-run-a-command-and-connect-it-to-sys-stdout-and-sys-stdin">How do I run a command and connect it to sys.stdout and sys.stdin?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-do-my-arguments-need-to-be-separate-strings">Why do my arguments need to be separate strings?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-order-keyword-arguments">How do I order keyword arguments?</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">sh</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+    <li>Contrib Commands</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/sections/contrib.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="contrib-commands">
+<span id="contrib"></span><h1>Contrib Commands<a class="headerlink" href="#contrib-commands" title="Permalink to this headline">¶</a></h1>
+<p>Contrib is an sh sub-module that provides friendly wrappers to useful commands.
+Typically, the commands being wrapped are unintuitive, and the contrib version
+makes them intuitive.</p>
+<div class="section" id="commands">
+<h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="sudo">
+<h3>Sudo<a class="headerlink" href="#sudo" title="Permalink to this headline">¶</a></h3>
+<p>Allows you to enter your password from the terminal at runtime, or as a string
+in your script.</p>
+<dl class="function">
+<dt>
+<code class="descname">sudo</code><span class="sig-paren">(</span><em>password=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span></dt>
+<dd><p>Call sudo with <em>password</em>, if specified, else ask the executing user for a
+password at runtime via <a class="reference external" href="https://docs.python.org/3.5/library/getpass.html#getpass.getpass" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">getpass.getpass()</span></code></a>.</p>
+</dd></dl>
+
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="sudo.html#contrib-sudo"><span class="std std-ref">sh.contrib.sudo</span></a></p>
+</div>
+</div>
+<div class="section" id="git">
+<span id="contrib-git"></span><h3>Git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h3>
+<p>Many git commands use a pager for output, which can cause an unexpected behavior
+when run through sh.  To account for this, the contrib version sets
+<code class="docutils literal"><span class="pre">_tty_out=False</span></code> for all git commands.</p>
+<dl class="function">
+<dt>
+<code class="descname">git</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span></dt>
+<dd><p>Call git with STDOUT connected to a pipe, instead of a TTY.</p>
+</dd></dl>
+
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh.contrib</span> <span class="kn">import</span> <span class="n">git</span>
+<span class="n">repo_log</span> <span class="o">=</span> <span class="n">git</span><span class="o">.</span><span class="n">log</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="faq.html#faq-tty-out"><span class="std std-ref">Why is _tty_out=True the default?</span></a> and <a class="reference internal" href="faq.html#faq-color-output"><span class="std std-ref">Why does my command&#8217;s output have color?</span></a></p>
+</div>
+</div>
+</div>
+<div class="section" id="extending">
+<h2>Extending<a class="headerlink" href="#extending" title="Permalink to this headline">¶</a></h2>
+<p>For developers.</p>
+<p>To extend contrib, simply decorate a function in sh with the <code class="docutils literal"><span class="pre">&#64;contrib</span></code>
+decorator, and pass in the name of the command you wish to shadow to the
+decorator.  This method must return an instance of <a class="reference internal" href="command_class.html#command-class"><span class="std std-ref">Command</span></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="nd">@contrib</span><span class="p">(</span><span class="s2">&quot;ls&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">my_ls</span><span class="p">(</span><span class="n">original</span><span class="p">):</span>
+    <span class="n">ls</span> <span class="o">=</span> <span class="n">original</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ls</span>
+</pre></div>
+</div>
+<p>Now you can run your custom contrib command from your scripts, and you&#8217;ll be
+using the command returned from your decorated function:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh.contrib</span> <span class="kn">import</span> <span class="n">ls</span>
+
+<span class="c1"># executing: ls -l</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>For even more flexibility, you can design your contrib command to rewrite its
+options based on <em>executed</em> arguments.  For example, say you only wish to set a
+command&#8217;s argument if another argument is set.  You can accomplish it like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="nd">@contrib</span><span class="p">(</span><span class="s2">&quot;ls&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">my_ls</span><span class="p">(</span><span class="n">original</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;-a&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-L&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span>
+
+    <span class="n">ls</span> <span class="o">=</span> <span class="n">original</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ls</span><span class="p">,</span> <span class="n">process</span>
+</pre></div>
+</div>
+<p>Returning a process function along with the command will tell sh to use that
+function to preprocess the arguments at execution time using the
+<a class="reference internal" href="special_arguments.html#preprocess"><span class="std std-ref">_arg_preprocess</span></a> special kwarg.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sudo.html" class="btn btn-neutral float-right" title="Using Sudo" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="command_class.html" class="btn btn-neutral" title="API" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Andrew Moffat.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.12.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
