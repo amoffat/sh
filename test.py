@@ -3,6 +3,7 @@ import sys
 import os
 
 IS_PY3 = sys.version_info[0] == 3
+IS_PY2 = not IS_PY3
 MINOR_VER = sys.version_info[1]
 
 # coverage doesn't work in python 3.1, 3.2 due to it just being a shit
@@ -2853,17 +2854,22 @@ if __name__ == "__main__":
     root.setLevel(logging.DEBUG)
     root.addHandler(NullHandler())
 
+    test_kwargs = {"verbosity": 2}
+
+    if IS_PY2 and MINOR_VER != 6:
+        test_kwargs["failfast"] = True
+
     try:
         # if we're running a specific test, we can let unittest framework figure out
         # that test and run it itself.  it will also handle setting the return code
         # of the process if any tests error or fail
         if len(sys.argv) > 1:
-            unittest.main()
+            unittest.main(**test_kwargs)
 
         # otherwise, it looks like we want to run all the tests
         else:
             suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
-            result = unittest.TextTestRunner(verbosity=2).run(suite)
+            result = unittest.TextTestRunner(**test_kwargs).run(suite)
 
             if not result.wasSuccessful():
                 exit(1)

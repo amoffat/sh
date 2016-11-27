@@ -3150,10 +3150,9 @@ class ModuleImporterFromVariables(object):
         return module
 
 
-def run_tests(env, locale, args, version=None, **extra_env): # pragma: no cover
+def run_tests(env, locale, args, version, **extra_env): # pragma: no cover
     py_version = "python"
-    if version:
-        py_version += str(version)
+    py_version += str(version)
 
     py_bin = which(py_version)
     return_code = None
@@ -3198,7 +3197,6 @@ if __name__ == "__main__": # pragma: no cover
         action = args[0]
 
     if action in ("test", "travis"):
-        import subprocess
         import test
         coverage = None
         if test.HAS_UNICODE_LITERAL:
@@ -3208,7 +3206,6 @@ if __name__ == "__main__": # pragma: no cover
         env["SH_TESTS_RUNNING"] = "1"
         if coverage:
             test.append_module_path(env, coverage)
-        
 
         # if we're testing locally, run all versions of python on the system
         if action == "test":
@@ -3218,7 +3215,9 @@ if __name__ == "__main__": # pragma: no cover
         # since travis will spawn a vm per python version in our .travis.yml
         # file
         elif action == "travis":
-            all_versions = (None,)
+            v = sys.version_info
+            sys_ver = "%d.%d" % (v[0], v[1])
+            all_versions = (sys_ver,)
 
         all_locales = ("en_US.UTF-8", "C")
         i = 0
@@ -3238,9 +3237,13 @@ if __name__ == "__main__": # pragma: no cover
                     print("Couldn't find %s, skipping" % version)
 
                 elif exit_code != 0:
+                    print("Failed for %s, %s" % (version, locale))
                     exit(1)
 
                 i += 1
+
+        ran_versions = ",".join(all_versions)
+        print("Tested Python versions: %s" % ran_versions)
 
     else:
         env = Environment(globals())
