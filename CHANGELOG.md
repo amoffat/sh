@@ -1,5 +1,43 @@
 # Changelog
 
+## 1.12.0 - 11/21/16
+
+*   composed commands no longer propagate `_bg`
+*   better support for using `sys.stdin` and `sys.stdout` for `_in` and `_out`
+*   bugfix where `which()` would not stop searching at the first valid executable found in PATH
+*   added `_long_prefix` for programs whose long arguments start with something other than `--` [#278](https://github.com/amoffat/sh/pull/278)
+*   added `_log_msg` for advanced configuration of log message [#311](https://github.com/amoffat/sh/pull/311)
+*   added `sh.contrib.sudo`
+*   added `_arg_preprocess` for advanced command wrapping
+*   alter callable `_in` arguments to signify completion with falsy chunk
+*   bugfix where pipes passed into `_out` or `_err` were not flushed on process end [#252](https://github.com/amoffat/sh/pull/252)
+*   deprecated `with sh.args(**kwargs)` in favor of `sh2 = sh(**kwargs)`
+*   made `sh.pushd` thread safe
+*   added `.kill_group()` and `.signal_group()` methods for better process control [#237](https://github.com/amoffat/sh/pull/237)
+*   added `new_session` special keyword argument for controlling spawned process session [#266](https://github.com/amoffat/sh/issues/266)
+*   bugfix better handling for EINTR on system calls [#292](https://github.com/amoffat/sh/pull/292)
+*   bugfix where with-contexts were not threadsafe [#247](https://github.com/amoffat/sh/issues/195)
+*   `_uid` new special keyword param for specifying the user id of the process [#133](https://github.com/amoffat/sh/issues/133)
+*   bugfix where exceptions were swallowed by processes that weren't waited on [#309](https://github.com/amoffat/sh/issues/309)
+*   bugfix where processes that dupd their stdout/stderr to a long running child process would cause sh to hang [#310](https://github.com/amoffat/sh/issues/310)
+*   improved logging output [#323](https://github.com/amoffat/sh/issues/323)
+*   bugfix for python3+ where binary data was passed into a process's stdin [#325](https://github.com/amoffat/sh/issues/325)
+*   Introduced execution contexts which allow baking of common special keyword arguments into all commands [#269](https://github.com/amoffat/sh/issues/269)
+*   `Command` and `which` now can take an optional `paths` parameter which specifies the search paths [#226](https://github.com/amoffat/sh/issues/226)
+*   `_preexec_fn` option for executing a function after the child process forks but before it execs [#260](https://github.com/amoffat/sh/issues/260)
+*   `_fg` reintroduced, with limited functionality.  hurrah! [#92](https://github.com/amoffat/sh/issues/92)
+*   bugfix where a command would block if passed a fd for stdin that wasn't yet ready to read [#253](https://github.com/amoffat/sh/issues/253)
+*   `_long_sep` can now take `None` which splits the long form arguments into individual arguments [#258](https://github.com/amoffat/sh/issues/258)
+*   making `_piped` perform "direct" piping by default (linking fds together).  this fixes memory problems [#270](https://github.com/amoffat/sh/issues/270)
+*   bugfix where calling `next()` on an iterable process that has raised `StopIteration`, hangs [#273](https://github.com/amoffat/sh/issues/273)
+*   `sh.cd` called with no arguments no changes into the user's home directory, like native `cd` [#275](https://github.com/amoffat/sh/issues/275)
+*   `sh.glob` removed entirely.  the rationale is correctness over hand-holding. [#279](https://github.com/amoffat/sh/issues/279)
+*   added `_truncate_exc`, defaulting to `True`, which tells our exceptions to truncate output.
+*   bugfix for exceptions whose messages contained unicode
+*   `_done` callback no longer assumes you want your command put in the background.
+*   `_done` callback is now called asynchronously in a separate thread.
+*   `_done` callback is called regardless of exception, which is necessary in order to release held resources, for example a process pool
+
 ## 1.10 - 12/30/14
 
 *   partially applied functions with `functools.partial` have been fixed for `_out` and `_err` callbacks [#160](https://github.com/amoffat/sh/issues/160)
