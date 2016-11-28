@@ -2854,10 +2854,12 @@ if __name__ == "__main__":
     root.setLevel(logging.DEBUG)
     root.addHandler(NullHandler())
 
-    test_kwargs = {"verbosity": 2}
+    test_kwargs = {}
 
     if IS_PY2 and MINOR_VER != 6:
         test_kwargs["failfast"] = True
+        test_kwargs["verbosity"] = 2
+
 
     try:
         # if we're running a specific test, we can let unittest framework figure out
@@ -2869,6 +2871,7 @@ if __name__ == "__main__":
         # otherwise, it looks like we want to run all the tests
         else:
             suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
+            test_kwargs["verbosity"] = 2
             result = unittest.TextTestRunner(**test_kwargs).run(suite)
 
             if not result.wasSuccessful():
