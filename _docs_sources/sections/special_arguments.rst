@@ -22,8 +22,9 @@ _out
 |def| ``None``
 
 What to redirect STDOUT to.  If this is a string, it will be treated as a file
-name.  You may also pass a file object (or file-like object), as well as a
-:class:`io.StringIO` object.
+name.  You may also pass a file object (or file-like object), an int
+(representing a file descriptor, like the result of :func:`os.pipe`), a
+:class:`io.StringIO` object, or a callable.
 
 .. code-block:: python
 
