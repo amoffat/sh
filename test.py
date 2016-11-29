@@ -1055,8 +1055,7 @@ sys.stdout.write("foobar\n")
 """)
 
         read_fd, write_fd = os.pipe()
-        read, write = os.fdopen(read_fd, 'rb', 0), os.fdopen(write_fd, 'wb', 0)
-        p = python(py.name, _out=write, u=True)
+        p = python(py.name, _out=write_fd, u=True)
 
         def alarm(sig, action):
             self.fail("Timeout while reading from pipe")
@@ -1065,7 +1064,8 @@ sys.stdout.write("foobar\n")
         signal.signal(signal.SIGALRM, alarm)
         signal.alarm(3)
 
-        self.assertEqual(b"foobar\n", read.read(-1))
+        data = os.read(read_fd, 100)
+        self.assertEqual(b"foobar\n", data)
         signal.alarm(0)
         signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
