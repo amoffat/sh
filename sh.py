@@ -2502,11 +2502,6 @@ def get_file_chunk_consumer(handler):
     def finish():
         flush()
 
-        if hasattr(handler, "fileno"):
-            fd_stat = os.fstat(handler.fileno())
-            if stat.S_ISFIFO(fd_stat.st_mode):
-                handler.close()
-
     return process, finish
 
 def get_callback_chunk_consumer(handler, encoding, decode_errors):
