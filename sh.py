@@ -24,7 +24,7 @@ http://amoffat.github.io/sh/
 #===============================================================================
 
 
-__version__ = "1.12.0"
+__version__ = "1.12.1"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
@@ -797,10 +797,7 @@ class RunningCommand(object):
 
 
 def output_redirect_is_filename(out):
-    return out \
-        and not callable(out) \
-        and not hasattr(out, "write") \
-        and not isinstance(out, (cStringIO, StringIO))
+    return isinstance(out, basestring)
 
 
 def get_prepend_stack():
@@ -829,12 +826,10 @@ def special_kwarg_validator(kwargs, invalid_list):
 
     return invalid_args
 
-def ob_is_tty(ob):
-    """ checks if an object (like a file-like object) is a tty.  """
 
+def get_fileno(ob):
     fileno_meth = getattr(ob, "fileno", None)
-    is_tty = False
-
+    fileno = None
     if fileno_meth:
         # StringIO objects will report a fileno, but calling it will raise an
         # exception
@@ -842,9 +837,28 @@ def ob_is_tty(ob):
             fileno = fileno_meth()
         except UnsupportedOperation:
             pass
-        else:
-            is_tty = os.isatty(fileno)
+    elif isinstance(ob, (int,long)) and ob >= 0:
+        fileno = ob
+
+    return fileno
+
+
+def ob_is_tty(ob):
+    """ checks if an object (like a file-like object) is a tty.  """
+    fileno = get_fileno(ob)
+    is_tty = False
+    if fileno:
+        is_tty = os.isatty(fileno)
     return is_tty
+
+def ob_is_pipe(ob):
+    fileno = get_fileno(ob)
+    is_pipe = False
+    if fileno:
+        fd_stat = os.fstat(fileno)
+        is_pipe = stat.S_ISFIFO(fd_stat.st_mode)
+    return is_pipe
+
 
 def tty_in_validator(kwargs):
     pairs = (("tty_in", "in"), ("tty_out", "out"))
@@ -1508,9 +1522,9 @@ class OProc(object):
         # file-like object that is a tty, for example `sys.stdin`, then, later
         # on in this constructor, we're going to skip out on setting up pipes
         # and pseudoterminals for those endpoints
-        stdin_is_tty = ob_is_tty(stdin)
-        stdout_is_tty = ob_is_tty(stdout)
-        stderr_is_tty = ob_is_tty(stderr)
+        stdin_is_tty_or_pipe = ob_is_tty(stdin) or ob_is_pipe(stdin)
+        stdout_is_tty_or_pipe = ob_is_tty(stdout) or ob_is_pipe(stdout)
+        stderr_is_tty_or_pipe = ob_is_tty(stderr) or ob_is_pipe(stderr)
 
         single_tty = ca["tty_in"] and ca["tty_out"]
 
@@ -1537,8 +1551,8 @@ class OProc(object):
                 self._stdin_read_fd = None
                 self._stdin_process = stdin
 
-            elif stdin_is_tty:
-                self._stdin_write_fd = os.dup(stdin.fileno())
+            elif stdin_is_tty_or_pipe:
+                self._stdin_write_fd = os.dup(get_fileno(stdin))
                 self._stdin_read_fd = None
 
             elif ca["tty_in"]:
@@ -1549,8 +1563,8 @@ class OProc(object):
                 self._stdin_write_fd, self._stdin_read_fd = os.pipe()
 
 
-            if stdout_is_tty:
-                self._stdout_write_fd = os.dup(stdout.fileno())
+            if stdout_is_tty_or_pipe:
+                self._stdout_write_fd = os.dup(get_fileno(stdout))
                 self._stdout_read_fd = None
 
             # tty_out=True is the default
@@ -1570,8 +1584,8 @@ class OProc(object):
                 self._stderr_read_fd = os.dup(self._stdout_read_fd)
                 self._stderr_write_fd = os.dup(self._stdout_write_fd)
 
-            elif stderr_is_tty:
-                self._stderr_write_fd = os.dup(stderr.fileno())
+            elif stderr_is_tty_or_pipe:
+                self._stderr_write_fd = os.dup(get_fileno(stderr))
                 self._stderr_read_fd = None
 
             else:
@@ -1660,7 +1674,7 @@ class OProc(object):
                 payload = ("%d,%d" % (sid, pgid)).encode(DEFAULT_ENCODING)
                 os.write(session_pipe_write, payload)
 
-                if ca["tty_out"] and not stdout_is_tty and not single_tty:
+                if ca["tty_out"] and not stdout_is_tty_or_pipe and not single_tty:
                     # set raw mode, so there isn't any weird translation of
                     # newlines to \r\n and other oddities.  we're not outputting
                     # to a terminal anyways
@@ -1699,7 +1713,7 @@ class OProc(object):
                     tmp_fd = os.open(os.ttyname(0), os.O_RDWR)
                     os.close(tmp_fd)
 
-                if ca["tty_out"] and not stdout_is_tty:
+                if ca["tty_out"] and not stdout_is_tty_or_pipe:
                     setwinsize(1, ca["tty_size"])
 
                 if ca["uid"] is not None:
@@ -1797,7 +1811,7 @@ class OProc(object):
             self._stdout = deque(maxlen=ca["internal_bufsize"])
             self._stderr = deque(maxlen=ca["internal_bufsize"])
 
-            if ca["tty_in"] and not stdin_is_tty:
+            if ca["tty_in"] and not stdin_is_tty_or_pipe:
                 setwinsize(self._stdin_read_fd, ca["tty_size"])
 
 
@@ -1807,7 +1821,7 @@ class OProc(object):
             self.log.debug("started process")
 
             # disable echoing, but only if it's a tty that we created ourselves
-            if ca["tty_in"] and not stdin_is_tty:
+            if ca["tty_in"] and not stdin_is_tty_or_pipe:
                 attr = termios.tcgetattr(self._stdin_read_fd)
                 attr[3] &= ~termios.ECHO
                 termios.tcsetattr(self._stdin_read_fd, termios.TCSANOW, attr)
@@ -2504,11 +2518,6 @@ def get_file_chunk_consumer(handler):
 
     def finish():
         flush()
-
-        if hasattr(handler, "fileno"):
-            fd_stat = os.fstat(handler.fileno())
-            if stat.S_ISFIFO(fd_stat.st_mode):
-                handler.close()
 
     return process, finish
 

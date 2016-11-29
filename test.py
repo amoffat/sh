@@ -1055,9 +1055,7 @@ sys.stdout.write("foobar\n")
 """)
 
         read_fd, write_fd = os.pipe()
-        read, write = os.fdopen(read_fd, 'rb', 0), os.fdopen(write_fd, 'wb', 0)
-        p = python(py.name, _out=write, u=True)
-        write.close()
+        p = python(py.name, _out=write_fd, u=True)
 
         def alarm(sig, action):
             self.fail("Timeout while reading from pipe")
@@ -1066,7 +1064,8 @@ sys.stdout.write("foobar\n")
         signal.signal(signal.SIGALRM, alarm)
         signal.alarm(3)
 
-        self.assertEqual(b"foobar\n", read.read(-1))
+        data = os.read(read_fd, 100)
+        self.assertEqual(b"foobar\n", data)
         signal.alarm(0)
         signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
@@ -2854,10 +2853,12 @@ if __name__ == "__main__":
     root.setLevel(logging.DEBUG)
     root.addHandler(NullHandler())
 
-    test_kwargs = {"verbosity": 2}
+    test_kwargs = {}
 
     if IS_PY2 and MINOR_VER != 6:
         test_kwargs["failfast"] = True
+        test_kwargs["verbosity"] = 2
+
 
     try:
         # if we're running a specific test, we can let unittest framework figure out
@@ -2869,6 +2870,7 @@ if __name__ == "__main__":
         # otherwise, it looks like we want to run all the tests
         else:
             suite = unittest.TestLoader().loadTestsFromModule(sys.modules[__name__])
+            test_kwargs["verbosity"] = 2
             result = unittest.TextTestRunner(**test_kwargs).run(suite)
 
             if not result.wasSuccessful():
