@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Special Kwargs &mdash; sh 1.12.0 documentation</title>
+  <title>Special Kwargs &mdash; sh 1.12.1 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.0 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.1 documentation" href="../index.html"/>
         <link rel="up" title="Reference" href="../reference.html"/>
         <link rel="next" title="Architecture Overview" href="architecture.html"/>
         <link rel="prev" title="Reference" href="../reference.html"/> 
@@ -314,8 +314,9 @@ sh will tell you if there are conflicts.</p>
 <span id="id1"></span><h3>_out<a class="headerlink" href="#out" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>What to redirect STDOUT to.  If this is a string, it will be treated as a file
-name.  You may also pass a file object (or file-like object), as well as a
-<a class="reference external" href="https://docs.python.org/3.5/library/io.html#io.StringIO" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">io.StringIO</span></code></a> object.</p>
+name.  You may also pass a file object (or file-like object), an int
+(representing a file descriptor, like the result of <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.pipe" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.pipe()</span></code></a>), a
+<a class="reference external" href="https://docs.python.org/3.5/library/io.html#io.StringIO" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">io.StringIO</span></code></a> object, or a callable.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="s2">&quot;/tmp/output&quot;</span><span class="p">)</span>
 </pre></div>
@@ -796,7 +797,7 @@ you absolutely have to.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.0',
+            VERSION:'1.12.1',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true
