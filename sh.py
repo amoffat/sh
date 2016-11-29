@@ -828,11 +828,14 @@ def special_kwarg_validator(kwargs, invalid_list):
 
 
 def get_fileno(ob):
+    # in py2, this will return None.  in py3, it will return an method that
+    # raises when called
     fileno_meth = getattr(ob, "fileno", None)
+
     fileno = None
     if fileno_meth:
-        # StringIO objects will report a fileno, but calling it will raise an
-        # exception
+        # py3 StringIO objects will report a fileno, but calling it will raise
+        # an exception
         try:
             fileno = fileno_meth()
         except UnsupportedOperation:
