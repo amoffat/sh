@@ -55,6 +55,7 @@ import ast
 from contextlib import contextmanager
 import pwd
 import errno
+from io import UnsupportedOperation
 
 from locale import getpreferredencoding
 DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
@@ -67,8 +68,10 @@ DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
 RUNNING_TESTS = bool(int(os.environ.get("SH_TESTS_RUNNING", "0")))
 
 if IS_PY3:
-    from io import StringIO, UnsupportedOperation
+    from io import StringIO
+    ioStringIO = StringIO
     from io import BytesIO as cStringIO
+    iocStringIO = cStringIO
     from queue import Queue, Empty
 
     # for some reason, python 3.1 removed the builtin "callable", wtf
@@ -78,6 +81,8 @@ if IS_PY3:
 else:
     from StringIO import StringIO
     from cStringIO import OutputType as cStringIO
+    from io import StringIO as ioStringIO
+    from io import BytesIO as iocStringIO
     from Queue import Queue, Empty
 
 IS_OSX = platform.system() == "Darwin"
@@ -2485,11 +2490,11 @@ def determine_how_to_feed_output(handler, encoding, decode_errors):
                 decode_errors)
 
     # in py3, this is used for bytes
-    elif isinstance(handler, cStringIO):
+    elif isinstance(handler, (cStringIO, iocStringIO)):
         process, finish = get_cstringio_chunk_consumer(handler)
 
     # in py3, this is used for unicode
-    elif isinstance(handler, StringIO):
+    elif isinstance(handler, (StringIO, ioStringIO)):
         process, finish = get_stringio_chunk_consumer(handler, encoding,
                 decode_errors)
 
