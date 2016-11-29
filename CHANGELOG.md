@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.3 - 11/29/16
+
+*   fd leak regression and fix for flawed fd leak detection test [#337](https://github.com/amoffat/sh/pull/337)
+
 ## 1.12.2 - 11/28/16
 
 *   support for `io.StringIO` in python2
