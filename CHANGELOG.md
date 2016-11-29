@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.12.1 - 11/28/16
+
+*   added support for using raw file descriptors for `_in`, `_out`, and `_err`
+*   removed `.close()`ing `_out` handler if FIFO detected
+
 ## 1.12.0 - 11/21/16
 
 *   composed commands no longer propagate `_bg`
