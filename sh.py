@@ -1786,6 +1786,7 @@ class OProc(object):
             os.close(session_pipe_write)
             sid, pgid = os.read(session_pipe_read,
                     1024).decode(DEFAULT_ENCODING).split(",")
+            os.close(session_pipe_read)
             self.sid = int(sid)
             self.pgid = int(pgid)
 

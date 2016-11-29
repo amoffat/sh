@@ -2545,6 +2545,7 @@ print("cool")
         def get_num_fds():
             lines = sh.lsof(p=test_pid).strip().split("\n")
             def test(line):
+                line = line.upper()
                 return "CHR" in line or "PIPE" in line
 
             lines = [line for line in lines if test(line)]
