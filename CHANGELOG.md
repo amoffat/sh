@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.2 - 11/28/16
+
+*   support for `io.StringIO` in python2
+
 ## 1.12.1 - 11/28/16
 
 *   added support for using raw file descriptors for `_in`, `_out`, and `_err`

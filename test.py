@@ -82,11 +82,15 @@ if IS_PY3:
     unicode = str
     long = int
     from io import StringIO
+    ioStringIO = StringIO
     from io import BytesIO as cStringIO
+    iocStringIO = cStringIO
     python = sh.Command(sh.which("python%d.%d" % sys.version_info[:2]))
 else:
     from StringIO import StringIO
     from cStringIO import StringIO as cStringIO
+    from io import StringIO as ioStringIO
+    from io import BytesIO as iocStringIO
     python = sh.python
 
 THIS_DIR = dirname(os.path.abspath(__file__))
@@ -1658,6 +1662,14 @@ else:
         self.assertEqual(out.getvalue(), "testing 123")
 
         out = cStringIO()
+        echo("-n", "testing 123", _out=out)
+        self.assertEqual(out.getvalue().decode(), "testing 123")
+
+        out = ioStringIO()
+        echo("-n", "testing 123", _out=out)
+        self.assertEqual(out.getvalue(), "testing 123")
+
+        out = iocStringIO()
         echo("-n", "testing 123", _out=out)
         self.assertEqual(out.getvalue().decode(), "testing 123")
 
