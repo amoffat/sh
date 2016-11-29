@@ -1057,7 +1057,6 @@ sys.stdout.write("foobar\n")
         read_fd, write_fd = os.pipe()
         read, write = os.fdopen(read_fd, 'rb', 0), os.fdopen(write_fd, 'wb', 0)
         p = python(py.name, _out=write, u=True)
-        write.close()
 
         def alarm(sig, action):
             self.fail("Timeout while reading from pipe")
