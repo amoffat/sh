@@ -797,10 +797,7 @@ class RunningCommand(object):
 
 
 def output_redirect_is_filename(out):
-    return out \
-        and not callable(out) \
-        and not hasattr(out, "write") \
-        and not isinstance(out, (cStringIO, StringIO))
+    return isinstance(out, basestring)
 
 
 def get_prepend_stack():
