@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.5 - 11/31/16
+
+*   further improvements on cpu usage
+
 ## 1.12.4 - 11/30/16
 
 *   regression in cpu usage [#339](https://github.com/amoffat/sh/issues/339)
