@@ -2107,6 +2107,8 @@ class OProc(object):
             self._output_thread.join()
             timer.cancel()
 
+            self._background_thread.join()
+
             if witnessed_end:
                 self._process_just_ended()
 
