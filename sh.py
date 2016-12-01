@@ -1835,15 +1835,19 @@ class OProc(object):
                 attr[3] &= ~termios.ECHO
                 termios.tcsetattr(self._stdin_read_fd, termios.TCSANOW, attr)
 
+            # we're only going to create a stdin thread iff we have potential
+            # for stdin to come in.  this would be through a stdout callback or
+            # through an object we've passed in for stdin
+            potentially_has_input = callable(stdout) or stdin
+
             # this represents the connection from a Queue object (or whatever
             # we're using to feed STDIN) to the process's STDIN fd
             self._stdin_stream = None
-            if not isinstance(self.stdin, OProc) and self._stdin_read_fd:
-                self._stdin_stream = \
-                        StreamWriter(
-                                self.log.get_child("streamwriter", "stdin"),
-                                self._stdin_read_fd, self.stdin, ca["in_bufsize"],
-                                ca["encoding"], ca["tty_in"])
+            if self._stdin_read_fd and potentially_has_input:
+                log = self.log.get_child("streamwriter", "stdin")
+                self._stdin_stream =  StreamWriter(log, self._stdin_read_fd,
+                        self.stdin, ca["in_bufsize"], ca["encoding"],
+                        ca["tty_in"])
 
             stdout_pipe = None
             if pipe is OProc.STDOUT and not ca["no_pipe"]:
@@ -2068,6 +2072,13 @@ class OProc(object):
         if done_callback:
             success = self.exit_code in self.call_args["ok_code"]
             done_callback(success, self.exit_code)
+
+        # this can only be closed at the end of the process, because it might be
+        # the CTTY, and closing it prematurely will send a SIGHUP.  we also
+        # don't want to close it if there's a self._stdin_stream, because that
+        # is in charge of closing it also
+        if self._stdin_read_fd and not self._stdin_stream:
+            os.close(self._stdin_read_fd)
 
 
     def wait(self):
