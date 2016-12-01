@@ -2193,7 +2193,7 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive,
     # loop and clean up
     while readers:
         outputs, inputs, err = no_interrupt(select.select, readers, [], errors,
-                0.01)
+                0.1)
 
         # stdout and stderr
         for stream in outputs:
