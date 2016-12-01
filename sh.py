@@ -2149,7 +2149,7 @@ def background_thread(timeout, timeout_fn, timeout_event, cancel_event,
         started = time.time()
 
         while True:
-            time.sleep(0.1)
+            time.sleep(0.01)
             elapsed = time.time() - started
             if elapsed > timeout or cancel_event.is_set():
                 break
@@ -2193,7 +2193,7 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive,
     # loop and clean up
     while readers:
         outputs, inputs, err = no_interrupt(select.select, readers, [], errors,
-                0.1)
+                0.01)
 
         # stdout and stderr
         for stream in outputs:
@@ -2221,7 +2221,7 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive,
     alive = True
     while alive:
         alive, exit_code = is_alive()
-        time.sleep(0.001)
+        time.sleep(0.01)
 
     if stdout:
         stdout.close()
