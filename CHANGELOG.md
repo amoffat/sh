@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.4 - 11/30/16
+
+*   regression in cpu usage [#339](https://github.com/amoffat/sh/issues/339)
+
 ## 1.12.3 - 11/29/16
 
 *   fd leak regression and fix for flawed fd leak detection test [#337](https://github.com/amoffat/sh/pull/337)

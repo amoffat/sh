@@ -2162,6 +2162,7 @@ def background_thread(timeout, timeout_fn, timeout_event, cancel_event,
     if handle_exit_code and not RUNNING_TESTS: # pragma: no cover
         alive = True
         while alive:
+            time.sleep(0.01)
             alive, exit_code = is_alive()
 
         handle_exit_code(exit_code)
