@@ -310,6 +310,10 @@ exit(3)
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=[code_to_pass])
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=range(code_to_pass + 1))
 
+    def test_ok_code_none(self):
+        py = create_tmp_test("exit(0)")
+        python(py.name, _ok_code=None)
+
     def test_quote_escaping(self):
         py = create_tmp_test("""
 from optparse import OptionParser
