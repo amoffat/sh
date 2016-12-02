@@ -1770,16 +1770,6 @@ sys.stdout.write("line1")
         import sh
         from time import time
 
-        # check that a normal sleep is more or less how long the whole process
-        # takes
-        sleep_for = 3
-        started = time()
-        sh.sleep(sleep_for).wait()
-        elapsed = time() - started
-
-        self.assertTrue(abs(elapsed - sleep_for) < 0.5)
-
-        # now make sure that killing early makes the process take less time
         sleep_for = 3
         timeout = 1
         started = time()
@@ -1787,6 +1777,8 @@ sys.stdout.write("line1")
             sh.sleep(sleep_for, _timeout=timeout).wait()
         except sh.TimeoutException:
             pass
+        else:
+            self.fail("no timeout exception")
         elapsed = time() - started
         self.assertTrue(abs(elapsed - timeout) < 0.5)
 
