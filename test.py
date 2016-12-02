@@ -310,6 +310,10 @@ exit(3)
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=[code_to_pass])
         ls("/aofwje/garogjao4a/eoan3on", _ok_code=range(code_to_pass + 1))
 
+    def test_ok_code_none(self):
+        py = create_tmp_test("exit(0)")
+        python(py.name, _ok_code=None)
+
     def test_quote_escaping(self):
         py = create_tmp_test("""
 from optparse import OptionParser
@@ -1770,16 +1774,6 @@ sys.stdout.write("line1")
         import sh
         from time import time
 
-        # check that a normal sleep is more or less how long the whole process
-        # takes
-        sleep_for = 3
-        started = time()
-        sh.sleep(sleep_for).wait()
-        elapsed = time() - started
-
-        self.assertTrue(abs(elapsed - sleep_for) < 0.5)
-
-        # now make sure that killing early makes the process take less time
         sleep_for = 3
         timeout = 1
         started = time()
@@ -1787,8 +1781,17 @@ sys.stdout.write("line1")
             sh.sleep(sleep_for, _timeout=timeout).wait()
         except sh.TimeoutException:
             pass
+        else:
+            self.fail("no timeout exception")
         elapsed = time() - started
         self.assertTrue(abs(elapsed - timeout) < 0.5)
+
+
+    def test_timeout_overstep(self):
+        started = time.time()
+        sh.sleep(1, _timeout=5)
+        elapsed = time.time() - started
+        self.assertTrue(abs(elapsed - 1) < 0.5)
 
 
     def test_binary_pipe(self):
