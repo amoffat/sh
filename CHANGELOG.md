@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.12.5 - 11/31/16
+## 1.12.5 - 12/01/16
 
 *   further improvements on cpu usage
 
