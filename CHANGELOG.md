@@ -1,8 +1,9 @@
 # Changelog
 
-## 1.12.6 - 11/32/16
+## 1.12.6 - 12/02/16
 
 *   regression bugfix on timeout [#344](https://github.com/amoffat/sh/issues/344)
+*   regression bugfix on `_ok_code=None`
 
 ## 1.12.5 - 12/01/16
 

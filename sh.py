@@ -1186,6 +1186,13 @@ output"),
         call_args.update(extracted_call_args)
 
 
+        # handle a None.  this is added back only to not break the api in the
+        # 1.* version.  TODO remove this in 2.0, as "ok_code", if specified,
+        # should always be a definitive value or list of values, and None is
+        # ambiguous
+        if call_args["ok_code"] is None:
+            call_args["ok_code"] = 0
+
         if not getattr(call_args["ok_code"], "__iter__", None):
             call_args["ok_code"] = [call_args["ok_code"]]
 
