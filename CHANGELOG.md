@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.6 - 11/32/16
+
+*   regression bugfix on timeout [#344](https://github.com/amoffat/sh/issues/344)
+
 ## 1.12.5 - 12/01/16
 
 *   further improvements on cpu usage
