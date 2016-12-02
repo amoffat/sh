@@ -39,6 +39,7 @@ support." % __version__)
 import sys
 IS_PY3 = sys.version_info[0] == 3
 MINOR_VER = sys.version_info[1]
+IS_PY26 = sys.version_info[0] == 2 and MINOR_VER == 6
 
 import traceback
 import os
@@ -1916,8 +1917,14 @@ class OProc(object):
                 self.timed_out = True
                 self.signal(ca["timeout_signal"])
 
-            self._timeout_event = threading.Event()
-            self._timeout_cancel_event = threading.Event()
+
+            self._timeout_event = None
+            self._timeout_timer = None
+            if ca["timeout"]:
+                self._timeout_event = threading.Event()
+                self._timeout_timer = threading.Timer(ca["timeout"],
+                        self._timeout_event.set)
+                self._timeout_timer.start()
 
             # this is for cases where we know that the RunningCommand that was
             # launched was not .wait()ed on to complete.  in those unique cases,
@@ -1937,9 +1944,8 @@ class OProc(object):
 
             thread_name = "background thread for pid %d" % self.pid
             self._background_thread = _start_daemon_thread(background_thread,
-                    thread_name, ca["timeout"], timeout_fn, self._timeout_event,
-                    self._timeout_cancel_event, handle_exit_code, self.is_alive,
-                    self._quit_threads)
+                    thread_name, timeout_fn, self._timeout_event,
+                    handle_exit_code, self.is_alive, self._quit_threads)
 
 
             # start the main io threads. stdin thread is not needed if we are
@@ -1958,13 +1964,13 @@ class OProc(object):
             # new subprocess.  in that case, stdout and stderr will never EOF,
             # so our output_thread will never finish and will hang.  this event
             # prevents that hanging
-            self._force_done_event = threading.Event()
+            self._stop_output_event = threading.Event()
 
             thread_name = "STDOUT/ERR thread for pid %d" % self.pid
             self._output_thread = _start_daemon_thread(output_thread,
                     thread_name, self.log, self._stdout_stream,
                     self._stderr_stream, self._timeout_event, self.is_alive,
-                    self._quit_threads, self._force_done_event)
+                    self._quit_threads, self._stop_output_event)
 
 
     def __repr__(self):
@@ -2069,7 +2075,8 @@ class OProc(object):
 
 
     def _process_just_ended(self):
-        self._timeout_cancel_event.set()
+        if self._timeout_timer:
+            self._timeout_timer.cancel()
 
         done_callback = self.call_args["done"]
         if done_callback:
@@ -2114,7 +2121,7 @@ class OProc(object):
             # wait, then signal to our output thread that the child process is
             # done, and we should have finished reading all the stdout/stderr
             # data that we can by now
-            timer = threading.Timer(2.0, self._force_done_event.set)
+            timer = threading.Timer(2.0, self._stop_output_event.set)
             timer.start()
 
             # wait for our stdout and stderr streamreaders to finish reading and
@@ -2154,7 +2161,7 @@ def input_thread(log, stdin, is_alive, quit, close_before_term):
                     stdin.close()
                     closed = True
 
-        alive, exit_code = is_alive()
+        alive, _ = is_alive()
 
     while alive:
         quit.wait(1)
@@ -2164,23 +2171,29 @@ def input_thread(log, stdin, is_alive, quit, close_before_term):
         stdin.close()
 
 
-def background_thread(timeout, timeout_fn, timeout_event, cancel_event,
-        handle_exit_code, is_alive, quit):
+def event_wait(ev, timeout=None):
+    triggered = ev.wait(timeout)
+    if IS_PY26:
+        triggered = ev.is_set()
+    return triggered
+
+
+def background_thread(timeout_fn, timeout_event, handle_exit_code, is_alive,
+        quit):
     """ handles the timeout logic """
 
-    if timeout:
-        started = time.time()
-
-        while True:
-            time.sleep(0.1)
-            elapsed = time.time() - started
-            if elapsed > timeout or cancel_event.is_set():
+    # if there's a timeout event, loop 
+    if timeout_event:
+        while not quit.is_set():
+            timed_out = event_wait(timeout_event, 0.1)
+            if timed_out:
+                timeout_fn()
                 break
 
-        if not cancel_event.is_set():
-            timeout_event.set()
-            timeout_fn()
-
+    # handle_exit_code will be a function ONLY if our command was NOT waited on
+    # as part of its spawning.  in other words, it's probably a background
+    # command
+    #
     # this reports the exit code exception in our thread.  it's purely for the
     # user's awareness, and cannot be caught or used in any way, so it's ok to
     # suppress this during the tests
@@ -2194,7 +2207,7 @@ def background_thread(timeout, timeout_fn, timeout_event, cancel_event,
 
 
 def output_thread(log, stdout, stderr, timeout_event, is_alive, quit,
-        force_done_event):
+        stop_output_event):
     """ this function is run in a separate thread.  it reads from the
     process's stdout stream (a streamreader), and waits for it to claim that
     its done """
@@ -2215,8 +2228,7 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive, quit,
     # things to poll.  when no more things are left to poll, we leave this
     # loop and clean up
     while readers:
-        outputs, inputs, err = no_interrupt(select.select, readers, [], errors,
-                1.0)
+        outputs, inputs, err = no_interrupt(select.select, readers, [], errors, 1)
 
         # stdout and stderr
         for stream in outputs:
@@ -2231,12 +2243,14 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive, quit,
         for stream in err:
             pass
 
-        if timeout_event.is_set():
+        if timeout_event and timeout_event.is_set():
             break
 
-        if force_done_event.is_set():
+        if stop_output_event.is_set():
             break
 
+    # we need to wait until the process is guaranteed dead before closing our
+    # outputs, otherwise SIGPIPE
     alive = True
     while alive:
         quit.wait(1)
