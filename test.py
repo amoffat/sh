@@ -1783,6 +1783,13 @@ sys.stdout.write("line1")
         self.assertTrue(abs(elapsed - timeout) < 0.5)
 
 
+    def test_timeout_overstep(self):
+        started = time.time()
+        sh.sleep(1, _timeout=5)
+        elapsed = time.time() - started
+        self.assertTrue(abs(elapsed - 1) < 0.5)
+
+
     def test_binary_pipe(self):
         binary = b'\xec;\xedr\xdbF'
 
