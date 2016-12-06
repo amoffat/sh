@@ -134,6 +134,7 @@ if not skipUnless:
 requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
 requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
 not_osx = skipUnless(not IS_OSX, "Doesn't work on OSX")
+requires_py3 = skipUnless(IS_PY3, "Test only works on Python 3")
 
 
 def create_tmp_test(code, prefix="tmp", delete=True, **kwargs):
