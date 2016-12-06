@@ -1553,7 +1553,11 @@ class OProc(object):
         stdout_is_tty_or_pipe = ob_is_tty(stdout) or ob_is_pipe(stdout)
         stderr_is_tty_or_pipe = ob_is_tty(stderr) or ob_is_pipe(stderr)
 
-        single_tty = ca["tty_in"] and ca["tty_out"]
+        # if we're passing in a custom stdout/out/err value, we obviously have
+        # to force not using single_tty
+        custom_in_out_err = stdin or stdout or stderr
+
+        single_tty = (ca["tty_in"] and ca["tty_out"]) and not custom_in_out_err
 
         # this logic is a little convoluted, but basically this top-level
         # if/else is for consolidating input and output TTYs into a single
