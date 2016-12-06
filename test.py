@@ -1909,7 +1909,7 @@ sys.stdout.write(sys.stdin.read())
 sys.stdout.flush()
 """)
         out = python(py.name, _in="test\n", _tty_in=True)
-        self.assertEqual("test\r\n", out)
+        self.assertEqual("test\n", out)
 
 
     def test_no_err(self):
