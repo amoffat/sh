@@ -248,6 +248,12 @@ print("ääääääääääääääääääääääääääääääääääää�
             slave.close()
             os.close(master_fd)
 
+    def test_pipe_fd(self):
+        py = create_tmp_test("""print("hi world")""")
+        read_fd, write_fd = os.pipe()
+        python(py.name, _out=write_fd)
+        out = os.read(read_fd, 10)
+        self.assertEqual(out, b"hi world\n")
 
     def test_trunc_exc(self):
         py = create_tmp_test("""
