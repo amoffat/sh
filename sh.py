@@ -535,6 +535,10 @@ class RunningCommand(object):
         "sid",
         "pgid",
         "ctty",
+
+        "input_thread_exc",
+        "output_thread_exc",
+        "bg_thread_exc",
     ))
 
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
@@ -1360,8 +1364,15 @@ def aggregate_keywords(keywords, sep, prefix, raw=False):
     return processed
 
 
-def _start_daemon_thread(fn, name, *args):
-    thrd = threading.Thread(target=fn, name=name, args=args)
+def _start_daemon_thread(fn, name, exc_queue, *args):
+    def wrap(*args, **kwargs):
+        try:
+            fn(*args, **kwargs)
+        except Exception as e:
+            exc_queue.put(e)
+            raise
+
+    thrd = threading.Thread(target=wrap, name=name, args=args)
     thrd.daemon = True
     thrd.start()
     return thrd
@@ -1950,20 +1961,24 @@ class OProc(object):
             self._quit_threads = threading.Event()
 
             thread_name = "background thread for pid %d" % self.pid
+            self._bg_thread_exc_queue = Queue(1)
             self._background_thread = _start_daemon_thread(background_thread,
-                    thread_name, timeout_fn, self._timeout_event,
-                    handle_exit_code, self.is_alive, self._quit_threads)
+                    thread_name, self._bg_thread_exc_queue, timeout_fn,
+                    self._timeout_event, handle_exit_code, self.is_alive,
+                    self._quit_threads)
 
 
             # start the main io threads. stdin thread is not needed if we are
             # connecting from another process's stdout pipe
             self._input_thread = None
+            self._input_thread_exc_queue = Queue(1)
             if self._stdin_stream:
                 close_before_term = not needs_ctty
                 thread_name = "STDIN thread for pid %d" % self.pid
                 self._input_thread = _start_daemon_thread(input_thread,
-                        thread_name, self.log, self._stdin_stream,
-                        self.is_alive, self._quit_threads, close_before_term)
+                        thread_name, self._input_thread_exc_queue, self.log,
+                        self._stdin_stream, self.is_alive, self._quit_threads,
+                        close_before_term)
 
 
             # this event is for cases where the subprocess that we launch
@@ -1973,15 +1988,46 @@ class OProc(object):
             # prevents that hanging
             self._stop_output_event = threading.Event()
 
+            self._output_thread_exc_queue = Queue(1)
             thread_name = "STDOUT/ERR thread for pid %d" % self.pid
             self._output_thread = _start_daemon_thread(output_thread,
-                    thread_name, self.log, self._stdout_stream,
-                    self._stderr_stream, self._timeout_event, self.is_alive,
-                    self._quit_threads, self._stop_output_event)
+                    thread_name, self._output_thread_exc_queue, self.log,
+                    self._stdout_stream, self._stderr_stream,
+                    self._timeout_event, self.is_alive, self._quit_threads,
+                    self._stop_output_event)
 
 
     def __repr__(self):
         return "<Process %d %r>" % (self.pid, self.cmd[:500])
+
+
+    # these next 3 properties are primary for tests
+    @property
+    def output_thread_exc(self):
+        exc = None
+        try:
+            exc = self._output_thread_exc_queue.get(False)
+        except Empty:
+            pass
+        return exc
+
+    @property
+    def input_thread_exc(self):
+        exc = None
+        try:
+            exc = self._input_thread_exc_queue.get(False)
+        except Empty:
+            pass
+        return exc
+
+    @property
+    def bg_thread_exc(self):
+        exc = None
+        try:
+            exc = self._bg_thread_exc_queue.get(False)
+        except Empty:
+            pass
+        return exc
 
 
     def change_in_bufsize(self, buf):
