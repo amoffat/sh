@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.12.7 - 12/07/16
+
+*   added `_out` and `_out_bufsize` validator [#346](https://github.com/amoffat/sh/issues/346)
+*   bugfix for internal stdout thread running when it shouldn't [#346](https://github.com/amoffat/sh/issues/346)
+
 ## 1.12.6 - 12/02/16
 
 *   regression bugfix on timeout [#344](https://github.com/amoffat/sh/issues/344)
