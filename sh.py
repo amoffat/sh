@@ -535,6 +535,10 @@ class RunningCommand(object):
         "sid",
         "pgid",
         "ctty",
+
+        "input_thread_exc",
+        "output_thread_exc",
+        "bg_thread_exc",
     ))
 
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
@@ -881,6 +885,33 @@ to set up a TTY with `_%s`" % (std, tty)
 
     return invalid
 
+def bufsize_validator(kwargs):
+    """ a validator to prevent a user from saying that they want custom
+    buffering when they're using an in/out object that will be os.dup'd to the
+    process, and has its own buffering.  an example is a pipe or a tty.  it
+    doesn't make sense to tell them to have a custom buffering, since the os
+    controls this. """
+    invalid = []
+
+    in_ob = kwargs.get("in", None)
+    out_ob = kwargs.get("out", None)
+
+    in_buf = kwargs.get("in_bufsize", None)
+    out_buf = kwargs.get("out_bufsize", None)
+
+    in_no_buf = ob_is_tty(in_ob) or ob_is_pipe(in_ob)
+    out_no_buf = ob_is_tty(out_ob) or ob_is_pipe(out_ob)
+
+    err = "Can't specify an {target} bufsize if the {target} target is a pipe or TTY"
+
+    if in_no_buf and in_buf is not None:
+        invalid.append((("in", "in_bufsize"), err.format(target="in")))
+
+    if out_no_buf and out_buf is not None:
+        invalid.append((("out", "out_bufsize"), err.format(target="out")))
+
+    return invalid
+
 
 class Command(object):
     """ represents an un-run system program, like "ls" or "cd".  because it
@@ -1009,6 +1040,7 @@ disabled the pipe"),
         (("no_out", "iter"), "You cannot iterate over output if there is no \
 output"),
         tty_in_validator,
+        bufsize_validator,
     )
 
 
@@ -1360,8 +1392,15 @@ def aggregate_keywords(keywords, sep, prefix, raw=False):
     return processed
 
 
-def _start_daemon_thread(fn, name, *args):
-    thrd = threading.Thread(target=fn, name=name, args=args)
+def _start_daemon_thread(fn, name, exc_queue, *args):
+    def wrap(*args, **kwargs):
+        try:
+            fn(*args, **kwargs)
+        except Exception as e:
+            exc_queue.put(e)
+            raise
+
+    thrd = threading.Thread(target=wrap, name=name, args=args)
     thrd.daemon = True
     thrd.start()
     return thrd
@@ -1542,7 +1581,11 @@ class OProc(object):
         stdout_is_tty_or_pipe = ob_is_tty(stdout) or ob_is_pipe(stdout)
         stderr_is_tty_or_pipe = ob_is_tty(stderr) or ob_is_pipe(stderr)
 
-        single_tty = ca["tty_in"] and ca["tty_out"]
+        # if we're passing in a custom stdout/out/err value, we obviously have
+        # to force not using single_tty
+        custom_in_out_err = stdin or stdout or stderr
+
+        single_tty = (ca["tty_in"] and ca["tty_out"]) and not custom_in_out_err
 
         # this logic is a little convoluted, but basically this top-level
         # if/else is for consolidating input and output TTYs into a single
@@ -1950,20 +1993,24 @@ class OProc(object):
             self._quit_threads = threading.Event()
 
             thread_name = "background thread for pid %d" % self.pid
+            self._bg_thread_exc_queue = Queue(1)
             self._background_thread = _start_daemon_thread(background_thread,
-                    thread_name, timeout_fn, self._timeout_event,
-                    handle_exit_code, self.is_alive, self._quit_threads)
+                    thread_name, self._bg_thread_exc_queue, timeout_fn,
+                    self._timeout_event, handle_exit_code, self.is_alive,
+                    self._quit_threads)
 
 
             # start the main io threads. stdin thread is not needed if we are
             # connecting from another process's stdout pipe
             self._input_thread = None
+            self._input_thread_exc_queue = Queue(1)
             if self._stdin_stream:
                 close_before_term = not needs_ctty
                 thread_name = "STDIN thread for pid %d" % self.pid
                 self._input_thread = _start_daemon_thread(input_thread,
-                        thread_name, self.log, self._stdin_stream,
-                        self.is_alive, self._quit_threads, close_before_term)
+                        thread_name, self._input_thread_exc_queue, self.log,
+                        self._stdin_stream, self.is_alive, self._quit_threads,
+                        close_before_term)
 
 
             # this event is for cases where the subprocess that we launch
@@ -1973,15 +2020,46 @@ class OProc(object):
             # prevents that hanging
             self._stop_output_event = threading.Event()
 
+            self._output_thread_exc_queue = Queue(1)
             thread_name = "STDOUT/ERR thread for pid %d" % self.pid
             self._output_thread = _start_daemon_thread(output_thread,
-                    thread_name, self.log, self._stdout_stream,
-                    self._stderr_stream, self._timeout_event, self.is_alive,
-                    self._quit_threads, self._stop_output_event)
+                    thread_name, self._output_thread_exc_queue, self.log,
+                    self._stdout_stream, self._stderr_stream,
+                    self._timeout_event, self.is_alive, self._quit_threads,
+                    self._stop_output_event)
 
 
     def __repr__(self):
         return "<Process %d %r>" % (self.pid, self.cmd[:500])
+
+
+    # these next 3 properties are primary for tests
+    @property
+    def output_thread_exc(self):
+        exc = None
+        try:
+            exc = self._output_thread_exc_queue.get(False)
+        except Empty:
+            pass
+        return exc
+
+    @property
+    def input_thread_exc(self):
+        exc = None
+        try:
+            exc = self._input_thread_exc_queue.get(False)
+        except Empty:
+            pass
+        return exc
+
+    @property
+    def bg_thread_exc(self):
+        exc = None
+        try:
+            exc = self._bg_thread_exc_queue.get(False)
+        except Empty:
+            pass
+        return exc
 
 
     def change_in_bufsize(self, buf):

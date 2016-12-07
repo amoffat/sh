@@ -34,8 +34,8 @@ if HAS_UNICODE_LITERAL:
 from os.path import exists, join, realpath, dirname, split
 import unittest
 import tempfile
-import fnmatch
 import warnings
+import pty
 import logging
 import sys
 import sh
@@ -134,6 +134,7 @@ if not skipUnless:
 requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
 requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
 not_osx = skipUnless(not IS_OSX, "Doesn't work on OSX")
+requires_py3 = skipUnless(IS_PY3, "Test only works on Python 3")
 
 
 def create_tmp_test(code, prefix="tmp", delete=True, **kwargs):
@@ -219,6 +220,12 @@ class FunctionalTests(BaseTests):
         else:
             self.fail("exception wasn't raised")
 
+    def test_pipe_fd(self):
+        py = create_tmp_test("""print("hi world")""")
+        read_fd, write_fd = os.pipe()
+        python(py.name, _out=write_fd)
+        out = os.read(read_fd, 10)
+        self.assertEqual(out, b"hi world\n")
 
     def test_trunc_exc(self):
         py = create_tmp_test("""
@@ -1874,7 +1881,7 @@ sys.stdout.write(sys.stdin.read())
 sys.stdout.flush()
 """)
         out = python(py.name, _in="test\n", _tty_in=True)
-        self.assertEqual("test\r\n", out)
+        self.assertEqual("test\n", out)
 
 
     def test_no_err(self):
