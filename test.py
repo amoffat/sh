@@ -220,34 +220,6 @@ class FunctionalTests(BaseTests):
         else:
             self.fail("exception wasn't raised")
 
-    # https://github.com/amoffat/sh/issues/346
-    @requires_py3
-    def test_single_tty_avoidance(self):
-        """ single tty should not be used when we're passing in _out _in or _err
-        """
-
-        # what we're constructing here is a very specific case where writing to
-        # the output pty will fail if single_tty is True in OProc.  in this
-        # case, we're creating a PTY (which will cause a dup to the process),
-        # but we're also making sure the _out has a .write and an encoding, so a
-        # StreamReader will see it as a file chunk handler.  finally, we're
-        # writing unicode, but setting the _out_bufsize=0.  all of this combined
-        # should make the file chunk handler attempt to encode a single byte to
-        # utf8 and fail.  but all of this should only happen if single_tty is
-        # used, which it shouldn't be, but it has in the past (see issue)
-        py = create_tmp_test("""# -*- coding: utf8 -*-
-print("äääääääääääääääääääääääääääääääääääääääääää".encode("utf8"))
-""")
-        try:
-            master_fd, slave_fd = pty.openpty()
-            slave = os.fdopen(slave_fd, "w", encoding="utf8")
-            p = python(py.name, _out_bufsize=0, _out=slave, _tty_in=True)
-
-            self.assertEqual(None, p.output_thread_exc)
-        finally:
-            slave.close()
-            os.close(master_fd)
-
     def test_pipe_fd(self):
         py = create_tmp_test("""print("hi world")""")
         read_fd, write_fd = os.pipe()
