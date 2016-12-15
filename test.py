@@ -276,7 +276,7 @@ print(sys.argv[1:])
 """)
             files = glob("*.faowjefoajweofj", recursive=True)
             out = python(py.name, files).strip()
-        self.assertEqual(out, "['*.faowjefoajweofj']")
+            self.assertEqual(out, "['*.faowjefoajweofj']")
 
     def test_exit_code_with_hasattr(self):
         from sh import ErrorReturnCode
