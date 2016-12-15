@@ -266,17 +266,17 @@ print(sys.argv[1:])
         out = python(py.name, files).strip()
         self.assertEqual(out, "['*.faowjefoajweofj']")
 
+    @unittest.skipUnless(IS_PY3 and MINOR_VER >= 5, "only applicable to Python 3.5 or higher")
     def test_patched_glob_with_recursive_argument(self):
-        if IS_PY3 and MINOR_VER >= 5:
-            from glob import glob
+        from glob import glob
 
-            py = create_tmp_test("""
+        py = create_tmp_test("""
 import sys
 print(sys.argv[1:])
 """)
-            files = glob("*.faowjefoajweofj", recursive=True)
-            out = python(py.name, files).strip()
-            self.assertEqual(out, "['*.faowjefoajweofj']")
+        files = glob("*.faowjefoajweofj", recursive=True)
+        out = python(py.name, files).strip()
+        self.assertEqual(out, "['*.faowjefoajweofj']")
 
     def test_exit_code_with_hasattr(self):
         from sh import ErrorReturnCode
