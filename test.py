@@ -135,6 +135,7 @@ requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
 requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
 not_osx = skipUnless(not IS_OSX, "Doesn't work on OSX")
 requires_py3 = skipUnless(IS_PY3, "Test only works on Python 3")
+requires_py35 = skipUnless(IS_PY3 and MINOR_VER >= 5, "Test only works on Python 3.5 or higher")
 
 
 def create_tmp_test(code, prefix="tmp", delete=True, **kwargs):
@@ -266,7 +267,7 @@ print(sys.argv[1:])
         out = python(py.name, files).strip()
         self.assertEqual(out, "['*.faowjefoajweofj']")
 
-    @unittest.skipUnless(IS_PY3 and MINOR_VER >= 5, "only applicable to Python 3.5 or higher")
+    @requires_py35
     def test_patched_glob_with_recursive_argument(self):
         from glob import glob
 
