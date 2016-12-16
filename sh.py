@@ -375,8 +375,8 @@ class GlobResults(list):
         self.path = path
         list.__init__(self, results)
 
-def glob(path):
-    expanded = GlobResults(path, _old_glob(path))
+def glob(path, *args, **kwargs):
+    expanded = GlobResults(path, _old_glob(path, *args, **kwargs))
     return expanded
 
 glob_module.glob = glob
