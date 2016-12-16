@@ -24,7 +24,7 @@ http://amoffat.github.io/sh/
 #===============================================================================
 
 
-__version__ = "1.12.7"
+__version__ = "1.12.8"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
@@ -375,8 +375,8 @@ class GlobResults(list):
         self.path = path
         list.__init__(self, results)
 
-def glob(path):
-    expanded = GlobResults(path, _old_glob(path))
+def glob(path, *args, **kwargs):
+    expanded = GlobResults(path, _old_glob(path, *args, **kwargs))
     return expanded
 
 glob_module.glob = glob

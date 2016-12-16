@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.8 - 12/16/16
+
+*   bugfix for patched glob.glob on python3.5 [#341](https://github.com/amoffat/sh/issues/341)
+
 ## 1.12.7 - 12/07/16
 
 *   added `_out` and `_out_bufsize` validator [#346](https://github.com/amoffat/sh/issues/346)
