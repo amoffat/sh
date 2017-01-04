@@ -113,17 +113,6 @@ will have to run :meth:`RunningCommand.wait` on it to ensure it terminates.
 
 .. seealso:: :ref:`background`.
 
-.. _bg_exc:
-
-_bg_exc
----
-.. versionadded:: 1.12.9
-
-|def| ``True``
-
-Automatically report exceptions for the background command. If you set this to
-``False`` you should make sure to call :meth:`RunningCommand.wait` or you may
-swallow exceptions that happen in the background command.
 
 .. _env:
 
