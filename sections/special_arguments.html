@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Special Kwargs &mdash; sh 1.12.1 documentation</title>
+  <title>Special Kwargs &mdash; sh 1.12.9 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.1 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.9 documentation" href="../index.html"/>
         <link rel="up" title="Reference" href="../reference.html"/>
         <link rel="next" title="Architecture Overview" href="architecture.html"/>
         <link rel="prev" title="Reference" href="../reference.html"/> 
@@ -131,6 +131,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#execution">Execution</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#fg">_fg</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#bg">_bg</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bg-exc">_bg_exc</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#env">_env</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#timeout">_timeout</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#timeout-signal">_timeout_signal</a></li>
@@ -395,8 +396,18 @@ will have to run <a class="reference internal" href="command_class.html#RunningC
 <p class="last"><a class="reference internal" href="asynchronous_execution.html#background"><span class="std std-ref">Background Processes</span></a>.</p>
 </div>
 </div>
+<div class="section" id="bg-exc">
+<span id="id5"></span><h3>_bg_exc<a class="headerlink" href="#bg-exc" title="Permalink to this headline">¶</a></h3>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 1.12.9.</span></p>
+</div>
+<p>Default value: <code class="docutils literal"><span class="pre">True</span></code></p>
+<p>Automatically report exceptions for the background command. If you set this to
+<code class="docutils literal"><span class="pre">False</span></code> you should make sure to call <a class="reference internal" href="command_class.html#RunningCommand.wait" title="RunningCommand.wait"><code class="xref py py-meth docutils literal"><span class="pre">RunningCommand.wait()</span></code></a> or you may
+swallow exceptions that happen in the background command.</p>
+</div>
 <div class="section" id="env">
-<span id="id5"></span><h3>_env<a class="headerlink" href="#env" title="Permalink to this headline">¶</a></h3>
+<span id="id6"></span><h3>_env<a class="headerlink" href="#env" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>A dictionary defining the only environment variables that will be made
 accessible to the process.  If not specified, the calling process&#8217;s environment
@@ -413,14 +424,14 @@ a copy of your current environment with the overriden variable to sh.</p>
 </div>
 </div>
 <div class="section" id="timeout">
-<span id="id6"></span><h3>_timeout<a class="headerlink" href="#timeout" title="Permalink to this headline">¶</a></h3>
+<span id="id7"></span><h3>_timeout<a class="headerlink" href="#timeout" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>How much time, in seconds, we should give the process to complete.  If the
 process does not finish within the timeout, it will be sent the signal defined
 by <a class="reference internal" href="#timeout-signal"><span class="std std-ref">_timeout_signal</span></a>.</p>
 </div>
 <div class="section" id="timeout-signal">
-<span id="id7"></span><h3>_timeout_signal<a class="headerlink" href="#timeout-signal" title="Permalink to this headline">¶</a></h3>
+<span id="id8"></span><h3>_timeout_signal<a class="headerlink" href="#timeout-signal" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">signal.SIGKILL</span></code></p>
 <p>The signal to be sent to the process if <a class="reference internal" href="#timeout"><span class="std std-ref">_timeout</span></a> is not <code class="docutils literal"><span class="pre">None</span></code>.</p>
 </div>
@@ -430,7 +441,7 @@ by <a class="reference internal" href="#timeout-signal"><span class="std std-ref
 <p>A string that sets the current working directory of the process.</p>
 </div>
 <div class="section" id="ok-code">
-<span id="id8"></span><h3>_ok_code<a class="headerlink" href="#ok-code" title="Permalink to this headline">¶</a></h3>
+<span id="id9"></span><h3>_ok_code<a class="headerlink" href="#ok-code" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">0</span></code></p>
 <p>Either an integer, a list, or a tuple containing the exit code(s) that are
 considered &#8220;ok&#8221;, or in other words: do not raise an exception.  Some misbehaved
@@ -445,7 +456,7 @@ programs use exit codes other than 0 to indicate success.</p>
 </div>
 </div>
 <div class="section" id="new-session">
-<span id="id9"></span><h3>_new_session<a class="headerlink" href="#new-session" title="Permalink to this headline">¶</a></h3>
+<span id="id10"></span><h3>_new_session<a class="headerlink" href="#new-session" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">True</span></code></p>
 <p>Determines if our forked process will be executed in its own session via
 <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.setsid" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.setsid()</span></code></a>.</p>
@@ -462,7 +473,7 @@ directly, regardless of the value of <code class="docutils literal"><span class=
 </div>
 </div>
 <div class="section" id="uid">
-<span id="id10"></span><h3>_uid<a class="headerlink" href="#uid" title="Permalink to this headline">¶</a></h3>
+<span id="id11"></span><h3>_uid<a class="headerlink" href="#uid" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
 <p><span class="versionmodified">New in version 1.12.0.</span></p>
 </div>
@@ -482,7 +493,7 @@ Typically not used by normal users.</p>
 <div class="section" id="communication">
 <h2>Communication<a class="headerlink" href="#communication" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="in">
-<span id="id11"></span><h3>_in<a class="headerlink" href="#in" title="Permalink to this headline">¶</a></h3>
+<span id="id12"></span><h3>_in<a class="headerlink" href="#in" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>Specifies an argument for the process to use as its standard input.  This may be
 a string, a <a class="reference external" href="https://docs.python.org/3.5/library/queue.html#queue.Queue" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">queue.Queue</span></code></a>, a file-like object, or any iterable.</p>
@@ -492,7 +503,7 @@ a string, a <a class="reference external" href="https://docs.python.org/3.5/libr
 </div>
 </div>
 <div class="section" id="piped">
-<span id="id12"></span><h3>_piped<a class="headerlink" href="#piped" title="Permalink to this headline">¶</a></h3>
+<span id="id13"></span><h3>_piped<a class="headerlink" href="#piped" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>May be <code class="docutils literal"><span class="pre">True</span></code>, <code class="docutils literal"><span class="pre">&quot;out&quot;</span></code>, or <code class="docutils literal"><span class="pre">&quot;err&quot;</span></code>.  Signals a command that it is being
 used as the input to another command, so it should return its output
@@ -503,7 +514,7 @@ incrementally as it receives it, instead of aggregating it all at once.</p>
 </div>
 </div>
 <div class="section" id="iter">
-<span id="id13"></span><h3>_iter<a class="headerlink" href="#iter" title="Permalink to this headline">¶</a></h3>
+<span id="id14"></span><h3>_iter<a class="headerlink" href="#iter" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>May be <code class="docutils literal"><span class="pre">True</span></code>, <code class="docutils literal"><span class="pre">&quot;out&quot;</span></code>, or <code class="docutils literal"><span class="pre">&quot;err&quot;</span></code>.  Puts a command in iterable mode.  In
 this mode, you can use a <code class="docutils literal"><span class="pre">for</span></code> or <code class="docutils literal"><span class="pre">while</span></code> loop to iterate over a command&#8217;s
@@ -519,7 +530,7 @@ output in real-time.</p>
 </div>
 </div>
 <div class="section" id="iter-noblock">
-<span id="id14"></span><h3>_iter_noblock<a class="headerlink" href="#iter-noblock" title="Permalink to this headline">¶</a></h3>
+<span id="id15"></span><h3>_iter_noblock<a class="headerlink" href="#iter-noblock" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>Same as <a class="reference internal" href="#iter"><span class="std std-ref">_iter</span></a>, except the loop will not block if there is no
 output to iterate over.  Instead, the output from the command will be
@@ -542,7 +553,7 @@ output to iterate over.  Instead, the output from the command will be
 </div>
 </div>
 <div class="section" id="with">
-<span id="id15"></span><h3>_with<a class="headerlink" href="#with" title="Permalink to this headline">¶</a></h3>
+<span id="id16"></span><h3>_with<a class="headerlink" href="#with" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">False</span></code></p>
 <p>Explicitly tells us that we&#8217;re running a command in a <code class="docutils literal"><span class="pre">with</span></code> context.  This is
 only necessary if you&#8217;re using a command in a <code class="docutils literal"><span class="pre">with</span></code> context <strong>and</strong> passing
@@ -558,7 +569,7 @@ parameters to it.</p>
 </div>
 </div>
 <div class="section" id="done">
-<span id="id16"></span><h3>_done<a class="headerlink" href="#done" title="Permalink to this headline">¶</a></h3>
+<span id="id17"></span><h3>_done<a class="headerlink" href="#done" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
 <p><span class="versionmodified">New in version 1.11.0.</span></p>
 </div>
@@ -596,14 +607,14 @@ time:</p>
 <div class="section" id="ttys">
 <h2>TTYs<a class="headerlink" href="#ttys" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="tty-in">
-<span id="id17"></span><h3>_tty_in<a class="headerlink" href="#tty-in" title="Permalink to this headline">¶</a></h3>
+<span id="id18"></span><h3>_tty_in<a class="headerlink" href="#tty-in" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">False</span></code>, meaning a <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.pipe" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.pipe()</span></code></a> will be used.</p>
 <p>If <code class="docutils literal"><span class="pre">True</span></code>, sh creates a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal">TTY</a>
 for STDIN, essentially emulating a terminal, as if your command was entered from
 the commandline.  This is necessary for commands that require STDIN to be a TTY.</p>
 </div>
 <div class="section" id="tty-out">
-<span id="id18"></span><h3>_tty_out<a class="headerlink" href="#tty-out" title="Permalink to this headline">¶</a></h3>
+<span id="id19"></span><h3>_tty_out<a class="headerlink" href="#tty-out" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">True</span></code></p>
 <p>If <code class="docutils literal"><span class="pre">True</span></code>, sh creates a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal#Applications">TTY</a>
 for STDOUT, otherwise use a <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.pipe" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.pipe()</span></code></a>.
@@ -629,13 +640,13 @@ program prints per line, for example.</p>
 a buffer of that amount.</p>
 </div>
 <div class="section" id="out-bufsize">
-<span id="id20"></span><h3>_out_bufsize<a class="headerlink" href="#out-bufsize" title="Permalink to this headline">¶</a></h3>
+<span id="id21"></span><h3>_out_bufsize<a class="headerlink" href="#out-bufsize" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">1</span></code></p>
 <p>The STDOUT/ERR buffer size.  0 for unbuffered, 1 for line buffered, anything
 else for a buffer of that amount.</p>
 </div>
 <div class="section" id="internal-bufsize">
-<span id="id21"></span><h3>_internal_bufsize<a class="headerlink" href="#internal-bufsize" title="Permalink to this headline">¶</a></h3>
+<span id="id22"></span><h3>_internal_bufsize<a class="headerlink" href="#internal-bufsize" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">3</span> <span class="pre">*</span> <span class="pre">1024**2</span></code> chunks</p>
 <p>How much of STDOUT/ERR your command will store internally.  This value
 represents the <em>number of bufsize chunks</em> not the total number of bytes.  For
@@ -797,7 +808,7 @@ you absolutely have to.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.1',
+            VERSION:'1.12.9',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true
