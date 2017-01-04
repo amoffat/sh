@@ -24,7 +24,7 @@ http://amoffat.github.io/sh/
 #===============================================================================
 
 
-__version__ = "1.12.8"
+__version__ = "1.12.9"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
@@ -931,6 +931,9 @@ class Command(object):
         # ignore SIGHUP and do not automatically exit when the parent process
         # ends
         "bg": False,
+
+        # automatically report exceptions for background commands
+        "bg_exc": True,
 
         "with": False, # prepend the command to every command after it
         "in": None,
@@ -1984,7 +1987,7 @@ class OProc(object):
             # RunningCommand.wait() does), because we want the exception to be
             # re-raised in the future, if we DO call .wait()
             handle_exit_code = None
-            if not self.command._spawned_and_waited:
+            if not self.command._spawned_and_waited and ca["bg_exc"]:
                 def fn(exit_code):
                     with process_assign_lock:
                         return self.command.handle_command_exit_code(exit_code)

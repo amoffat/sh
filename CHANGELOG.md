@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.9 - 1/04/17
+
+*   added `_bg_exc` for silencing exceptions in background threads [#350](https://github.com/amoffat/sh/pull/350)
+
 ## 1.12.8 - 12/16/16
 
 *   bugfix for patched glob.glob on python3.5 [#341](https://github.com/amoffat/sh/issues/341)
