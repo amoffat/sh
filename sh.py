@@ -586,8 +586,6 @@ class RunningCommand(object):
         if call_args["bg"]:
             should_wait = False
 
-        self._bg_exc = call_args["bg_exc"]
-
         # redirection
         if call_args["err_to_out"]:
             stderr = OProc.STDOUT
@@ -1989,7 +1987,7 @@ class OProc(object):
             # RunningCommand.wait() does), because we want the exception to be
             # re-raised in the future, if we DO call .wait()
             handle_exit_code = None
-            if not self.command._spawned_and_waited and self.command._bg_exc:
+            if not self.command._spawned_and_waited and ca["bg_exc"]:
                 def fn(exit_code):
                     with process_assign_lock:
                         return self.command.handle_command_exit_code(exit_code)
