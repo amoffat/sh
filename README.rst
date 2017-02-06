@@ -30,7 +30,7 @@ Installation
 
     $> pip install sh
 
-Complete documentation @ http://amoffat.github.com/sh
+Complete documentation @ https://amoffat.github.com/sh
 =====================================================
 
 Developers
