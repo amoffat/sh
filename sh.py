@@ -2376,7 +2376,7 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive, quit,
     # things to poll.  when no more things are left to poll, we leave this
     # loop and clean up
     while readers:
-        outputs, inputs, err = no_interrupt(poll_select, readers, [], errors, 1)
+        outputs, inputs, err = no_interrupt(our_select, readers, [], errors, 1)
 
         # stdout and stderr
         for stream in outputs:
