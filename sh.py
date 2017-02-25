@@ -129,6 +129,66 @@ if IS_PY3:
 
 _unicode_methods = set(dir(unicode()))
 
+def poll_select(readers, writers, errors, timeout):
+    readers = set(readers)
+    writers = set(writers)
+    errors = set(errors)
+
+    timeout *= 1000
+    poll = select.poll()
+
+    fd_lookup = {}
+
+    def fd_set(obj):
+        if hasattr(obj, "fileno"):
+            fd = obj.fileno()
+            fd_lookup[fd] = obj
+
+    def fd_get(fd):
+        return fd_lookup.get(fd, fd)
+
+    for reader in readers:
+        fd_set(reader)
+        poll.register(reader, select.POLLIN)
+
+    for writer in writers:
+        fd_set(writer)
+        poll.register(writer,  select.POLLOUT)
+
+    for error in errors:
+        fd_set(error)
+        poll.register(error, select.POLLERR)
+
+    changed = poll.poll(timeout)
+
+    for fd in fd_lookup.keys():
+        poll.unregister(fd)
+
+    to_read = []
+    to_write = []
+    to_err = []
+
+    for (fd, event) in changed:
+        fd = fd_get(fd)
+        if event & (select.POLLERR | select.POLLNVAL) and fd in errors:
+            to_err.append(fd)
+
+        if event & (select.POLLOUT | select.POLLHUP) and fd in writers:
+            to_write.append(fd)
+
+        if event & (select.POLLIN | select.POLLHUP) and fd in readers:
+            to_read.append(fd)
+
+    return to_read, to_write, to_err
+
+
+our_select = select.select
+
+use_poll = hasattr(select, "poll")
+if use_poll:
+    our_select = poll_select
+
+
 
 def encode_to_py3bytes_or_py2str(s):
     """ takes anything and attempts to return a py2 string or py3 bytes.  this
