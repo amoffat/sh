@@ -2297,7 +2297,7 @@ def input_thread(log, stdin, is_alive, quit, close_before_term):
     writers = [stdin]
 
     while writers and alive:
-        _, to_write, _ = select.select([], writers, [], 1)
+        _, to_write, _ = our_select([], writers, [], 1)
 
         if to_write:
             log.debug("%r ready for more input", stdin)
@@ -2376,7 +2376,7 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive, quit,
     # things to poll.  when no more things are left to poll, we leave this
     # loop and clean up
     while readers:
-        outputs, inputs, err = no_interrupt(select.select, readers, [], errors, 1)
+        outputs, inputs, err = no_interrupt(poll_select, readers, [], errors, 1)
 
         # stdout and stderr
         for stream in outputs:
@@ -2533,7 +2533,7 @@ def get_file_chunk_reader(stdin):
         # this select is for files that may not yet be ready to read.  we test
         # for fileno because StringIO/BytesIO cannot be used in a select
         if is_real_file and hasattr(stdin, "fileno"):
-            outputs, _, _ = select.select([stdin], [], [], 0.1)
+            outputs, _, _ = our_select([stdin], [], [], 0.1)
             if not outputs:
                 raise NotYetReadyToRead
 
