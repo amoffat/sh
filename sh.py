@@ -130,6 +130,132 @@ if IS_PY3:
 _unicode_methods = set(dir(unicode()))
 
 
+POLLER_EVENT_READ = 1
+POLLER_EVENT_WRITE = 2
+POLLER_EVENT_HUP = 4
+POLLER_EVENT_ERROR = 8
+if hasattr(select, "poll"):
+    class Poller(object):
+        def __init__(self):
+            self._poll = select.poll()
+            # file descriptor <-> file object bidirectional maps
+            self.fd_lookup = {}
+            self.fo_lookup = {}
+
+        def __nonzero__(self):
+            return len(self.fd_lookup) != 0
+
+        def __len__(self):
+            return len(self.fd_lookup)
+
+        def _set_fileobject(self, f):
+            if hasattr(f, "fileno"):
+                fd = f.fileno()
+                self.fd_lookup[fd] = f
+                self.fo_lookup[f] = fd
+            else:
+                self.fd_lookup[f] = f
+                self.fo_lookup[f] = f
+
+        def _remove_fileobject(self, f):
+            if hasattr(f, "fileno"):
+                fd = f.fileno()
+                del self.fd_lookup[fd]
+                del self.fo_lookup[f]
+            else:
+                del self.fd_lookup[f]
+                del self.fo_lookup[f]
+
+        def _get_file_descriptor(self, f):
+            return self.fo_lookup.get(f)
+
+        def _get_file_object(self, fd):
+            return self.fd_lookup.get(fd)
+
+        def _register(self, f, events):
+            # f can be a file descriptor or file object
+            self._set_fileobject(f)
+            fd = self._get_file_descriptor(f)
+            self._poll.register(fd, events)
+
+        def register_read(self, f):
+            self._register(f, select.POLLIN | select.POLLPRI)
+
+        def register_write(self, f):
+            self._register(f, select.POLLOUT)
+
+        def register_error(self, f):
+            self._register(f, select.POLLERR | select.POLLHUP | select.POLLNVAL)
+
+        def unregister(self, f):
+            fd = self._get_file_descriptor(f)
+            self._poll.unregister(fd)
+            self._remove_fileobject(f)
+
+        def poll(self, timeout):
+            if timeout is not None:
+                # convert from seconds to milliseconds
+                timeout *= 1000
+            changes = self._poll.poll(timeout)
+            results = []
+            for fd, events in changes:
+                f = self._get_file_object(fd)
+                if events & (select.POLLIN | select.POLLPRI):
+                    results.append((f, POLLER_EVENT_READ))
+                elif events & (select.POLLOUT):
+                    results.append((f, POLLER_EVENT_WRITE))
+                elif events & (select.POLLHUP):
+                    results.append((f, POLLER_EVENT_HUP))
+                elif events & (select.POLLERR | select.POLLNVAL):
+                    results.append((f, POLLER_EVENT_ERROR))
+            return results
+else:
+    class Poller(object):
+        def __init__(self):
+            self.rlist = []
+            self.wlist = []
+            self.xlist = []
+
+        def __nonzero__(self):
+            return len(self.rlist) + len(self.wlist) + len(self.xlist) != 0
+
+        def __len__(self):
+            return len(self.rlist) + len(self.wlist) + len(self.xlist)
+
+        def _register(self, f, l):
+            if f not in l:
+                l.append(f)
+
+        def _unregister(self, f, l):
+            if f in l:
+                l.remove(f)
+
+        def register_read(self, f):
+            self._register(f, self.rlist)
+
+        def register_write(self, f):
+            self._register(f, self.wlist)
+
+        def register_error(self, f):
+            self._register(f, self.xlist)
+
+        def unregister(self, f):
+            self._unregister(f, self.rlist)
+            self._unregister(f, self.wlist)
+            self._unregister(f, self.xlist)
+
+        def poll(self, timeout):
+            _in, _out, _err = select.select(self.rlist, self.wlist, self.xlist, timeout)
+            results = []
+            for f in _in:
+                results.append((f, POLLER_EVENT_READ))
+            for f in _out:
+                results.append((f, POLLER_EVENT_WRITE))
+            for f in _err:
+                results.append((f, POLLER_EVENT_ERROR))
+            return results
+
+
 def encode_to_py3bytes_or_py2str(s):
     """ takes anything and attempts to return a py2 string or py3 bytes.  this
     is typically used when creating command + arguments to be executed via
@@ -2234,20 +2360,21 @@ def input_thread(log, stdin, is_alive, quit, close_before_term):
     done = False
     closed = False
     alive = True
-    writers = [stdin]
+    poller = Poller()
+    poller.register_write(stdin)
 
-    while writers and alive:
-        _, to_write, _ = select.select([], writers, [], 1)
+    while poller and alive:
+        changed = poller.poll(1)
+        for fd, events in changed:
+            if events & (POLLER_EVENT_WRITE | POLLER_EVENT_HUP):
+                log.debug("%r ready for more input", stdin)
+                done = stdin.write()
 
-        if to_write:
-            log.debug("%r ready for more input", stdin)
-            done = stdin.write()
-
-            if done:
-                writers = []
-                if close_before_term:
-                    stdin.close()
-                    closed = True
+                if done:
+                    poller.unregister(stdin)
+                    if close_before_term:
+                        stdin.close()
+                        closed = True
 
         alive, _ = is_alive()
 
@@ -2300,36 +2427,30 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive, quit,
     process's stdout stream (a streamreader), and waits for it to claim that
     its done """
 
-    readers = []
-    errors = []
-
+    poller = Poller()
     if stdout is not None:
-        readers.append(stdout)
-        errors.append(stdout)
+        poller.register_read(stdout)
     if stderr is not None:
-        readers.append(stderr)
-        errors.append(stderr)
+        poller.register_read(stderr)
 
-    # this is our select loop for polling stdout or stderr that is ready to
+    # this is our poll loop for polling stdout or stderr that is ready to
     # be read and processed.  if one of those streamreaders indicate that it
     # is done altogether being read from, we remove it from our list of
     # things to poll.  when no more things are left to poll, we leave this
     # loop and clean up
-    while readers:
-        outputs, inputs, err = no_interrupt(select.select, readers, [], errors, 1)
-
-        # stdout and stderr
-        for stream in outputs:
-            log.debug("%r ready to be read from", stream)
-            done = stream.read()
-            if done:
-                readers.remove(stream)
-
-        # for some reason, we have to just ignore streams that have had an
-        # error.  i'm not exactly sure why, but don't remove this until we
-        # figure that out, and create a test for it
-        for stream in err:
-            pass
+    while poller:
+        changed = no_interrupt(poller.poll, 0.1)
+        for f, events in changed:
+            if events & (POLLER_EVENT_READ | POLLER_EVENT_HUP):
+                log.debug("%r ready to be read from", f)
+                done = f.read()
+                if done:
+                    poller.unregister(f)
+            elif events & POLLER_EVENT_ERROR:
+                # for some reason, we have to just ignore streams that have had an
+                # error.  i'm not exactly sure why, but don't remove this until we
+                # figure that out, and create a test for it
+                pass
 
         if timeout_event and timeout_event.is_set():
             break
@@ -2461,7 +2582,7 @@ def get_file_chunk_reader(stdin):
 
     def fn():
         # python 3.* includes a fileno on stringios, but accessing it throws an
-        # exception.  that exception is how we'll know we can't do a select on
+        # exception.  that exception is how we'll know we can't do a poll on
         # stdin
         is_real_file = True
         if IS_PY3:
@@ -2470,11 +2591,17 @@ def get_file_chunk_reader(stdin):
             except UnsupportedOperation:
                 is_real_file = False
 
-        # this select is for files that may not yet be ready to read.  we test
-        # for fileno because StringIO/BytesIO cannot be used in a select
+        # this poll is for files that may not yet be ready to read.  we test
+        # for fileno because StringIO/BytesIO cannot be used in a poll
         if is_real_file and hasattr(stdin, "fileno"):
-            outputs, _, _ = select.select([stdin], [], [], 0.1)
-            if not outputs:
+            poller = Poller()
+            poller.register_read(stdin)
+            changed = poller.poll(0.1)
+            ready = False
+            for fd, events in changed:
+                if events & (POLLER_EVENT_READ | POLLER_EVENT_HUP):
+                    ready = True
+            if not ready:
                 raise NotYetReadyToRead
 
         chunk = stdin.read(bufsize)
@@ -2526,7 +2653,7 @@ class StreamWriter(object):
 
 
     def fileno(self):
-        """ defining this allows us to do select.select on an instance of this
+        """ defining this allows us to do poll on an instance of this
         class """
         return self.stream
 
@@ -2719,7 +2846,7 @@ class StreamReader(object):
 
 
     def fileno(self):
-        """ defining this allows us to do select.select on an instance of this
+        """ defining this allows us to do poll on an instance of this
         class """
         return self.stream
 
