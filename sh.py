@@ -1643,7 +1643,7 @@ class OProc(object):
             # by the time the process exits, and the data will be lost.
             # i've only seen this on OSX.
             if stderr is OProc.STDOUT:
-                self._stderr_read_fd = os.dup(self._stdout_read_fd)
+                self._stderr_read_fd = None if self._stdout_read_fd is None else os.dup(self._stdout_read_fd)
                 self._stderr_write_fd = os.dup(self._stdout_write_fd)
 
             elif stderr_is_tty_or_pipe:
