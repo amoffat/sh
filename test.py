@@ -916,6 +916,22 @@ sys.stderr.flush()
         stdout = python(py.name, _err_to_out=True)
         self.assertEqual(stdout, "stdoutstderr")
 
+    def test_err_to_out_and_sys_stdout(self):
+        py = create_tmp_test("""
+import sys
+import os
+
+sys.stdout.write("stdout")
+sys.stdout.flush()
+sys.stderr.write("stderr")
+sys.stderr.flush()
+""")
+        master, slave = os.pipe()
+        stdout = python(py.name, _err_to_out=True, _out=slave)
+        # "stdoutstderr" goes to the stdout of the test runner
+        self.assertEqual(stdout, "")
+        self.assertEqual(os.read(master, 12), b"stdoutstderr")
+
 
     def test_err_piped(self):
         py = create_tmp_test("""
