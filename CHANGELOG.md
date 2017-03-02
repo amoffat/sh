@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.12.10 - 3/02/17
+
+*   bugfix for file descriptors over 1024 [#356](https://github.com/amoffat/sh/issues/356)
+*   bugfix when `_err_to_out` is True and `_out` is pipe or tty [#365](https://github.com/amoffat/sh/issues/365)
+
 ## 1.12.9 - 1/04/17
 
 *   added `_bg_exc` for silencing exceptions in background threads [#350](https://github.com/amoffat/sh/pull/350)
