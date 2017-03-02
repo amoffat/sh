@@ -928,7 +928,6 @@ sys.stderr.flush()
 """)
         master, slave = os.pipe()
         stdout = python(py.name, _err_to_out=True, _out=slave)
-        # "stdoutstderr" goes to the stdout of the test runner
         self.assertEqual(stdout, "")
         self.assertEqual(os.read(master, 12), b"stdoutstderr")
 
