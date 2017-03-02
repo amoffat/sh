@@ -67,6 +67,7 @@ DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
 # serious side-effects that could change anything.  as long as we do that, it
 # should be ok
 RUNNING_TESTS = bool(int(os.environ.get("SH_TESTS_RUNNING", "0")))
+FORCE_USE_SELECT = bool(int(os.environ.get("SH_TESTS_USE_SELECT", "0")))
 
 if IS_PY3:
     from io import StringIO
@@ -130,11 +131,13 @@ if IS_PY3:
 _unicode_methods = set(dir(unicode()))
 
 
+HAS_POLL = hasattr(select, "poll")
 POLLER_EVENT_READ = 1
 POLLER_EVENT_WRITE = 2
 POLLER_EVENT_HUP = 4
 POLLER_EVENT_ERROR = 8
-if hasattr(select, "poll"):
+
+if HAS_POLL and not FORCE_USE_SELECT:
     class Poller(object):
         def __init__(self):
             self._poll = select.poll()
@@ -3427,17 +3430,22 @@ class ModuleImporterFromVariables(object):
         return module
 
 
-def run_tests(env, locale, args, version, **extra_env): # pragma: no cover
+def run_tests(env, locale, args, version, force_select, **extra_env): # pragma: no cover
     py_version = "python"
     py_version += str(version)
 
     py_bin = which(py_version)
     return_code = None
 
-    if py_bin:
-        print("Testing %s, locale %r" % (py_version.capitalize(),
-            locale))
+    poller = "poll"
+    if force_select:
+        poller = "select"
 
+    if py_bin:
+        print("Testing %s, locale %r, poller: %s" % (py_version.capitalize(),
+            locale, poller))
+
+        env["SH_TESTS_USE_SELECT"] = str(int(force_select))
         env["LANG"] = locale
 
         for k,v in extra_env.items():
@@ -3496,6 +3504,10 @@ if __name__ == "__main__": # pragma: no cover
             sys_ver = "%d.%d" % (v[0], v[1])
             all_versions = (sys_ver,)
 
+        all_force_select = [True]
+        if HAS_POLL:
+            all_force_select.append(False)
+
         all_locales = ("en_US.UTF-8", "C")
         i = 0
         for locale in all_locales:
@@ -3506,18 +3518,20 @@ if __name__ == "__main__": # pragma: no cover
                 if constrain_versions and version not in constrain_versions:
                     continue
 
-                env_copy = env.copy()
-                exit_code = run_tests(env_copy, locale, args, version,
-                        SH_TEST_RUN_IDX=i)
+                for force_select in all_force_select:
+                    env_copy = env.copy()
 
-                if exit_code is None:
-                    print("Couldn't find %s, skipping" % version)
+                    exit_code = run_tests(env_copy, locale, args, version,
+                            force_select, SH_TEST_RUN_IDX=i)
 
-                elif exit_code != 0:
-                    print("Failed for %s, %s" % (version, locale))
-                    exit(1)
+                    if exit_code is None:
+                        print("Couldn't find %s, skipping" % version)
 
-                i += 1
+                    elif exit_code != 0:
+                        print("Failed for %s, %s" % (version, locale))
+                        exit(1)
+
+                    i += 1
 
         ran_versions = ",".join(all_versions)
         print("Tested Python versions: %s" % ran_versions)
