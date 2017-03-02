@@ -137,6 +137,12 @@ POLLER_EVENT_WRITE = 2
 POLLER_EVENT_HUP = 4
 POLLER_EVENT_ERROR = 8
 
+
+# here we use an use a poller interface that transparently selects the most
+# capable poller (out of either select.select or select.poll).  this was added
+# by zhangyafeikimi when he discovered that if the fds created internally by sh
+# numbered > 1024, select.select failed (a limitation of select.select).  this
+# can happen if your script opens a lot of files
 if HAS_POLL and not FORCE_USE_SELECT:
     class Poller(object):
         def __init__(self):
