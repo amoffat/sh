@@ -2569,6 +2569,9 @@ class MiscTests(BaseTests):
                     break
 
             python(py.name)
+            for master, slave in pipes:
+                os.close(master)
+                os.close(slave)
 
 
     def test_args_deprecated(self):
