@@ -36,8 +36,10 @@ import unittest
 import tempfile
 import warnings
 import pty
+import resource
 import logging
 import sys
+from contextlib import contextmanager
 import sh
 import signal
 import errno
@@ -130,6 +132,7 @@ if not skipUnless:
                     return
                 return skip
         return wrapper
+skip_unless = skipUnless
 
 def requires_progs(*progs):
     missing = []
@@ -148,6 +151,22 @@ requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must
 not_osx = skipUnless(not IS_OSX, "Doesn't work on OSX")
 requires_py3 = skipUnless(IS_PY3, "Test only works on Python 3")
 requires_py35 = skipUnless(IS_PY3 and MINOR_VER >= 5, "Test only works on Python 3.5 or higher")
+
+
+def requires_poller(poller):
+    use_select = bool(int(os.environ.get("SH_TESTS_USE_SELECT", "0")))
+    cur_poller = "select" if use_select else "poll"
+    return skipUnless(cur_poller == poller, "Only enabled for select.%s" % cur_poller)
+
+
+@contextmanager
+def ulimit(key, new_soft):
+    soft, hard = resource.getrlimit(key)
+    resource.setrlimit(key, (new_soft, hard))
+    try:
+        yield
+    finally:
+        resource.setrlimit(key, (soft, hard))
 
 
 def create_tmp_test(code, prefix="tmp", delete=True, **kwargs):
@@ -928,7 +947,6 @@ sys.stderr.flush()
 """)
         master, slave = os.pipe()
         stdout = python(py.name, _err_to_out=True, _out=slave)
-        # "stdoutstderr" goes to the stdout of the test runner
         self.assertEqual(stdout, "")
         self.assertEqual(os.read(master, 12), b"stdoutstderr")
 
@@ -2536,6 +2554,22 @@ for line in sys.stdin:
 
 
 class MiscTests(BaseTests):
+
+    @requires_poller("poll")
+    def test_fd_over_1024(self):
+        py = create_tmp_test("""print("hi world")""")
+
+        with ulimit(resource.RLIMIT_NOFILE, 2048):
+            cutoff_fd = 1024
+            pipes = []
+            for i in xrange(cutoff_fd):
+                master, slave = os.pipe()
+                pipes.append((master, slave))
+                if slave >= cutoff_fd:
+                    break
+
+            python(py.name)
+
 
     def test_args_deprecated(self):
         self.assertRaises(DeprecationWarning, sh.args, _env={})
