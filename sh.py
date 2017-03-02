@@ -129,6 +129,66 @@ if IS_PY3:
 
 _unicode_methods = set(dir(unicode()))
 
+def poll_select(readers, writers, errors, timeout):
+    readers = set(readers)
+    writers = set(writers)
+    errors = set(errors)
+
+    timeout *= 1000
+    poll = select.poll()
+
+    fd_lookup = {}
+
+    def fd_set(obj):
+        if hasattr(obj, "fileno"):
+            fd = obj.fileno()
+            fd_lookup[fd] = obj
+
+    def fd_get(fd):
+        return fd_lookup.get(fd, fd)
+
+    for reader in readers:
+        fd_set(reader)
+        poll.register(reader, select.POLLIN)
+
+    for writer in writers:
+        fd_set(writer)
+        poll.register(writer,  select.POLLOUT)
+
+    for error in errors:
+        fd_set(error)
+        poll.register(error, select.POLLERR)
+
+    changed = poll.poll(timeout)
+
+    for fd in fd_lookup.keys():
+        poll.unregister(fd)
+
+    to_read = []
+    to_write = []
+    to_err = []
+
+    for (fd, event) in changed:
+        fd = fd_get(fd)
+        if event & (select.POLLERR | select.POLLNVAL) and fd in errors:
+            to_err.append(fd)
+
+        if event & (select.POLLOUT | select.POLLHUP) and fd in writers:
+            to_write.append(fd)
+
+        if event & (select.POLLIN | select.POLLHUP) and fd in readers:
+            to_read.append(fd)
+
+    return to_read, to_write, to_err
+
+
+our_select = select.select
+
+use_poll = hasattr(select, "poll")
+if use_poll:
+    our_select = poll_select
+
+
 
 def encode_to_py3bytes_or_py2str(s):
     """ takes anything and attempts to return a py2 string or py3 bytes.  this
@@ -2245,7 +2305,7 @@ def input_thread(log, stdin, is_alive, quit, close_before_term):
     writers = [stdin]
 
     while writers and alive:
-        _, to_write, _ = select.select([], writers, [], 1)
+        _, to_write, _ = our_select([], writers, [], 1)
 
         if to_write:
             log.debug("%r ready for more input", stdin)
@@ -2324,7 +2384,7 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive, quit,
     # things to poll.  when no more things are left to poll, we leave this
     # loop and clean up
     while readers:
-        outputs, inputs, err = no_interrupt(select.select, readers, [], errors, 1)
+        outputs, inputs, err = no_interrupt(our_select, readers, [], errors, 1)
 
         # stdout and stderr
         for stream in outputs:
@@ -2481,7 +2541,7 @@ def get_file_chunk_reader(stdin):
         # this select is for files that may not yet be ready to read.  we test
         # for fileno because StringIO/BytesIO cannot be used in a select
         if is_real_file and hasattr(stdin, "fileno"):
-            outputs, _, _ = select.select([stdin], [], [], 0.1)
+            outputs, _, _ = our_select([stdin], [], [], 0.1)
             if not outputs:
                 raise NotYetReadyToRead
 
