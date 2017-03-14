@@ -2,6 +2,7 @@
 
 ## 1.12.11 - 
 
+*   bugfix for relative paths to `sh.Command` not expanding to absolute paths [#372](https://github.com/amoffat/sh/issues/372)
 *   updated for python 3.6
 *   bugfix for SIGPIPE not being handled correctly on pipelined processes [#373](https://github.com/amoffat/sh/issues/373)
 

@@ -536,6 +536,7 @@ def which(program, paths=None):
     # if there's a path component, then we've specified a path to the program,
     # and we should just test if that program is executable.  if it is, return
     if fpath:
+        program = os.path.abspath(os.path.expanduser(program))
         if is_exe(program):
             found_path = program
 
