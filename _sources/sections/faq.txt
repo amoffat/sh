@@ -78,17 +78,6 @@ is received.
 The solution to the ``git log`` problem above is simply to use
 ``_tty_out=False``, but this is not totally obvious.
 
-How do I run a program with dashes in its name?
------------------------------------------------
-
-Replace the dashes with underscores when importing or calling your command.  For
-example, to call the program ``google-chrome``:
-
-.. code-block:: python
-
-    import sh
-    sh.google_chrome("http://google.com")
-
 Why doesn't "*" work as a command argument?
 -------------------------------------------
 
