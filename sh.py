@@ -2725,7 +2725,7 @@ class StreamWriter(object):
                 # sys.stdout.write(sys.stdin.read())
                 #
                 # then type 'a' followed by ctrl-d 3 times.  in python
-                # 2.6,2.7,3.3,3.4,3.5, it only takes 2 ctrl-d to terminate.
+                # 2.6,2.7,3.3,3.4,3.5,3.6, it only takes 2 ctrl-d to terminate.
                 # however, in python 3.1 and 3.2, it takes all 3.
                 #
                 # so here we send an extra EOF along, just in case.  i don't
@@ -3516,7 +3516,7 @@ if __name__ == "__main__": # pragma: no cover
 
         # if we're testing locally, run all versions of python on the system
         if action == "test":
-            all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5")
+            all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6")
 
         # if we're testing on travis, just use the system's default python,
         # since travis will spawn a vm per python version in our .travis.yml
