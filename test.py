@@ -1507,10 +1507,13 @@ while True:
     exit(0)
         """)
 
-        def fn():
-            python(python("-u", py1.name, _piped="out"), "-u", py2.name)
+        p1 = python("-u", py1.name, _piped="out")
+        p2 = python(p1, "-u", py2.name)
 
-        self.assertRaises(sh.SignalException_SIGPIPE, fn)
+        # SIGPIPE should happen, but it shouldn't be an error, since _piped is
+        # truthful
+        self.assertEqual(-p1.exit_code, signal.SIGPIPE)
+        self.assertEqual(p2.exit_code, 0)
 
 
     def test_piped_generator(self):
