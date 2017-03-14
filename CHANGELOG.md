@@ -2,6 +2,7 @@
 
 ## 1.12.11 - 
 
+*   updated for python 3.6
 *   bugfix for SIGPIPE not being handled correctly on pipelined processes [#373](https://github.com/amoffat/sh/issues/373)
 
 ## 1.12.10 - 3/02/17
