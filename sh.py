@@ -805,10 +805,12 @@ class RunningCommand(object):
         """ here we determine if we had an exception, or an error code that we
         weren't expecting to see.  if we did, we create and raise an exception
         """
-        exc_class = get_exc_exit_code_would_raise(code, self.call_args["ok_code"])
+        ca = self.call_args
+        exc_class = get_exc_exit_code_would_raise(code, ca["ok_code"],
+                ca["piped"])
         if exc_class:
             exc = exc_class(self.ran, self.process.stdout, self.process.stderr,
-                    self.call_args["truncate_exc"])
+                    ca["truncate_exc"])
             raise exc
 
 
@@ -1399,7 +1401,8 @@ output"),
                 launch = lambda: os.spawnve(os.P_WAIT, cmd[0], cmd, call_args["env"])
 
             exit_code = launch()
-            exc_class = get_exc_exit_code_would_raise(exit_code, call_args["ok_code"])
+            exc_class = get_exc_exit_code_would_raise(exit_code,
+                    call_args["ok_code"], call_args["piped"])
             if exc_class:
                 if IS_PY3:
                     ran = " ".join([arg.decode(DEFAULT_ENCODING, "ignore") for arg in cmd])
@@ -1622,10 +1625,17 @@ def construct_streamreader_callback(process, handler):
     return fn
 
 
-def get_exc_exit_code_would_raise(exit_code, ok_codes):
+def get_exc_exit_code_would_raise(exit_code, ok_codes, sigpipe_ok):
     exc = None
     success = exit_code in ok_codes
     bad_sig = -exit_code in SIGNALS_THAT_SHOULD_THROW_EXCEPTION
+
+    # if this is a piped command, SIGPIPE must be ignored by us and not raise an
+    # exception, since it's perfectly normal for the consumer of a process's
+    # pipe to terminate early
+    if sigpipe_ok and -exit_code == signal.SIGPIPE:
+        bad_sig = False
+        success = True
 
     if not success or bad_sig:
         exc = get_rc_exc(exit_code)
@@ -1840,7 +1850,6 @@ class OProc(object):
         if IS_OSX:
             close_pipe_read, close_pipe_write = os.pipe()
 
-
         # session id, group id, process id
         self.sid = None
         self.pgid = None
@@ -1858,6 +1867,13 @@ class OProc(object):
                 # exits.  only ignore if we're backgrounded
                 if ca["bg"] is True:
                     signal.signal(signal.SIGHUP, signal.SIG_IGN)
+
+                # python ignores SIGPIPE by default.  we must make sure to put
+                # this behavior back to the default for spawned processes,
+                # otherwise SIGPIPE won't kill piped processes, which is what we
+                # need, so that we can check the error code of the killed
+                # process to see that SIGPIPE killed it
+                signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
                 # put our forked process in a new session?  this will relinquish
                 # any control of our inherited CTTY and also make our parent
