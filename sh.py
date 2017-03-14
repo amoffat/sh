@@ -398,7 +398,7 @@ class TimeoutException(Exception):
         self.exit_code = exit_code
         super(Exception, self).__init__()
 
-SIGNALS_THAT_SHOULD_THROW_EXCEPTION = (
+SIGNALS_THAT_SHOULD_THROW_EXCEPTION = set((
     signal.SIGABRT,
     signal.SIGBUS,
     signal.SIGFPE,
@@ -410,7 +410,7 @@ SIGNALS_THAT_SHOULD_THROW_EXCEPTION = (
     signal.SIGSEGV,
     signal.SIGTERM,
     signal.SIGSYS,
-)
+))
 
 
 # we subclass AttributeError because:
