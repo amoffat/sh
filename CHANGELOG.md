@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.12.11 - 3/13/17
+
+*   bugfix for relative paths to `sh.Command` not expanding to absolute paths [#372](https://github.com/amoffat/sh/issues/372)
+*   updated for python 3.6
+*   bugfix for SIGPIPE not being handled correctly on pipelined processes [#373](https://github.com/amoffat/sh/issues/373)
+
 ## 1.12.10 - 3/02/17
 
 *   bugfix for file descriptors over 1024 [#356](https://github.com/amoffat/sh/issues/356)
