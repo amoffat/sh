@@ -33,6 +33,11 @@ Installation
 Complete documentation @ https://amoffat.github.com/sh
 =====================================================
 
+Updating the docs
+=================
+
+Check out the `gh-pages <https://github.com/amoffat/sh/tree/gh-pages>`_ branch and follow the ``README.rst`` there.
+
 Developers
 ==========
 
