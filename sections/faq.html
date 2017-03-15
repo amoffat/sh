@@ -251,6 +251,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-run-a-command-and-connect-it-to-sys-stdout-and-sys-stdin">How do I run a command and connect it to sys.stdout and sys.stdin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#why-do-my-arguments-need-to-be-separate-strings">Why do my arguments need to be separate strings?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-order-keyword-arguments">How do I order keyword arguments?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-disable-pylint-e1101-no-member-errors">How to disable pylint E1101 no-member errors?</a></li>
 </ul>
 </li>
 </ul>
@@ -516,6 +517,17 @@ specific order.</p>
 <p>So the solution here is to forego the usage of the keyword argument
 <em>convenience</em>, and just use raw ordered arguments:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">sh</span><span class="o">.</span><span class="n">my_command</span><span class="p">(</span><span class="s2">&quot;--arg1=val1&quot;</span><span class="p">,</span> <span class="s2">&quot;arg2&quot;</span><span class="p">,</span> <span class="s2">&quot;--arg3=val3&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="how-to-disable-pylint-e1101-no-member-errors">
+<span id="faq-pylint"></span><h2>How to disable pylint E1101 no-member errors?<a class="headerlink" href="#how-to-disable-pylint-e1101-no-member-errors" title="Permalink to this headline">¶</a></h2>
+<p>Pylint complains with E1101 no-member to almost all <code class="docutils literal"><span class="pre">sh.command</span></code> invocations,
+because it doesn&#8217;t know, that these members are generated dynamically.
+Starting with Pylint 1.6 these messages can be suppressed using <a class="reference external" href="https://docs.pylint.org/en/1.6.0/features.html#id28">generated-members</a> option.</p>
+<p>Just add following lines to <code class="docutils literal"><span class="pre">pylintrc</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">TYPECHECK</span><span class="p">]</span>
+<span class="n">generated</span><span class="o">-</span><span class="n">members</span><span class="o">=</span><span class="n">sh</span>
 </pre></div>
 </div>
 </div>
