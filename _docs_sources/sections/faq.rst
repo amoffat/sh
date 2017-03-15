@@ -282,7 +282,7 @@ specific order.
 So the solution here is to forego the usage of the keyword argument
 *convenience*, and just use raw ordered arguments:
 
-.. code-block:: pythondfs
+.. code-block:: python
 
     sh.my_command("--arg1=val1", "arg2", "--arg3=val3")
 
