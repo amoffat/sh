@@ -982,7 +982,7 @@ sys.stdout.write("stdout")
 sys.stderr.write("stderr")
 """)
 
-        file_obj = tempfile.TemporaryFile()
+        file_obj = tempfile.NamedTemporaryFile()
         out = python(py.name, _out=file_obj)
 
         self.assertTrue(len(out) == 0)
@@ -995,7 +995,7 @@ sys.stderr.write("stderr")
 
 
         # test with tee
-        file_obj = tempfile.TemporaryFile()
+        file_obj = tempfile.NamedTemporaryFile()
         out = python(py.name, _out=file_obj, _tee=True)
 
         self.assertTrue(len(out) != 0)
@@ -1018,7 +1018,7 @@ import os
 sys.stdout.write("stdout")
 sys.stderr.write("stderr")
 """)
-        file_obj = tempfile.TemporaryFile()
+        file_obj = tempfile.NamedTemporaryFile()
         p = python("-u", py.name, _err=file_obj)
 
         file_obj.seek(0)
@@ -1030,7 +1030,7 @@ sys.stderr.write("stderr")
         self.assertTrue(len(p.stderr) == 0)
 
         # now with tee
-        file_obj = tempfile.TemporaryFile()
+        file_obj = tempfile.NamedTemporaryFile()
         p = python(py.name, _err=file_obj, _tee="err")
 
         file_obj.seek(0)
@@ -2110,14 +2110,16 @@ p.wait()
         from sh import mkdir
 
         child = realpath(tempfile.mkdtemp())
+        try:
+            old_wd = os.getcwd()
+            with sh.pushd(tempdir):
+                self.assertEqual(tempdir, os.getcwd())
+                sh.cd(child)
+                self.assertEqual(child, os.getcwd())
 
-        old_wd = os.getcwd()
-        with sh.pushd(tempdir):
-            self.assertEqual(tempdir, os.getcwd())
-            sh.cd(child)
-            self.assertEqual(child, os.getcwd())
-
-        self.assertEqual(old_wd, os.getcwd())
+            self.assertEqual(old_wd, os.getcwd())
+        finally:
+            os.rmdir(child)
 
     def test_cd_homedir(self):
         orig = os.getcwd()
@@ -2668,29 +2670,33 @@ print("cool")
 
         temp1 = realpath(tempfile.mkdtemp())
         temp2 = realpath(tempfile.mkdtemp())
-        results = [None, None]
+        try:
+            results = [None, None]
 
-        def fn1():
-            with sh.pushd(temp1):
-                time.sleep(0.2)
-                results[0] = realpath(os.getcwd())
+            def fn1():
+                with sh.pushd(temp1):
+                    time.sleep(0.2)
+                    results[0] = realpath(os.getcwd())
 
-        def fn2():
-            time.sleep(0.1)
-            with sh.pushd(temp2):
-                results[1] = realpath(os.getcwd())
-                time.sleep(0.3)
+            def fn2():
+                time.sleep(0.1)
+                with sh.pushd(temp2):
+                    results[1] = realpath(os.getcwd())
+                    time.sleep(0.3)
 
-        t1 = threading.Thread(name="t1", target=fn1)
-        t2 = threading.Thread(name="t2", target=fn2)
+            t1 = threading.Thread(name="t1", target=fn1)
+            t2 = threading.Thread(name="t2", target=fn2)
 
-        t1.start()
-        t2.start()
+            t1.start()
+            t2.start()
 
-        t1.join()
-        t2.join()
+            t1.join()
+            t2.join()
 
-        self.assertEqual(results, [temp1, temp2])
+            self.assertEqual(results, [temp1, temp2])
+        finally:
+            os.rmdir(temp1)
+            os.rmdir(temp2)
 
 
     def test_stdin_nohang(self):
