@@ -285,3 +285,17 @@ So the solution here is to forego the usage of the keyword argument
 .. code-block:: python
 
     sh.my_command("--arg1=val1", "arg2", "--arg3=val3")
+
+.. _faq_pylint:
+
+How to disable pylint E1101 no-member errors?
+---------------------------------------------
+
+Pylint complains with E1101 no-member to almost all ``sh.command`` invocations,
+because it doesn't know, that these members are generated dynamically.
+Starting with Pylint 1.6 these messages can be suppressed using `generated-members <https://docs.pylint.org/en/1.6.0/features.html#id28>`_ option.
+
+Just add following lines to ``pylintrc``::
+
+    [TYPECHECK]
+    generated-members=sh
