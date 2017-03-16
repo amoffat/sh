@@ -252,6 +252,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#why-do-my-arguments-need-to-be-separate-strings">Why do my arguments need to be separate strings?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-order-keyword-arguments">How do I order keyword arguments?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-to-disable-pylint-e1101-no-member-errors">How to disable pylint E1101 no-member errors?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-is-sh-just-a-single-file">Why is sh just a single file?</a></li>
 </ul>
 </li>
 </ul>
@@ -530,6 +531,33 @@ Starting with Pylint 1.6 these messages can be suppressed using <a class="refere
 <span class="n">generated</span><span class="o">-</span><span class="n">members</span><span class="o">=</span><span class="n">sh</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="why-is-sh-just-a-single-file">
+<h2>Why is sh just a single file?<a class="headerlink" href="#why-is-sh-just-a-single-file" title="Permalink to this headline">¶</a></h2>
+<p>When sh was first written the design decision was made to make it a single-file
+module.  This has pros and cons:</p>
+<p>Cons:</p>
+<ul class="simple">
+<li>Auditing the code is more challenging</li>
+<li>Without file-enforced structure, adding more features and abstractions makes
+the code harder to follow</li>
+<li>Cognitively, it feels cluttered</li>
+</ul>
+<p>Pros:</p>
+<ul class="simple">
+<li>Can be used easily on systems without Python package managers</li>
+<li>Can be embedded/bundled together with other software more easily</li>
+<li>Cognitively, it feels more self-contained</li>
+</ul>
+<p>In my mind, because the primary target audience of sh users is generally more
+scrappy devops, systems people, or people just trying to stitch together some
+clunky system programs, the listed pros weigh a little more heavily than the
+cons.  Sacrificing some development advantages to give those users a more
+flexible tool is a win to me.</p>
+<p>Down the road, the development disadvantages of a single file can be solved with
+additional development tools, for example, with a tool that compiles multiple
+modules into the single sh.py file.  Realistically, though, sh is pretty mature,
+so I don&#8217;t see it growing much more in complexity or code size.</p>
 </div>
 </div>
 

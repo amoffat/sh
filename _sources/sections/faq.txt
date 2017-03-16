@@ -299,3 +299,34 @@ Just add following lines to ``pylintrc``::
 
     [TYPECHECK]
     generated-members=sh
+
+
+Why is sh just a single file?
+-----------------------------
+
+When sh was first written the design decision was made to make it a single-file
+module.  This has pros and cons:
+
+Cons:
+
+- Auditing the code is more challenging
+- Without file-enforced structure, adding more features and abstractions makes
+  the code harder to follow
+- Cognitively, it feels cluttered
+
+Pros:
+
+- Can be used easily on systems without Python package managers
+- Can be embedded/bundled together with other software more easily
+- Cognitively, it feels more self-contained
+
+In my mind, because the primary target audience of sh users is generally more
+scrappy devops, systems people, or people just trying to stitch together some
+clunky system programs, the listed pros weigh a little more heavily than the
+cons.  Sacrificing some development advantages to give those users a more
+flexible tool is a win to me.
+
+Down the road, the development disadvantages of a single file can be solved with
+additional development tools, for example, with a tool that compiles multiple
+modules into the single sh.py file.  Realistically, though, sh is pretty mature,
+so I don't see it growing much more in complexity or code size.
