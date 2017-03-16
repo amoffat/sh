@@ -304,7 +304,7 @@ Just add following lines to ``pylintrc``::
 Why is sh just a single file?
 -----------------------------
 
-When sh was first written the design decision was made to make it a single-file
+When sh was first written, the design decision was made to make it a single-file
 module.  This has pros and cons:
 
 Cons:
