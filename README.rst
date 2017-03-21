@@ -1,3 +1,9 @@
+.. image:: https://github.com/amoffat/sh/blob/master/logo-230.png
+    :target: https://amoffat.github.com/sh
+    :alt: Logo
+
+|
+
 .. image:: https://img.shields.io/pypi/v/sh.svg?style=flat-square
     :target: https://pypi.python.org/pypi/sh
     :alt: Version
