@@ -1,5 +1,3 @@
-sh |version|
-============
 
 .. toctree::
     :hidden:
@@ -13,6 +11,11 @@ sh |version|
     tutorials 
     sections/faq
     
+.. image:: static/logo-230.png
+    :alt: Logo
+
+|version|
+=========
 
 .. image:: https://img.shields.io/pypi/v/sh.svg?style=flat-square
     :target: https://pypi.python.org/pypi/sh
