@@ -11,7 +11,7 @@
     tutorials 
     sections/faq
     
-.. image:: static/logo-230.png
+.. image:: images/logo-230.png
     :alt: Logo
 
 |version|
