@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.12.12 - 3/30/17
+## 1.12.12, 1.12.13 - 3/30/17
 *   pypi readme doc bugfix [PR#377](https://github.com/amoffat/sh/pull/377)
 
 ## 1.12.11 - 3/13/17
