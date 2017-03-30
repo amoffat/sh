@@ -19,7 +19,7 @@ before_script:
 
 script:
     - python sh.py travis
-    - python setup.py check --restructuredtext --metadata --strict
+    - if python -c 'import sys; sys.exit(int(not sys.version_info >= (3, 5)))' ; then python setup.py check --restructuredtext --metadata --strict ; fi
 
 after_success:
     - coveralls
