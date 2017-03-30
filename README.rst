@@ -1,4 +1,4 @@
-.. image:: https://github.com/amoffat/sh/blob/master/logo-230.png
+.. image:: https://raw.githubusercontent.com/amoffat/sh/master/logo-230.png
     :target: https://amoffat.github.com/sh
     :alt: Logo
 
