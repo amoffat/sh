@@ -126,8 +126,38 @@ The above will run ``google-chrome http://google.com``
 
     If a program named ``google_chrome`` exists on your system, that will be
     called instead.  In that case, in order to execute the program with a dash
-    in the name, you'll have to use the method described :ref:`here. <faq_path>`
+    in the name, you'll have to use the method described :ref:`here.
+    <faq_special>`
 
+.. _faq_special:
+
+How do I execute a program with a special character in its name?
+----------------------------------------------------------------
+
+Programs with non-alphanumeric, non-dash characters in their names cannot be
+executed directly as an attribute on the sh module.  For example, **this will not
+work:**
+
+.. code-block:: python
+
+    import sh
+    sh.mkfs.ext4()
+
+The reason should be fairly obvious.  In Python, characters like ``.`` have
+special meaning, in this case, attribute access.  What sh is trying to do in the
+above example is find the program "mkfs" (which may or may not exist) and then
+perform a :ref:`subcommand lookup <subcommands>` with the name "ext4".  In other
+words, it will try to call ``mkfs`` with the argument ``ext4``, which is
+probably not what you want.
+
+The workaround is instantiating the :ref:`Command Class <command_class>` with
+the string of the program you're looking for:
+
+.. code-block:: python
+
+    import sh
+    mkfsext4 = sh.Command("mkfs.ext4")
+    mkfsext4() # run it
 
 .. _faq_pipe_syntax:
 

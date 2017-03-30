@@ -32,7 +32,7 @@ if __name__ == "__main__":
         sh.rm(join(THIS_DIR, o), "-rf")
     
     logging.info("compiling docs with sphinx")
-    print sh.make("html", _cwd=DOCS_DIR, _err_to_out=True)
+    print(sh.make("html", _cwd=DOCS_DIR, _err_to_out=True))
     
     logging.info("cleaning up cruft")
     sh.rm(join(THIS_DIR, "objects.inv"))

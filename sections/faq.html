@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>FAQ &mdash; sh 1.12.11 documentation</title>
+  <title>FAQ &mdash; sh 1.12.13 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.11 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
         <link rel="prev" title="Entering an SSH password" href="../tutorials/interacting_with_processes.html"/> 
 
   
@@ -246,6 +246,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#why-doesn-t-work-as-a-command-argument">Why doesn&#8217;t &#8220;*&#8221; work as a command argument?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn&#8217;t in <code class="docutils literal"><span class="pre">$PATH</span></code>?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-execute-a-program-with-a-dash-in-its-name">How do I execute a program with a dash in its name?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-do-i-execute-a-program-with-a-special-character-in-its-name">How do I execute a program with a special character in its name?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#why-not-use-to-pipe-commands">Why not use <code class="docutils literal"><span class="pre">|</span></code> to pipe commands?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#why-isn-t-piping-asynchronous-by-default">Why isn&#8217;t piping asynchronous by default?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-run-a-command-and-connect-it-to-sys-stdout-and-sys-stdin">How do I run a command and connect it to sys.stdout and sys.stdin?</a></li>
@@ -397,7 +398,30 @@ directly, then execute that:</p>
 <p class="first admonition-title">Note</p>
 <p class="last">If a program named <code class="docutils literal"><span class="pre">google_chrome</span></code> exists on your system, that will be
 called instead.  In that case, in order to execute the program with a dash
-in the name, you&#8217;ll have to use the method described <a class="reference internal" href="#faq-path"><span class="std std-ref">here.</span></a></p>
+in the name, you&#8217;ll have to use the method described <a class="reference internal" href="#faq-special"><span class="std std-ref">here.</span></a></p>
+</div>
+</div>
+<div class="section" id="how-do-i-execute-a-program-with-a-special-character-in-its-name">
+<span id="faq-special"></span><h2>How do I execute a program with a special character in its name?<a class="headerlink" href="#how-do-i-execute-a-program-with-a-special-character-in-its-name" title="Permalink to this headline">¶</a></h2>
+<p>Programs with non-alphanumeric, non-dash characters in their names cannot be
+executed directly as an attribute on the sh module.  For example, <strong>this will not
+work:</strong></p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">mkfs</span><span class="o">.</span><span class="n">ext4</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The reason should be fairly obvious.  In Python, characters like <code class="docutils literal"><span class="pre">.</span></code> have
+special meaning, in this case, attribute access.  What sh is trying to do in the
+above example is find the program &#8220;mkfs&#8221; (which may or may not exist) and then
+perform a <a class="reference internal" href="subcommands.html#subcommands"><span class="std std-ref">subcommand lookup</span></a> with the name &#8220;ext4&#8221;.  In other
+words, it will try to call <code class="docutils literal"><span class="pre">mkfs</span></code> with the argument <code class="docutils literal"><span class="pre">ext4</span></code>, which is
+probably not what you want.</p>
+<p>The workaround is instantiating the <a class="reference internal" href="command_class.html#command-class"><span class="std std-ref">Command Class</span></a> with
+the string of the program you&#8217;re looking for:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<span class="n">mkfsext4</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s2">&quot;mkfs.ext4&quot;</span><span class="p">)</span>
+<span class="n">mkfsext4</span><span class="p">()</span> <span class="c1"># run it</span>
+</pre></div>
 </div>
 </div>
 <div class="section" id="why-not-use-to-pipe-commands">
@@ -600,7 +624,7 @@ so I don&#8217;t see it growing much more in complexity or code size.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.11',
+            VERSION:'1.12.13',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true
