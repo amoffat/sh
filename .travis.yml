@@ -19,6 +19,7 @@ before_script:
 
 script:
     - python sh.py travis
+    - python setup.py check --restructuredtext --metadata --strict
 
 after_success:
     - coveralls
