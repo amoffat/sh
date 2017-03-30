@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.12.12 - 3/30/17
+*   pypi readme doc bugfix [PR#377](https://github.com/amoffat/sh/pull/377)
+
 ## 1.12.11 - 3/13/17
 
 *   bugfix for relative paths to `sh.Command` not expanding to absolute paths [#372](https://github.com/amoffat/sh/issues/372)
