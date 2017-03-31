@@ -106,6 +106,7 @@ import resource
 from collections import deque
 import logging
 import weakref
+import warnings
 
 
 # a re-entrant lock for pushd.  this way, multiple threads that happen to use
@@ -3090,7 +3091,7 @@ def args(**kwargs):
 
     kwargs_str = ",".join(["%s=%r" % (k,v) for k,v in kwargs.items()])
 
-    raise DeprecationWarning("""
+    warnings.warn("""
 
 sh.args() has been deprecated because it was never thread safe.  use the
 following instead:
@@ -3104,7 +3105,7 @@ or
     from sh2 import your_command
     your_command()
 
-""".format(kwargs=kwargs_str))
+""".format(kwargs=kwargs_str), DeprecationWarning)
 
 
 
