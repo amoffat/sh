@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.12.14 -
+*   bugfix for when `_tee` and `_out` are used, and the `_out` is a tty or pipe [#384](https://github.com/amoffat/sh/issues/384)
 *   bugfix where python 3.3+ detected different arg counts for bound method output callbacks [#380](https://github.com/amoffat/sh/issues/380)
 
 ## 1.12.12, 1.12.13 - 3/30/17

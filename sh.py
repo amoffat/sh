@@ -1730,11 +1730,15 @@ class OProc(object):
         stdout_is_tty_or_pipe = ob_is_tty(stdout) or ob_is_pipe(stdout)
         stderr_is_tty_or_pipe = ob_is_tty(stderr) or ob_is_pipe(stderr)
 
+        tee_out = ca["tee"] in (True, "out")
+        tee_err = ca["tee"] == "err"
+
         # if we're passing in a custom stdout/out/err value, we obviously have
         # to force not using single_tty
         custom_in_out_err = stdin or stdout or stderr
 
-        single_tty = (ca["tty_in"] and ca["tty_out"]) and not custom_in_out_err
+        single_tty = (ca["tty_in"] and ca["tty_out"])\
+                and not custom_in_out_err
 
         # this logic is a little convoluted, but basically this top-level
         # if/else is for consolidating input and output TTYs into a single
@@ -1771,7 +1775,7 @@ class OProc(object):
                 self._stdin_write_fd, self._stdin_read_fd = os.pipe()
 
 
-            if stdout_is_tty_or_pipe:
+            if stdout_is_tty_or_pipe and not tee_out:
                 self._stdout_write_fd = os.dup(get_fileno(stdout))
                 self._stdout_read_fd = None
 
@@ -1793,14 +1797,14 @@ class OProc(object):
                 # we should not specify a read_fd, because stdout is dup'd
                 # directly to the stdout fd (no pipe), and so stderr won't have
                 # a slave end of a pipe either to dup
-                if stdout_is_tty_or_pipe:
+                if stdout_is_tty_or_pipe and not tee_out:
                     self._stderr_read_fd = None
                 else:
                     self._stderr_read_fd = os.dup(self._stdout_read_fd)
                 self._stderr_write_fd = os.dup(self._stdout_write_fd)
 
 
-            elif stderr_is_tty_or_pipe:
+            elif stderr_is_tty_or_pipe and not tee_err:
                 self._stderr_write_fd = os.dup(get_fileno(stderr))
                 self._stderr_read_fd = None
 
@@ -2073,7 +2077,7 @@ class OProc(object):
             # to pipe data to other processes), and also an internal deque
             # that we use to aggregate all the output
             save_stdout = not ca["no_out"] and \
-                (ca["tee"] in (True, "out") or stdout is None)
+                (tee_out or stdout is None)
 
 
             pipe_out = ca["piped"] in ("out", True)

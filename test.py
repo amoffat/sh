@@ -1042,6 +1042,29 @@ sys.stderr.write("stderr")
         self.assertTrue(len(p.stderr) != 0)
 
 
+    def test_tty_tee(self):
+        py = create_tmp_test("""
+import sys
+sys.stdout.write("stdout")
+""")
+        read, write = pty.openpty()
+        out = python("-u", py.name, _out=write).stdout
+        tee = os.read(read, 6)
+
+        self.assertEqual(out, b"")
+        self.assertEqual(tee, b"stdout")
+        os.close(write)
+        os.close(read)
+
+        read, write = pty.openpty()
+        out = python("-u", py.name, _out=write, _tee=True).stdout
+        tee = os.read(read, 6)
+
+        self.assertEqual(out, b"stdout")
+        self.assertEqual(tee, b"stdout")
+        os.close(write)
+        os.close(read)
+
 
     def test_err_redirection_actual_file(self):
       import tempfile
