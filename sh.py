@@ -56,7 +56,7 @@ import ast
 from contextlib import contextmanager
 import pwd
 import errno
-from io import UnsupportedOperation
+from io import UnsupportedOperation, open as fdopen
 
 from locale import getpreferredencoding
 DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
@@ -2792,11 +2792,20 @@ def determine_how_to_feed_output(handler, encoding, decode_errors):
         process, finish = get_file_chunk_consumer(handler)
 
     else:
-        process = lambda chunk: False
-        finish = lambda: None
+        try:
+            handler = int(handler)
+        except (ValueError, TypeError):
+            process = lambda chunk: False
+            finish = lambda: None
+        else:
+            process, finish = get_fd_chunk_consumer(handler)
 
     return process, finish
 
+
+def get_fd_chunk_consumer(handler):
+    handler = fdopen(handler, "w", closefd=False)
+    return get_file_chunk_consumer(handler)
 
 def get_file_chunk_consumer(handler):
     encode = lambda chunk: chunk

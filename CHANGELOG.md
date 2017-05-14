@@ -1,6 +1,7 @@
 # Changelog
 
 ## 1.12.14 -
+*   allow passing raw integer file descriptors for `_out` and `_err` handlers
 *   bugfix for when `_tee` and `_out` are used, and the `_out` is a tty or pipe [#384](https://github.com/amoffat/sh/issues/384)
 *   bugfix where python 3.3+ detected different arg counts for bound method output callbacks [#380](https://github.com/amoffat/sh/issues/380)
 
