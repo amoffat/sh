@@ -2498,7 +2498,7 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive, quit,
 
     # we need to wait until the process is guaranteed dead before closing our
     # outputs, otherwise SIGPIPE
-    alive = True
+    alive, _ = is_alive()
     while alive:
         quit.wait(1)
         alive, _ = is_alive()
