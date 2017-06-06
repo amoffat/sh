@@ -114,9 +114,9 @@ import weakref
 PUSHD_LOCK = threading.RLock()
 
 
-if hasattr(inspect, "signature"):
+if hasattr(inspect, "getfullargspec"):
     def get_num_args(fn):
-        return len(inspect.signature(fn).parameters)
+        return len(inspect.getfullargspec(fn).args)
 else:
     def get_num_args(fn):
         return len(inspect.getargspec(fn).args)
