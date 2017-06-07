@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.12.14 -
+## 1.12.14 - 6/6/17
 *   bugfix for poor sleep performance [#378](https://github.com/amoffat/sh/issues/378)
 *   allow passing raw integer file descriptors for `_out` and `_err` handlers
 *   bugfix for when `_tee` and `_out` are used, and the `_out` is a tty or pipe [#384](https://github.com/amoffat/sh/issues/384)
