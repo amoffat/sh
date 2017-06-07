@@ -33,6 +33,12 @@ if HAS_UNICODE_LITERAL:
 
 from os.path import exists, join, realpath, dirname, split
 import unittest
+try:
+    import unittest.mock
+except ImportError:
+    HAS_MOCK = False
+else:
+    HAS_MOCK = True
 import tempfile
 import warnings
 import pty
@@ -1041,6 +1047,29 @@ sys.stderr.write("stderr")
         self.assertTrue(stderr == "stderr")
         self.assertTrue(len(p.stderr) != 0)
 
+
+    def test_tty_tee(self):
+        py = create_tmp_test("""
+import sys
+sys.stdout.write("stdout")
+""")
+        read, write = pty.openpty()
+        out = python("-u", py.name, _out=write).stdout
+        tee = os.read(read, 6)
+
+        self.assertEqual(out, b"")
+        self.assertEqual(tee, b"stdout")
+        os.close(write)
+        os.close(read)
+
+        read, write = pty.openpty()
+        out = python("-u", py.name, _out=write, _tee=True).stdout
+        tee = os.read(read, 6)
+
+        self.assertEqual(out, b"stdout")
+        self.assertEqual(tee, b"stdout")
+        os.close(write)
+        os.close(read)
 
 
     def test_err_redirection_actual_file(self):
@@ -2558,8 +2587,37 @@ for line in sys.stdin:
         self.assertRaises(ErrorReturnCode_2, python, middleman_normal_pipe, consumer.name)
 
 
-class MiscTests(BaseTests):
+@skip_unless(HAS_MOCK, "requires unittest.mock")
+class MockTests(BaseTests):
 
+    def test_patch_command_cls(self):
+        def fn():
+            cmd = sh.Command("afowejfow")
+            return cmd()
+
+        @unittest.mock.patch("sh.Command")
+        def test(Command):
+            Command().return_value = "some output"
+            return fn()
+
+        self.assertEqual(test(), "some output")
+        self.assertRaises(sh.CommandNotFound, fn)
+
+
+    def test_patch_command(self):
+        def fn():
+            return sh.afowejfow()
+
+        @unittest.mock.patch("sh.afowejfow", create=True)
+        def test(cmd):
+            cmd.return_value = "some output"
+            return fn()
+
+        self.assertEqual(test(), "some output")
+        self.assertRaises(sh.CommandNotFound, fn)
+
+
+class MiscTests(BaseTests):
     @requires_poller("poll")
     def test_fd_over_1024(self):
         py = create_tmp_test("""print("hi world")""")

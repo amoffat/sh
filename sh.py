@@ -24,7 +24,7 @@ http://amoffat.github.io/sh/
 #===============================================================================
 
 
-__version__ = "1.12.13"
+__version__ = "1.12.14"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
@@ -56,7 +56,7 @@ import ast
 from contextlib import contextmanager
 import pwd
 import errno
-from io import UnsupportedOperation
+from io import UnsupportedOperation, open as fdopen
 
 from locale import getpreferredencoding
 DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
@@ -114,9 +114,9 @@ import weakref
 PUSHD_LOCK = threading.RLock()
 
 
-if hasattr(inspect, "signature"):
+if hasattr(inspect, "getfullargspec"):
     def get_num_args(fn):
-        return len(inspect.signature(fn).parameters)
+        return len(inspect.getfullargspec(fn).args)
 else:
     def get_num_args(fn):
         return len(inspect.getargspec(fn).args)
@@ -1730,11 +1730,15 @@ class OProc(object):
         stdout_is_tty_or_pipe = ob_is_tty(stdout) or ob_is_pipe(stdout)
         stderr_is_tty_or_pipe = ob_is_tty(stderr) or ob_is_pipe(stderr)
 
+        tee_out = ca["tee"] in (True, "out")
+        tee_err = ca["tee"] == "err"
+
         # if we're passing in a custom stdout/out/err value, we obviously have
         # to force not using single_tty
         custom_in_out_err = stdin or stdout or stderr
 
-        single_tty = (ca["tty_in"] and ca["tty_out"]) and not custom_in_out_err
+        single_tty = (ca["tty_in"] and ca["tty_out"])\
+                and not custom_in_out_err
 
         # this logic is a little convoluted, but basically this top-level
         # if/else is for consolidating input and output TTYs into a single
@@ -1771,7 +1775,7 @@ class OProc(object):
                 self._stdin_write_fd, self._stdin_read_fd = os.pipe()
 
 
-            if stdout_is_tty_or_pipe:
+            if stdout_is_tty_or_pipe and not tee_out:
                 self._stdout_write_fd = os.dup(get_fileno(stdout))
                 self._stdout_read_fd = None
 
@@ -1793,14 +1797,14 @@ class OProc(object):
                 # we should not specify a read_fd, because stdout is dup'd
                 # directly to the stdout fd (no pipe), and so stderr won't have
                 # a slave end of a pipe either to dup
-                if stdout_is_tty_or_pipe:
+                if stdout_is_tty_or_pipe and not tee_out:
                     self._stderr_read_fd = None
                 else:
                     self._stderr_read_fd = os.dup(self._stdout_read_fd)
                 self._stderr_write_fd = os.dup(self._stdout_write_fd)
 
 
-            elif stderr_is_tty_or_pipe:
+            elif stderr_is_tty_or_pipe and not tee_err:
                 self._stderr_write_fd = os.dup(get_fileno(stderr))
                 self._stderr_read_fd = None
 
@@ -2073,7 +2077,7 @@ class OProc(object):
             # to pipe data to other processes), and also an internal deque
             # that we use to aggregate all the output
             save_stdout = not ca["no_out"] and \
-                (ca["tee"] in (True, "out") or stdout is None)
+                (tee_out or stdout is None)
 
 
             pipe_out = ca["piped"] in ("out", True)
@@ -2494,7 +2498,7 @@ def output_thread(log, stdout, stderr, timeout_event, is_alive, quit,
 
     # we need to wait until the process is guaranteed dead before closing our
     # outputs, otherwise SIGPIPE
-    alive = True
+    alive, _ = is_alive()
     while alive:
         quit.wait(1)
         alive, _ = is_alive()
@@ -2788,11 +2792,20 @@ def determine_how_to_feed_output(handler, encoding, decode_errors):
         process, finish = get_file_chunk_consumer(handler)
 
     else:
-        process = lambda chunk: False
-        finish = lambda: None
+        try:
+            handler = int(handler)
+        except (ValueError, TypeError):
+            process = lambda chunk: False
+            finish = lambda: None
+        else:
+            process, finish = get_fd_chunk_consumer(handler)
 
     return process, finish
 
+
+def get_fd_chunk_consumer(handler):
+    handler = fdopen(handler, "w", closefd=False)
+    return get_file_chunk_consumer(handler)
 
 def get_file_chunk_consumer(handler):
     encode = lambda chunk: chunk
