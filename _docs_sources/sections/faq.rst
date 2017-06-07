@@ -331,6 +331,49 @@ Just add following lines to ``pylintrc``::
     generated-members=sh
 
 
+How do I patch sh in my tests?
+------------------------------
+
+sh can be patched in your tests the typical way, with
+:func:`unittest.mock.patch`:
+
+.. code-block:: python
+
+    from unittest.mock import patch
+    import sh
+
+    def get_something():
+        return sh.pwd()
+
+    @patch("sh.pwd", create=True)
+    def test_something(pwd):
+        pwd.return_value = "/"
+        assert get_something() == "/"
+
+The important thing to note here is that ``create=True`` is set.  This is
+required because sh is a bit magical and ``patch`` will fail to find the ``pwd``
+command as an attribute on the sh module.
+
+You may also patch the :class:`Command` class:
+
+.. code-block:: python
+
+    from unittest.mock import patch
+    import sh
+
+    def get_something():
+        pwd = sh.Command("pwd")
+        return pwd()
+
+    @patch("sh.Command")
+    def test_something(Command):
+        Command().return_value = "/"
+        assert get_something() == "/"
+
+Notice here we do not need ``create=True``, because :class:`Command` is not an
+automatically generated object on the sh module (it actually exists).
+
+
 Why is sh just a single file?
 -----------------------------
 

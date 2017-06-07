@@ -253,6 +253,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#why-do-my-arguments-need-to-be-separate-strings">Why do my arguments need to be separate strings?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-order-keyword-arguments">How do I order keyword arguments?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-to-disable-pylint-e1101-no-member-errors">How to disable pylint E1101 no-member errors?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-do-i-patch-sh-in-my-tests">How do I patch sh in my tests?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#why-is-sh-just-a-single-file">Why is sh just a single file?</a></li>
 </ul>
 </li>
@@ -555,6 +556,42 @@ Starting with Pylint 1.6 these messages can be suppressed using <a class="refere
 <span class="n">generated</span><span class="o">-</span><span class="n">members</span><span class="o">=</span><span class="n">sh</span>
 </pre></div>
 </div>
+</div>
+<div class="section" id="how-do-i-patch-sh-in-my-tests">
+<h2>How do I patch sh in my tests?<a class="headerlink" href="#how-do-i-patch-sh-in-my-tests" title="Permalink to this headline">¶</a></h2>
+<p>sh can be patched in your tests the typical way, with
+<a class="reference external" href="https://docs.python.org/3.5/library/unittest.mock.html#unittest.mock.patch" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">unittest.mock.patch()</span></code></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">unittest.mock</span> <span class="kn">import</span> <span class="n">patch</span>
+<span class="kn">import</span> <span class="nn">sh</span>
+
+<span class="k">def</span> <span class="nf">get_something</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">sh</span><span class="o">.</span><span class="n">pwd</span><span class="p">()</span>
+
+<span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;sh.pwd&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">pwd</span><span class="p">):</span>
+    <span class="n">pwd</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span>
+    <span class="k">assert</span> <span class="n">get_something</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span>
+</pre></div>
+</div>
+<p>The important thing to note here is that <code class="docutils literal"><span class="pre">create=True</span></code> is set.  This is
+required because sh is a bit magical and <code class="docutils literal"><span class="pre">patch</span></code> will fail to find the <code class="docutils literal"><span class="pre">pwd</span></code>
+command as an attribute on the sh module.</p>
+<p>You may also patch the <a class="reference internal" href="command_class.html#Command" title="Command"><code class="xref py py-class docutils literal"><span class="pre">Command</span></code></a> class:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">unittest.mock</span> <span class="kn">import</span> <span class="n">patch</span>
+<span class="kn">import</span> <span class="nn">sh</span>
+
+<span class="k">def</span> <span class="nf">get_something</span><span class="p">():</span>
+    <span class="n">pwd</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s2">&quot;pwd&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pwd</span><span class="p">()</span>
+
+<span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;sh.Command&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">Command</span><span class="p">):</span>
+    <span class="n">Command</span><span class="p">()</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span>
+    <span class="k">assert</span> <span class="n">get_something</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span>
+</pre></div>
+</div>
+<p>Notice here we do not need <code class="docutils literal"><span class="pre">create=True</span></code>, because <a class="reference internal" href="command_class.html#Command" title="Command"><code class="xref py py-class docutils literal"><span class="pre">Command</span></code></a> is not an
+automatically generated object on the sh module (it actually exists).</p>
 </div>
 <div class="section" id="why-is-sh-just-a-single-file">
 <h2>Why is sh just a single file?<a class="headerlink" href="#why-is-sh-just-a-single-file" title="Permalink to this headline">¶</a></h2>
