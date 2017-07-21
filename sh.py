@@ -3430,6 +3430,13 @@ class ModuleImporterFromVariables(object):
         the rest of this function """
 
         parent_frame = inspect.currentframe().f_back
+
+        # Calling PyImport_ImportModule("some_module"); via the C API may not
+        # have a parent frame. Early-out to avoid in_importlib() trying to
+        # get f_code from None when looking for 'some_module'
+        if not parent_frame:
+            return None
+
         while in_importlib(parent_frame):
             parent_frame = parent_frame.f_back
 
