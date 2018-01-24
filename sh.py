@@ -774,14 +774,14 @@ class RunningCommand(object):
                 self.wait()
 
 
-    def wait(self):
+    def wait(self, timeout=None):
         """ waits for the running command to finish.  this is called on all
         running commands, eventually, except for ones that run in the background
         """
         if not self._process_completed:
             self._process_completed = True
 
-            exit_code = self.process.wait()
+            exit_code = self.process.wait(timeout=timeout)
             if self.process.timed_out:
                 # if we timed out, our exit code represents a signal, which is
                 # negative, so let's make it positive to store in our
