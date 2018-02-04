@@ -20,7 +20,7 @@
 |
 
 sh is a full-fledged subprocess replacement for Python 2.6 - 3.6, PyPy and PyPy3
-that allows you to call any program as if it were a function:
+that allows you to call *any* program as if it were a function:
 
 .. code:: python
 
