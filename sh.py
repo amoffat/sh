@@ -798,7 +798,7 @@ class RunningCommand(object):
                 if self.process._stdin_process:
                     self.process._stdin_process.command.wait()
 
-        self.log.info("process completed")
+            self.log.info("process completed")
         return self
 
 
