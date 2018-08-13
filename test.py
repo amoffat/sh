@@ -1876,8 +1876,8 @@ sys.stdout.write("line1")
         started = time()
         try:
             sh.sleep(sleep_for, _timeout=timeout).wait()
-        except sh.TimeoutException:
-            pass
+        except sh.TimeoutException as e:
+            self.assertEqual(e.full_cmd, '/bin/sleep 3')
         else:
             self.fail("no timeout exception")
         elapsed = time() - started

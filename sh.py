@@ -394,8 +394,9 @@ class SignalException(ErrorReturnCode): pass
 class TimeoutException(Exception):
     """ the exception thrown when a command is killed because a specified
     timeout (via _timeout) was hit """
-    def __init__(self, exit_code):
+    def __init__(self, exit_code, full_cmd):
         self.exit_code = exit_code
+        self.full_cmd = full_cmd
         super(Exception, self).__init__()
 
 SIGNALS_THAT_SHOULD_THROW_EXCEPTION = set((
@@ -786,7 +787,7 @@ class RunningCommand(object):
                 # if we timed out, our exit code represents a signal, which is
                 # negative, so let's make it positive to store in our
                 # TimeoutException
-                raise TimeoutException(-exit_code)
+                raise TimeoutException(-exit_code, self.ran)
 
             else:
                 self.handle_command_exit_code(exit_code)
