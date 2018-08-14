@@ -753,7 +753,7 @@ class RunningCommand(object):
             logger_str = log_str_factory(self.ran, call_args)
             self.log = Logger("command", logger_str)
 
-            self.log.info("starting process")
+            self.log.debug("starting process")
 
             if should_wait:
                 self._spawned_and_waited = True
@@ -798,7 +798,7 @@ class RunningCommand(object):
                 if self.process._stdin_process:
                     self.process._stdin_process.command.wait()
 
-        self.log.info("process completed")
+        self.log.debug("process completed")
         return self
 
 
