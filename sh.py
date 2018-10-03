@@ -3391,7 +3391,12 @@ def register_importer():
     """
 
     def test(importer):
-        return importer.__class__.__name__ == ModuleImporterFromVariables.__name__
+        try:
+            return importer.__class__.__name__ == ModuleImporterFromVariables.__name__
+        except AttributeError:
+            # ran into importer which is not a class instance
+            return False
+
     already_registered = any([True for i in sys.meta_path if test(i)])
 
     if not already_registered:
