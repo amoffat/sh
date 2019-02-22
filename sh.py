@@ -1540,7 +1540,7 @@ def _start_daemon_thread(fn, name, exc_queue, *args):
             fn(*args, **kwargs)
         except Exception as e:
             exc_queue.put(e)
-            raise
+#            raise  # exceptions escaping toplevel pollute curses screen
 
     thrd = threading.Thread(target=wrap, name=name, args=args)
     thrd.daemon = True
