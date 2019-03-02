@@ -387,6 +387,12 @@ class ErrorReturnCode(Exception):
             stderr=exc_stderr.decode(DEFAULT_ENCODING, "replace")
         )
 
+        if not IS_PY3:
+            # Exception messages should be treated as an API which takes native str type on both
+            # Python2 and Python3.  (Meaning, it's a byte string on Python2 and a text string on
+            # Python3)
+            msg = encode_to_py3bytes_or_py2str(msg)
+
         super(ErrorReturnCode, self).__init__(msg)
 
 
