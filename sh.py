@@ -3364,12 +3364,30 @@ class SelfWrapper(ModuleType):
         # cached module from sys.modules.  if we don't, it gets re-used, and any
         # old baked params get used, which is not what we want
         parent = inspect.stack()[1]
-        code = parent[4][0].strip()
-        parsed = ast.parse(code)
-        module_name = parsed.body[0].targets[0].id
+        try:
+            code = parent[4][0].strip()
+        except TypeError:
+            # On the REPL or from the commandline, we don't get the source code in the
+            # top stack frame
+            # Older versions of pypy don't set parent[1] the same way as CPython or newer versions
+            # of Pypy so we have to special case that too.
+            if parent[1] in ('<stdin>', '<string>') or (
+                    parent[1] == '<module>' and platform.python_implementation().lower() == 'pypy'):
+                # This depends on things like Python's calling convention and the layout of stack
+                # frames but it's a fix for a bug in a very cornery cornercase so....
+                module_name = parent[0].f_code.co_names[-1]
+        else:
+            parsed = ast.parse(code)
+            try:
+                module_name = parsed.body[0].targets[0].id
+            except Exception:
+                # Diagnose what went wrong
+                if not isinstance(parsed.body[0], ast.Assign):
+                    raise RuntimeError("A new execution context must be assigned to a variable")
+                raise
 
         if module_name == __name__:
-            raise RuntimeError("Cannot use the name 'sh' as an execution context")
+            raise RuntimeError("Cannot use the name '%s' as an execution context" % __name__)
 
         sys.modules.pop(module_name, None)
 

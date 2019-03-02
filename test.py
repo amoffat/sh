@@ -3015,6 +3015,31 @@ class ExecutionContextTests(unittest.TestCase):
             from _os import path
         self.assertRaises(ImportError, unallowed_import)
 
+    def test_reimport_from_cli(self):
+        # The REPL and CLI both need special handling to create an execution context that is safe to
+        # reimport
+        if IS_PY3:
+            cmdstr = '; '.join(('import sh, io, sys',
+                                'out = io.StringIO()',
+                                '_sh = sh(_out=out)',
+                                'import _sh',
+                                '_sh.echo("-n", "TEST")',
+                                'sys.stderr.write(out.getvalue())',
+                                ))
+        else:
+            cmdstr = '; '.join(('import sh, StringIO, sys',
+                                'out = StringIO.StringIO()',
+                                '_sh = sh(_out=out)',
+                                'import _sh',
+                                '_sh.echo("-n", "TEST")',
+                                'sys.stderr.write(out.getvalue())',
+                                ))
+
+        err = StringIO()
+
+        python('-c', cmdstr, _err=err)
+        self.assertEqual('TEST', err.getvalue())
+
 
 if __name__ == "__main__":
     root = logging.getLogger()
