@@ -515,6 +515,13 @@ while True:
             "VERSIONER_PYTHON_VERSION",
         ]
 
+        # On python-3.7+, the changes for no encoding inject LC_CTYPE into subprocesses
+        py37_extra_envvars = [
+            "LC_CTYPE",
+        ]
+
+        prune_envvars = osx_cruft + py37_extra_envvars
+
         # first we test that the environment exists in our child process as
         # we've set it
         py = create_tmp_test("""
@@ -525,7 +532,7 @@ for key in osx_cruft:
     try: del os.environ[key]
     except: pass
 print(os.environ["HERP"] + " " + str(len(os.environ)))
-""" % osx_cruft)
+""" % prune_envvars)
         out = python(py.name, _env=env).strip()
         self.assertEqual(out, "DERP 1")
 
@@ -533,12 +540,12 @@ print(os.environ["HERP"] + " " + str(len(os.environ)))
 import os, sys
 sys.path.insert(0, os.getcwd())
 import sh
-osx_cruft = %s
-for key in osx_cruft:
+prune_envvars = %s
+for key in prune_envvars:
     try: del os.environ[key]
     except: pass
 print(sh.HERP + " " + str(len(os.environ)))
-""" % osx_cruft)
+""" % prune_envvars)
         out = python(py.name, _env=env, _cwd=THIS_DIR).strip()
         self.assertEqual(out, "DERP 1")
 
