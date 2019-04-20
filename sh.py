@@ -87,6 +87,11 @@ else:
     from io import BytesIO as iocStringIO
     from Queue import Queue, Empty
 
+try:
+    from shlex import quote as shlex_quote # here from 3.3 onward
+except ImportError:
+    from pipes import quote as shlex_quote # undocumented before 2.7
+
 IS_OSX = platform.system() == "Darwin"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 SH_LOGGER_NAME = __name__
@@ -692,7 +697,7 @@ class RunningCommand(object):
         # arguments are the encoding we pass into _encoding, which falls back to
         # the system's encoding
         enc = call_args["encoding"]
-        self.ran = " ".join([arg.decode(enc, "ignore") for arg in cmd])
+        self.ran = " ".join([shlex_quote(arg.decode(enc, "ignore")) for arg in cmd])
 
         self.call_args = call_args
         self.cmd = cmd
