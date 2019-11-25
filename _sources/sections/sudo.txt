@@ -70,7 +70,7 @@ You may also specify your password to ``sh.contrib.sudo`` as a string:
 
     password = get_your_password()
 
-    with sh.contrib.sudo(password=password, _with=True):
+    with sh.contrib.sudo(password, _with=True):
         print(ls("/root"))
 
 .. warning::

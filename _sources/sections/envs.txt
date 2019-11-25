@@ -4,7 +4,7 @@ Environments
 ============
 
 The :ref:`_env <env>` special kwarg allows you to pass a dictionary of
-environement variables and their corresponding values:
+environment variables and their corresponding values:
 
 .. code-block:: python
 

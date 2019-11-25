@@ -126,6 +126,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#encoding">_encoding</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#decode-errors">_decode_errors</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#tee">_tee</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#truncate-exc">_truncate_exc</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#execution">Execution</a><ul>
@@ -406,7 +407,7 @@ some kind of closure or class, but to keep it simple, we&#8217;ll just use a glo
 <span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
     <span class="k">global</span> <span class="n">aggregated</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">char</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
     <span class="n">aggregated</span> <span class="o">+=</span> <span class="n">char</span>
     <span class="k">if</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password: &quot;</span><span class="p">):</span>
         <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
@@ -429,7 +430,7 @@ with a real user in a real terminal session.  To enable TTY, we can add the
 <span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
     <span class="k">global</span> <span class="n">aggregated</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">char</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
-<span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
     <span class="n">aggregated</span> <span class="o">+=</span> <span class="n">char</span>
     <span class="k">if</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password: &quot;</span><span class="p">):</span>
         <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>

@@ -15,7 +15,7 @@ command to the input of the outer command:
 	# sort this directory by biggest file
 	print(sort(du(glob("*"), "-sb"), "-rn"))
 	
-	# print the number of folders and files in /etc
+	# print(the number of folders and files in /etc
 	print(wc(ls("/etc", "-1"), "-l"))
 
 .. note::

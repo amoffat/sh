@@ -126,6 +126,7 @@
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#encoding">_encoding</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#decode-errors">_decode_errors</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tee">_tee</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#truncate-exc">_truncate_exc</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="special_arguments.html#execution">Execution</a><ul>
@@ -308,7 +309,7 @@
   <div class="section" id="environments">
 <span id="id1"></span><h1>Environments<a class="headerlink" href="#environments" title="Permalink to this headline">¶</a></h1>
 <p>The <a class="reference internal" href="special_arguments.html#env"><span class="std std-ref">_env</span></a> special kwarg allows you to pass a dictionary of
-environement variables and their corresponding values:</p>
+environment variables and their corresponding values:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">google_chrome</span><span class="p">(</span><span class="n">_env</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;SOCKS_SERVER&quot;</span><span class="p">:</span> <span class="s2">&quot;localhost:1234&quot;</span><span class="p">})</span>
 </pre></div>

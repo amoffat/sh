@@ -126,6 +126,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#encoding">_encoding</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#decode-errors">_decode_errors</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#tee">_tee</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#truncate-exc">_truncate_exc</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#execution">Execution</a><ul>
@@ -366,9 +367,18 @@ to <a class="reference external" href="https://docs.python.org/3.5/library/stdty
 <p>As of 1.07.0, any time redirection is used, either for STDOUT or STDERR, the
 respective internal buffers are not filled.  For example, if you&#8217;re downloading
 a file and using a callback on STDOUT, the internal STDOUT buffer, nor the pipe
-buffer be filled with data from STDOUT.  This option forces those buffers to be
-filled anyways, in effect &#8220;tee-ing&#8221; the output into two places (the
-callback/redirect handler, and the internal buffers).</p>
+buffer be filled with data from STDOUT.  This option forces one of stderr
+(<code class="docutils literal"><span class="pre">_tee='err'</span></code>) or stdout (<code class="docutils literal"><span class="pre">_tee='out'</span></code> or <code class="docutils literal"><span class="pre">_tee=True</span></code>) to be filled
+anyways, in effect &#8220;tee-ing&#8221; the output into two places (the callback/redirect
+handler, and the internal buffers).</p>
+</div>
+<div class="section" id="truncate-exc">
+<h3>_truncate_exc<a class="headerlink" href="#truncate-exc" title="Permalink to this headline">¶</a></h3>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 1.12.0.</span></p>
+</div>
+<p>Default value: <code class="docutils literal"><span class="pre">True</span></code></p>
+<p>Whether or not exception ouput should be truncated.</p>
 </div>
 </div>
 <div class="section" id="execution">

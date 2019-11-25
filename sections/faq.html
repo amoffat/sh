@@ -124,6 +124,7 @@
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#encoding">_encoding</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#decode-errors">_decode_errors</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tee">_tee</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#truncate-exc">_truncate_exc</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="special_arguments.html#execution">Execution</a><ul>
@@ -534,7 +535,7 @@ like the following commandline:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">sh</span><span class="o">.</span><span class="n">my_command</span><span class="p">(</span><span class="n">arg1</span><span class="o">=</span><span class="s2">&quot;val1&quot;</span><span class="p">,</span> <span class="s2">&quot;arg2&quot;</span><span class="p">,</span> <span class="n">arg3</span><span class="o">=</span><span class="s2">&quot;val3&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>This doesn&#8217;t work because, in Python, position arguements, like <code class="docutils literal"><span class="pre">arg2</span></code> cannot
+<p>This doesn&#8217;t work because, in Python, position arguments, like <code class="docutils literal"><span class="pre">arg2</span></code> cannot
 come after keyword arguments.</p>
 <p>Furthermore, it is entirely possible that <code class="docutils literal"><span class="pre">--arg3=val3</span></code> comes before
 <code class="docutils literal"><span class="pre">--arg1=val1</span></code>.  The reason for this is that a function&#8217;s <code class="docutils literal"><span class="pre">**kwargs</span></code> is an
