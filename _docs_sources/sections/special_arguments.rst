@@ -79,6 +79,13 @@ buffer be filled with data from STDOUT.  This option forces those buffers to be
 filled anyways, in effect "tee-ing" the output into two places (the
 callback/redirect handler, and the internal buffers).
 
+_truncate_exc
+----
+.. versionadded:: 1.12.0
+
+|def| ``True``
+
+Whether or not exception ouput should be truncated.
 
 Execution
 =========
