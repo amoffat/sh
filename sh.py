@@ -1968,12 +1968,17 @@ class OProc(object):
             # if your parent process experiences an exit code 255, it is most
             # likely that an exception occurred between the fork of the child
             # and the exec.  this should be reported.
-            except:
+            except Exception as e:
                 # some helpful debugging
                 try:
-                    tb = traceback.format_exc().encode("utf8", "ignore")
+                    tb = traceback.format_exc()
+                    tb = tb.encode("utf8", "ignore")
                     os.write(exc_pipe_write, tb)
-
+                except:
+                    # dump to stderr if we cannot save it to exc_pipe_write
+                    if not exc_pipe_write or not hasattr(exc_pipe_write, 'write'):
+                        sys.stderr.write(
+                            "\nFATAL: %s\n%s" % (e, str(tb)))
                 finally:
                     os._exit(255)
 
