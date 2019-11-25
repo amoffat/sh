@@ -75,9 +75,11 @@ _tee
 As of 1.07.0, any time redirection is used, either for STDOUT or STDERR, the
 respective internal buffers are not filled.  For example, if you're downloading
 a file and using a callback on STDOUT, the internal STDOUT buffer, nor the pipe
-buffer be filled with data from STDOUT.  This option forces those buffers to be
-filled anyways, in effect "tee-ing" the output into two places (the
-callback/redirect handler, and the internal buffers).
+buffer be filled with data from STDOUT.  This option forces one of stderr
+(``_tee='err'``) or stdout (``_tee='out'`` or ``_tee=True``) to be filled
+anyways, in effect "tee-ing" the output into two places (the callback/redirect
+handler, and the internal buffers).
+
 
 _truncate_exc
 ----
