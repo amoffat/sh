@@ -511,6 +511,7 @@ while True:
         osx_cruft = [
             "__CF_USER_TEXT_ENCODING",
             "__PYVENV_LAUNCHER__",
+            "LC_CTYPE",
             "VERSIONER_PYTHON_PREFER_32_BIT",
             "VERSIONER_PYTHON_VERSION",
         ]
