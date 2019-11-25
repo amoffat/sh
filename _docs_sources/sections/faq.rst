@@ -301,7 +301,7 @@ This is usually the first attempt that they make:
 
     sh.my_command(arg1="val1", "arg2", arg3="val3")
 
-This doesn't work because, in Python, position arguements, like ``arg2`` cannot
+This doesn't work because, in Python, position arguments, like ``arg2`` cannot
 come after keyword arguments.
 
 Furthermore, it is entirely possible that ``--arg3=val3`` comes before
