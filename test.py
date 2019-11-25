@@ -295,7 +295,7 @@ exit(3)
 
     def test_patched_glob(self):
         from glob import glob
-        
+
         py = create_tmp_test("""
 import sys
 print(sys.argv[1:])
@@ -516,17 +516,23 @@ while True:
             "VERSIONER_PYTHON_VERSION",
         ]
 
+        linux_cruft = [
+            "LC_CTYPE",
+        ]
+
+        crufts_env_vars = osx_cruft + linux_cruft
+
         # first we test that the environment exists in our child process as
         # we've set it
         py = create_tmp_test("""
 import os
 
-osx_cruft = %s
-for key in osx_cruft:
+cruft = %s
+for key in cruft:
     try: del os.environ[key]
     except: pass
 print(os.environ["HERP"] + " " + str(len(os.environ)))
-""" % osx_cruft)
+""" % crufts_env_vars)
         out = python(py.name, _env=env).strip()
         self.assertEqual(out, "DERP 1")
 
@@ -534,12 +540,12 @@ print(os.environ["HERP"] + " " + str(len(os.environ)))
 import os, sys
 sys.path.insert(0, os.getcwd())
 import sh
-osx_cruft = %s
-for key in osx_cruft:
+cruft = %s
+for key in cruft:
     try: del os.environ[key]
     except: pass
 print(sh.HERP + " " + str(len(os.environ)))
-""" % osx_cruft)
+""" % crufts_env_vars)
         out = python(py.name, _env=env, _cwd=THIS_DIR).strip()
         self.assertEqual(out, "DERP 1")
 
@@ -596,7 +602,7 @@ sys.stdout.write("line2\\n")
 exit(2)
 """)
 
-        py2 = create_tmp_test("") 
+        py2 = create_tmp_test("")
 
         def fn():
             list(python(python(py.name, _piped=True), "-u", py2.name, _iter=True))
@@ -613,7 +619,7 @@ sys.stdout.write("line2\\n")
 exit(2)
 """)
 
-        py2 = create_tmp_test("") 
+        py2 = create_tmp_test("")
 
         def fn():
             python(python(py.name, _piped=True), "-u", py2.name)
@@ -828,10 +834,18 @@ print(sys.argv[1])
                 _long_prefix="-custom-").strip()
         self.assertEqual(out, "-custom-long-option=underscore")
 
+        out = python(py.name, {"long-option": True},
+                _long_prefix="-custom-").strip()
+        self.assertEqual(out, "-custom-long-option")
+
         # test baking too
         out = python.bake(py.name, {"long-option": "underscore"},
                 _long_prefix="-baked-")().strip()
         self.assertEqual(out, "-baked-long-option=underscore")
+
+        out = python.bake(py.name, {"long-option": True},
+                _long_prefix="-baked-")().strip()
+        self.assertEqual(out, "-baked-long-option")
 
 
     def test_command_wrapper(self):
@@ -1322,7 +1336,7 @@ import sys
 import os
 import time
 
-for i in range(5): 
+for i in range(5):
     print(i)
     time.sleep(.5)
 """)
@@ -1358,7 +1372,7 @@ import sys
 import os
 import time
 
-for i in range(5): 
+for i in range(5):
     print(i)
     time.sleep(.5)
 """)
@@ -1397,7 +1411,7 @@ import signal
 def sig_handler(sig, frame):
     print(10)
     exit(0)
-    
+
 signal.signal(signal.SIGINT, sig_handler)
 
 for i in range(5):
@@ -1427,7 +1441,7 @@ import sys
 import os
 import time
 
-for i in range(42): 
+for i in range(42):
     print(i)
     sys.stdout.flush()
 """)
@@ -1489,7 +1503,7 @@ sys.stderr.write("stderr")
 import sys
 import os
 
-for i in range(42): 
+for i in range(42):
     sys.stderr.write(str(i)+"\\n")
 """)
 
@@ -1598,7 +1612,7 @@ import sys
 import os
 
 for i in range(42):
-    sys.stderr.write(str(i * 2)+"\\n") 
+    sys.stderr.write(str(i * 2)+"\\n")
     print(i)
 """)
 
@@ -2163,7 +2177,7 @@ p.wait()
         from sh import ls
 
         # sanity check
-        non_exist_dir = join(tempdir, "aowjgoahewro") 
+        non_exist_dir = join(tempdir, "aowjgoahewro")
         self.assertFalse(exists(non_exist_dir))
 
         self.assertRaises(OSError, ls, _cwd=non_exist_dir)
@@ -2668,7 +2682,7 @@ print("cool")
         import sh
         import os
         from itertools import product
-        
+
         # options whose combinations can possibly cause fd leaks
         kwargs = {
             "_tty_out": (True, False),

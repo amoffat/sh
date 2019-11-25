@@ -1521,7 +1521,7 @@ def aggregate_keywords(keywords, sep, prefix, raw=False):
                 k = k.replace("_", "-")
 
             if v is True:
-                processed.append(encode("--" + k))
+                processed.append(encode(prefix + k))
             elif v is False:
                 pass
             elif sep is None or sep == " ":
