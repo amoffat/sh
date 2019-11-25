@@ -21,16 +21,16 @@ Here's our first attempt:
 
 .. code-block:: python
 
-	from sh import ssh
-	
-	def ssh_interact(line, stdin):
-	    line = line.strip()
-	    print(line)
-	    if line.endswith("password:"):
-	        stdin.put("correcthorsebatterystaple")
-		
-	ssh("10.10.10.100", _out=ssh_interact)
-	
+    from sh import ssh
+
+    def ssh_interact(line, stdin):
+        line = line.strip()
+        print(line)
+        if line.endswith("password:"):
+            stdin.put("correcthorsebatterystaple")
+
+    ssh("10.10.10.100", _out=ssh_interact)
+
 If you run this (substituting an IP that you can SSH to), you'll notice that
 nothing is printed from within the callback.  The problem has to do with STDOUT
 buffering.  By default, sh line-buffers STDOUT, which means that
@@ -39,8 +39,8 @@ output.  This is a problem because the password prompt has no newline:
 
 .. code-block:: none
 
-	amoffat@10.10.10.100's password:
-	
+    amoffat@10.10.10.100's password:
+
 Because a newline is never encountered, nothing is sent to the ``ssh_interact``
 callback.  So we need to change the STDOUT buffering.  We do this with the
 :ref:`_out_bufsize <out_bufsize>` special kwarg.  We'll set
@@ -48,15 +48,15 @@ it to 0 for unbuffered output:
 
 .. code-block:: python
 
-	from sh import ssh
-	
-	def ssh_interact(line, stdin):
-	    line = line.strip()
-	    print(line)
-	    if line.endswith("password:"):
-	        stdin.put("correcthorsebatterystaple")
-		
-	ssh("10.10.10.100", _out=ssh_interact, _out_bufsize=0)
+    from sh import ssh
+    
+    def ssh_interact(line, stdin):
+        line = line.strip()
+        print(line)
+        if line.endswith("password:"):
+            stdin.put("correcthorsebatterystaple")
+
+    ssh("10.10.10.100", _out=ssh_interact, _out_bufsize=0)
 
 If you run this updated version, you'll notice a new problem.  The output looks
 like this:
@@ -85,7 +85,7 @@ like this:
     0
     '
     s
-
+    
     p
     a
     s
@@ -95,7 +95,7 @@ like this:
     r
     d
     :
-	
+
 This is because the chunks of STDOUT our callback is receiving are unbuffered,
 and are therefore individual characters, instead of entire lines.  What we need
 to do now is aggregate this character-by-character data into something more
@@ -107,20 +107,20 @@ some kind of closure or class, but to keep it simple, we'll just use a global:
 
 .. code-block:: python
 
-	from sh import ssh
-	import sys
-	
-	aggregated = ""
-	def ssh_interact(char, stdin):
-	    global aggregated
-	    sys.stdout.write(char.encode())
+    from sh import ssh
+    import sys
+
+    aggregated = ""
+    def ssh_interact(char, stdin):
+        global aggregated
+        sys.stdout.write(char.encode())
         sys.stdout.flush()
-	    aggregated += char
-	    if aggregated.endswith("password: "):
-	        stdin.put("correcthorsebatterystaple")
-		
-	ssh("10.10.10.100", _out=ssh_interact, _out_bufsize=0)
-	
+        aggregated += char
+        if aggregated.endswith("password: "):
+            stdin.put("correcthorsebatterystaple")
+
+    ssh("10.10.10.100", _out=ssh_interact, _out_bufsize=0)
+
 You'll also notice that the example still doesn't work.  There are two problems:
 The first is that your password must end with a newline, as if you had typed it
 and hit the return key.  This is because SSH has no idea how long your password
@@ -133,43 +133,43 @@ with a real user in a real terminal session.  To enable TTY, we can add the
 
 .. code-block:: python
 
-	from sh import ssh
-	import sys
-	
-	aggregated = ""
-	def ssh_interact(char, stdin):
-	    global aggregated
-	    sys.stdout.write(char.encode())
+    from sh import ssh
+    import sys
+
+    aggregated = ""
+    def ssh_interact(char, stdin):
+        global aggregated
+        sys.stdout.write(char.encode())
         sys.stdout.flush()
-	    aggregated += char
-	    if aggregated.endswith("password: "):
-	        stdin.put("correcthorsebatterystaple\n")
-		
-	ssh("10.10.10.100", _out=ssh_interact, _out_bufsize=0, _tty_in=True)
-	
+        aggregated += char
+        if aggregated.endswith("password: "):
+            stdin.put("correcthorsebatterystaple\n")
+
+    ssh("10.10.10.100", _out=ssh_interact, _out_bufsize=0, _tty_in=True)
+    
 And now our remote login script works!
 
 .. code-block:: none
 
-	amoffat@10.10.10.100's password: 
-	Linux 10.10.10.100 testhost #1 SMP Tue Jun 21 10:29:24 EDT 2011 i686 GNU/Linux
-	Ubuntu 10.04.2 LTS
-	
-	Welcome to Ubuntu!
-	 * Documentation:  https://help.ubuntu.com/
-	
-	66 packages can be updated.
-	53 updates are security updates.
-	
-	Ubuntu 10.04.2 LTS
-	
-	Welcome to Ubuntu!
-	 * Documentation:  https://help.ubuntu.com/
-	You have new mail.
-	Last login: Thu Sep 13 03:53:00 2012 from some.ip.address
-	amoffat@10.10.10.100:~$ 
-	
-	
+    amoffat@10.10.10.100's password: 
+    Linux 10.10.10.100 testhost #1 SMP Tue Jun 21 10:29:24 EDT 2011 i686 GNU/Linux
+    Ubuntu 10.04.2 LTS
+    
+    Welcome to Ubuntu!
+     * Documentation:  https://help.ubuntu.com/
+    
+    66 packages can be updated.
+    53 updates are security updates.
+    
+    Ubuntu 10.04.2 LTS
+    
+    Welcome to Ubuntu!
+     * Documentation:  https://help.ubuntu.com/
+    You have new mail.
+    Last login: Thu Sep 13 03:53:00 2012 from some.ip.address
+    amoffat@10.10.10.100:~$ 
+
+
 How you should REALLY be using SSH
 ----------------------------------
 
@@ -189,26 +189,26 @@ without having to use that server's shell directly:
 
 .. code-block:: none
 
-	ssh amoffat@10.10.10.100 ifconfig 
-	
+    ssh amoffat@10.10.10.100 ifconfig 
+
 Translating this to sh, it becomes:
 
 .. code-block:: python
 
-	import sh
-	
-	print(sh.ssh("amoffat@10.10.10.100", "ifconfig"))
+    import sh
+
+    print(sh.ssh("amoffat@10.10.10.100", "ifconfig"))
 
 We can make this even nicer by taking advantage of sh's :ref:`baking` to bind
 our server username/ip to a command object:
 
 .. code-block:: python
 
-	import sh
-	
-	my_server = sh.ssh.bake("amoffat@10.10.10.100")
-	print(my_server("ifconfig"))
-	print(my_server("whoami"))
+    import sh
+
+    my_server = sh.ssh.bake("amoffat@10.10.10.100")
+    print(my_server("ifconfig"))
+    print(my_server("whoami"))
 
 Now we have a reusable command object that we can use to call remote commands.
 But there is room for one more improvement.  We can also use sh's
@@ -217,8 +217,8 @@ arguments:
 
 .. code-block:: python
 
-	import sh
-	
-	my_server = sh.ssh.bake("amoffat@10.10.10.100")
-	print(my_server.ifconfig())
-	print(my_server.whoami())
+    import sh
+
+    my_server = sh.ssh.bake("amoffat@10.10.10.100")
+    print(my_server.ifconfig())
+    print(my_server.whoami())
