@@ -3,6 +3,7 @@
 ## X.XX.XX - XX/XX/XX
 *   minor Travis CI fixes [#492](https://github.com/amoffat/sh/pull/492)
 *   bugfix for boolean long options not respecting `_long_prefix` [#488](https://github.com/amoffat/sh/pull/488)
+*   fix deprecation warning on Python 3.6 regexes [#482](https://github.com/amoffat/sh/pull/482)
 
 ## 1.12.14 - 6/6/17
 *   bugfix for poor sleep performance [#378](https://github.com/amoffat/sh/issues/378)
