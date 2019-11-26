@@ -3545,17 +3545,21 @@ if __name__ == "__main__": # pragma: no cover
 
         all_locales = ("en_US.UTF-8", "C")
         i = 0
+        ran_versions = set()
         for locale in all_locales:
+            # make sure this locale is allowed
             if constrain_locales and locale not in constrain_locales:
                 continue
 
             for version in all_versions:
+                # make sure this version is allowed
                 if constrain_versions and version not in constrain_versions:
                     continue
 
                 for force_select in all_force_select:
                     env_copy = env.copy()
 
+                    ran_versions.add(version)
                     exit_code = run_tests(env_copy, locale, args, version,
                             force_select, SH_TEST_RUN_IDX=i)
 
@@ -3568,8 +3572,7 @@ if __name__ == "__main__": # pragma: no cover
 
                     i += 1
 
-        ran_versions = ",".join(all_versions)
-        print("Tested Python versions: %s" % ran_versions)
+        print("Tested Python versions: %s" % ",".join(sorted(list(ran_versions))))
 
     else:
         env = Environment(globals())
