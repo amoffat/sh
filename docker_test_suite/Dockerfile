@@ -43,4 +43,4 @@ RUN pip install -r /tmp/requirements-dev.txt
 
 USER shtest
 WORKDIR /home/shtest/sh
-ENTRYPOINT python sh.py test
+ENTRYPOINT ["python", "sh.py", "test"]
