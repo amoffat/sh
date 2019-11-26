@@ -3517,7 +3517,7 @@ if __name__ == "__main__": # pragma: no cover
     if args:
         action = args[0]
 
-    if action in ("test", "travis"):
+    if action in ("test", "travis", "tox"):
         import test
         coverage = None
         if test.HAS_UNICODE_LITERAL:
@@ -3530,12 +3530,11 @@ if __name__ == "__main__": # pragma: no cover
 
         # if we're testing locally, run all versions of python on the system
         if action == "test":
-            all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6")
+            all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8")
 
-        # if we're testing on travis, just use the system's default python,
-        # since travis will spawn a vm per python version in our .travis.yml
-        # file
-        elif action == "travis":
+        # if we're testing on travis or tox, just use the system's default python, since travis will spawn a vm per
+        # python version in our .travis.yml file, and tox will run its matrix via tox.ini
+        elif action in ("travis", "tox"):
             v = sys.version_info
             sys_ver = "%d.%d" % (v[0], v[1])
             all_versions = (sys_ver,)
