@@ -576,6 +576,16 @@ print("hi")
         self.assertRaises(TypeError, ls, _iter=True, _piped=True)
 
 
+    def test_invalid_env(self):
+        from sh import ls
+
+        with self.assertRaises(TypeError):
+            ls(_env="XXX")
+        with self.assertRaises(TypeError):
+            ls(_env={"foo": 123})
+        with self.assertRaises(TypeError):
+            ls(_env={123: "bar"})
+
     def test_exception(self):
         from sh import ErrorReturnCode_2
 
