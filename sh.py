@@ -421,7 +421,7 @@ class CommandNotFound(AttributeError): pass
 
 
 
-rc_exc_regex = re.compile("(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z]+)")
+rc_exc_regex = re.compile(r"(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z]+)")
 rc_exc_cache = {}
 
 SIGNAL_MAPPING = {}
@@ -1521,7 +1521,7 @@ def aggregate_keywords(keywords, sep, prefix, raw=False):
                 k = k.replace("_", "-")
 
             if v is True:
-                processed.append(encode("--" + k))
+                processed.append(encode(prefix + k))
             elif v is False:
                 pass
             elif sep is None or sep == " ":
