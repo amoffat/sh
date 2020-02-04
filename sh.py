@@ -1847,7 +1847,7 @@ class OProc(object):
         session_pipe_read, session_pipe_write = os.pipe()
         exc_pipe_read, exc_pipe_write = os.pipe()
 
-        # this pipe is for synchronzing with the child that the parent has
+        # this pipe is for synchronizing with the child that the parent has
         # closed its in/out/err fds.  this is a bug on OSX (but not linux),
         # where we can lose output sometimes, due to a race, if we do
         # os.close(self._stdout_write_fd) in the parent after the child starts
