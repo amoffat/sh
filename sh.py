@@ -1952,8 +1952,11 @@ class OProc(object):
 
 
                 # don't inherit file descriptors
-                max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-                os.closerange(3, max_fd)
+                for fd in filter(lambda x: x not in (0, 1, 2), (int(fd) for fd in os.listdir("/dev/fd"))):
+                    try:
+                        os.close(fd)
+                    except OSError:
+                        pass
 
                 # actually execute the process
                 if ca["env"] is None:
