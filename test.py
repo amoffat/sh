@@ -249,16 +249,15 @@ class FunctionalTests(BaseTests):
         py = create_tmp_test("exit(1)")
 
         arg = "漢字"
+        native_arg = arg
         if not IS_PY3:
             arg = arg.decode("utf8")
+
 
         try:
             python(py.name, arg, _encoding="utf8")
         except ErrorReturnCode as e:
-            if IS_PY3:
-                self.assertTrue(arg in str(e))
-            else:
-                self.assertTrue(arg in unicode(e))
+            self.assertTrue(native_arg in str(e))
         else:
             self.fail("exception wasn't raised")
 
