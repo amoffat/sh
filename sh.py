@@ -3475,7 +3475,7 @@ class ModuleImporterFromVariables(object):
         module = fetch_module_from_frame(mod_fullname, parent_frame)
 
         # we HAVE to include the module in sys.modules, per the import PEP.
-        # older verions of python were more lenient about this being set, but
+        # older versions of python were more lenient about this being set, but
         # not in >= python3.3, unfortunately.  this requirement necessitates the
         # ugly code in SelfWrapper.__call__
         sys.modules[mod_fullname] = module
