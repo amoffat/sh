@@ -422,3 +422,23 @@ Down the road, the development disadvantages of a single file can be solved with
 additional development tools, for example, with a tool that compiles multiple
 modules into the single sh.py file.  Realistically, though, sh is pretty mature,
 so I don't see it growing much more in complexity or code size.
+
+How do I see the commands sh is running?
+----------------------------------------
+
+Use logging:
+
+.. code-block:: python
+
+    import logging
+    import sh
+
+    logging.basicConfig(level=logging.INFO)
+    sh.ls()
+
+.. code-block:: none
+
+    INFO:sh.command:<Command '/bin/ls'>: starting process
+    INFO:sh.command:<Command '/bin/ls', pid 32394>: process started
+    INFO:sh.command:<Command '/bin/ls', pid 32394>: process completed
+    ...
