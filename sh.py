@@ -50,6 +50,7 @@ from types import ModuleType, GeneratorType
 from functools import partial
 import inspect
 import tempfile
+import warnings
 import stat
 import glob as glob_module
 import ast
@@ -86,6 +87,11 @@ else:
     from io import StringIO as ioStringIO
     from io import BytesIO as iocStringIO
     from Queue import Queue, Empty
+
+try:
+    from shlex import quote as shlex_quote # here from 3.3 onward
+except ImportError:
+    from pipes import quote as shlex_quote # undocumented before 2.7
 
 IS_OSX = platform.system() == "Darwin"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -692,7 +698,7 @@ class RunningCommand(object):
         # arguments are the encoding we pass into _encoding, which falls back to
         # the system's encoding
         enc = call_args["encoding"]
-        self.ran = " ".join([arg.decode(enc, "ignore") for arg in cmd])
+        self.ran = " ".join([shlex_quote(arg.decode(enc, "ignore")) for arg in cmd])
 
         self.call_args = call_args
         self.cmd = cmd
@@ -998,7 +1004,7 @@ def ob_is_tty(ob):
     """ checks if an object (like a file-like object) is a tty.  """
     fileno = get_fileno(ob)
     is_tty = False
-    if fileno:
+    if fileno is not None:
         is_tty = os.isatty(fileno)
     return is_tty
 
@@ -1047,6 +1053,28 @@ def bufsize_validator(kwargs):
 
     if out_no_buf and out_buf is not None:
         invalid.append((("out", "out_bufsize"), err.format(target="out")))
+
+    return invalid
+
+
+def env_validator(kwargs):
+    """ a validator to check that env is a dictionary and that all environment variable 
+    keys and values are strings. Otherwise, we would exit with a confusing exit code 255. """
+    invalid = []
+
+    env = kwargs.get("env", None)
+    if env is None:
+        return invalid
+
+    if not isinstance(env, dict):
+        invalid.append((("env"), "env must be a dict. Got {!r}".format(env)))
+        return invalid
+
+    for k, v in kwargs["env"].items():
+        if not isinstance(k, str):
+            invalid.append((("env"), "env key {!r} must be a str".format(k)))
+        if not isinstance(v, str):
+            invalid.append((("env"), "value {!r} of env key {!r} must be a str".format(v, k)))
 
     return invalid
 
@@ -1167,6 +1195,13 @@ class Command(object):
         # a callable that produces a log message from an argument tuple of the
         # command and the args
         "log_msg": None,
+
+        # whether or not to close all inherited fds. typically, this should be True, as inheriting fds can be a security
+        # vulnerability
+        "close_fds": True,
+
+        # a whitelist of the integer fds to pass through to the child process. setting this forces close_fds to be True
+        "pass_fds": set(),
     }
 
     # this is a collection of validators to make sure the special kwargs make
@@ -1176,12 +1211,12 @@ class Command(object):
         (("fg", "err_to_out"), "Can't redirect STDERR in foreground mode"),
         (("err", "err_to_out"), "Stderr is already being redirected"),
         (("piped", "iter"), "You cannot iterate when this command is being piped"),
-        (("piped", "no_pipe"), "Using a pipe doesn't make sense if you've \
-disabled the pipe"),
-        (("no_out", "iter"), "You cannot iterate over output if there is no \
-output"),
+        (("piped", "no_pipe"), "Using a pipe doesn't make sense if you've disabled the pipe"),
+        (("no_out", "iter"), "You cannot iterate over output if there is no output"),
+        (("close_fds", "pass_fds"), "Passing `pass_fds` forces `close_fds` to be True"),
         tty_in_validator,
         bufsize_validator,
+        env_validator,
     )
 
 
@@ -1847,7 +1882,7 @@ class OProc(object):
         session_pipe_read, session_pipe_write = os.pipe()
         exc_pipe_read, exc_pipe_write = os.pipe()
 
-        # this pipe is for synchronzing with the child that the parent has
+        # this pipe is for synchronizing with the child that the parent has
         # closed its in/out/err fds.  this is a bug on OSX (but not linux),
         # where we can lose output sometimes, due to a race, if we do
         # os.close(self._stdout_write_fd) in the parent after the child starts
@@ -1866,6 +1901,19 @@ class OProc(object):
                 os.read(close_pipe_read, 1)
                 os.close(close_pipe_read)
                 os.close(close_pipe_write)
+
+            # this is critical
+            # our exc_pipe_write must have CLOEXEC enabled. the reason for this is tricky:
+            # if our child (the block we're in now), has an exception, we need to be able to write to exc_pipe_write, so
+            # that when the parent does os.read(exc_pipe_read), it gets our traceback.  however, os.read(exc_pipe_read)
+            # in the parent blocks, so if our child *doesn't* have an exception, and doesn't close the writing end, it
+            # hangs forever.  not good!  but obviously the child can't close the writing end until it knows it's not
+            # going to have an exception, which is impossible to know because but what if os.execv has an exception?  so
+            # the answer is CLOEXEC, so that the writing end of the pipe gets closed upon successful exec, and the
+            # parent reading the read end won't block (close breaks the block).
+            flags = fcntl.fcntl(exc_pipe_write, fcntl.F_GETFD)
+            flags |= fcntl.FD_CLOEXEC
+            fcntl.fcntl(exc_pipe_write, fcntl.F_SETFD, flags) 
 
             try:
                 # ignoring SIGHUP lets us persist even after the parent process
@@ -1950,10 +1998,22 @@ class OProc(object):
                 if callable(preexec_fn):
                     preexec_fn()
 
+                close_fds = ca["close_fds"]
+                if ca["pass_fds"]:
+                    close_fds = True
 
-                # don't inherit file descriptors
-                max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-                os.closerange(3, max_fd)
+                if close_fds:
+                    pass_fds = set((0, 1, 2, exc_pipe_write))
+                    pass_fds.update(ca["pass_fds"])
+
+                    # don't inherit file descriptors
+                    inherited_fds = os.listdir("/dev/fd")
+                    inherited_fds = set(int(fd) for fd in inherited_fds) - pass_fds
+                    for fd in inherited_fds:
+                        try:
+                            os.close(fd)
+                        except OSError:
+                            pass
 
                 # actually execute the process
                 if ca["env"] is None:
@@ -2255,13 +2315,13 @@ class OProc(object):
 
     def get_pgid(self):
         """ return the CURRENT group id of the process. this differs from
-        self.pgid in that this refects the current state of the process, where
+        self.pgid in that this reflects the current state of the process, where
         self.pgid is the group id at launch """
         return os.getpgid(self.pid)
 
     def get_sid(self):
         """ return the CURRENT session id of the process. this differs from
-        self.sid in that this refects the current state of the process, where
+        self.sid in that this reflects the current state of the process, where
         self.sid is the session id at launch """
         return os.getsid(self.pid)
 
@@ -3188,9 +3248,8 @@ class Environment(dict):
 
         # somebody tried to be funny and do "from sh import *"
         if k == "__all__":
-            raise RuntimeError("Cannot import * from sh. \
-Please import sh or import programs individually.")
-
+            warnings.warn("Cannot import * from sh. Please import sh or import programs individually.")
+            return []
 
         # check if we're naming a dynamically generated ReturnCode exception
         exc = get_exc_from_name(k)
@@ -3431,7 +3490,7 @@ class ModuleImporterFromVariables(object):
             derp = sh()
             from derp import ls
 
-        here, mod_fullname will be "derp".  keep that in mind as we go throug
+        here, mod_fullname will be "derp".  keep that in mind as we go through
         the rest of this function """
 
         parent_frame = inspect.currentframe().f_back
@@ -3462,7 +3521,7 @@ class ModuleImporterFromVariables(object):
         module = fetch_module_from_frame(mod_fullname, parent_frame)
 
         # we HAVE to include the module in sys.modules, per the import PEP.
-        # older verions of python were more lenient about this being set, but
+        # older versions of python were more lenient about this being set, but
         # not in >= python3.3, unfortunately.  this requirement necessitates the
         # ugly code in SelfWrapper.__call__
         sys.modules[mod_fullname] = module
@@ -3493,6 +3552,7 @@ def run_tests(env, locale, args, version, force_select, **extra_env): # pragma: 
             env[k] = str(v)
 
         cmd = [py_bin, "-W", "ignore", os.path.join(THIS_DIR, "test.py")] + args[1:]
+        print("Running %r" % cmd)
         launch = lambda: os.spawnve(os.P_WAIT, cmd[0], cmd, env)
         return_code = launch()
 
@@ -3522,7 +3582,7 @@ if __name__ == "__main__": # pragma: no cover
     if args:
         action = args[0]
 
-    if action in ("test", "travis"):
+    if action in ("test", "travis", "tox"):
         import test
         coverage = None
         if test.HAS_UNICODE_LITERAL:
@@ -3535,12 +3595,11 @@ if __name__ == "__main__": # pragma: no cover
 
         # if we're testing locally, run all versions of python on the system
         if action == "test":
-            all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6")
+            all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8")
 
-        # if we're testing on travis, just use the system's default python,
-        # since travis will spawn a vm per python version in our .travis.yml
-        # file
-        elif action == "travis":
+        # if we're testing on travis or tox, just use the system's default python, since travis will spawn a vm per
+        # python version in our .travis.yml file, and tox will run its matrix via tox.ini
+        elif action in ("travis", "tox"):
             v = sys.version_info
             sys_ver = "%d.%d" % (v[0], v[1])
             all_versions = (sys_ver,)
@@ -3551,17 +3610,21 @@ if __name__ == "__main__": # pragma: no cover
 
         all_locales = ("en_US.UTF-8", "C")
         i = 0
+        ran_versions = set()
         for locale in all_locales:
+            # make sure this locale is allowed
             if constrain_locales and locale not in constrain_locales:
                 continue
 
             for version in all_versions:
+                # make sure this version is allowed
                 if constrain_versions and version not in constrain_versions:
                     continue
 
                 for force_select in all_force_select:
                     env_copy = env.copy()
 
+                    ran_versions.add(version)
                     exit_code = run_tests(env_copy, locale, args, version,
                             force_select, SH_TEST_RUN_IDX=i)
 
@@ -3574,8 +3637,7 @@ if __name__ == "__main__": # pragma: no cover
 
                     i += 1
 
-        ran_versions = ",".join(all_versions)
-        print("Tested Python versions: %s" % ran_versions)
+        print("Tested Python versions: %s" % ",".join(sorted(list(ran_versions))))
 
     else:
         env = Environment(globals())

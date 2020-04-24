@@ -15,20 +15,23 @@ if HAS_UNICODE_LITERAL:
     run_idx = int(os.environ.pop("SH_TEST_RUN_IDX", "0"))
     first_run = run_idx == 0
 
-    import coverage
+    try:
+        import coverage
+    except ImportError:
+        pass
+    else:
+        # for some reason, we can't run auto_data on the first run, or the coverage
+        # numbers get really screwed up
+        auto_data = True
+        if first_run:
+            auto_data = False
 
-    # for some reason, we can't run auto_data on the first run, or the coverage
-    # numbers get really screwed up
-    auto_data = True
-    if first_run:
-        auto_data = False
+        cov = coverage.Coverage(auto_data=auto_data)
 
-    cov = coverage.Coverage(auto_data=auto_data)
+        if first_run:
+            cov.erase()
 
-    if first_run:
-        cov.erase()
-
-    cov.start()
+        cov.start()
 
 
 from os.path import exists, join, realpath, dirname, split
@@ -50,6 +53,7 @@ import sh
 import signal
 import errno
 import stat
+import fcntl
 import platform
 from functools import wraps
 import time
@@ -506,48 +510,30 @@ while True:
         # this is the environment we'll pass into our commands
         env = {"HERP": "DERP"}
 
-        # python on osx will bizarrely add some extra environment variables that
-        # i didn't ask for.  for this test, we prune those out if they exist
-        osx_cruft = [
-            "__CF_USER_TEXT_ENCODING",
-            "__PYVENV_LAUNCHER__",
-            "LC_CTYPE",
-            "VERSIONER_PYTHON_PREFER_32_BIT",
-            "VERSIONER_PYTHON_VERSION",
-        ]
-
-        linux_cruft = [
-            "LC_CTYPE",
-        ]
-
-        crufts_env_vars = osx_cruft + linux_cruft
-
         # first we test that the environment exists in our child process as
         # we've set it
         py = create_tmp_test("""
 import os
 
-cruft = %s
-for key in cruft:
-    try: del os.environ[key]
-    except: pass
-print(os.environ["HERP"] + " " + str(len(os.environ)))
-""" % crufts_env_vars)
+for key in list(os.environ.keys()):
+    if key != "HERP":
+        del os.environ[key]
+print(dict(os.environ))
+""")
         out = python(py.name, _env=env).strip()
-        self.assertEqual(out, "DERP 1")
+        self.assertEqual(out, "{'HERP': 'DERP'}")
 
         py = create_tmp_test("""
 import os, sys
 sys.path.insert(0, os.getcwd())
 import sh
-cruft = %s
-for key in cruft:
-    try: del os.environ[key]
-    except: pass
-print(sh.HERP + " " + str(len(os.environ)))
-""" % crufts_env_vars)
+for key in list(os.environ.keys()):
+    if key != "HERP":
+        del os.environ[key]
+print(dict(HERP=sh.HERP))
+""")
         out = python(py.name, _env=env, _cwd=THIS_DIR).strip()
-        self.assertEqual(out, "DERP 1")
+        self.assertEqual(out, "{'HERP': 'DERP'}")
 
 
     def test_which(self):
@@ -570,6 +556,78 @@ print("hi")
         found_path = which(test_name, [test_path])
         self.assertEqual(found_path, py.name)
 
+    def test_no_close_fds(self):
+        # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
+        # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
+        # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
+        #
+        # https://www.python.org/dev/peps/pep-0446/
+        tmp = [tempfile.TemporaryFile() for i in range(10)]
+        for t in tmp:
+            flags = fcntl.fcntl(t.fileno(), fcntl.F_GETFD)
+            flags &= ~fcntl.FD_CLOEXEC
+            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags) 
+        first_fd = tmp[0].fileno()
+
+        py = create_tmp_test("""
+import os
+print(len(os.listdir("/dev/fd")))
+""")
+        out = python(py.name, _close_fds=False).strip()
+        # pick some number greater than 4, since it's hard to know exactly how many fds will be open/inherted in the
+        # child
+        self.assertTrue(int(out) > 7)
+
+        for t in tmp:
+            t.close()
+
+    def test_close_fds(self):
+        # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
+        # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
+        # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
+        #
+        # https://www.python.org/dev/peps/pep-0446/
+        tmp = [tempfile.TemporaryFile() for i in range(10)]
+        for t in tmp:
+            flags = fcntl.fcntl(t.fileno(), fcntl.F_GETFD)
+            flags &= ~fcntl.FD_CLOEXEC
+            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags) 
+
+        py = create_tmp_test("""
+import os
+print(os.listdir("/dev/fd"))
+""")
+        out = python(py.name).strip()
+        self.assertEqual(out, "['0', '1', '2', '3']")
+
+        for t in tmp:
+            t.close()
+
+
+    def test_pass_fds(self):
+        # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
+        # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
+        # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
+        #
+        # https://www.python.org/dev/peps/pep-0446/
+        tmp = [tempfile.TemporaryFile() for i in range(10)]
+        for t in tmp:
+            flags = fcntl.fcntl(t.fileno(), fcntl.F_GETFD)
+            flags &= ~fcntl.FD_CLOEXEC
+            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags) 
+        last_fd = tmp[-1].fileno()
+
+        py = create_tmp_test("""
+import os
+print(os.listdir("/dev/fd"))
+""")
+        out = python(py.name, _pass_fds=[last_fd]).strip()
+        inherited = [0, 1, 2, 3, last_fd]
+        inherited_str = [str(i) for i in inherited]
+        self.assertEqual(out, str(inherited_str))
+
+        for t in tmp:
+            t.close()
 
     def test_no_arg(self):
         import pwd
@@ -582,6 +640,17 @@ print("hi")
         from sh import ls
         self.assertRaises(TypeError, ls, _iter=True, _piped=True)
 
+
+    def test_invalid_env(self):
+        from sh import ls
+
+        exc = TypeError
+        if IS_PY2 and MINOR_VER == 6:
+            exc = ValueError
+
+        self.assertRaises(exc, ls, _env="XXX")
+        self.assertRaises(exc, ls, _env={"foo": 123})
+        self.assertRaises(exc, ls, _env={123: "bar"})
 
     def test_exception(self):
         from sh import ErrorReturnCode_2
@@ -2655,13 +2724,6 @@ class MiscTests(BaseTests):
     def test_args_deprecated(self):
         self.assertRaises(DeprecationWarning, sh.args, _env={})
 
-    def test_cant_import_all(self):
-        def go():
-            # we have to use exec, because in py3, this syntax raises a
-            # SyntaxError upon compilation
-            exec("from sh import *")
-        self.assertRaises(RuntimeError, go)
-
     def test_percent_doesnt_fail_logging(self):
         """ test that a command name doesn't interfere with string formatting in
         the internal loggers """
@@ -2671,7 +2733,6 @@ print("cool")
         out = python(py.name, "%")
         out = python(py.name, "%%")
         out = python(py.name, "%%%")
-
 
     # TODO
     # for some reason, i can't get a good stable baseline measured in this test
