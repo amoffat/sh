@@ -3488,6 +3488,7 @@ def run_tests(env, locale, args, version, force_select, **extra_env): # pragma: 
             env[k] = str(v)
 
         cmd = [py_bin, "-W", "ignore", os.path.join(THIS_DIR, "test.py")] + args[1:]
+        print("Running %r" % cmd)
         launch = lambda: os.spawnve(os.P_WAIT, cmd[0], cmd, env)
         return_code = launch()
 
@@ -3517,7 +3518,7 @@ if __name__ == "__main__": # pragma: no cover
     if args:
         action = args[0]
 
-    if action in ("test", "travis"):
+    if action in ("test", "travis", "tox"):
         import test
         coverage = None
         if test.HAS_UNICODE_LITERAL:
@@ -3530,12 +3531,11 @@ if __name__ == "__main__": # pragma: no cover
 
         # if we're testing locally, run all versions of python on the system
         if action == "test":
-            all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6")
+            all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8")
 
-        # if we're testing on travis, just use the system's default python,
-        # since travis will spawn a vm per python version in our .travis.yml
-        # file
-        elif action == "travis":
+        # if we're testing on travis or tox, just use the system's default python, since travis will spawn a vm per
+        # python version in our .travis.yml file, and tox will run its matrix via tox.ini
+        elif action in ("travis", "tox"):
             v = sys.version_info
             sys_ver = "%d.%d" % (v[0], v[1])
             all_versions = (sys_ver,)
@@ -3546,17 +3546,21 @@ if __name__ == "__main__": # pragma: no cover
 
         all_locales = ("en_US.UTF-8", "C")
         i = 0
+        ran_versions = set()
         for locale in all_locales:
+            # make sure this locale is allowed
             if constrain_locales and locale not in constrain_locales:
                 continue
 
             for version in all_versions:
+                # make sure this version is allowed
                 if constrain_versions and version not in constrain_versions:
                     continue
 
                 for force_select in all_force_select:
                     env_copy = env.copy()
 
+                    ran_versions.add(version)
                     exit_code = run_tests(env_copy, locale, args, version,
                             force_select, SH_TEST_RUN_IDX=i)
 
@@ -3569,8 +3573,7 @@ if __name__ == "__main__": # pragma: no cover
 
                     i += 1
 
-        ran_versions = ",".join(all_versions)
-        print("Tested Python versions: %s" % ran_versions)
+        print("Tested Python versions: %s" % ",".join(sorted(list(ran_versions))))
 
     else:
         env = Environment(globals())
