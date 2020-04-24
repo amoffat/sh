@@ -13,7 +13,8 @@ RUN apt-get -y install\
     software-properties-common\
     curl\
     sudo\
-    python
+    python\
+    lsof
 
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update
