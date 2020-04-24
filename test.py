@@ -557,8 +557,6 @@ print("hi")
         self.assertEqual(found_path, py.name)
 
     def test_no_close_fds(self):
-        import sh
-
         # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
         # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
         # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
@@ -584,8 +582,6 @@ print(len(os.listdir("/dev/fd")))
             t.close()
 
     def test_close_fds(self):
-        import sh
-
         # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
         # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
         # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
@@ -609,8 +605,6 @@ print(os.listdir("/dev/fd"))
 
 
     def test_pass_fds(self):
-        import sh
-
         # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
         # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
         # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
