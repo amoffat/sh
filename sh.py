@@ -2268,13 +2268,13 @@ class OProc(object):
 
     def get_pgid(self):
         """ return the CURRENT group id of the process. this differs from
-        self.pgid in that this refects the current state of the process, where
+        self.pgid in that this reflects the current state of the process, where
         self.pgid is the group id at launch """
         return os.getpgid(self.pid)
 
     def get_sid(self):
         """ return the CURRENT session id of the process. this differs from
-        self.sid in that this refects the current state of the process, where
+        self.sid in that this reflects the current state of the process, where
         self.sid is the session id at launch """
         return os.getsid(self.pid)
 
