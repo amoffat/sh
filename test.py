@@ -506,48 +506,30 @@ while True:
         # this is the environment we'll pass into our commands
         env = {"HERP": "DERP"}
 
-        # python on osx will bizarrely add some extra environment variables that
-        # i didn't ask for.  for this test, we prune those out if they exist
-        osx_cruft = [
-            "__CF_USER_TEXT_ENCODING",
-            "__PYVENV_LAUNCHER__",
-            "LC_CTYPE",
-            "VERSIONER_PYTHON_PREFER_32_BIT",
-            "VERSIONER_PYTHON_VERSION",
-        ]
-
-        linux_cruft = [
-            "LC_CTYPE",
-        ]
-
-        crufts_env_vars = osx_cruft + linux_cruft
-
         # first we test that the environment exists in our child process as
         # we've set it
         py = create_tmp_test("""
 import os
 
-cruft = %s
-for key in cruft:
-    try: del os.environ[key]
-    except: pass
-print(os.environ["HERP"] + " " + str(len(os.environ)))
-""" % crufts_env_vars)
+for key in list(os.environ.keys()):
+    if key != "HERP":
+        del os.environ[key]
+print(dict(os.environ))
+""")
         out = python(py.name, _env=env).strip()
-        self.assertEqual(out, "DERP 1")
+        self.assertEqual(out, "{'HERP': 'DERP'}")
 
         py = create_tmp_test("""
 import os, sys
 sys.path.insert(0, os.getcwd())
 import sh
-cruft = %s
-for key in cruft:
-    try: del os.environ[key]
-    except: pass
-print(sh.HERP + " " + str(len(os.environ)))
-""" % crufts_env_vars)
+for key in list(os.environ.keys()):
+    if key != "HERP":
+        del os.environ[key]
+print(dict(HERP=sh.HERP))
+""")
         out = python(py.name, _env=env, _cwd=THIS_DIR).strip()
-        self.assertEqual(out, "DERP 1")
+        self.assertEqual(out, "{'HERP': 'DERP'}")
 
 
     def test_which(self):
