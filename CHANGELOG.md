@@ -4,8 +4,9 @@
 *   minor Travis CI fixes [#492](https://github.com/amoffat/sh/pull/492)
 *   bugfix for boolean long options not respecting `_long_prefix` [#488](https://github.com/amoffat/sh/pull/488)
 *   fix deprecation warning on Python 3.6 regexes [#482](https://github.com/amoffat/sh/pull/482)
-*   `_pass_fds` and `close_fds` special kwargs for controlling file descriptor inheritance in child.
+*   `_pass_fds` and `_close_fds` special kwargs for controlling file descriptor inheritance in child.
 *   more efficiently closing inherited fds [#406](https://github.com/amoffat/sh/issues/406)
+*   bugfix where passing invalid dictionary to `_env` will cause a mysterious child 255 exit code. [#497](https://github.com/amoffat/sh/pull/497)
 
 ## 1.12.14 - 6/6/17
 *   bugfix for poor sleep performance [#378](https://github.com/amoffat/sh/issues/378)
