@@ -2724,13 +2724,6 @@ class MiscTests(BaseTests):
     def test_args_deprecated(self):
         self.assertRaises(DeprecationWarning, sh.args, _env={})
 
-    def test_cant_import_all(self):
-        def go():
-            # we have to use exec, because in py3, this syntax raises a
-            # SyntaxError upon compilation
-            exec("from sh import *")
-        self.assertRaises(RuntimeError, go)
-
     def test_percent_doesnt_fail_logging(self):
         """ test that a command name doesn't interfere with string formatting in
         the internal loggers """
