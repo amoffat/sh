@@ -3,6 +3,25 @@
 FAQ
 ===
 
+How do I execute a bash builtin?
+--------------------------------
+
+.. code-block:: python
+
+    import sh
+
+    sh.bash("-c", "your_builtin")
+
+Or
+
+.. code-block:: python
+
+    import sh
+
+    builtins = sh.bash.bake("-c")
+    builtins("your_builtin")
+
+
 Will Windows be supported?
 --------------------------
 
