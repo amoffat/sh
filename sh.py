@@ -1984,7 +1984,7 @@ class OProc(object):
                     close_fds = True
 
                 if close_fds:
-                    pass_fds = set((0, 1, 2))
+                    pass_fds = set((0, 1, 2, exc_pipe_write))
                     pass_fds.update(ca["pass_fds"])
 
                     # don't inherit file descriptors
