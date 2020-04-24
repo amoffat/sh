@@ -4,9 +4,16 @@ os:
 language: python
 
 python:
-    - pypy
+    # - 2.6 No longer supported on Travis
+    - 2.7
+    # - 3.3 No longer supported on Travis
+    - 3.4
     - 3.5
     - 3.6
+    - 3.7
+    - 3.8
+    - pypy
+    - pypy3.5
 
 before_script:
     - pip install -r requirements-dev.txt

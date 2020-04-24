@@ -421,7 +421,7 @@ class CommandNotFound(AttributeError): pass
 
 
 
-rc_exc_regex = re.compile("(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z]+)")
+rc_exc_regex = re.compile(r"(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z]+)")
 rc_exc_cache = {}
 
 SIGNAL_MAPPING = {}
@@ -1189,6 +1189,13 @@ class Command(object):
         # a callable that produces a log message from an argument tuple of the
         # command and the args
         "log_msg": None,
+
+        # whether or not to close all inherited fds. typically, this should be True, as inheriting fds can be a security
+        # vulnerability
+        "close_fds": True,
+
+        # a whitelist of the integer fds to pass through to the child process. setting this forces close_fds to be True
+        "pass_fds": set(),
     }
 
     # this is a collection of validators to make sure the special kwargs make
@@ -1198,10 +1205,9 @@ class Command(object):
         (("fg", "err_to_out"), "Can't redirect STDERR in foreground mode"),
         (("err", "err_to_out"), "Stderr is already being redirected"),
         (("piped", "iter"), "You cannot iterate when this command is being piped"),
-        (("piped", "no_pipe"), "Using a pipe doesn't make sense if you've \
-disabled the pipe"),
-        (("no_out", "iter"), "You cannot iterate over output if there is no \
-output"),
+        (("piped", "no_pipe"), "Using a pipe doesn't make sense if you've disabled the pipe"),
+        (("no_out", "iter"), "You cannot iterate over output if there is no output"),
+        (("close_fds", "pass_fds"), "Passing `pass_fds` forces `close_fds` to be True"),
         tty_in_validator,
         bufsize_validator,
         env_validator,
@@ -1544,7 +1550,7 @@ def aggregate_keywords(keywords, sep, prefix, raw=False):
                 k = k.replace("_", "-")
 
             if v is True:
-                processed.append(encode("--" + k))
+                processed.append(encode(prefix + k))
             elif v is False:
                 pass
             elif sep is None or sep == " ":
@@ -1973,10 +1979,22 @@ class OProc(object):
                 if callable(preexec_fn):
                     preexec_fn()
 
+                close_fds = ca["close_fds"]
+                if ca["pass_fds"]:
+                    close_fds = True
 
-                # don't inherit file descriptors
-                max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-                os.closerange(3, max_fd)
+                if close_fds:
+                    pass_fds = set((0, 1, 2))
+                    pass_fds.update(ca["pass_fds"])
+
+                    # don't inherit file descriptors
+                    inherited_fds = os.listdir("/dev/fd")
+                    inherited_fds = set(int(fd) for fd in inherited_fds) - pass_fds
+                    for fd in inherited_fds:
+                        try:
+                            os.close(fd)
+                        except OSError:
+                            pass
 
                 # actually execute the process
                 if ca["env"] is None:
@@ -3511,6 +3529,7 @@ def run_tests(env, locale, args, version, force_select, **extra_env): # pragma: 
             env[k] = str(v)
 
         cmd = [py_bin, "-W", "ignore", os.path.join(THIS_DIR, "test.py")] + args[1:]
+        print("Running %r" % cmd)
         launch = lambda: os.spawnve(os.P_WAIT, cmd[0], cmd, env)
         return_code = launch()
 
@@ -3540,7 +3559,7 @@ if __name__ == "__main__": # pragma: no cover
     if args:
         action = args[0]
 
-    if action in ("test", "travis"):
+    if action in ("test", "travis", "tox"):
         import test
         coverage = None
         if test.HAS_UNICODE_LITERAL:
@@ -3553,12 +3572,11 @@ if __name__ == "__main__": # pragma: no cover
 
         # if we're testing locally, run all versions of python on the system
         if action == "test":
-            all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6")
+            all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8")
 
-        # if we're testing on travis, just use the system's default python,
-        # since travis will spawn a vm per python version in our .travis.yml
-        # file
-        elif action == "travis":
+        # if we're testing on travis or tox, just use the system's default python, since travis will spawn a vm per
+        # python version in our .travis.yml file, and tox will run its matrix via tox.ini
+        elif action in ("travis", "tox"):
             v = sys.version_info
             sys_ver = "%d.%d" % (v[0], v[1])
             all_versions = (sys_ver,)
@@ -3569,17 +3587,21 @@ if __name__ == "__main__": # pragma: no cover
 
         all_locales = ("en_US.UTF-8", "C")
         i = 0
+        ran_versions = set()
         for locale in all_locales:
+            # make sure this locale is allowed
             if constrain_locales and locale not in constrain_locales:
                 continue
 
             for version in all_versions:
+                # make sure this version is allowed
                 if constrain_versions and version not in constrain_versions:
                     continue
 
                 for force_select in all_force_select:
                     env_copy = env.copy()
 
+                    ran_versions.add(version)
                     exit_code = run_tests(env_copy, locale, args, version,
                             force_select, SH_TEST_RUN_IDX=i)
 
@@ -3592,8 +3614,7 @@ if __name__ == "__main__": # pragma: no cover
 
                     i += 1
 
-        ran_versions = ",".join(all_versions)
-        print("Tested Python versions: %s" % ran_versions)
+        print("Tested Python versions: %s" % ",".join(sorted(list(ran_versions))))
 
     else:
         env = Environment(globals())
