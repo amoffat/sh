@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Contrib Commands &mdash; sh 1.12.13 documentation</title>
+  <title>Contrib Commands &mdash; sh 1.12.15 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.15 documentation" href="../index.html"/>
         <link rel="next" title="Using Sudo" href="sudo.html"/>
         <link rel="prev" title="API" href="command_class.html"/> 
 
@@ -140,6 +140,8 @@
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="special_arguments.html#communication">Communication</a><ul>
@@ -364,7 +366,7 @@ using the command returned from your decorated function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh.contrib</span> <span class="kn">import</span> <span class="n">ls</span>
 
 <span class="c1"># executing: ls -l</span>
-<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>For even more flexibility, you can design your contrib command to rewrite its
@@ -428,7 +430,7 @@ function to preprocess the arguments at execution time using the
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.12.15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

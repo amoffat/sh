@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Tailing a real-time log file &mdash; sh 1.12.13 documentation</title>
+  <title>Tailing a real-time log file &mdash; sh 1.12.15 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.15 documentation" href="../index.html"/>
         <link rel="up" title="Tutorials" href="../tutorials.html"/>
         <link rel="next" title="Entering an SSH password" href="interacting_with_processes.html"/>
         <link rel="prev" title="Tutorials" href="../tutorials.html"/> 
@@ -141,6 +141,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#communication">Communication</a><ul>
@@ -311,7 +313,7 @@
 <p>sh has the ability to respond to subprocesses in an event-driven fashion.
 A typical example of where this would be useful is tailing a log file for
 a specific pattern, then responding to that value immediately:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="k">import</span> <span class="n">tail</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
 
 <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;info.log&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="k">if</span> <span class="s2">&quot;ERROR&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
@@ -329,7 +331,7 @@ produces output can be iterated over.  Say you wanted to send an email to a
 coworker if their C code emits a warning:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">gcc</span><span class="p">,</span> <span class="n">git</span>
 
-<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">gcc</span><span class="p">(</span><span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="s2">&quot;awesome_binary&quot;</span><span class="p">,</span> <span class="s2">&quot;awesome_source.c&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">gcc</span><span class="p">(</span><span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="s2">&quot;awesome_binary&quot;</span><span class="p">,</span> <span class="s2">&quot;awesome_source.c&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="k">if</span> <span class="s2">&quot;warning&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
         <span class="c1"># parse out the relevant info</span>
         <span class="n">filename</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">char</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
@@ -412,7 +414,7 @@ do the same processing that we did earlier.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.12.15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

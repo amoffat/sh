@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>1.12.13 &mdash; sh 1.12.13 documentation</title>
+  <title>1.12.15 &mdash; sh 1.12.15 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="#"/>
+    <link rel="top" title="sh 1.12.15 documentation" href="#"/>
         <link rel="next" title="Usage" href="usage.html"/> 
 
   
@@ -139,6 +139,8 @@
 <li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="sections/special_arguments.html#communication">Communication</a><ul>
@@ -288,7 +290,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="#">Docs</a> &raquo;</li>
       
-    <li>1.12.13</li>
+    <li>1.12.15</li>
       <li class="wy-breadcrumbs-aside">
         
           
@@ -306,7 +308,7 @@
 </div>
 <img alt="Logo" src="_images/logo-230.png" />
 <div class="section" id="version">
-<h1>1.12.13<a class="headerlink" href="#version" title="Permalink to this headline">¶</a></h1>
+<h1>1.12.15<a class="headerlink" href="#version" title="Permalink to this headline">¶</a></h1>
 <a class="reference external image-reference" href="https://pypi.python.org/pypi/sh"><img alt="Version" src="https://img.shields.io/pypi/v/sh.svg?style=flat-square" /></a>
 <a class="reference external image-reference" href="https://pypi.python.org/pypi/sh"><img alt="Python Versions" src="https://img.shields.io/pypi/pyversions/sh.svg?style=flat-square" /></a>
 <a class="reference external image-reference" href="https://travis-ci.org/amoffat/sh"><img alt="Build Status" src="https://img.shields.io/travis/amoffat/sh.svg?style=flat-square" /></a>
@@ -315,7 +317,7 @@
 <p>sh is a full-fledged subprocess replacement for Python 2.6 - 3.5, PyPy and PyPy3
 that allows you to call any program as if it were a function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ifconfig</span>
-<span class="k">print</span><span class="p">(</span><span class="n">ifconfig</span><span class="p">(</span><span class="s2">&quot;wlan0&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ifconfig</span><span class="p">(</span><span class="s2">&quot;wlan0&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Output:</p>
@@ -354,7 +356,7 @@ system are easily available to you from within Python.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
     <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/doesnt/exist&quot;</span><span class="p">)</span>
 <span class="k">except</span> <span class="n">sh</span><span class="o">.</span><span class="n">ErrorReturnCode_2</span><span class="p">:</span>
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;directory doesn&#39;t exist&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;directory doesn&#39;t exist&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><a class="reference internal" href="sections/exit_codes.html#exit-codes"><span class="std std-ref">Read More</span></a></p>
@@ -402,7 +404,7 @@ system are easily available to you from within Python.</p>
 </div>
 <div class="section" id="background-processes">
 <h2>Background Processes<a class="headerlink" href="#background-processes" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;-name&quot;</span><span class="p">,</span> <span class="s2">&quot;sh.py&quot;</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;-name&quot;</span><span class="p">,</span> <span class="s2">&quot;sh.py&quot;</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="c1"># ... do other things ...</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>
@@ -450,7 +452,7 @@ system are easily available to you from within Python.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'1.12.13',
+            VERSION:'1.12.15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

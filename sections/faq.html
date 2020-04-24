@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>FAQ &mdash; sh 1.12.13 documentation</title>
+  <title>FAQ &mdash; sh 1.12.15 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.15 documentation" href="../index.html"/>
         <link rel="prev" title="Entering an SSH password" href="../tutorials/interacting_with_processes.html"/> 
 
   
@@ -139,6 +139,8 @@
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="special_arguments.html#communication">Communication</a><ul>
@@ -352,7 +354,7 @@ command&#8217;s output to sh&#8217;s internal code.</p>
 <p>Of course, there are some gotchas with TTY STDOUT.  One of them is commands that
 use a pager, for example:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
-<span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">git</span><span class="o">.</span><span class="n">log</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">git</span><span class="o">.</span><span class="n">log</span><span class="p">())</span>
 </pre></div>
 </div>
 <p>This will raise a <code class="docutils literal"><span class="pre">SignalException_SIGPIPE</span></code>, and it&#8217;s unclear exactly why.
@@ -456,7 +458,7 @@ command starts running, and both are running simultaneously.  Data can then flow
 from the inner command to the outer command asynchronously:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
-<span class="n">sh</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="s2">&quot;test</span><span class="se">\n</span><span class="s2">1</span><span class="se">\n</span><span class="s2">2</span><span class="se">\n</span><span class="s2">3</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_piped</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="s2">&quot;test</span><span class="se">\n</span><span class="s2">1</span><span class="se">\n</span><span class="s2">2</span><span class="se">\n</span><span class="s2">3</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_piped</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Again, this example is contrived &#8211; a better example would be a long-running
@@ -485,7 +487,7 @@ launched the python process), and probably not set in raw mode
 by newlines.</p>
 <p>The real solution is to use <a class="reference internal" href="special_arguments.html#fg"><span class="std std-ref">_fg=True</span></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">top</span><span class="p">(</span><span class="n">_fg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">top</span><span class="p">(</span><span class="n">_fg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -568,7 +570,7 @@ Starting with Pylint 1.6 these messages can be suppressed using <a class="refere
 <span class="k">def</span> <span class="nf">get_something</span><span class="p">():</span>
     <span class="k">return</span> <span class="n">sh</span><span class="o">.</span><span class="n">pwd</span><span class="p">()</span>
 
-<span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;sh.pwd&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;sh.pwd&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">pwd</span><span class="p">):</span>
     <span class="n">pwd</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span>
     <span class="k">assert</span> <span class="n">get_something</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span>
@@ -662,7 +664,7 @@ so I don&#8217;t see it growing much more in complexity or code size.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.12.15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

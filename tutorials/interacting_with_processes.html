@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Entering an SSH password &mdash; sh 1.12.13 documentation</title>
+  <title>Entering an SSH password &mdash; sh 1.12.15 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.15 documentation" href="../index.html"/>
         <link rel="up" title="Tutorials" href="../tutorials.html"/>
         <link rel="next" title="FAQ" href="../sections/faq.html"/>
         <link rel="prev" title="Tailing a real-time log file" href="real_time_output.html"/> 
@@ -141,6 +141,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#communication">Communication</a><ul>
@@ -327,7 +329,7 @@ second argument, and we&#8217;ll use that to send STDIN back to the process.</p>
 
 <span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
     <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password:&quot;</span><span class="p">):</span>
         <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
 
@@ -350,7 +352,7 @@ it to 0 for unbuffered output:</p>
 
 <span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
     <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password:&quot;</span><span class="p">):</span>
         <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
 
@@ -435,7 +437,7 @@ with a real user in a real terminal session.  To enable TTY, we can add the
     <span class="k">if</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password: &quot;</span><span class="p">):</span>
         <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_tty_in</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_tty_in</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>And now our remote login script works!</p>
@@ -477,7 +479,7 @@ without having to use that server&#8217;s shell directly:</p>
 <p>Translating this to sh, it becomes:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
-<span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">,</span> <span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">,</span> <span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>We can make this even nicer by taking advantage of sh&#8217;s <a class="reference internal" href="../sections/baking.html#baking"><span class="std std-ref">Baking</span></a> to bind
@@ -485,8 +487,8 @@ our server username/ip to a command object:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">my_server</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
-<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;whoami&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;whoami&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Now we have a reusable command object that we can use to call remote commands.
@@ -496,8 +498,8 @@ arguments:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">my_server</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">ifconfig</span><span class="p">())</span>
-<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">whoami</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">ifconfig</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">whoami</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -544,7 +546,7 @@ arguments:</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.12.15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

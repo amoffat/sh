@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>‘With’ Contexts &mdash; sh 1.12.13 documentation</title>
+  <title>‘With’ Contexts &mdash; sh 1.12.15 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.15 documentation" href="../index.html"/>
         <link rel="up" title="Usage" href="../usage.html"/>
         <link rel="next" title="Reference" href="../reference.html"/>
         <link rel="prev" title="Input via STDIN" href="stdin.html"/> 
@@ -141,6 +141,8 @@
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="special_arguments.html#communication">Communication</a><ul>
@@ -311,7 +313,7 @@
 <p>Commands can be run within a Python <code class="docutils literal"><span class="pre">with</span></code> context.  Popular commands using
 this might be <code class="docutils literal"><span class="pre">sudo</span></code> or <code class="docutils literal"><span class="pre">fakeroot</span></code>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">:</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
@@ -321,8 +323,8 @@ this might be <code class="docutils literal"><span class="pre">sudo</span></code
 <p>If you need to run a command in a with context and pass in arguments, for
 example, specifying a -p prompt with sudo, you need to use the <a class="reference internal" href="special_arguments.html#with"><span class="std std-ref">_with=True</span></a> This let&#8217;s the command know that it&#8217;s being run from a with context so
 it can behave correctly:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -368,7 +370,7 @@ it can behave correctly:</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.12.15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

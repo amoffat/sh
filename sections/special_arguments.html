@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Special Kwargs &mdash; sh 1.12.13 documentation</title>
+  <title>Special Kwargs &mdash; sh 1.12.15 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.15 documentation" href="../index.html"/>
         <link rel="up" title="Reference" href="../reference.html"/>
         <link rel="next" title="Architecture Overview" href="architecture.html"/>
         <link rel="prev" title="Reference" href="../reference.html"/> 
@@ -141,6 +141,8 @@
 <li class="toctree-l4"><a class="reference internal" href="#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#communication">Communication</a><ul>
@@ -502,11 +504,25 @@ directly, regardless of the value of <code class="docutils literal"><span class=
 <p>A function to be run directly before the child process calls <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.execv" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.execv()</span></code></a>.
 Typically not used by normal users.</p>
 </div>
+<div class="section" id="pass-fds">
+<span id="id12"></span><h3>_pass_fds<a class="headerlink" href="#pass-fds" title="Permalink to this headline">¶</a></h3>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 1.12.15.</span></p>
+</div>
+<p>Default value: <code class="docutils literal"><span class="pre">{}</span></code> (empty set)</p>
+<p>A whitelist iterable of integer file descriptors to be inherited by the child. Passing anything in this argument causes <a class="reference internal" href="#close-fds"><span class="std std-ref">_close_fds</span></a> to be <code class="docutils literal"><span class="pre">True</span></code>.</p>
+</div>
+<div class="section" id="close-fds">
+<span id="id13"></span><h3>_close_fds<a class="headerlink" href="#close-fds" title="Permalink to this headline">¶</a></h3>
+<p>Default value: <code class="docutils literal"><span class="pre">True</span></code></p>
+<p>Causes all inherited file descriptors besides stdin, stdout, and stderr to be automatically closed. This option is
+automatically enabled when <a class="reference internal" href="#pass-fds"><span class="std std-ref">_pass_fds</span></a> is given a value.</p>
+</div>
 </div>
 <div class="section" id="communication">
 <h2>Communication<a class="headerlink" href="#communication" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="in">
-<span id="id12"></span><h3>_in<a class="headerlink" href="#in" title="Permalink to this headline">¶</a></h3>
+<span id="id14"></span><h3>_in<a class="headerlink" href="#in" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>Specifies an argument for the process to use as its standard input.  This may be
 a string, a <a class="reference external" href="https://docs.python.org/3.5/library/queue.html#queue.Queue" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">queue.Queue</span></code></a>, a file-like object, or any iterable.</p>
@@ -516,7 +532,7 @@ a string, a <a class="reference external" href="https://docs.python.org/3.5/libr
 </div>
 </div>
 <div class="section" id="piped">
-<span id="id13"></span><h3>_piped<a class="headerlink" href="#piped" title="Permalink to this headline">¶</a></h3>
+<span id="id15"></span><h3>_piped<a class="headerlink" href="#piped" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>May be <code class="docutils literal"><span class="pre">True</span></code>, <code class="docutils literal"><span class="pre">&quot;out&quot;</span></code>, or <code class="docutils literal"><span class="pre">&quot;err&quot;</span></code>.  Signals a command that it is being
 used as the input to another command, so it should return its output
@@ -527,14 +543,14 @@ incrementally as it receives it, instead of aggregating it all at once.</p>
 </div>
 </div>
 <div class="section" id="iter">
-<span id="id14"></span><h3>_iter<a class="headerlink" href="#iter" title="Permalink to this headline">¶</a></h3>
+<span id="id16"></span><h3>_iter<a class="headerlink" href="#iter" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>May be <code class="docutils literal"><span class="pre">True</span></code>, <code class="docutils literal"><span class="pre">&quot;out&quot;</span></code>, or <code class="docutils literal"><span class="pre">&quot;err&quot;</span></code>.  Puts a command in iterable mode.  In
 this mode, you can use a <code class="docutils literal"><span class="pre">for</span></code> or <code class="docutils literal"><span class="pre">while</span></code> loop to iterate over a command&#8217;s
 output in real-time.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
-<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sh</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="s2">&quot;/tmp/file&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sh</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="s2">&quot;/tmp/file&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
@@ -543,7 +559,7 @@ output in real-time.</p>
 </div>
 </div>
 <div class="section" id="iter-noblock">
-<span id="id15"></span><h3>_iter_noblock<a class="headerlink" href="#iter-noblock" title="Permalink to this headline">¶</a></h3>
+<span id="id17"></span><h3>_iter_noblock<a class="headerlink" href="#iter-noblock" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
 <p>Same as <a class="reference internal" href="#iter"><span class="std std-ref">_iter</span></a>, except the loop will not block if there is no
 output to iterate over.  Instead, the output from the command will be
@@ -552,12 +568,12 @@ output to iterate over.  Instead, the output from the command will be
 <span class="kn">import</span> <span class="nn">errno</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
-<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sh</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;stuff.log&quot;</span><span class="p">,</span> <span class="n">_iter_noblock</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sh</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;stuff.log&quot;</span><span class="p">,</span> <span class="n">_iter_noblock</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">EWOULDBLOCK</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;doing something else...&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;doing something else...&quot;</span><span class="p">)</span>
         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;processing line!&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;processing line!&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
@@ -566,14 +582,14 @@ output to iterate over.  Instead, the output from the command will be
 </div>
 </div>
 <div class="section" id="with">
-<span id="id16"></span><h3>_with<a class="headerlink" href="#with" title="Permalink to this headline">¶</a></h3>
+<span id="id18"></span><h3>_with<a class="headerlink" href="#with" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">False</span></code></p>
 <p>Explicitly tells us that we&#8217;re running a command in a <code class="docutils literal"><span class="pre">with</span></code> context.  This is
 only necessary if you&#8217;re using a command in a <code class="docutils literal"><span class="pre">with</span></code> context <strong>and</strong> passing
 parameters to it.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
-<span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">(</span><span class="n">password</span><span class="o">=</span><span class="s2">&quot;abc123&quot;</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
+<span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">(</span><span class="n">password</span><span class="o">=</span><span class="s2">&quot;abc123&quot;</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
@@ -582,7 +598,7 @@ parameters to it.</p>
 </div>
 </div>
 <div class="section" id="done">
-<span id="id17"></span><h3>_done<a class="headerlink" href="#done" title="Permalink to this headline">¶</a></h3>
+<span id="id19"></span><h3>_done<a class="headerlink" href="#done" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
 <p><span class="versionmodified">New in version 1.11.0.</span></p>
 </div>
@@ -605,7 +621,7 @@ time:</p>
 
 <span class="k">def</span> <span class="nf">do_thing</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
     <span class="n">pool</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-    <span class="n">sh</span><span class="o">.</span><span class="n">your_parallel_command</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">_done</span><span class="o">=</span><span class="n">done</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">your_parallel_command</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">_done</span><span class="o">=</span><span class="n">done</span><span class="p">)</span>
 
 <span class="n">procs</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
@@ -620,14 +636,14 @@ time:</p>
 <div class="section" id="ttys">
 <h2>TTYs<a class="headerlink" href="#ttys" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="tty-in">
-<span id="id18"></span><h3>_tty_in<a class="headerlink" href="#tty-in" title="Permalink to this headline">¶</a></h3>
+<span id="id20"></span><h3>_tty_in<a class="headerlink" href="#tty-in" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">False</span></code>, meaning a <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.pipe" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.pipe()</span></code></a> will be used.</p>
 <p>If <code class="docutils literal"><span class="pre">True</span></code>, sh creates a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal">TTY</a>
 for STDIN, essentially emulating a terminal, as if your command was entered from
 the commandline.  This is necessary for commands that require STDIN to be a TTY.</p>
 </div>
 <div class="section" id="tty-out">
-<span id="id19"></span><h3>_tty_out<a class="headerlink" href="#tty-out" title="Permalink to this headline">¶</a></h3>
+<span id="id21"></span><h3>_tty_out<a class="headerlink" href="#tty-out" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">True</span></code></p>
 <p>If <code class="docutils literal"><span class="pre">True</span></code>, sh creates a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal#Applications">TTY</a>
 for STDOUT, otherwise use a <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.pipe" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.pipe()</span></code></a>.
@@ -653,13 +669,13 @@ program prints per line, for example.</p>
 a buffer of that amount.</p>
 </div>
 <div class="section" id="out-bufsize">
-<span id="id21"></span><h3>_out_bufsize<a class="headerlink" href="#out-bufsize" title="Permalink to this headline">¶</a></h3>
+<span id="id23"></span><h3>_out_bufsize<a class="headerlink" href="#out-bufsize" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">1</span></code></p>
 <p>The STDOUT/ERR buffer size.  0 for unbuffered, 1 for line buffered, anything
 else for a buffer of that amount.</p>
 </div>
 <div class="section" id="internal-bufsize">
-<span id="id22"></span><h3>_internal_bufsize<a class="headerlink" href="#internal-bufsize" title="Permalink to this headline">¶</a></h3>
+<span id="id24"></span><h3>_internal_bufsize<a class="headerlink" href="#internal-bufsize" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">3</span> <span class="pre">*</span> <span class="pre">1024**2</span></code> chunks</p>
 <p>How much of STDOUT/ERR your command will store internally.  This value
 represents the <em>number of bufsize chunks</em> not the total number of bytes.  For
@@ -723,7 +739,7 @@ achieve this would be to set <code class="docutils literal"><span class="pre">_l
 <p>If your program expects the long argument name to be separate from its value,
 pass <code class="docutils literal"><span class="pre">None</span></code> into <code class="docutils literal"><span class="pre">_long_sep</span></code> instead:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">your_program</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">_long_sep</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">your_program</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">_long_sep</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Would send the following list of arguments to your program:</p>
@@ -821,7 +837,7 @@ you absolutely have to.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.12.15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>&lt;no title&gt; &mdash; sh 1.12.13 documentation</title>
+  <title>&lt;no title&gt; &mdash; sh 1.12.15 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/> 
+    <link rel="top" title="sh 1.12.15 documentation" href="../index.html"/> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
@@ -138,6 +138,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#communication">Communication</a><ul>
@@ -314,7 +316,7 @@ time:</p>
 
 <span class="k">def</span> <span class="nf">do_thing</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
     <span class="n">pool</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-    <span class="n">sh</span><span class="o">.</span><span class="n">your_parallel_command</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">_done</span><span class="o">=</span><span class="n">done</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">your_parallel_command</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">_done</span><span class="o">=</span><span class="n">done</span><span class="p">)</span>
 
 <span class="n">procs</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
@@ -357,7 +359,7 @@ time:</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.12.15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Asynchronous Execution &mdash; sh 1.12.13 documentation</title>
+  <title>Asynchronous Execution &mdash; sh 1.12.15 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.15 documentation" href="../index.html"/>
         <link rel="up" title="Usage" href="../usage.html"/>
         <link rel="next" title="Baking" href="baking.html"/>
         <link rel="prev" title="Redirection" href="redirection.html"/> 
@@ -141,6 +141,8 @@
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="special_arguments.html#communication">Communication</a><ul>
@@ -318,8 +320,8 @@ that you can loop over:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
 
 <span class="c1"># runs forever</span>
-<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>By default, <a class="reference internal" href="special_arguments.html#iter"><span class="std std-ref">_iter</span></a> iterates over STDOUT, but you can change set this
@@ -340,13 +342,13 @@ returned, otherwise you&#8217;ll receive a chunk of output, as normal.</p>
 long-running command, you can put it in the background with the <a class="reference internal" href="special_arguments.html#bg"><span class="std std-ref">_bg=True</span></a> special kwarg:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># blocks</span>
 <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s2">&quot;...3 seconds later&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...3 seconds later&quot;</span><span class="p">)</span>
 
 <span class="c1"># doesn&#39;t block</span>
-<span class="n">p</span> <span class="o">=</span> <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s2">&quot;prints immediately!&quot;</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;prints immediately!&quot;</span><span class="p">)</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-<span class="k">print</span><span class="p">(</span><span class="s2">&quot;...and 3 seconds later&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...and 3 seconds later&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>You&#8217;ll notice that you need to call <a class="reference internal" href="command_class.html#RunningCommand.wait" title="RunningCommand.wait"><code class="xref py py-meth docutils literal"><span class="pre">RunningCommand.wait()</span></code></a> in order to exit
@@ -372,9 +374,9 @@ outputs:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span>    <span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
 
     <span class="k">def</span> <span class="nf">process_output</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 
-    <span class="n">p</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_output</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_output</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -404,25 +406,25 @@ that can be used from callbacks:</p>
 
         <span class="k">elif</span> <span class="n">line</span> <span class="o">==</span> <span class="s2">&quot;Huh? I... I don&#39;t know that....AAAAGHHHHHH&quot;</span><span class="p">:</span>
             <span class="n">cross_bridge</span><span class="p">()</span>
-            <span class="k">return</span> <span class="bp">True</span>
+            <span class="k">return</span> <span class="kc">True</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;I don&#39;t know....AAGGHHHHH&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">True</span>
+            <span class="k">return</span> <span class="kc">True</span>
 
-    <span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">bridgekeeper</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="n">interact</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">bridgekeeper</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="n">interact</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>You can also kill or terminate your process (or send any signal, really) from
 your callback by adding a third argument to receive the process object:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">process_output</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">,</span> <span class="n">process</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
     <span class="k">if</span> <span class="s2">&quot;ERROR&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
         <span class="n">process</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
-<span class="n">p</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_output</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_output</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The above code will run, printing lines from <code class="docutils literal"><span class="pre">some_log_file.log</span></code> until the
@@ -451,7 +453,7 @@ time:</p>
 
 <span class="k">def</span> <span class="nf">do_thing</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
     <span class="n">pool</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-    <span class="n">sh</span><span class="o">.</span><span class="n">your_parallel_command</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">_done</span><span class="o">=</span><span class="n">done</span><span class="p">)</span>
+    <span class="n">sh</span><span class="o">.</span><span class="n">your_parallel_command</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">_done</span><span class="o">=</span><span class="n">done</span><span class="p">)</span>
 
 <span class="n">procs</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
@@ -506,7 +508,7 @@ time:</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.12.15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

@@ -229,7 +229,26 @@ _preexec_fn
 
 A function to be run directly before the child process calls :func:`os.execv`.
 Typically not used by normal users.
+
+.. _pass_fds:
+
+_pass_fds
+---------
+.. versionadded:: 1.12.15
+
+|def| ``{}`` (empty set)
+
+A whitelist iterable of integer file descriptors to be inherited by the child. Passing anything in this argument causes :ref:`_close_fds <close_fds>` to be ``True``.
 		
+.. _close_fds:
+
+_close_fds
+----------
+
+|def| ``True``
+
+Causes all inherited file descriptors besides stdin, stdout, and stderr to be automatically closed. This option is
+automatically enabled when :ref:`_pass_fds <pass_fds>` is given a value.
 
 Communication
 =============

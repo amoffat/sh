@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Input via STDIN &mdash; sh 1.12.13 documentation</title>
+  <title>Input via STDIN &mdash; sh 1.12.15 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.15 documentation" href="../index.html"/>
         <link rel="up" title="Usage" href="../usage.html"/>
         <link rel="next" title="‘With’ Contexts" href="with.html"/>
         <link rel="prev" title="Environments" href="envs.html"/> 
@@ -141,6 +141,8 @@
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="special_arguments.html#communication">Communication</a><ul>
@@ -310,11 +312,11 @@
 <span id="stdin"></span><h1>Input via STDIN<a class="headerlink" href="#input-via-stdin" title="Permalink to this headline">¶</a></h1>
 <p>STDIN is sent to a process directly by using a command&#8217;s <a class="reference internal" href="special_arguments.html#in"><span class="std std-ref">_in</span></a> special
 kwarg:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">cat</span><span class="p">(</span><span class="n">_in</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">))</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">cat</span><span class="p">(</span><span class="n">_in</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Any command that takes input from STDIN can be used this way:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">tr</span><span class="p">(</span><span class="s2">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s2">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="s2">&quot;sh is awesome&quot;</span><span class="p">))</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">tr</span><span class="p">(</span><span class="s2">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s2">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="s2">&quot;sh is awesome&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>You&#8217;re also not limited to using just strings.  You may use a file object, a
@@ -366,7 +368,7 @@ kwarg:</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.12.15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

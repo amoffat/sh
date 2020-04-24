@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Baking &mdash; sh 1.12.13 documentation</title>
+  <title>Baking &mdash; sh 1.12.15 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.15 documentation" href="../index.html"/>
         <link rel="up" title="Usage" href="../usage.html"/>
         <link rel="next" title="Piping" href="piping.html"/>
         <link rel="prev" title="Asynchronous Execution" href="asynchronous_execution.html"/> 
@@ -141,6 +141,8 @@
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="special_arguments.html#communication">Communication</a><ul>
@@ -314,10 +316,10 @@ like you might do with <a class="reference external" href="https://docs.python.o
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ls</span>
 
 <span class="n">ls</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;-la&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span> <span class="c1"># &quot;/usr/bin/ls -la&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span> <span class="c1"># &quot;/usr/bin/ls -la&quot;</span>
 
 <span class="c1"># resolves to &quot;ls -la /&quot;</span>
-<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>The idea here is that now every call to <code class="docutils literal"><span class="pre">ls</span></code> will have the &#8220;-la&#8221; arguments
@@ -333,7 +335,7 @@ already specified.  Baking can become very useful when you combine it with
 <span class="c1"># wouldn&#39;t it be nice to bake the common parameters into the ssh command?</span>
 <span class="n">myserver</span> <span class="o">=</span> <span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;myserver.com&quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">1393</span><span class="p">)</span>
 
-<span class="k">print</span><span class="p">(</span><span class="n">myserver</span><span class="p">)</span> <span class="c1"># &quot;/usr/bin/ssh myserver.com -p 1393&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">myserver</span><span class="p">)</span> <span class="c1"># &quot;/usr/bin/ssh myserver.com -p 1393&quot;</span>
 
 <span class="c1"># resolves to &quot;/usr/bin/ssh myserver.com -p 1393 whoami&quot;</span>
 <span class="n">iam2</span> <span class="o">=</span> <span class="n">myserver</span><span class="o">.</span><span class="n">whoami</span><span class="p">()</span>
@@ -344,7 +346,7 @@ already specified.  Baking can become very useful when you combine it with
 <p>Now that the &#8220;myserver&#8221; callable represents a baked ssh command, you
 can call anything on the server easily:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># executes &quot;/usr/bin/ssh myserver.com -p 1393 tail /var/log/dumb_daemon.log -n 100&quot;</span>
-<span class="k">print</span><span class="p">(</span><span class="n">myserver</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;/var/log/dumb_daemon.log&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">myserver</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;/var/log/dumb_daemon.log&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -390,7 +392,7 @@ can call anything on the server easily:</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.12.15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

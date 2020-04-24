@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Exit Codes &amp; Exceptions &mdash; sh 1.12.13 documentation</title>
+  <title>Exit Codes &amp; Exceptions &mdash; sh 1.12.15 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.12.15 documentation" href="../index.html"/>
         <link rel="up" title="Usage" href="../usage.html"/>
         <link rel="next" title="Redirection" href="redirection.html"/>
         <link rel="prev" title="Passing Arguments" href="passing_arguments.html"/> 
@@ -141,6 +141,8 @@
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="special_arguments.html#communication">Communication</a><ul>
@@ -311,19 +313,19 @@
 <p>Normal processes exit with exit code 0.  This can be seen through a
 <a class="reference internal" href="command_class.html#RunningCommand.exit_code" title="RunningCommand.exit_code"><code class="xref py py-attr docutils literal"><span class="pre">RunningCommand.exit_code</span></code></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">exit_code</span><span class="p">)</span> <span class="c1"># should be 0</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">exit_code</span><span class="p">)</span> <span class="c1"># should be 0</span>
 </pre></div>
 </div>
 <p>If a process terminates, and the exit code is not 0, an exception is generated
 dynamically.  This lets you catch a specific return code, or catch all error
 return codes through the base class <a class="reference internal" href="command_class.html#ErrorReturnCode" title="ErrorReturnCode"><code class="xref py py-class docutils literal"><span class="pre">ErrorReturnCode</span></code></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/some/non-existant/folder&quot;</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/some/non-existant/folder&quot;</span><span class="p">))</span>
 <span class="k">except</span> <span class="n">ErrorReturnCode_2</span><span class="p">:</span>
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;folder doesn&#39;t exist!&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;folder doesn&#39;t exist!&quot;</span><span class="p">)</span>
     <span class="n">create_the_folder</span><span class="p">()</span>
 <span class="k">except</span> <span class="n">ErrorReturnCode</span><span class="p">:</span>
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;unknown error&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;unknown error&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
@@ -336,10 +338,10 @@ return codes through the base class <a class="reference internal" href="command_
 exception raised in this situation is <a class="reference internal" href="command_class.html#signal-exc"><span class="std std-ref">SignalException</span></a>, which subclasses
 <a class="reference internal" href="command_class.html#error-return-code"><span class="std std-ref">ErrorReturnCode</span></a>.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
-    <span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">p</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
 <span class="k">except</span> <span class="n">sh</span><span class="o">.</span><span class="n">SignalException_SIGKILL</span><span class="p">:</span>
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;killed&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;killed&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -394,7 +396,7 @@ For example, the following two exception classes are equivalent:</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.12.15',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true
