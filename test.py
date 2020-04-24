@@ -15,20 +15,23 @@ if HAS_UNICODE_LITERAL:
     run_idx = int(os.environ.pop("SH_TEST_RUN_IDX", "0"))
     first_run = run_idx == 0
 
-    import coverage
+    try:
+        import coverage
+    except ImportError:
+        pass
+    else:
+        # for some reason, we can't run auto_data on the first run, or the coverage
+        # numbers get really screwed up
+        auto_data = True
+        if first_run:
+            auto_data = False
 
-    # for some reason, we can't run auto_data on the first run, or the coverage
-    # numbers get really screwed up
-    auto_data = True
-    if first_run:
-        auto_data = False
+        cov = coverage.Coverage(auto_data=auto_data)
 
-    cov = coverage.Coverage(auto_data=auto_data)
+        if first_run:
+            cov.erase()
 
-    if first_run:
-        cov.erase()
-
-    cov.start()
+        cov.start()
 
 
 from os.path import exists, join, realpath, dirname, split
