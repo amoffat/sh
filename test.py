@@ -97,22 +97,21 @@ if IS_PY3:
     ioStringIO = StringIO
     from io import BytesIO as cStringIO
     iocStringIO = cStringIO
-    python = sh.Command(sh.which("python%d.%d" % sys.version_info[:2]))
 else:
     from StringIO import StringIO
     from cStringIO import StringIO as cStringIO
     from io import StringIO as ioStringIO
     from io import BytesIO as iocStringIO
-    python = sh.python
 
 THIS_DIR = dirname(os.path.abspath(__file__))
 
+system_python = sh.Command(sys.executable)
 
 # this is to ensure that our `python` helper here is able to import our local sh
 # module, and not the system one
 baked_env = os.environ.copy()
 append_module_path(baked_env, sh)
-python = python.bake(_env=baked_env)
+python = system_python.bake(_env=baked_env)
 
 
 if hasattr(logging, 'NullHandler'):
@@ -399,7 +398,6 @@ print(args)
         self.assertEqual(out, "[\"one two's three\"]")
 
     def test_multiple_pipes(self):
-        from sh import tr, python
         import time
 
         py = create_tmp_test("""
@@ -1717,10 +1715,10 @@ sys.stdout.write(sys.argv[1])
 
     def test_fg(self):
         py = create_tmp_test("exit(0)")
-        # notice we're using `sh.python`, and not `python`.  this is because
+        # notice we're using `system_python`, and not `python`.  this is because
         # `python` has an env baked into it, and we want `_env` to be None for
         # coverage
-        sh.python(py.name, _fg=True)
+        system_python(py.name, _fg=True)
 
     def test_fg_env(self):
         py = create_tmp_test("""
@@ -2141,8 +2139,10 @@ time.sleep(3)
 """)
 
         parent = create_tmp_test("""
+import sys
 import sh
-p = sh.python("{child_file}", _bg=True, _new_session=False)
+python = sh.Command(sys.executable)
+p = python("{child_file}", _bg=True, _new_session=False)
 print(p.pid)
 print(p.process.pgid)
 p.wait()
@@ -2608,7 +2608,8 @@ import sys
 child_file = sys.argv[1]
 output_file = sys.argv[2]
 
-os.spawnlp(os.P_NOWAIT, "python", "python", child_file, output_file)
+python_name = os.path.basename(sys.executable)
+os.spawnlp(os.P_NOWAIT, python_name, python_name, child_file, output_file)
 time.sleep(1) # give child a chance to set up
 """)
 
@@ -2844,10 +2845,11 @@ print("hi")
     def test_unicode_path(self):
         from sh import Command
 
-        py = create_tmp_test("""#!/usr/bin/env python
+        python_name = os.path.basename(sys.executable)
+        py = create_tmp_test("""#!/usr/bin/env {0}
 # -*- coding: utf8 -*-
 print("字")
-""", "字", delete=False)
+""".format(python_name), prefix="字", delete=False)
 
         try:
             py.close()
@@ -2950,11 +2952,11 @@ sys.stdout.write(repr(res))
         def f1():
             with p1:
                 time.sleep(1)
-                results[0] = str(sh.python("one"))
+                results[0] = str(system_python("one"))
 
         def f2():
             with p2:
-                results[1] = str(sh.python("two"))
+                results[1] = str(system_python("two"))
 
         t1 = threading.Thread(target=f1)
         t1.start()
@@ -3082,7 +3084,7 @@ class ExecutionContextTests(unittest.TestCase):
         import sh
         _sh = sh()
         omg = _sh
-        from omg import python
+        from omg import cat
 
     def test_importer_only_works_with_sh(self):
         def unallowed_import():
