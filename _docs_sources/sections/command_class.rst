@@ -270,7 +270,7 @@ ErrorReturnCode
 
 .. py:attribute:: ErrorReturnCode.stdout
 
-    The total aggregated STDERR for the process.
+    The total aggregated STDOUT for the process.
 
 .. py:attribute:: ErrorReturnCode.stderr
 
