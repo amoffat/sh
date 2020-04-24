@@ -1003,7 +1003,7 @@ def ob_is_tty(ob):
     """ checks if an object (like a file-like object) is a tty.  """
     fileno = get_fileno(ob)
     is_tty = False
-    if fileno:
+    if fileno is not None:
         is_tty = os.isatty(fileno)
     return is_tty
 

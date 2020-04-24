@@ -7,6 +7,7 @@
 *   `_pass_fds` and `_close_fds` special kwargs for controlling file descriptor inheritance in child.
 *   more efficiently closing inherited fds [#406](https://github.com/amoffat/sh/issues/406)
 *   bugfix where passing invalid dictionary to `_env` will cause a mysterious child 255 exit code. [#497](https://github.com/amoffat/sh/pull/497)
+*   bugfix where `_in` using 0 or `sys.stdin` wasn't behaving like a TTY, if it was in fact a TTY. [#514](https://github.com/amoffat/sh/issues/514)
 
 ## 1.12.14 - 6/6/17
 *   bugfix for poor sleep performance [#378](https://github.com/amoffat/sh/issues/378)
