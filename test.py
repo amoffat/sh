@@ -50,6 +50,7 @@ import sh
 import signal
 import errno
 import stat
+import fcntl
 import platform
 from functools import wraps
 import time
@@ -552,6 +553,84 @@ print("hi")
         found_path = which(test_name, [test_path])
         self.assertEqual(found_path, py.name)
 
+    def test_no_close_fds(self):
+        import sh
+
+        # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
+        # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
+        # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
+        #
+        # https://www.python.org/dev/peps/pep-0446/
+        tmp = [tempfile.TemporaryFile() for i in range(10)]
+        for t in tmp:
+            flags = fcntl.fcntl(t.fileno(), fcntl.F_GETFD)
+            flags &= ~fcntl.FD_CLOEXEC
+            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags) 
+        first_fd = tmp[0].fileno()
+
+        py = create_tmp_test("""
+import os
+print(len(os.listdir("/dev/fd")))
+""")
+        out = python(py.name, _close_fds=False).strip()
+        # pick some number greater than 4, since it's hard to know exactly how many fds will be open/inherted in the
+        # child
+        self.assertTrue(int(out) > 7)
+
+        for t in tmp:
+            t.close()
+
+    def test_close_fds(self):
+        import sh
+
+        # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
+        # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
+        # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
+        #
+        # https://www.python.org/dev/peps/pep-0446/
+        tmp = [tempfile.TemporaryFile() for i in range(10)]
+        for t in tmp:
+            flags = fcntl.fcntl(t.fileno(), fcntl.F_GETFD)
+            flags &= ~fcntl.FD_CLOEXEC
+            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags) 
+
+        py = create_tmp_test("""
+import os
+print(os.listdir("/dev/fd"))
+""")
+        out = python(py.name).strip()
+        self.assertEqual(out, "['0', '1', '2', '3']")
+
+        for t in tmp:
+            t.close()
+
+
+    def test_pass_fds(self):
+        import sh
+
+        # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
+        # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
+        # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
+        #
+        # https://www.python.org/dev/peps/pep-0446/
+        tmp = [tempfile.TemporaryFile() for i in range(10)]
+        for t in tmp:
+            flags = fcntl.fcntl(t.fileno(), fcntl.F_GETFD)
+            flags &= ~fcntl.FD_CLOEXEC
+            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags) 
+        last_fd = tmp[-1].fileno()
+
+        py = create_tmp_test("""
+import os
+print(os.listdir("/dev/fd"))
+""")
+        out = python(py.name, _pass_fds=[last_fd]).strip()
+        inherited = [0, 1, 2, 3, last_fd]
+        inherited_str = [str(i) for i in inherited]
+        self.assertEqual(out, str(inherited_str))
+
+        for t in tmp:
+            t.close()
 
     def test_no_arg(self):
         import pwd
@@ -2653,7 +2732,6 @@ print("cool")
         out = python(py.name, "%")
         out = python(py.name, "%%")
         out = python(py.name, "%%%")
-
 
     # TODO
     # for some reason, i can't get a good stable baseline measured in this test

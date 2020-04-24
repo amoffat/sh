@@ -1167,6 +1167,13 @@ class Command(object):
         # a callable that produces a log message from an argument tuple of the
         # command and the args
         "log_msg": None,
+
+        # whether or not to close all inherited fds. typically, this should be True, as inheriting fds can be a security
+        # vulnerability
+        "close_fds": True,
+
+        # a whitelist of the integer fds to pass through to the child process. setting this forces close_fds to be True
+        "pass_fds": set(),
     }
 
     # this is a collection of validators to make sure the special kwargs make
@@ -1176,10 +1183,9 @@ class Command(object):
         (("fg", "err_to_out"), "Can't redirect STDERR in foreground mode"),
         (("err", "err_to_out"), "Stderr is already being redirected"),
         (("piped", "iter"), "You cannot iterate when this command is being piped"),
-        (("piped", "no_pipe"), "Using a pipe doesn't make sense if you've \
-disabled the pipe"),
-        (("no_out", "iter"), "You cannot iterate over output if there is no \
-output"),
+        (("piped", "no_pipe"), "Using a pipe doesn't make sense if you've disabled the pipe"),
+        (("no_out", "iter"), "You cannot iterate over output if there is no output"),
+        (("close_fds", "pass_fds"), "Passing `pass_fds` forces `close_fds` to be True"),
         tty_in_validator,
         bufsize_validator,
     )
@@ -1950,13 +1956,22 @@ class OProc(object):
                 if callable(preexec_fn):
                     preexec_fn()
 
+                close_fds = ca["close_fds"]
+                if ca["pass_fds"]:
+                    close_fds = True
 
-                # don't inherit file descriptors
-                for fd in filter(lambda x: x not in (0, 1, 2), (int(fd) for fd in os.listdir("/dev/fd"))):
-                    try:
-                        os.close(fd)
-                    except OSError:
-                        pass
+                if close_fds:
+                    pass_fds = set((0, 1, 2))
+                    pass_fds.update(ca["pass_fds"])
+
+                    # don't inherit file descriptors
+                    inherited_fds = os.listdir("/dev/fd")
+                    inherited_fds = set(int(fd) for fd in inherited_fds) - pass_fds
+                    for fd in inherited_fds:
+                        try:
+                            os.close(fd)
+                        except OSError:
+                            pass
 
                 # actually execute the process
                 if ca["env"] is None:
