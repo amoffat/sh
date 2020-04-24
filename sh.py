@@ -1056,6 +1056,28 @@ def bufsize_validator(kwargs):
     return invalid
 
 
+def env_validator(kwargs):
+    """ a validator to check that env is a dictionary and that all environment variable 
+    keys and values are strings. Otherwise, we would exit with a confusing exit code 255. """
+    invalid = []
+
+    env = kwargs.get("env", None)
+    if env is None:
+        return invalid
+
+    if not isinstance(env, dict):
+        invalid.append((("env"), "env must be a dict. Got {!r}".format(env)))
+        return invalid
+
+    for k, v in kwargs["env"].items():
+        if not isinstance(k, str):
+            invalid.append((("env"), "env key {!r} must be a str".format(k)))
+        if not isinstance(v, str):
+            invalid.append((("env"), "value {!r} of env key {!r} must be a str".format(v, k)))
+
+    return invalid
+
+
 class Command(object):
     """ represents an un-run system program, like "ls" or "cd".  because it
     represents the program itself (and not a running instance of it), it should
@@ -1193,6 +1215,7 @@ class Command(object):
         (("close_fds", "pass_fds"), "Passing `pass_fds` forces `close_fds` to be True"),
         tty_in_validator,
         bufsize_validator,
+        env_validator,
     )
 
 
@@ -1966,7 +1989,7 @@ class OProc(object):
                     close_fds = True
 
                 if close_fds:
-                    pass_fds = set((0, 1, 2))
+                    pass_fds = set((0, 1, 2, exc_pipe_write))
                     pass_fds.update(ca["pass_fds"])
 
                     # don't inherit file descriptors

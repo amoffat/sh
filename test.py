@@ -647,6 +647,17 @@ print(os.listdir("/dev/fd"))
         self.assertRaises(TypeError, ls, _iter=True, _piped=True)
 
 
+    def test_invalid_env(self):
+        from sh import ls
+
+        exc = TypeError
+        if IS_PY2 and MINOR_VER == 6:
+            exc = ValueError
+
+        self.assertRaises(exc, ls, _env="XXX")
+        self.assertRaises(exc, ls, _env={"foo": 123})
+        self.assertRaises(exc, ls, _env={123: "bar"})
+
     def test_exception(self):
         from sh import ErrorReturnCode_2
 
