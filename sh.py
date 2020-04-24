@@ -2030,9 +2030,14 @@ class OProc(object):
             # and the exec.  this should be reported.
             except:
                 # some helpful debugging
+                tb = traceback.format_exc().encode("utf8", "ignore")
+
                 try:
-                    tb = traceback.format_exc().encode("utf8", "ignore")
                     os.write(exc_pipe_write, tb)
+
+                except Exception as e:
+                    # dump to stderr if we cannot save it to exc_pipe_write
+                    sys.stderr.write("\nFATAL SH ERROR: %s\n" % e)
 
                 finally:
                     os._exit(255)
