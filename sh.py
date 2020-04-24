@@ -50,6 +50,7 @@ from types import ModuleType, GeneratorType
 from functools import partial
 import inspect
 import tempfile
+import warnings
 import stat
 import glob as glob_module
 import ast
@@ -3229,9 +3230,8 @@ class Environment(dict):
 
         # somebody tried to be funny and do "from sh import *"
         if k == "__all__":
-            raise RuntimeError("Cannot import * from sh. \
-Please import sh or import programs individually.")
-
+            warnings.warn("Cannot import * from sh. Please import sh or import programs individually.")
+            return []
 
         # check if we're naming a dynamically generated ReturnCode exception
         exc = get_exc_from_name(k)
