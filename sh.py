@@ -3488,6 +3488,7 @@ def run_tests(env, locale, args, version, force_select, **extra_env): # pragma: 
             env[k] = str(v)
 
         cmd = [py_bin, "-W", "ignore", os.path.join(THIS_DIR, "test.py")] + args[1:]
+        print("Running %r" % cmd)
         launch = lambda: os.spawnve(os.P_WAIT, cmd[0], cmd, env)
         return_code = launch()
 
