@@ -1902,6 +1902,19 @@ class OProc(object):
                 os.close(close_pipe_read)
                 os.close(close_pipe_write)
 
+            # this is critical
+            # our exc_pipe_write must have CLOEXEC enabled. the reason for this is tricky:
+            # if our child (the block we're in now), has an exception, we need to be able to write to exc_pipe_write, so
+            # that when the parent does os.read(exc_pipe_read), it gets our traceback.  however, os.read(exc_pipe_read)
+            # in the parent blocks, so if our child *doesn't* have an exception, and doesn't close the writing end, it
+            # hangs forever.  not good!  but obviously the child can't close the writing end until it knows it's not
+            # going to have an exception, which is impossible to know because but what if os.execv has an exception?  so
+            # the answer is CLOEXEC, so that the writing end of the pipe gets closed upon successful exec, and the
+            # parent reading the read end won't block (close breaks the block).
+            flags = fcntl.fcntl(exc_pipe_write, fcntl.F_GETFD)
+            flags |= fcntl.FD_CLOEXEC
+            fcntl.fcntl(exc_pipe_write, fcntl.F_SETFD, flags) 
+
             try:
                 # ignoring SIGHUP lets us persist even after the parent process
                 # exits.  only ignore if we're backgrounded
