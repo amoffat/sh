@@ -3444,7 +3444,7 @@ class ModuleImporterFromVariables(object):
             derp = sh()
             from derp import ls
 
-        here, mod_fullname will be "derp".  keep that in mind as we go throug
+        here, mod_fullname will be "derp".  keep that in mind as we go through
         the rest of this function """
 
         parent_frame = inspect.currentframe().f_back
