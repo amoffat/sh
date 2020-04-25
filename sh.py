@@ -2121,6 +2121,11 @@ class OProc(object):
 
             self.stdin = stdin
 
+            # this accounts for when _out is a callable that is passed stdin.  in that case, if stdin is unspecified, we
+            # must set it to a queue, so callbacks can put things on it
+            if callable(ca["out"]) and self.stdin is None:
+                self.stdin = Queue()
+
             # _pipe_queue is used internally to hand off stdout from one process
             # to another.  by default, all stdout from a process gets dumped
             # into this pipe queue, to be consumed in real time (hence the
