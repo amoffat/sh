@@ -390,13 +390,14 @@ This is necessary for commands that require STDOUT to be a TTY.
 
 _unify_ttys
 --------
+.. versionadded:: 1.12.15
 
 |def| ``False``
 
 If ``True``, sh will combine the STDOUT and STDIN TTY into a single pseudo-terminal. This is sometimes required by picky
 programs which expect to be dealing with a single pseudo-terminal, like SSH.
 
-.. seealso:: :ref:`_tutorial2 <ssh tutorial>`
+.. seealso:: :ref:`tutorial2`
 
 _tty_size
 ---------
