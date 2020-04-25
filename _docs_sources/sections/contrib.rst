@@ -53,7 +53,7 @@ when run through sh.  To account for this, the contrib version sets
 SSH
 ---
 
-.. versionadded:: 1.12.15
+.. versionadded:: 1.13.0
 
 SSH password-based logins :ref:`can be a pain <tutorial2>`. This contrib command performs all of the ugly setup and
 provides a clean interface to using SSH.

@@ -234,7 +234,7 @@ Typically not used by normal users.
 
 _pass_fds
 ---------
-.. versionadded:: 1.12.15
+.. versionadded:: 1.13.0
 
 |def| ``{}`` (empty set)
 
@@ -244,7 +244,7 @@ A whitelist iterable of integer file descriptors to be inherited by the child. P
 
 _close_fds
 ----------
-.. versionadded:: 1.12.15
+.. versionadded:: 1.13.0
 
 |def| ``True``
 
@@ -390,7 +390,7 @@ This is necessary for commands that require STDOUT to be a TTY.
 
 _unify_ttys
 --------
-.. versionadded:: 1.12.15
+.. versionadded:: 1.13.0
 
 |def| ``False``
 
