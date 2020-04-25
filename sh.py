@@ -3590,7 +3590,7 @@ def register_importer():
 
     if not already_registered:
         importer = ModuleImporterFromVariables(
-            restrict_to=["SelfWrapper"],
+            restrict_to=[SelfWrapper.__name__],
         )
         sys.meta_path.insert(0, importer)
 
