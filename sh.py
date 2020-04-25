@@ -699,8 +699,7 @@ class RunningCommand(object):
 
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
         """
-            cmd is an array, where each element is encoded as bytes (PY3) or str
-            (PY2)
+            cmd is a list, where each element is encoded as bytes (PY3) or str (PY2)
         """
 
         # self.ran is used for auditing what actually ran.  for example, in
@@ -1750,14 +1749,11 @@ class OProc(object):
     def __init__(self, command, parent_log, cmd, stdin, stdout, stderr,
             call_args, pipe, process_assign_lock):
         """
-            cmd is the full string that will be exec'd.  it includes the program
-            name and all its arguments
+            cmd is the full list of arguments that will be exec'd.  it includes the program name and all its arguments.
 
-            stdin, stdout, stderr are what the child will use for standard
-            input/output/err
+            stdin, stdout, stderr are what the child will use for standard input/output/err.
 
-            call_args is a mapping of all the special keyword arguments to apply
-            to the child process
+            call_args is a mapping of all the special keyword arguments to apply to the child process.
         """
         self.command = command
         self.call_args = call_args
