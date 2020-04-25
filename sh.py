@@ -1799,10 +1799,12 @@ class OProc(object):
             #    os.dup2(self._stderr_child_fd, 2)
             self._stdin_parent_fd, self._stdin_child_fd = pty.openpty()
 
+            # this makes our parent fds behave like a terminal. it says that the very same fd that we "type" to (for
+            # stdin) is the same one that we see output printed to (for stdout)
             self._stdout_parent_fd = os.dup(self._stdin_parent_fd)
 
             # this line is what makes stdout and stdin attached to the same pty. in other words the process will write
-            # to the same underlying fd as stdout as it uses to read from for stdin.
+            # to the same underlying fd as stdout as it uses to read from for stdin. this makes programs like ssh happy
             self._stdout_child_fd = os.dup(self._stdin_child_fd)
 
             self._stderr_parent_fd = os.dup(self._stdin_parent_fd)
