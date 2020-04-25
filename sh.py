@@ -1061,7 +1061,10 @@ def fg_validator(passed_kwargs, merged_kwargs):
 _fg is invalid with nearly every other option, see warning and workaround here:
 
     https://amoffat.github.io/sh/sections/special_arguments.html#fg"""
-    if "fg" in passed_kwargs and len(passed_kwargs) > 1:
+    whitelist = set(("env", "fg"))
+    offending = set(passed_kwargs.keys()) - whitelist
+
+    if "fg" in passed_kwargs and offending:
         invalid.append(("fg", msg))
     return invalid
 
