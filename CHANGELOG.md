@@ -9,6 +9,9 @@
 *   bugfix where passing invalid dictionary to `_env` will cause a mysterious child 255 exit code. [#497](https://github.com/amoffat/sh/pull/497)
 *   bugfix where `_in` using 0 or `sys.stdin` wasn't behaving like a TTY, if it was in fact a TTY. [#514](https://github.com/amoffat/sh/issues/514)
 *   bugfix where `help(sh)` raised an exception [#455](https://github.com/amoffat/sh/issues/455)
+*   bugfix fixing broken interactive ssh tutorial from docs
+*   change to automatic tty merging into a single pty if `_tty_in=True` and `_tty_out=True`
+*   introducing `_unify_ttys`, default False, which allows explicit tty merging into single pty
 
 ## 1.12.14 - 6/6/17
 *   bugfix for poor sleep performance [#378](https://github.com/amoffat/sh/issues/378)

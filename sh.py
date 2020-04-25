@@ -968,15 +968,15 @@ def get_prepend_stack():
     return tl._prepend_stack
 
 
-def special_kwarg_validator(kwargs, invalid_list):
-    s1 = set(kwargs.keys())
+def special_kwarg_validator(passed_kwargs, merged_kwargs, invalid_list):
+    s1 = set(passed_kwargs.keys())
     invalid_args = []
 
     for args in invalid_list:
 
         if callable(args):
             fn = args
-            ret = fn(kwargs)
+            ret = fn(passed_kwargs, merged_kwargs)
             invalid_args.extend(ret)
 
         else:
@@ -1024,19 +1024,26 @@ def ob_is_pipe(ob):
     return is_pipe
 
 
-def tty_in_validator(kwargs):
+def tty_in_validator(passed_kwargs, merged_kwargs):
+    # here we'll validate that people aren't randomly shotgun-debugging different tty options and hoping that they'll
+    # work, without understanding what they do
     pairs = (("tty_in", "in"), ("tty_out", "out"))
     invalid = []
     for tty, std in pairs:
-        if tty in kwargs and ob_is_tty(kwargs.get(std, None)):
+        if tty in passed_kwargs and ob_is_tty(passed_kwargs.get(std, None)):
             args = (tty, std)
-            error = "`_%s` is a TTY already, so so it doesn't make sense \
-to set up a TTY with `_%s`" % (std, tty)
+            error = "`_%s` is a TTY already, so so it doesn't make sense to set up a TTY with `_%s`" % (std, tty)
             invalid.append((args, error))
+
+    # if unify_ttys is set, then both tty_in and tty_out must both be True
+    if merged_kwargs["unify_ttys"] and not (merged_kwargs["tty_in"] and merged_kwargs["tty_out"]):
+        invalid.append((("unify_ttys", "tty_in", "tty_out"),
+            "`_tty_in` and `_tty_out` must both be True if `_unify_ttys` is True"))
 
     return invalid
 
-def bufsize_validator(kwargs):
+
+def bufsize_validator(passed_kwargs, merged_kwargs):
     """ a validator to prevent a user from saying that they want custom
     buffering when they're using an in/out object that will be os.dup'd to the
     process, and has its own buffering.  an example is a pipe or a tty.  it
@@ -1044,11 +1051,11 @@ def bufsize_validator(kwargs):
     controls this. """
     invalid = []
 
-    in_ob = kwargs.get("in", None)
-    out_ob = kwargs.get("out", None)
+    in_ob = passed_kwargs.get("in", None)
+    out_ob = passed_kwargs.get("out", None)
 
-    in_buf = kwargs.get("in_bufsize", None)
-    out_buf = kwargs.get("out_bufsize", None)
+    in_buf = passed_kwargs.get("in_bufsize", None)
+    out_buf = passed_kwargs.get("out_bufsize", None)
 
     in_no_buf = ob_is_tty(in_ob) or ob_is_pipe(in_ob)
     out_no_buf = ob_is_tty(out_ob) or ob_is_pipe(out_ob)
@@ -1064,12 +1071,12 @@ def bufsize_validator(kwargs):
     return invalid
 
 
-def env_validator(kwargs):
+def env_validator(passed_kwargs, merged_kwargs):
     """ a validator to check that env is a dictionary and that all environment variable 
     keys and values are strings. Otherwise, we would exit with a confusing exit code 255. """
     invalid = []
 
-    env = kwargs.get("env", None)
+    env = passed_kwargs.get("env", None)
     if env is None:
         return invalid
 
@@ -1077,7 +1084,7 @@ def env_validator(kwargs):
         invalid.append((("env"), "env must be a dict. Got {!r}".format(env)))
         return invalid
 
-    for k, v in kwargs["env"].items():
+    for k, v in passed_kwargs["env"].items():
         if not isinstance(k, str):
             invalid.append((("env"), "env key {!r} must be a str".format(k)))
         if not isinstance(v, str):
@@ -1152,6 +1159,7 @@ class Command(object):
         # ssh is one of those programs
         "tty_in": False,
         "tty_out": True,
+        "unify_ttys": False,
 
         "encoding": DEFAULT_ENCODING,
         "decode_errors": "strict",
@@ -1290,8 +1298,9 @@ class Command(object):
                 call_args[parg] = kwargs[key]
                 del kwargs[key]
 
-        invalid_kwargs = special_kwarg_validator(call_args,
-                Command._kwarg_validators)
+        merged_args = Command._call_args.copy()
+        merged_args.update(call_args)
+        invalid_kwargs = special_kwarg_validator(call_args, merged_args, Command._kwarg_validators)
 
         if invalid_kwargs:
             exc_msg = []
@@ -1775,12 +1784,7 @@ class OProc(object):
         tee_out = ca["tee"] in (True, "out")
         tee_err = ca["tee"] == "err"
 
-        # if we're passing in a custom stdout/out/err value, we obviously have
-        # to force not using single_tty
-        custom_in_out_err = stdin or stdout or stderr
-
-        single_tty = (ca["tty_in"] and ca["tty_out"])\
-                and not custom_in_out_err
+        single_tty = ca["tty_in"] and ca["tty_out"] and ca["unify_ttys"]
 
         # this logic is a little convoluted, but basically this top-level
         # if/else is for consolidating input and output TTYs into a single
@@ -1830,7 +1834,6 @@ class OProc(object):
             # tty_in=False is the default
             else:
                 self._stdin_child_fd, self._stdin_parent_fd = os.pipe()
-
 
             if stdout_is_tty_or_pipe and not tee_out:
                 self._stdout_child_fd = os.dup(get_fileno(stdout))
