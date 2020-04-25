@@ -13,7 +13,8 @@
 *   change to automatic tty merging into a single pty if `_tty_in=True` and `_tty_out=True`
 *   introducing `_unify_ttys`, default False, which allows explicit tty merging into single pty
 *   contrib command for `ssh` connections requiring passwords
-*   performance fix for polling output too fast when using `_iter` [462](https://github.com/amoffat/sh/issues/462)
+*   performance fix for polling output too fast when using `_iter` [#462](https://github.com/amoffat/sh/issues/462)
+*   execution contexts can now be used in python shell [#466](https://github.com/amoffat/sh/pull/466)
 
 ## 1.12.14 - 6/6/17
 *   bugfix for poor sleep performance [#378](https://github.com/amoffat/sh/issues/378)
