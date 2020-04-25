@@ -1053,6 +1053,18 @@ def tty_in_validator(passed_kwargs, merged_kwargs):
 
     return invalid
 
+def fg_validator(passed_kwargs, merged_kwargs):
+    """ fg is not valid with basically every other option """
+
+    invalid = []
+    msg = """\
+_fg is invalid with nearly every other option, see warning and workaround here:
+
+    https://amoffat.github.io/sh/sections/special_arguments.html#fg"""
+    if "fg" in passed_kwargs and len(passed_kwargs) > 1:
+        invalid.append(("fg", msg))
+    return invalid
+
 
 def bufsize_validator(passed_kwargs, merged_kwargs):
     """ a validator to prevent a user from saying that they want custom
@@ -1235,8 +1247,6 @@ class Command(object):
     # this is a collection of validators to make sure the special kwargs make
     # sense
     _kwarg_validators = (
-        (("fg", "bg"), "Command can't be run in the foreground and background"),
-        (("fg", "err_to_out"), "Can't redirect STDERR in foreground mode"),
         (("err", "err_to_out"), "Stderr is already being redirected"),
         (("piped", "iter"), "You cannot iterate when this command is being piped"),
         (("piped", "no_pipe"), "Using a pipe doesn't make sense if you've disabled the pipe"),
@@ -1245,6 +1255,7 @@ class Command(object):
         tty_in_validator,
         bufsize_validator,
         env_validator,
+        fg_validator,
     )
 
 
