@@ -531,6 +531,8 @@ def glob(path, *args, **kwargs):
 glob_module.glob = glob
 
 
+def canonicalize(path):
+    return os.path.abspath(os.path.expanduser(path))
 
 
 def which(program, paths=None):
@@ -550,7 +552,7 @@ def which(program, paths=None):
     # if there's a path component, then we've specified a path to the program,
     # and we should just test if that program is executable.  if it is, return
     if fpath:
-        program = os.path.abspath(os.path.expanduser(program))
+        program = canonicalize(program)
         if is_exe(program):
             found_path = program
 
@@ -566,7 +568,7 @@ def which(program, paths=None):
             paths_to_search.extend(env_paths)
 
         for path in paths_to_search:
-            exe_file = os.path.join(path, program)
+            exe_file = os.path.join(canonicalize(path), program)
             if is_exe(exe_file):
                 found_path = exe_file
                 break

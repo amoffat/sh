@@ -715,6 +715,7 @@ exit(2)
 
         self.assertEqual(Command(which("ls")), ls)
 
+
     def test_doesnt_execute_directories(self):
         save_path = os.environ['PATH']
         bin_dir1 = tempfile.mkdtemp()
