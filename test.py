@@ -212,8 +212,8 @@ class BaseTests(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             fn(*args, **kwargs)
 
-            assert len(w) == 1
-            assert issubclass(w[-1].category, DeprecationWarning)
+            self.assertEqual(len(w), 1)
+            self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
 
 
 @requires_posix
