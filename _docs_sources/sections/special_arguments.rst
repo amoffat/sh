@@ -100,16 +100,24 @@ _fg
 
 |def| ``False``
 
-Runs a command in the foreground, meaning it is spawned using
-:func:`os.spawnle()`.  The current process's STDIN/OUT/ERR is :func:`os.dup2`'d
-to the new process and so the new process becomes the *foreground* of the shell
-executing the script.  This option is basically a shortcut for:
+Runs a command in the foreground, meaning it is spawned using :func:`os.spawnle()`.  The current process's STDIN/OUT/ERR
+is :func:`os.dup2`'d to the new process and so the new process becomes the *foreground* of the shell executing the
+script.  This is only really useful when you want to launch a lean, interactive process that sh is having trouble
+running, for example, ssh.
+
+.. warning::
+
+    ``_fg=True`` side-steps a lot of sh's functionality.  You will not be returned a process object and most (likely
+    all) other special kwargs will not work.
+
+If you are looking for similar functionality, but still retaining sh's features, use the following:
 
 .. code-block:: python
         
     import sh
     import sys
     sh.your_command(_in=sys.stdin, _out=sys.stdout, _err=sys.stderr)
+
 
 .. _bg:
 
