@@ -24,4 +24,6 @@ You're also not limited to using just strings.  You may use a file object, a
 	stdin = ["sh", "is", "awesome"]
 	out = tr("[:lower:]", "[:upper:]", _in=stdin)
 
-	
+.. note::
+
+    If you use a queue, you can signal the end of the queue (EOF) with ``None``
