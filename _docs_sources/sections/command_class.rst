@@ -117,6 +117,9 @@ this class
     argument (see :ref:`piping <piping>`), :meth:`wait` is also called on that
     instance, and any exceptions resulting from that process are propagated up.
 
+.. py:attribute:: RunningCommand.process
+
+    The underlying :ref:`OProc <oproc_class>` instance.
 
 .. py:attribute:: RunningCommand.stdout
 
@@ -177,6 +180,11 @@ this class
     Shortcut for :meth:`RunningCommand.signal_group(signal.SIGKILL)
     <RunningCommand.signal_group>`.
 
+.. py:method:: RunningCommand.is_alive()
+
+    Returns whether or not the process is still alive.
+
+    :rtype: boolean
 
 .. _oproc_class:
 
