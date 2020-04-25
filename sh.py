@@ -94,7 +94,7 @@ try:
 except ImportError:
     from pipes import quote as shlex_quote # undocumented before 2.7
 
-IS_OSX = platform.system() == "Darwin"
+IS_MACOS = platform.system() == "Darwin"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 SH_LOGGER_NAME = __name__
 
@@ -1092,14 +1092,14 @@ def env_validator(passed_kwargs, merged_kwargs):
         return invalid
 
     if not isinstance(env, dict):
-        invalid.append((("env"), "env must be a dict. Got {!r}".format(env)))
+        invalid.append(("env", "env must be a dict. Got {!r}".format(env)))
         return invalid
 
     for k, v in passed_kwargs["env"].items():
         if not isinstance(k, str):
-            invalid.append((("env"), "env key {!r} must be a str".format(k)))
+            invalid.append(("env", "env key {!r} must be a str".format(k)))
         if not isinstance(v, str):
-            invalid.append((("env"), "value {!r} of env key {!r} must be a str".format(v, k)))
+            invalid.append(("env", "value {!r} of env key {!r} must be a str".format(v, k)))
 
     return invalid
 
@@ -1922,7 +1922,7 @@ class OProc(object):
         # where we can lose output sometimes, due to a race, if we do
         # os.close(self._stdout_child_fd) in the parent after the child starts
         # writing.
-        if IS_OSX:
+        if IS_MACOS:
             close_pipe_read, close_pipe_write = os.pipe()
 
         # session id, group id, process id
@@ -1932,7 +1932,7 @@ class OProc(object):
 
         # child
         if self.pid == 0: # pragma: no cover
-            if IS_OSX:
+            if IS_MACOS:
                 os.read(close_pipe_read, 1)
                 os.close(close_pipe_read)
                 os.close(close_pipe_write)
@@ -2089,7 +2089,7 @@ class OProc(object):
             # tell our child process that we've closed our write_fds, so it is
             # ok to proceed towards exec.  see the comment where this pipe is
             # opened, for why this is necessary
-            if IS_OSX:
+            if IS_MACOS:
                 os.close(close_pipe_read)
                 os.write(close_pipe_write, str(1).encode(DEFAULT_ENCODING))
                 os.close(close_pipe_write)

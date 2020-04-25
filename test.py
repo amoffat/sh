@@ -62,7 +62,7 @@ import inspect
 # we have to use the real path because on osx, /tmp is a symlink to
 # /private/tmp, and so assertions that gettempdir() == sh.pwd() will fail
 tempdir = realpath(tempfile.gettempdir())
-IS_OSX = platform.system() == "Darwin"
+IS_MACOS = platform.system() == "Darwin"
 
 
 # these 3 functions are helpers for modifying PYTHONPATH with a module's main
@@ -157,7 +157,7 @@ def requires_progs(*progs):
 
 requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
 requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
-not_osx = skipUnless(not IS_OSX, "Doesn't work on OSX")
+not_macos = skipUnless(not IS_MACOS, "Doesn't work on MacOS")
 requires_py3 = skipUnless(IS_PY3, "Test only works on Python 3")
 requires_py35 = skipUnless(IS_PY3 and MINOR_VER >= 5, "Test only works on Python 3.5 or higher")
 
@@ -370,7 +370,7 @@ exit(3)
 
         exc_to_test = ErrorReturnCode_2
         code_to_pass = 2
-        if IS_OSX:
+        if IS_MACOS:
             exc_to_test = ErrorReturnCode_1
             code_to_pass = 1
         self.assertRaises(exc_to_test, ls, "/aofwje/garogjao4a/eoan3on")
@@ -959,7 +959,7 @@ print(sys.argv[1])
         p = ls("/ofawjeofj", _bg=True) # should not raise
 
         exc_to_test = ErrorReturnCode_2
-        if IS_OSX: exc_to_test = ErrorReturnCode_1
+        if IS_MACOS: exc_to_test = ErrorReturnCode_1
         self.assertRaises(exc_to_test, p.wait) # should raise
 
 
@@ -2770,7 +2770,7 @@ print("cool")
     # TODO
     # for some reason, i can't get a good stable baseline measured in this test
     # on osx.  so skip it for now if osx
-    @not_osx
+    @not_macos
     @requires_progs("lsof")
     def test_no_fd_leak(self):
         import sh
