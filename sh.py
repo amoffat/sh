@@ -1787,9 +1787,22 @@ class OProc(object):
         # TTY.  this is the only way some secure programs like ssh will
         # output correctly (is if stdout and stdin are both the same TTY)
         if single_tty:
+            # master_fd, slave_fd = pty.openpty()
+            #
+            # Anything that is written on the master end is provided to the process on the slave end as though it was
+            # input typed on a terminal. -"man 7 pty"
+            #
+            # later, in the child process, we're going to do this, so keep it in mind:
+            #
+            #    os.dup2(self._stdin_write_fd, 0)
+            #    os.dup2(self._stdout_write_fd, 1)
+            #    os.dup2(self._stderr_write_fd, 2)
             self._stdin_read_fd, self._stdin_write_fd = pty.openpty()
 
             self._stdout_read_fd = os.dup(self._stdin_read_fd)
+
+            # this line is what makes stdout and stdin attached to the same pty. in other words the process will write
+            # to the same underlying fd as stdout as it uses to read from for stdin.
             self._stdout_write_fd = os.dup(self._stdin_write_fd)
 
             self._stderr_read_fd = os.dup(self._stdin_read_fd)
