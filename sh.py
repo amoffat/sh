@@ -2,7 +2,7 @@
 http://amoffat.github.io/sh/
 """
 #===============================================================================
-# Copyright (C) 2011-2017 by Andrew Moffat
+# Copyright (C) 2011-2020 by Andrew Moffat
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -52,6 +52,7 @@ import inspect
 import tempfile
 import warnings
 import stat
+from collections import deque
 import glob as glob_module
 import ast
 from contextlib import contextmanager
@@ -968,15 +969,15 @@ def get_prepend_stack():
     return tl._prepend_stack
 
 
-def special_kwarg_validator(kwargs, invalid_list):
-    s1 = set(kwargs.keys())
+def special_kwarg_validator(passed_kwargs, merged_kwargs, invalid_list):
+    s1 = set(passed_kwargs.keys())
     invalid_args = []
 
     for args in invalid_list:
 
         if callable(args):
             fn = args
-            ret = fn(kwargs)
+            ret = fn(passed_kwargs, merged_kwargs)
             invalid_args.extend(ret)
 
         else:
@@ -1024,19 +1025,26 @@ def ob_is_pipe(ob):
     return is_pipe
 
 
-def tty_in_validator(kwargs):
+def tty_in_validator(passed_kwargs, merged_kwargs):
+    # here we'll validate that people aren't randomly shotgun-debugging different tty options and hoping that they'll
+    # work, without understanding what they do
     pairs = (("tty_in", "in"), ("tty_out", "out"))
     invalid = []
     for tty, std in pairs:
-        if tty in kwargs and ob_is_tty(kwargs.get(std, None)):
+        if tty in passed_kwargs and ob_is_tty(passed_kwargs.get(std, None)):
             args = (tty, std)
-            error = "`_%s` is a TTY already, so so it doesn't make sense \
-to set up a TTY with `_%s`" % (std, tty)
+            error = "`_%s` is a TTY already, so so it doesn't make sense to set up a TTY with `_%s`" % (std, tty)
             invalid.append((args, error))
+
+    # if unify_ttys is set, then both tty_in and tty_out must both be True
+    if merged_kwargs["unify_ttys"] and not (merged_kwargs["tty_in"] and merged_kwargs["tty_out"]):
+        invalid.append((("unify_ttys", "tty_in", "tty_out"),
+            "`_tty_in` and `_tty_out` must both be True if `_unify_ttys` is True"))
 
     return invalid
 
-def bufsize_validator(kwargs):
+
+def bufsize_validator(passed_kwargs, merged_kwargs):
     """ a validator to prevent a user from saying that they want custom
     buffering when they're using an in/out object that will be os.dup'd to the
     process, and has its own buffering.  an example is a pipe or a tty.  it
@@ -1044,11 +1052,11 @@ def bufsize_validator(kwargs):
     controls this. """
     invalid = []
 
-    in_ob = kwargs.get("in", None)
-    out_ob = kwargs.get("out", None)
+    in_ob = passed_kwargs.get("in", None)
+    out_ob = passed_kwargs.get("out", None)
 
-    in_buf = kwargs.get("in_bufsize", None)
-    out_buf = kwargs.get("out_bufsize", None)
+    in_buf = passed_kwargs.get("in_bufsize", None)
+    out_buf = passed_kwargs.get("out_bufsize", None)
 
     in_no_buf = ob_is_tty(in_ob) or ob_is_pipe(in_ob)
     out_no_buf = ob_is_tty(out_ob) or ob_is_pipe(out_ob)
@@ -1064,12 +1072,12 @@ def bufsize_validator(kwargs):
     return invalid
 
 
-def env_validator(kwargs):
+def env_validator(passed_kwargs, merged_kwargs):
     """ a validator to check that env is a dictionary and that all environment variable 
     keys and values are strings. Otherwise, we would exit with a confusing exit code 255. """
     invalid = []
 
-    env = kwargs.get("env", None)
+    env = passed_kwargs.get("env", None)
     if env is None:
         return invalid
 
@@ -1077,7 +1085,7 @@ def env_validator(kwargs):
         invalid.append((("env"), "env must be a dict. Got {!r}".format(env)))
         return invalid
 
-    for k, v in kwargs["env"].items():
+    for k, v in passed_kwargs["env"].items():
         if not isinstance(k, str):
             invalid.append((("env"), "env key {!r} must be a str".format(k)))
         if not isinstance(v, str):
@@ -1152,6 +1160,7 @@ class Command(object):
         # ssh is one of those programs
         "tty_in": False,
         "tty_out": True,
+        "unify_ttys": False,
 
         "encoding": DEFAULT_ENCODING,
         "decode_errors": "strict",
@@ -1290,8 +1299,9 @@ class Command(object):
                 call_args[parg] = kwargs[key]
                 del kwargs[key]
 
-        invalid_kwargs = special_kwarg_validator(call_args,
-                Command._kwarg_validators)
+        merged_args = Command._call_args.copy()
+        merged_args.update(call_args)
+        invalid_kwargs = special_kwarg_validator(call_args, merged_args, Command._kwarg_validators)
 
         if invalid_kwargs:
             exc_msg = []
@@ -1775,25 +1785,35 @@ class OProc(object):
         tee_out = ca["tee"] in (True, "out")
         tee_err = ca["tee"] == "err"
 
-        # if we're passing in a custom stdout/out/err value, we obviously have
-        # to force not using single_tty
-        custom_in_out_err = stdin or stdout or stderr
-
-        single_tty = (ca["tty_in"] and ca["tty_out"])\
-                and not custom_in_out_err
+        single_tty = ca["tty_in"] and ca["tty_out"] and ca["unify_ttys"]
 
         # this logic is a little convoluted, but basically this top-level
         # if/else is for consolidating input and output TTYs into a single
         # TTY.  this is the only way some secure programs like ssh will
         # output correctly (is if stdout and stdin are both the same TTY)
         if single_tty:
-            self._stdin_read_fd, self._stdin_write_fd = pty.openpty()
+            # master_fd, slave_fd = pty.openpty()
+            #
+            # Anything that is written on the master end is provided to the process on the slave end as though it was
+            # input typed on a terminal. -"man 7 pty"
+            #
+            # later, in the child process, we're going to do this, so keep it in mind:
+            #
+            #    os.dup2(self._stdin_child_fd, 0)
+            #    os.dup2(self._stdout_child_fd, 1)
+            #    os.dup2(self._stderr_child_fd, 2)
+            self._stdin_parent_fd, self._stdin_child_fd = pty.openpty()
 
-            self._stdout_read_fd = os.dup(self._stdin_read_fd)
-            self._stdout_write_fd = os.dup(self._stdin_write_fd)
+            # this makes our parent fds behave like a terminal. it says that the very same fd that we "type" to (for
+            # stdin) is the same one that we see output printed to (for stdout)
+            self._stdout_parent_fd = os.dup(self._stdin_parent_fd)
 
-            self._stderr_read_fd = os.dup(self._stdin_read_fd)
-            self._stderr_write_fd = os.dup(self._stdin_write_fd)
+            # this line is what makes stdout and stdin attached to the same pty. in other words the process will write
+            # to the same underlying fd as stdout as it uses to read from for stdin. this makes programs like ssh happy
+            self._stdout_child_fd = os.dup(self._stdin_child_fd)
+
+            self._stderr_parent_fd = os.dup(self._stdin_parent_fd)
+            self._stderr_child_fd = os.dup(self._stdin_child_fd)
 
         # do not consolidate stdin and stdout.  this is the most common use-
         # case
@@ -1801,32 +1821,31 @@ class OProc(object):
             # this check here is because we may be doing piping and so our stdin
             # might be an instance of OProc
             if isinstance(stdin, OProc) and stdin.call_args["piped"]:
-                self._stdin_write_fd = stdin._pipe_fd
-                self._stdin_read_fd = None
+                self._stdin_child_fd = stdin._pipe_fd
+                self._stdin_parent_fd = None
                 self._stdin_process = stdin
 
             elif stdin_is_tty_or_pipe:
-                self._stdin_write_fd = os.dup(get_fileno(stdin))
-                self._stdin_read_fd = None
+                self._stdin_child_fd = os.dup(get_fileno(stdin))
+                self._stdin_parent_fd = None
 
             elif ca["tty_in"]:
-                self._stdin_read_fd, self._stdin_write_fd = pty.openpty()
+                self._stdin_parent_fd, self._stdin_child_fd = pty.openpty()
 
             # tty_in=False is the default
             else:
-                self._stdin_write_fd, self._stdin_read_fd = os.pipe()
-
+                self._stdin_child_fd, self._stdin_parent_fd = os.pipe()
 
             if stdout_is_tty_or_pipe and not tee_out:
-                self._stdout_write_fd = os.dup(get_fileno(stdout))
-                self._stdout_read_fd = None
+                self._stdout_child_fd = os.dup(get_fileno(stdout))
+                self._stdout_parent_fd = None
 
             # tty_out=True is the default
             elif ca["tty_out"]:
-                self._stdout_read_fd, self._stdout_write_fd = pty.openpty()
+                self._stdout_parent_fd, self._stdout_child_fd = pty.openpty()
 
             else:
-                self._stdout_read_fd, self._stdout_write_fd = os.pipe()
+                self._stdout_parent_fd, self._stdout_child_fd = os.pipe()
 
             # unless STDERR is going to STDOUT, it ALWAYS needs to be a pipe,
             # and never a PTY.  the reason for this is not totally clear to me,
@@ -1840,26 +1859,26 @@ class OProc(object):
                 # directly to the stdout fd (no pipe), and so stderr won't have
                 # a slave end of a pipe either to dup
                 if stdout_is_tty_or_pipe and not tee_out:
-                    self._stderr_read_fd = None
+                    self._stderr_parent_fd = None
                 else:
-                    self._stderr_read_fd = os.dup(self._stdout_read_fd)
-                self._stderr_write_fd = os.dup(self._stdout_write_fd)
+                    self._stderr_parent_fd = os.dup(self._stdout_parent_fd)
+                self._stderr_child_fd = os.dup(self._stdout_child_fd)
 
 
             elif stderr_is_tty_or_pipe and not tee_err:
-                self._stderr_write_fd = os.dup(get_fileno(stderr))
-                self._stderr_read_fd = None
+                self._stderr_child_fd = os.dup(get_fileno(stderr))
+                self._stderr_parent_fd = None
 
             else:
-                self._stderr_read_fd, self._stderr_write_fd = os.pipe()
+                self._stderr_parent_fd, self._stderr_child_fd = os.pipe()
 
 
         piped = ca["piped"]
         self._pipe_fd = None
         if piped:
-            fd_to_use = self._stdout_read_fd
+            fd_to_use = self._stdout_parent_fd
             if piped == "err":
-                fd_to_use = self._stderr_read_fd
+                fd_to_use = self._stderr_parent_fd
             self._pipe_fd = os.dup(fd_to_use)
 
 
@@ -1868,7 +1887,7 @@ class OProc(object):
 
         self.ctty = None
         if needs_ctty:
-            self.ctty = os.ttyname(self._stdin_write_fd)
+            self.ctty = os.ttyname(self._stdin_child_fd)
 
         # this is a hack, but what we're doing here is intentionally throwing an
         # OSError exception if our child processes's directory doesn't exist,
@@ -1892,7 +1911,7 @@ class OProc(object):
         # this pipe is for synchronizing with the child that the parent has
         # closed its in/out/err fds.  this is a bug on OSX (but not linux),
         # where we can lose output sometimes, due to a race, if we do
-        # os.close(self._stdout_write_fd) in the parent after the child starts
+        # os.close(self._stdout_child_fd) in the parent after the child starts
         # writing.
         if IS_OSX:
             close_pipe_read, close_pipe_write = os.pipe()
@@ -1963,19 +1982,19 @@ class OProc(object):
                     # we HAVE to do this here, and not in the parent process,
                     # because we have to guarantee that this is set before the
                     # child process is run, and we can't do it twice.
-                    tty.setraw(self._stdout_write_fd)
+                    tty.setraw(self._stdout_child_fd)
 
 
                 # if the parent-side fd for stdin exists, close it.  the case
                 # where it may not exist is if we're using piping
-                if self._stdin_read_fd:
-                    os.close(self._stdin_read_fd)
+                if self._stdin_parent_fd:
+                    os.close(self._stdin_parent_fd)
 
-                if self._stdout_read_fd:
-                    os.close(self._stdout_read_fd)
+                if self._stdout_parent_fd:
+                    os.close(self._stdout_parent_fd)
 
-                if self._stderr_read_fd:
-                    os.close(self._stderr_read_fd)
+                if self._stderr_parent_fd:
+                    os.close(self._stderr_parent_fd)
 
                 os.close(session_pipe_read)
                 os.close(exc_pipe_read)
@@ -1983,9 +2002,9 @@ class OProc(object):
                 if cwd:
                     os.chdir(cwd)
 
-                os.dup2(self._stdin_write_fd, 0)
-                os.dup2(self._stdout_write_fd, 1)
-                os.dup2(self._stderr_write_fd, 2)
+                os.dup2(self._stdin_child_fd, 0)
+                os.dup2(self._stdout_child_fd, 1)
+                os.dup2(self._stderr_child_fd, 2)
 
 
                 # set our controlling terminal, but only if we're using a tty
@@ -2054,9 +2073,9 @@ class OProc(object):
             if gc_enabled:
                 gc.enable()
 
-            os.close(self._stdin_write_fd)
-            os.close(self._stdout_write_fd)
-            os.close(self._stderr_write_fd)
+            os.close(self._stdin_child_fd)
+            os.close(self._stdout_child_fd)
+            os.close(self._stderr_child_fd)
 
             # tell our child process that we've closed our write_fds, so it is
             # ok to proceed towards exec.  see the comment where this pipe is
@@ -2111,7 +2130,7 @@ class OProc(object):
             self._stderr = deque(maxlen=ca["internal_bufsize"])
 
             if ca["tty_in"] and not stdin_is_tty_or_pipe:
-                setwinsize(self._stdin_read_fd, ca["tty_size"])
+                setwinsize(self._stdin_parent_fd, ca["tty_size"])
 
 
             self.log = parent_log.get_child("process", repr(self))
@@ -2121,9 +2140,9 @@ class OProc(object):
 
             # disable echoing, but only if it's a tty that we created ourselves
             if ca["tty_in"] and not stdin_is_tty_or_pipe:
-                attr = termios.tcgetattr(self._stdin_read_fd)
+                attr = termios.tcgetattr(self._stdin_parent_fd)
                 attr[3] &= ~termios.ECHO
-                termios.tcsetattr(self._stdin_read_fd, termios.TCSANOW, attr)
+                termios.tcsetattr(self._stdin_parent_fd, termios.TCSANOW, attr)
 
             # we're only going to create a stdin thread iff we have potential
             # for stdin to come in.  this would be through a stdout callback or
@@ -2133,9 +2152,9 @@ class OProc(object):
             # this represents the connection from a Queue object (or whatever
             # we're using to feed STDIN) to the process's STDIN fd
             self._stdin_stream = None
-            if self._stdin_read_fd and potentially_has_input:
+            if self._stdin_parent_fd and potentially_has_input:
                 log = self.log.get_child("streamwriter", "stdin")
-                self._stdin_stream =  StreamWriter(log, self._stdin_read_fd,
+                self._stdin_stream =  StreamWriter(log, self._stdin_parent_fd,
                         self.stdin, ca["in_bufsize"], ca["encoding"],
                         ca["tty_in"])
 
@@ -2160,20 +2179,19 @@ class OProc(object):
             # already hooked up this processes's stdout fd to the other
             # processes's stdin fd
             self._stdout_stream = None
-            if not pipe_out and self._stdout_read_fd:
+            if not pipe_out and self._stdout_parent_fd:
                 if callable(stdout):
                     stdout = construct_streamreader_callback(self, stdout)
                 self._stdout_stream = \
                         StreamReader(
                                 self.log.get_child("streamreader", "stdout"),
-                                self._stdout_read_fd, stdout, self._stdout,
+                                self._stdout_parent_fd, stdout, self._stdout,
                                 ca["out_bufsize"], ca["encoding"],
                                 ca["decode_errors"], stdout_pipe,
                                 save_data=save_stdout)
 
-            elif self._stdout_read_fd:
-                os.close(self._stdout_read_fd)
-
+            elif self._stdout_parent_fd:
+                os.close(self._stdout_parent_fd)
 
             # if stderr is going to one place (because it's grouped with stdout,
             # or we're dealing with a single tty), then we don't actually need a
@@ -2181,7 +2199,7 @@ class OProc(object):
             # stdout above
             self._stderr_stream = None
             if stderr is not OProc.STDOUT and not single_tty and not pipe_err \
-                    and self._stderr_read_fd:
+                    and self._stderr_parent_fd:
 
                 stderr_pipe = None
                 if pipe is OProc.STDERR and not ca["no_pipe"]:
@@ -2194,12 +2212,12 @@ class OProc(object):
                     stderr = construct_streamreader_callback(self, stderr)
 
                 self._stderr_stream = StreamReader(Logger("streamreader"),
-                        self._stderr_read_fd, stderr, self._stderr,
+                        self._stderr_parent_fd, stderr, self._stderr,
                         ca["err_bufsize"], ca["encoding"], ca["decode_errors"],
                         stderr_pipe, save_data=save_stderr)
 
-            elif self._stderr_read_fd:
-                os.close(self._stderr_read_fd)
+            elif self._stderr_parent_fd:
+                os.close(self._stderr_parent_fd)
 
 
             def timeout_fn():
@@ -2411,8 +2429,8 @@ class OProc(object):
         # the CTTY, and closing it prematurely will send a SIGHUP.  we also
         # don't want to close it if there's a self._stdin_stream, because that
         # is in charge of closing it also
-        if self._stdin_read_fd and not self._stdin_stream:
-            os.close(self._stdin_read_fd)
+        if self._stdin_parent_fd and not self._stdin_stream:
+            os.close(self._stdin_parent_fd)
 
 
     def wait(self):
@@ -3344,6 +3362,7 @@ def git(orig): # pragma: no cover
     cmd = orig.bake(_tty_out=False)
     return cmd
 
+
 @contrib("sudo")
 def sudo(orig): # pragma: no cover
     """ a nicer version of sudo that uses getpass to ask for a password, or
@@ -3371,6 +3390,85 @@ def sudo(orig): # pragma: no cover
     return cmd
 
 
+@contrib("ssh")
+def ssh(orig): # pragma: no cover
+    """ An ssh command for automatic password login """
+
+    class SessionContent(object):
+        def __init__(self):
+            self.chars = deque(maxlen=50000)
+            self.lines = deque(maxlen=5000)
+            self.line_chars = []
+            self.last_line = ""
+            self.cur_char = ""
+
+        def append_char(self, char):
+            if char == "\n":
+                line = self.cur_line
+                self.last_line = line
+                self.lines.append(line)
+                self.line_chars = []
+            else:
+                self.line_chars.append(char)
+
+            self.chars.append(char)
+            self.cur_char = char
+
+        @property
+        def cur_line(self):
+            line = "".join(self.line_chars)
+            return line
+
+    class SSHInteract(object):
+        def __init__(self, prompt_match, pass_getter, out_handler, login_success):
+            self.prompt_match = prompt_match
+            self.pass_getter = pass_getter
+            self.out_handler = out_handler
+            self.login_success = login_success
+            self.content = SessionContent()
+
+            # some basic state
+            self.pw_entered = False
+            self.success = False
+
+        def __call__(self, char, stdin):
+            self.content.append_char(char)
+
+            if self.pw_entered and not self.success:
+                self.success = self.login_success(self.content)
+
+            if self.success:
+                return self.out_handler(self.content, stdin)
+
+            if self.prompt_match(self.content):
+                password = self.pass_getter()
+                stdin.put(password + "\n")
+                self.pw_entered = True
+
+
+    def process(args, kwargs):
+        real_out_handler = kwargs.pop("interact")
+        password = kwargs.pop("password", None)
+        login_success = kwargs.pop("login_success", None)
+        prompt_match = kwargs.pop("prompt", None)
+        prompt = "Please enter SSH password: "
+
+        if prompt_match is None:
+            prompt_match = lambda content: content.cur_line.endswith("password: ")
+
+        if password is None:
+            pass_getter = lambda: getpass.getpass(prompt=prompt)
+        else:
+            pass_getter = lambda: password.rstrip("\n")
+
+        if login_success is None:
+            login_success = lambda content: True
+
+        kwargs["_out"] = SSHInteract(prompt_match, pass_getter, real_out_handler, login_success)
+        return args, kwargs
+
+    cmd = orig.bake(_out_bufsize=0, _tty_in=True, _unify_ttys=True, _arg_preprocess=process)
+    return cmd
 
 
 def run_repl(env): # pragma: no cover
