@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Entering an SSH password &mdash; sh 1.12.13 documentation</title>
+  <title>Entering an SSH password &mdash; sh 1.13.0 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.13.0 documentation" href="../index.html"/>
         <link rel="up" title="Tutorials" href="../tutorials.html"/>
         <link rel="next" title="FAQ" href="../sections/faq.html"/>
         <link rel="prev" title="Tailing a real-time log file" href="real_time_output.html"/> 
@@ -141,6 +141,8 @@
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#communication">Communication</a><ul>
@@ -155,6 +157,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../sections/special_arguments.html#ttys">TTYs</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#tty-in">_tty_in</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#tty-out">_tty_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#unify-ttys">_unify_ttys</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../sections/special_arguments.html#tty-size">_tty_size</a></li>
 </ul>
 </li>
@@ -217,6 +220,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../sections/contrib.html#commands">Commands</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../sections/contrib.html#sudo">Sudo</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../sections/contrib.html#git">Git</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sections/contrib.html#ssh">SSH</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/contrib.html#extending">Extending</a></li>
@@ -236,12 +240,14 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="real_time_output.html">Tailing a real-time log file</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Entering an SSH password</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#ssh-contrib-command">SSH Contrib command</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#how-you-should-really-be-using-ssh">How you should REALLY be using SSH</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../sections/faq.html">FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-execute-a-bash-builtin">How do I execute a bash builtin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#will-windows-be-supported">Will Windows be supported?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-append-output-to-a-file">How do I append output to a file?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-does-my-command-s-output-have-color">Why does my command&#8217;s output have color?</a></li>
@@ -258,6 +264,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-to-disable-pylint-e1101-no-member-errors">How to disable pylint E1101 no-member errors?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-patch-sh-in-my-tests">How do I patch sh in my tests?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-is-sh-just-a-single-file">Why is sh just a single file?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-see-the-commands-sh-is-running">How do I see the commands sh is running?</a></li>
 </ul>
 </li>
 </ul>
@@ -327,7 +334,7 @@ second argument, and we&#8217;ll use that to send STDIN back to the process.</p>
 
 <span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
     <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password:&quot;</span><span class="p">):</span>
         <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
 
@@ -350,7 +357,7 @@ it to 0 for unbuffered output:</p>
 
 <span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
     <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password:&quot;</span><span class="p">):</span>
         <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
 
@@ -422,7 +429,8 @@ is, and is line-buffering STDIN.</p>
 <p>The second problem lies deeper in SSH.  SSH needs a TTY attached to its STDIN in
 order to work properly.  This tricks SSH into believing that it is interacting
 with a real user in a real terminal session.  To enable TTY, we can add the
-<a class="reference internal" href="../sections/special_arguments.html#tty-in"><span class="std std-ref">_tty_in</span></a> special kwarg:</p>
+<a class="reference internal" href="../sections/special_arguments.html#tty-in"><span class="std std-ref">_tty_in</span></a> special kwarg.  We also need to use <a class="reference internal" href="../sections/special_arguments.html#unify-ttys"><span class="std std-ref">_unify_ttys</span></a> special kwarg.
+This tells sh to make STDOUT and STDIN come from a single pseudo-terminal, which is a requirement of SSH:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 
@@ -435,7 +443,7 @@ with a real user in a real terminal session.  To enable TTY, we can add the
     <span class="k">if</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password: &quot;</span><span class="p">):</span>
         <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_tty_in</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_tty_in</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">_unify_ttys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>And now our remote login script works!</p>
@@ -458,6 +466,23 @@ Last login: Thu Sep 13 03:53:00 2012 from some.ip.address
 amoffat@10.10.10.100:~$
 </pre></div>
 </div>
+<div class="section" id="ssh-contrib-command">
+<h2>SSH Contrib command<a class="headerlink" href="#ssh-contrib-command" title="Permalink to this headline">¶</a></h2>
+<p>The above process can be simplified by using a <a class="reference internal" href="../sections/contrib.html#contrib"><span class="std std-ref">Contrib Commands</span></a>. The <a class="reference internal" href="../sections/contrib.html#contrib-ssh"><span class="std std-ref">SSH contrib command</span></a> does
+all the ugly kwarg argument setup for you, and provides a simple but powerful interface for doing SSH password logins.
+Please see the <a class="reference internal" href="../sections/contrib.html#contrib-ssh"><span class="std std-ref">SSH contrib command</span></a> for more details about the exact api:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh.contrib</span> <span class="kn">import</span> <span class="n">ssh</span>
+
+<span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">cur_char</span><span class="p">)</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+<span class="c1"># automatically logs in with password and then presents subsequent content to</span>
+<span class="c1"># the ssh_interact callback</span>
+<span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">,</span> <span class="n">interact</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
 <div class="section" id="how-you-should-really-be-using-ssh">
 <h2>How you should REALLY be using SSH<a class="headerlink" href="#how-you-should-really-be-using-ssh" title="Permalink to this headline">¶</a></h2>
 <p>Many people want to learn how to enter an SSH password by script because they
@@ -477,7 +502,7 @@ without having to use that server&#8217;s shell directly:</p>
 <p>Translating this to sh, it becomes:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
-<span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">,</span> <span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">,</span> <span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>We can make this even nicer by taking advantage of sh&#8217;s <a class="reference internal" href="../sections/baking.html#baking"><span class="std std-ref">Baking</span></a> to bind
@@ -485,8 +510,8 @@ our server username/ip to a command object:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">my_server</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
-<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;whoami&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;whoami&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Now we have a reusable command object that we can use to call remote commands.
@@ -496,8 +521,8 @@ arguments:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">my_server</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">ifconfig</span><span class="p">())</span>
-<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">whoami</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">ifconfig</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">whoami</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>
@@ -544,7 +569,7 @@ arguments:</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.13.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

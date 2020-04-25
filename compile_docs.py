@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import sh
 from os.path import abspath, join, dirname 
 import logging

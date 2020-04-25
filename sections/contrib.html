@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Contrib Commands &mdash; sh 1.12.13 documentation</title>
+  <title>Contrib Commands &mdash; sh 1.13.0 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="../genindex.html"/>
         <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.12.13 documentation" href="../index.html"/>
+    <link rel="top" title="sh 1.13.0 documentation" href="../index.html"/>
         <link rel="next" title="Using Sudo" href="sudo.html"/>
         <link rel="prev" title="API" href="command_class.html"/> 
 
@@ -140,6 +140,8 @@
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#new-session">_new_session</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#uid">_uid</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#preexec-fn">_preexec_fn</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#pass-fds">_pass_fds</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#close-fds">_close_fds</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="special_arguments.html#communication">Communication</a><ul>
@@ -154,6 +156,7 @@
 <li class="toctree-l3"><a class="reference internal" href="special_arguments.html#ttys">TTYs</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tty-in">_tty_in</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tty-out">_tty_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="special_arguments.html#unify-ttys">_unify_ttys</a></li>
 <li class="toctree-l4"><a class="reference internal" href="special_arguments.html#tty-size">_tty_size</a></li>
 </ul>
 </li>
@@ -216,6 +219,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#commands">Commands</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#sudo">Sudo</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#git">Git</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ssh">SSH</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#extending">Extending</a></li>
@@ -235,12 +239,14 @@
 <li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/real_time_output.html">Tailing a real-time log file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../tutorials/interacting_with_processes.html">Entering an SSH password</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../tutorials/interacting_with_processes.html#ssh-contrib-command">SSH Contrib command</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../tutorials/interacting_with_processes.html#how-you-should-really-be-using-ssh">How you should REALLY be using SSH</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="faq.html">FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-execute-a-bash-builtin">How do I execute a bash builtin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#will-windows-be-supported">Will Windows be supported?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-append-output-to-a-file">How do I append output to a file?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#why-does-my-command-s-output-have-color">Why does my command&#8217;s output have color?</a></li>
@@ -257,6 +263,7 @@
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-to-disable-pylint-e1101-no-member-errors">How to disable pylint E1101 no-member errors?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-patch-sh-in-my-tests">How do I patch sh in my tests?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#why-is-sh-just-a-single-file">Why is sh just a single file?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-see-the-commands-sh-is-running">How do I see the commands sh is running?</a></li>
 </ul>
 </li>
 </ul>
@@ -308,6 +315,11 @@
 <p>Contrib is an sh sub-module that provides friendly wrappers to useful commands.
 Typically, the commands being wrapped are unintuitive, and the contrib version
 makes them intuitive.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Contrib commands should be considered generally unstable. They will grow and change as the community figures out the
+best interface for them.</p>
+</div>
 <div class="section" id="commands">
 <h2>Commands<a class="headerlink" href="#commands" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="sudo">
@@ -317,7 +329,7 @@ in your script.</p>
 <dl class="function">
 <dt>
 <code class="descname">sudo</code><span class="sig-paren">(</span><em>password=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span></dt>
-<dd><p>Call sudo with <em>password</em>, if specified, else ask the executing user for a
+<dd><p>Call sudo with <code class="docutils literal"><span class="pre">password</span></code>, if specified, else ask the executing user for a
 password at runtime via <a class="reference external" href="https://docs.python.org/3.5/library/getpass.html#getpass.getpass" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">getpass.getpass()</span></code></a>.</p>
 </dd></dl>
 
@@ -346,6 +358,154 @@ when run through sh.  To account for this, the contrib version sets
 <p class="last"><a class="reference internal" href="faq.html#faq-tty-out"><span class="std std-ref">Why is _tty_out=True the default?</span></a> and <a class="reference internal" href="faq.html#faq-color-output"><span class="std std-ref">Why does my command&#8217;s output have color?</span></a></p>
 </div>
 </div>
+<div class="section" id="ssh">
+<span id="contrib-ssh"></span><h3>SSH<a class="headerlink" href="#ssh" title="Permalink to this headline">¶</a></h3>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 1.13.0.</span></p>
+</div>
+<p>SSH password-based logins <a class="reference internal" href="../tutorials/interacting_with_processes.html#tutorial2"><span class="std std-ref">can be a pain</span></a>. This contrib command performs all of the ugly setup and
+provides a clean interface to using SSH.</p>
+<dl class="function">
+<dt>
+<code class="descname">ssh</code><span class="sig-paren">(</span><em>interact=None</em>, <em>password=None</em>, <em>prompt_match=None</em>, <em>login_success=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>interact</strong> &#8211; A callback to handle SSH session interaction <em>after</em> login is successful. Required.</li>
+<li><strong>password</strong> &#8211; A password string or a function that returns a password string. Optional. If not provided, <a class="reference external" href="https://docs.python.org/3.5/library/getpass.html#getpass.getpass" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">getpass.getpass()</span></code></a> is used.</li>
+<li><strong>prompt_match</strong> &#8211; The string to match in order to determine when to provide SSH with the password. Or a function
+that matches on the output. Optional.</li>
+<li><strong>login_success</strong> &#8211; A function to determine if SSH login is successful. Optional.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p>The <code class="docutils literal"><span class="pre">interact</span></code> parameter takes a callback with a signature that is slightly different to the function callbacks for
+<a class="reference internal" href="redirection.html#red-func"><span class="std std-ref">redirection</span></a>:</p>
+<dl class="function">
+<dt id="fn">
+<code class="descname">fn</code><span class="sig-paren">(</span><em>content</em>, <em>stdin_queue</em><span class="sig-paren">)</span><a class="headerlink" href="#fn" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>content</strong> &#8211; An instance of an ephemeral <a class="reference internal" href="#session-content"><span class="std std-ref">SessionContent</span></a> class whose job is to hold the
+characters that the SSH session has written to STDOUT.</li>
+<li><strong>stdin_queue</strong> &#8211; A <a class="reference external" href="https://docs.python.org/3.5/library/queue.html#queue.Queue" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">queue.Queue</span></code></a> object to communicate with STDIN programmatically.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<p><code class="docutils literal"><span class="pre">password</span></code> can be simply a string that will be used to type the password. If it&#8217;s not provided, it will be read from STDIN
+at runtime via <a class="reference external" href="https://docs.python.org/3.5/library/getpass.html#getpass.getpass" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">getpass.getpass()</span></code></a>. It can also be a callable that returns the password string.</p>
+<p><code class="docutils literal"><span class="pre">prompt_match</span></code> is a string to match before the contrib command will provide the SSH process with the password. It is
+optional, and if left unspecified, will default to &#8220;password: &#8221;. It can also be a callable that is called on a
+<a class="reference internal" href="#session-content"><span class="std std-ref">SessionContent</span></a> instance and returns <code class="docutils literal"><span class="pre">True</span></code> or <code class="docutils literal"><span class="pre">False</span></code> for a match.</p>
+<p><code class="docutils literal"><span class="pre">login_success</span></code> is a function that takes a <a class="reference internal" href="#session-content"><span class="std std-ref">SessionContent</span></a> object and returns a boolean for
+whether or not a successful login occurred. It is optional, and if unspecified, simply evaluates to <code class="docutils literal"><span class="pre">True</span></code>, meaning
+any password submission results in a successful login (obviously not always correct). It is recommended that you specify
+this.</p>
+<span class="target" id="session-content"></span><dl class="class">
+<dt id="SessionContent">
+<em class="property">class </em><code class="descname">SessionContent</code><a class="headerlink" href="#SessionContent" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class contains a record lines and characters written to the SSH processes&#8217;s STDOUT. It should be all you need
+from the callbacks to determine how to interact with the SSH process.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SessionContent.chars">
+<code class="descclassname">SessionContent.</code><code class="descname">chars</code><a class="headerlink" href="#SessionContent.chars" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3.5/library/collections.html#collections.deque" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">collections.deque</span></code></a></td>
+</tr>
+</tbody>
+</table>
+<p>The previous 50,000 characters.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SessionContent.lines">
+<code class="descclassname">SessionContent.</code><code class="descname">lines</code><a class="headerlink" href="#SessionContent.lines" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3.5/library/collections.html#collections.deque" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">collections.deque</span></code></a></td>
+</tr>
+</tbody>
+</table>
+<p>The previous 5,000 lines.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SessionContent.line_chars">
+<code class="descclassname">SessionContent.</code><code class="descname">line_chars</code><a class="headerlink" href="#SessionContent.line_chars" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+<p>The characters in the line currently being aggregated.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SessionContent.cur_line">
+<code class="descclassname">SessionContent.</code><code class="descname">cur_line</code><a class="headerlink" href="#SessionContent.cur_line" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">string</td>
+</tr>
+</tbody>
+</table>
+<p>A string of the line currently being aggregated.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SessionContent.last_line">
+<code class="descclassname">SessionContent.</code><code class="descname">last_line</code><a class="headerlink" href="#SessionContent.last_line" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">string</td>
+</tr>
+</tbody>
+</table>
+<p>The previous line.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="SessionContent.cur_char">
+<code class="descclassname">SessionContent.</code><code class="descname">cur_char</code><a class="headerlink" href="#SessionContent.cur_char" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">string</td>
+</tr>
+</tbody>
+</table>
+<p>The currently written character.</p>
+</dd></dl>
+
+</div>
 </div>
 <div class="section" id="extending">
 <h2>Extending<a class="headerlink" href="#extending" title="Permalink to this headline">¶</a></h2>
@@ -364,7 +524,7 @@ using the command returned from your decorated function:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh.contrib</span> <span class="kn">import</span> <span class="n">ls</span>
 
 <span class="c1"># executing: ls -l</span>
-<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>For even more flexibility, you can design your contrib command to rewrite its
@@ -428,7 +588,7 @@ function to preprocess the arguments at execution time using the
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../',
-            VERSION:'1.12.13',
+            VERSION:'1.13.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

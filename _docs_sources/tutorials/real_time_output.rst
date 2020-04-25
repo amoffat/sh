@@ -51,7 +51,7 @@ else.  To be truly event-driven, sh provides callbacks:
 	    if "ERROR" in line:
 	        send_an_email_to_support(line)
 	
-	process = tail("-f", "info.log", _out=process_log_line)
+	process = tail("-f", "info.log", _out=process_log_line, _bg=True)
 	
 	# ... do other stuff here ...
 	

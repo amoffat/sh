@@ -132,6 +132,10 @@ that can be used from callbacks:
 	p = sh.bridgekeeper(_out=interact, _bg=True)
     p.wait()
 
+.. note::
+
+    If you use a queue, you can signal the end of the input (EOF) with ``None``
+
 You can also kill or terminate your process (or send any signal, really) from
 your callback by adding a third argument to receive the process object:
 
