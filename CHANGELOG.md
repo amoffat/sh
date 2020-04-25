@@ -16,6 +16,7 @@
 *   performance fix for polling output too fast when using `_iter` [#462](https://github.com/amoffat/sh/issues/462)
 *   execution contexts can now be used in python shell [#466](https://github.com/amoffat/sh/pull/466)
 *   bugfix `ErrorReturnCode` instances can now be pickled
+*   bugfix passing empty string or `None` for `_in` hanged [#427](https://github.com/amoffat/sh/pull/427)
 
 ## 1.12.14 - 6/6/17
 *   bugfix for poor sleep performance [#378](https://github.com/amoffat/sh/issues/378)
