@@ -1794,19 +1794,19 @@ class OProc(object):
             #
             # later, in the child process, we're going to do this, so keep it in mind:
             #
-            #    os.dup2(self._stdin_write_fd, 0)
-            #    os.dup2(self._stdout_write_fd, 1)
-            #    os.dup2(self._stderr_write_fd, 2)
-            self._stdin_read_fd, self._stdin_write_fd = pty.openpty()
+            #    os.dup2(self._stdin_child_fd, 0)
+            #    os.dup2(self._stdout_child_fd, 1)
+            #    os.dup2(self._stderr_child_fd, 2)
+            self._stdin_parent_fd, self._stdin_child_fd = pty.openpty()
 
-            self._stdout_read_fd = os.dup(self._stdin_read_fd)
+            self._stdout_parent_fd = os.dup(self._stdin_parent_fd)
 
             # this line is what makes stdout and stdin attached to the same pty. in other words the process will write
             # to the same underlying fd as stdout as it uses to read from for stdin.
-            self._stdout_write_fd = os.dup(self._stdin_write_fd)
+            self._stdout_child_fd = os.dup(self._stdin_child_fd)
 
-            self._stderr_read_fd = os.dup(self._stdin_read_fd)
-            self._stderr_write_fd = os.dup(self._stdin_write_fd)
+            self._stderr_parent_fd = os.dup(self._stdin_parent_fd)
+            self._stderr_child_fd = os.dup(self._stdin_child_fd)
 
         # do not consolidate stdin and stdout.  this is the most common use-
         # case
@@ -1814,32 +1814,32 @@ class OProc(object):
             # this check here is because we may be doing piping and so our stdin
             # might be an instance of OProc
             if isinstance(stdin, OProc) and stdin.call_args["piped"]:
-                self._stdin_write_fd = stdin._pipe_fd
-                self._stdin_read_fd = None
+                self._stdin_child_fd = stdin._pipe_fd
+                self._stdin_parent_fd = None
                 self._stdin_process = stdin
 
             elif stdin_is_tty_or_pipe:
-                self._stdin_write_fd = os.dup(get_fileno(stdin))
-                self._stdin_read_fd = None
+                self._stdin_child_fd = os.dup(get_fileno(stdin))
+                self._stdin_parent_fd = None
 
             elif ca["tty_in"]:
-                self._stdin_read_fd, self._stdin_write_fd = pty.openpty()
+                self._stdin_parent_fd, self._stdin_child_fd = pty.openpty()
 
             # tty_in=False is the default
             else:
-                self._stdin_write_fd, self._stdin_read_fd = os.pipe()
+                self._stdin_child_fd, self._stdin_parent_fd = os.pipe()
 
 
             if stdout_is_tty_or_pipe and not tee_out:
-                self._stdout_write_fd = os.dup(get_fileno(stdout))
-                self._stdout_read_fd = None
+                self._stdout_child_fd = os.dup(get_fileno(stdout))
+                self._stdout_parent_fd = None
 
             # tty_out=True is the default
             elif ca["tty_out"]:
-                self._stdout_read_fd, self._stdout_write_fd = pty.openpty()
+                self._stdout_parent_fd, self._stdout_child_fd = pty.openpty()
 
             else:
-                self._stdout_read_fd, self._stdout_write_fd = os.pipe()
+                self._stdout_parent_fd, self._stdout_child_fd = os.pipe()
 
             # unless STDERR is going to STDOUT, it ALWAYS needs to be a pipe,
             # and never a PTY.  the reason for this is not totally clear to me,
@@ -1853,26 +1853,26 @@ class OProc(object):
                 # directly to the stdout fd (no pipe), and so stderr won't have
                 # a slave end of a pipe either to dup
                 if stdout_is_tty_or_pipe and not tee_out:
-                    self._stderr_read_fd = None
+                    self._stderr_parent_fd = None
                 else:
-                    self._stderr_read_fd = os.dup(self._stdout_read_fd)
-                self._stderr_write_fd = os.dup(self._stdout_write_fd)
+                    self._stderr_parent_fd = os.dup(self._stdout_parent_fd)
+                self._stderr_child_fd = os.dup(self._stdout_child_fd)
 
 
             elif stderr_is_tty_or_pipe and not tee_err:
-                self._stderr_write_fd = os.dup(get_fileno(stderr))
-                self._stderr_read_fd = None
+                self._stderr_child_fd = os.dup(get_fileno(stderr))
+                self._stderr_parent_fd = None
 
             else:
-                self._stderr_read_fd, self._stderr_write_fd = os.pipe()
+                self._stderr_parent_fd, self._stderr_child_fd = os.pipe()
 
 
         piped = ca["piped"]
         self._pipe_fd = None
         if piped:
-            fd_to_use = self._stdout_read_fd
+            fd_to_use = self._stdout_parent_fd
             if piped == "err":
-                fd_to_use = self._stderr_read_fd
+                fd_to_use = self._stderr_parent_fd
             self._pipe_fd = os.dup(fd_to_use)
 
 
@@ -1881,7 +1881,7 @@ class OProc(object):
 
         self.ctty = None
         if needs_ctty:
-            self.ctty = os.ttyname(self._stdin_write_fd)
+            self.ctty = os.ttyname(self._stdin_child_fd)
 
         # this is a hack, but what we're doing here is intentionally throwing an
         # OSError exception if our child processes's directory doesn't exist,
@@ -1905,7 +1905,7 @@ class OProc(object):
         # this pipe is for synchronizing with the child that the parent has
         # closed its in/out/err fds.  this is a bug on OSX (but not linux),
         # where we can lose output sometimes, due to a race, if we do
-        # os.close(self._stdout_write_fd) in the parent after the child starts
+        # os.close(self._stdout_child_fd) in the parent after the child starts
         # writing.
         if IS_OSX:
             close_pipe_read, close_pipe_write = os.pipe()
@@ -1976,19 +1976,19 @@ class OProc(object):
                     # we HAVE to do this here, and not in the parent process,
                     # because we have to guarantee that this is set before the
                     # child process is run, and we can't do it twice.
-                    tty.setraw(self._stdout_write_fd)
+                    tty.setraw(self._stdout_child_fd)
 
 
                 # if the parent-side fd for stdin exists, close it.  the case
                 # where it may not exist is if we're using piping
-                if self._stdin_read_fd:
-                    os.close(self._stdin_read_fd)
+                if self._stdin_parent_fd:
+                    os.close(self._stdin_parent_fd)
 
-                if self._stdout_read_fd:
-                    os.close(self._stdout_read_fd)
+                if self._stdout_parent_fd:
+                    os.close(self._stdout_parent_fd)
 
-                if self._stderr_read_fd:
-                    os.close(self._stderr_read_fd)
+                if self._stderr_parent_fd:
+                    os.close(self._stderr_parent_fd)
 
                 os.close(session_pipe_read)
                 os.close(exc_pipe_read)
@@ -1996,9 +1996,9 @@ class OProc(object):
                 if cwd:
                     os.chdir(cwd)
 
-                os.dup2(self._stdin_write_fd, 0)
-                os.dup2(self._stdout_write_fd, 1)
-                os.dup2(self._stderr_write_fd, 2)
+                os.dup2(self._stdin_child_fd, 0)
+                os.dup2(self._stdout_child_fd, 1)
+                os.dup2(self._stderr_child_fd, 2)
 
 
                 # set our controlling terminal, but only if we're using a tty
@@ -2067,9 +2067,9 @@ class OProc(object):
             if gc_enabled:
                 gc.enable()
 
-            os.close(self._stdin_write_fd)
-            os.close(self._stdout_write_fd)
-            os.close(self._stderr_write_fd)
+            os.close(self._stdin_child_fd)
+            os.close(self._stdout_child_fd)
+            os.close(self._stderr_child_fd)
 
             # tell our child process that we've closed our write_fds, so it is
             # ok to proceed towards exec.  see the comment where this pipe is
@@ -2124,7 +2124,7 @@ class OProc(object):
             self._stderr = deque(maxlen=ca["internal_bufsize"])
 
             if ca["tty_in"] and not stdin_is_tty_or_pipe:
-                setwinsize(self._stdin_read_fd, ca["tty_size"])
+                setwinsize(self._stdin_parent_fd, ca["tty_size"])
 
 
             self.log = parent_log.get_child("process", repr(self))
@@ -2134,9 +2134,9 @@ class OProc(object):
 
             # disable echoing, but only if it's a tty that we created ourselves
             if ca["tty_in"] and not stdin_is_tty_or_pipe:
-                attr = termios.tcgetattr(self._stdin_read_fd)
+                attr = termios.tcgetattr(self._stdin_parent_fd)
                 attr[3] &= ~termios.ECHO
-                termios.tcsetattr(self._stdin_read_fd, termios.TCSANOW, attr)
+                termios.tcsetattr(self._stdin_parent_fd, termios.TCSANOW, attr)
 
             # we're only going to create a stdin thread iff we have potential
             # for stdin to come in.  this would be through a stdout callback or
@@ -2146,9 +2146,9 @@ class OProc(object):
             # this represents the connection from a Queue object (or whatever
             # we're using to feed STDIN) to the process's STDIN fd
             self._stdin_stream = None
-            if self._stdin_read_fd and potentially_has_input:
+            if self._stdin_parent_fd and potentially_has_input:
                 log = self.log.get_child("streamwriter", "stdin")
-                self._stdin_stream =  StreamWriter(log, self._stdin_read_fd,
+                self._stdin_stream =  StreamWriter(log, self._stdin_parent_fd,
                         self.stdin, ca["in_bufsize"], ca["encoding"],
                         ca["tty_in"])
 
@@ -2173,20 +2173,19 @@ class OProc(object):
             # already hooked up this processes's stdout fd to the other
             # processes's stdin fd
             self._stdout_stream = None
-            if not pipe_out and self._stdout_read_fd:
+            if not pipe_out and self._stdout_parent_fd:
                 if callable(stdout):
                     stdout = construct_streamreader_callback(self, stdout)
                 self._stdout_stream = \
                         StreamReader(
                                 self.log.get_child("streamreader", "stdout"),
-                                self._stdout_read_fd, stdout, self._stdout,
+                                self._stdout_parent_fd, stdout, self._stdout,
                                 ca["out_bufsize"], ca["encoding"],
                                 ca["decode_errors"], stdout_pipe,
                                 save_data=save_stdout)
 
-            elif self._stdout_read_fd:
-                os.close(self._stdout_read_fd)
-
+            elif self._stdout_parent_fd:
+                os.close(self._stdout_parent_fd)
 
             # if stderr is going to one place (because it's grouped with stdout,
             # or we're dealing with a single tty), then we don't actually need a
@@ -2194,7 +2193,7 @@ class OProc(object):
             # stdout above
             self._stderr_stream = None
             if stderr is not OProc.STDOUT and not single_tty and not pipe_err \
-                    and self._stderr_read_fd:
+                    and self._stderr_parent_fd:
 
                 stderr_pipe = None
                 if pipe is OProc.STDERR and not ca["no_pipe"]:
@@ -2207,12 +2206,12 @@ class OProc(object):
                     stderr = construct_streamreader_callback(self, stderr)
 
                 self._stderr_stream = StreamReader(Logger("streamreader"),
-                        self._stderr_read_fd, stderr, self._stderr,
+                        self._stderr_parent_fd, stderr, self._stderr,
                         ca["err_bufsize"], ca["encoding"], ca["decode_errors"],
                         stderr_pipe, save_data=save_stderr)
 
-            elif self._stderr_read_fd:
-                os.close(self._stderr_read_fd)
+            elif self._stderr_parent_fd:
+                os.close(self._stderr_parent_fd)
 
 
             def timeout_fn():
@@ -2424,8 +2423,8 @@ class OProc(object):
         # the CTTY, and closing it prematurely will send a SIGHUP.  we also
         # don't want to close it if there's a self._stdin_stream, because that
         # is in charge of closing it also
-        if self._stdin_read_fd and not self._stdin_stream:
-            os.close(self._stdin_read_fd)
+        if self._stdin_parent_fd and not self._stdin_stream:
+            os.close(self._stdin_parent_fd)
 
 
     def wait(self):
