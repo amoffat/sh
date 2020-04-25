@@ -3606,8 +3606,16 @@ class ModuleImporterFromVariables(object):
         the rest of this function """
 
         parent_frame = inspect.currentframe().f_back
-        while in_importlib(parent_frame):
+
+        while parent_frame and in_importlib(parent_frame):
             parent_frame = parent_frame.f_back
+
+        # Calling PyImport_ImportModule("some_module"); via the C API may not
+        # have a parent frame. Early-out to avoid in_importlib() trying to
+        # get f_code from None when looking for 'some_module'.
+        # This also happens when using gevent apparently.
+        if not parent_frame:
+            return None
 
         # this line is saying "hey, does mod_fullname exist as a name we've
         # defind previously?"  the purpose of this is to ensure that
