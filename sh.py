@@ -868,7 +868,7 @@ class RunningCommand(object):
         # so the slight timeout allows for that.
         while True:
             try:
-                chunk = self.process._pipe_queue.get(True, 0.001)
+                chunk = self.process._pipe_queue.get(True, self.call_args["iter_poll_time"])
             except Empty:
                 if self.call_args["iter_noblock"]:
                     return errno.EWOULDBLOCK
@@ -1144,6 +1144,8 @@ class Command(object):
         "piped": None,
         "iter": None,
         "iter_noblock": None,
+        # the amount of time to sleep between polling for the iter output queue
+        "iter_poll_time": 0.1,
         "ok_code": 0,
         "cwd": None,
 
