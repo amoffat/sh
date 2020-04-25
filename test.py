@@ -287,6 +287,17 @@ print(args[0])
         out = python(py.name, 3).strip()
         self.assertEqual(out, "3")
 
+    def test_empty_stdin_no_hang(self):
+        py = create_tmp_test("""
+import sys
+data = sys.stdin.read()
+sys.stdout.write("no hang")
+""")
+        out = python(py.name, _in="", _timeout=2)
+        self.assertEqual(out, "no hang")
+
+        out = python(py.name, _in=None, _timeout=2)
+        self.assertEqual(out, "no hang")
 
     def test_exit_code(self):
         from sh import ErrorReturnCode

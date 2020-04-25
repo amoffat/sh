@@ -2119,7 +2119,7 @@ class OProc(object):
             # to prevent race conditions
             self.exit_code = None
 
-            self.stdin = stdin or Queue()
+            self.stdin = stdin
 
             # _pipe_queue is used internally to hand off stdout from one process
             # to another.  by default, all stdout from a process gets dumped
@@ -2152,15 +2152,10 @@ class OProc(object):
                 attr[3] &= ~termios.ECHO
                 termios.tcsetattr(self._stdin_parent_fd, termios.TCSANOW, attr)
 
-            # we're only going to create a stdin thread iff we have potential
-            # for stdin to come in.  this would be through a stdout callback or
-            # through an object we've passed in for stdin
-            potentially_has_input = callable(stdout) or stdin
-
             # this represents the connection from a Queue object (or whatever
             # we're using to feed STDIN) to the process's STDIN fd
             self._stdin_stream = None
-            if self._stdin_parent_fd and potentially_has_input:
+            if self._stdin_parent_fd:
                 log = self.log.get_child("streamwriter", "stdin")
                 self._stdin_stream =  StreamWriter(log, self._stdin_parent_fd,
                         self.stdin, ca["in_bufsize"], ca["encoding"],
@@ -2650,6 +2645,12 @@ def determine_how_to_read_input(input_obj):
     elif isinstance(input_obj, GeneratorType):
         log_msg = "generator"
         get_chunk = get_iter_chunk_reader(iter(input_obj))
+
+    elif input_obj is None:
+        log_msg = "None"
+        def raise_():
+            raise DoneReadingForever
+        get_chunk = raise_
 
     else:
         try:
