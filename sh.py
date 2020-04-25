@@ -680,7 +680,7 @@ class RunningCommand(object):
     finishes, RunningCommand is smart enough to translate exit codes to
     exceptions. """
 
-    # these are attributes that we allow to passthrough to OProc for
+    # these are attributes that we allow to passthrough to OProc
     _OProc_attr_whitelist = set((
         "signal",
         "terminate",
@@ -819,6 +819,11 @@ class RunningCommand(object):
 
             self.log.debug("process completed")
         return self
+
+
+    def is_alive(self):
+         """ returns whether or not we're still alive. this call has side-effects on OProc """
+         return self.process.is_alive()[0]
 
 
     def handle_command_exit_code(self, code):
