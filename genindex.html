@@ -9,7 +9,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Index &mdash; sh 1.12.15 documentation</title>
+  <title>Index &mdash; sh 1.13.0 documentation</title>
   
 
   
@@ -34,7 +34,7 @@
         <link rel="index" title="Index"
               href="#"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="sh 1.12.15 documentation" href="index.html"/> 
+    <link rel="top" title="sh 1.13.0 documentation" href="index.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -155,6 +155,7 @@
 <li class="toctree-l3"><a class="reference internal" href="sections/special_arguments.html#ttys">TTYs</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#tty-in">_tty_in</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#tty-out">_tty_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#unify-ttys">_unify_ttys</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#tty-size">_tty_size</a></li>
 </ul>
 </li>
@@ -217,6 +218,7 @@
 <li class="toctree-l2"><a class="reference internal" href="sections/contrib.html#commands">Commands</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="sections/contrib.html#sudo">Sudo</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sections/contrib.html#git">Git</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sections/contrib.html#ssh">SSH</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="sections/contrib.html#extending">Extending</a></li>
@@ -236,12 +238,14 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/real_time_output.html">Tailing a real-time log file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/interacting_with_processes.html">Entering an SSH password</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/interacting_with_processes.html#ssh-contrib-command">SSH Contrib command</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorials/interacting_with_processes.html#how-you-should-really-be-using-ssh">How you should REALLY be using SSH</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="sections/faq.html">FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-execute-a-bash-builtin">How do I execute a bash builtin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sections/faq.html#will-windows-be-supported">Will Windows be supported?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-append-output-to-a-file">How do I append output to a file?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sections/faq.html#why-does-my-command-s-output-have-color">Why does my command&#8217;s output have color?</a></li>
@@ -258,6 +262,7 @@
 <li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-to-disable-pylint-e1101-no-member-errors">How to disable pylint E1101 no-member errors?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-patch-sh-in-my-tests">How do I patch sh in my tests?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sections/faq.html#why-is-sh-just-a-single-file">Why is sh just a single file?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-see-the-commands-sh-is-running">How do I see the commands sh is running?</a></li>
 </ul>
 </li>
 </ul>
@@ -311,7 +316,9 @@
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
+ | <a href="#I"><strong>I</strong></a>
  | <a href="#K"><strong>K</strong></a>
+ | <a href="#L"><strong>L</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
@@ -332,11 +339,13 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
+  <dt><a href="sections/contrib.html#SessionContent.chars">chars (SessionContent attribute)</a>
+  </dt>
+
+      
   <dt><a href="sections/command_class.html#Command">Command (built-in class)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="sections/command_class.html#OProc.ctty">ctty (OProc attribute)</a>
   </dt>
@@ -347,6 +356,16 @@
   </dt>
 
       </dl></dd>
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="sections/contrib.html#SessionContent.cur_char">cur_char (SessionContent attribute)</a>
+  </dt>
+
+      
+  <dt><a href="sections/contrib.html#SessionContent.cur_line">cur_line (SessionContent attribute)</a>
+  </dt>
+
   </dl></td>
 </tr></table>
 
@@ -378,7 +397,7 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="sections/redirection.html#fn">fn() (built-in function)</a>, <a href="sections/redirection.html#fn">[1]</a>, <a href="sections/redirection.html#fn">[2]</a>
+  <dt><a href="sections/contrib.html#fn">fn() (built-in function)</a>, <a href="sections/redirection.html#fn">[1]</a>, <a href="sections/redirection.html#fn">[2]</a>, <a href="sections/redirection.html#fn">[3]</a>
   </dt>
 
   </dl></td>
@@ -395,6 +414,16 @@
   <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="sections/contrib.html#git">git() (built-in function)</a>
+  </dt>
+
+  </dl></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="sections/command_class.html#RunningCommand.is_alive">is_alive() (RunningCommand method)</a>
   </dt>
 
   </dl></td>
@@ -428,6 +457,26 @@
   </dl></td>
 </tr></table>
 
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="sections/contrib.html#SessionContent.last_line">last_line (SessionContent attribute)</a>
+  </dt>
+
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="sections/contrib.html#SessionContent.line_chars">line_chars (SessionContent attribute)</a>
+  </dt>
+
+      
+  <dt><a href="sections/contrib.html#SessionContent.lines">lines (SessionContent attribute)</a>
+  </dt>
+
+  </dl></td>
+</tr></table>
+
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
@@ -441,8 +490,6 @@
   </dt>
 
       </dl></dd>
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="sections/command_class.html#OProc.pid">pid (OProc attribute)</a>
   </dt>
@@ -453,6 +500,12 @@
   </dt>
 
       </dl></dd>
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="sections/command_class.html#RunningCommand.process">process (RunningCommand attribute)</a>
+  </dt>
+
       
   <dt><a href="sections/command_class.html#pushd">pushd() (built-in function)</a>
   </dt>
@@ -463,6 +516,10 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="sections/contrib.html#SessionContent">SessionContent (built-in class)</a>
+  </dt>
+
       
   <dt><a href="sections/command_class.html#OProc.sid">sid (OProc attribute)</a>
   </dt>
@@ -495,6 +552,10 @@
       </dl></dd>
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="sections/contrib.html#ssh">ssh() (built-in function)</a>
+  </dt>
+
       
   <dt><a href="sections/command_class.html#ErrorReturnCode.stderr">stderr (ErrorReturnCode attribute)</a>
   </dt>
@@ -601,7 +662,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'1.12.15',
+            VERSION:'1.13.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

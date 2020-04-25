@@ -100,16 +100,24 @@ _fg
 
 |def| ``False``
 
-Runs a command in the foreground, meaning it is spawned using
-:func:`os.spawnle()`.  The current process's STDIN/OUT/ERR is :func:`os.dup2`'d
-to the new process and so the new process becomes the *foreground* of the shell
-executing the script.  This option is basically a shortcut for:
+Runs a command in the foreground, meaning it is spawned using :func:`os.spawnle()`.  The current process's STDIN/OUT/ERR
+is :func:`os.dup2`'d to the new process and so the new process becomes the *foreground* of the shell executing the
+script.  This is only really useful when you want to launch a lean, interactive process that sh is having trouble
+running, for example, ssh.
+
+.. warning::
+
+    ``_fg=True`` side-steps a lot of sh's functionality.  You will not be returned a process object and most (likely
+    all) other special kwargs will not work.
+
+If you are looking for similar functionality, but still retaining sh's features, use the following:
 
 .. code-block:: python
         
     import sh
     import sys
     sh.your_command(_in=sys.stdin, _out=sys.stdout, _err=sys.stderr)
+
 
 .. _bg:
 
@@ -234,7 +242,7 @@ Typically not used by normal users.
 
 _pass_fds
 ---------
-.. versionadded:: 1.12.15
+.. versionadded:: 1.13.0
 
 |def| ``{}`` (empty set)
 
@@ -244,6 +252,7 @@ A whitelist iterable of integer file descriptors to be inherited by the child. P
 
 _close_fds
 ----------
+.. versionadded:: 1.13.0
 
 |def| ``True``
 
@@ -384,6 +393,19 @@ for STDOUT, otherwise use a :func:`os.pipe`.
 This is necessary for commands that require STDOUT to be a TTY.
 
 .. seealso:: :ref:`faq_tty_out`
+
+.. _unify_ttys:
+
+_unify_ttys
+--------
+.. versionadded:: 1.13.0
+
+|def| ``False``
+
+If ``True``, sh will combine the STDOUT and STDIN TTY into a single pseudo-terminal. This is sometimes required by picky
+programs which expect to be dealing with a single pseudo-terminal, like SSH.
+
+.. seealso:: :ref:`tutorial2`
 
 _tty_size
 ---------

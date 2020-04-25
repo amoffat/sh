@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Search &mdash; sh 1.12.15 documentation</title>
+  <title>Search &mdash; sh 1.13.0 documentation</title>
   
 
   
@@ -33,7 +33,7 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="#"/>
-    <link rel="top" title="sh 1.12.15 documentation" href="index.html"/> 
+    <link rel="top" title="sh 1.13.0 documentation" href="index.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -154,6 +154,7 @@
 <li class="toctree-l3"><a class="reference internal" href="sections/special_arguments.html#ttys">TTYs</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#tty-in">_tty_in</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#tty-out">_tty_out</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#unify-ttys">_unify_ttys</a></li>
 <li class="toctree-l4"><a class="reference internal" href="sections/special_arguments.html#tty-size">_tty_size</a></li>
 </ul>
 </li>
@@ -216,6 +217,7 @@
 <li class="toctree-l2"><a class="reference internal" href="sections/contrib.html#commands">Commands</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="sections/contrib.html#sudo">Sudo</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sections/contrib.html#git">Git</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sections/contrib.html#ssh">SSH</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="sections/contrib.html#extending">Extending</a></li>
@@ -235,12 +237,14 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/real_time_output.html">Tailing a real-time log file</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tutorials/interacting_with_processes.html">Entering an SSH password</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tutorials/interacting_with_processes.html#ssh-contrib-command">SSH Contrib command</a></li>
 <li class="toctree-l3"><a class="reference internal" href="tutorials/interacting_with_processes.html#how-you-should-really-be-using-ssh">How you should REALLY be using SSH</a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="sections/faq.html">FAQ</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-execute-a-bash-builtin">How do I execute a bash builtin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sections/faq.html#will-windows-be-supported">Will Windows be supported?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-append-output-to-a-file">How do I append output to a file?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sections/faq.html#why-does-my-command-s-output-have-color">Why does my command&#8217;s output have color?</a></li>
@@ -257,6 +261,7 @@
 <li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-to-disable-pylint-e1101-no-member-errors">How to disable pylint E1101 no-member errors?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-patch-sh-in-my-tests">How do I patch sh in my tests?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sections/faq.html#why-is-sh-just-a-single-file">Why is sh just a single file?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sections/faq.html#how-do-i-see-the-commands-sh-is-running">How do I see the commands sh is running?</a></li>
 </ul>
 </li>
 </ul>
@@ -344,7 +349,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'1.12.15',
+            VERSION:'1.13.0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

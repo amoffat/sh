@@ -129,7 +129,8 @@ is, and is line-buffering STDIN.
 The second problem lies deeper in SSH.  SSH needs a TTY attached to its STDIN in
 order to work properly.  This tricks SSH into believing that it is interacting
 with a real user in a real terminal session.  To enable TTY, we can add the
-:ref:`_tty_in <tty_in>` special kwarg:
+:ref:`_tty_in <tty_in>` special kwarg.  We also need to use :ref:`_unify_ttys <unify_ttys>` special kwarg.
+This tells sh to make STDOUT and STDIN come from a single pseudo-terminal, which is a requirement of SSH:
 
 .. code-block:: python
 
@@ -145,7 +146,7 @@ with a real user in a real terminal session.  To enable TTY, we can add the
         if aggregated.endswith("password: "):
             stdin.put("correcthorsebatterystaple\n")
 
-    ssh("10.10.10.100", _out=ssh_interact, _out_bufsize=0, _tty_in=True)
+    ssh("10.10.10.100", _out=ssh_interact, _out_bufsize=0, _tty_in=True, _unify_ttys=True)
     
 And now our remote login script works!
 
@@ -169,6 +170,24 @@ And now our remote login script works!
     Last login: Thu Sep 13 03:53:00 2012 from some.ip.address
     amoffat@10.10.10.100:~$ 
 
+SSH Contrib command
+-------------------
+
+The above process can be simplified by using a :ref:`contrib`. The :ref:`SSH contrib command <contrib_ssh>` does
+all the ugly kwarg argument setup for you, and provides a simple but powerful interface for doing SSH password logins.
+Please see the :ref:`SSH contrib command <contrib_ssh>` for more details about the exact api:
+
+.. code-block:: python
+
+    from sh.contrib import ssh
+
+    def ssh_interact(content, stdin):
+        sys.stdout.write(content.cur_char)
+        sys.stdout.flush()
+
+    # automatically logs in with password and then presents subsequent content to
+    # the ssh_interact callback
+    ssh("10.10.10.100", password="correcthorsebatterystaple", interact=ssh_interact)
 
 How you should REALLY be using SSH
 ----------------------------------
