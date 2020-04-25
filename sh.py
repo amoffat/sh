@@ -52,6 +52,7 @@ import inspect
 import tempfile
 import warnings
 import stat
+from collections import deque
 import glob as glob_module
 import ast
 from contextlib import contextmanager
@@ -3361,6 +3362,7 @@ def git(orig): # pragma: no cover
     cmd = orig.bake(_tty_out=False)
     return cmd
 
+
 @contrib("sudo")
 def sudo(orig): # pragma: no cover
     """ a nicer version of sudo that uses getpass to ask for a password, or
@@ -3388,6 +3390,85 @@ def sudo(orig): # pragma: no cover
     return cmd
 
 
+@contrib("ssh")
+def ssh(orig): # pragma: no cover
+    """ An ssh command for automatic password login """
+
+    class SessionContent(object):
+        def __init__(self):
+            self.chars = deque(maxlen=50000)
+            self.lines = deque(maxlen=5000)
+            self.line_chars = []
+            self.last_line = ""
+            self.cur_char = ""
+
+        def append_char(self, char):
+            if char == "\n":
+                line = self.cur_line
+                self.last_line = line
+                self.lines.append(line)
+                self.line_chars = []
+            else:
+                self.line_chars.append(char)
+
+            self.chars.append(char)
+            self.cur_char = char
+
+        @property
+        def cur_line(self):
+            line = "".join(self.line_chars)
+            return line
+
+    class SSHInteract(object):
+        def __init__(self, prompt_match, pass_getter, out_handler, login_success):
+            self.prompt_match = prompt_match
+            self.pass_getter = pass_getter
+            self.out_handler = out_handler
+            self.login_success = login_success
+            self.content = SessionContent()
+
+            # some basic state
+            self.pw_entered = False
+            self.success = False
+
+        def __call__(self, char, stdin):
+            self.content.append_char(char)
+
+            if self.pw_entered and not self.success:
+                self.success = self.login_success(self.content)
+
+            if self.success:
+                return self.out_handler(self.content, stdin)
+
+            if self.prompt_match(self.content):
+                password = self.pass_getter()
+                stdin.put(password + "\n")
+                self.pw_entered = True
+
+
+    def process(args, kwargs):
+        real_out_handler = kwargs.pop("interact")
+        password = kwargs.pop("password", None)
+        login_success = kwargs.pop("login_success", None)
+        prompt_match = kwargs.pop("prompt", None)
+        prompt = "Please enter SSH password: "
+
+        if prompt_match is None:
+            prompt_match = lambda content: content.cur_line.endswith("password: ")
+
+        if password is None:
+            pass_getter = lambda: getpass.getpass(prompt=prompt)
+        else:
+            pass_getter = lambda: password.rstrip("\n")
+
+        if login_success is None:
+            login_success = lambda content: True
+
+        kwargs["_out"] = SSHInteract(prompt_match, pass_getter, real_out_handler, login_success)
+        return args, kwargs
+
+    cmd = orig.bake(_out_bufsize=0, _tty_in=True, _unify_ttys=True, _arg_preprocess=process)
+    return cmd
 
 
 def run_repl(env): # pragma: no cover
