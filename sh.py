@@ -1017,6 +1017,8 @@ def get_fileno(ob):
 
     return fileno
 
+def ob_is_fd_based(ob):
+    return get_fileno(ob) is not None
 
 def ob_is_tty(ob):
     """ checks if an object (like a file-like object) is a tty.  """
@@ -1083,8 +1085,8 @@ def bufsize_validator(passed_kwargs, merged_kwargs):
     in_buf = passed_kwargs.get("in_bufsize", None)
     out_buf = passed_kwargs.get("out_bufsize", None)
 
-    in_no_buf = ob_is_tty(in_ob) or ob_is_pipe(in_ob)
-    out_no_buf = ob_is_tty(out_ob) or ob_is_pipe(out_ob)
+    in_no_buf = ob_is_fd_based(in_ob)
+    out_no_buf = ob_is_fd_based(out_ob)
 
     err = "Can't specify an {target} bufsize if the {target} target is a pipe or TTY"
 
@@ -1801,9 +1803,9 @@ class OProc(object):
         # file-like object that is a tty, for example `sys.stdin`, then, later
         # on in this constructor, we're going to skip out on setting up pipes
         # and pseudoterminals for those endpoints
-        stdin_is_tty_or_pipe = ob_is_tty(stdin) or ob_is_pipe(stdin)
-        stdout_is_tty_or_pipe = ob_is_tty(stdout) or ob_is_pipe(stdout)
-        stderr_is_tty_or_pipe = ob_is_tty(stderr) or ob_is_pipe(stderr)
+        stdin_is_fd_based = ob_is_fd_based(stdin)
+        stdout_is_fd_based = ob_is_fd_based(stdout)
+        stderr_is_fd_based = ob_is_fd_based(stderr)
 
         tee_out = ca["tee"] in (True, "out")
         tee_err = ca["tee"] == "err"
@@ -1848,7 +1850,7 @@ class OProc(object):
                 self._stdin_parent_fd = None
                 self._stdin_process = stdin
 
-            elif stdin_is_tty_or_pipe:
+            elif stdin_is_fd_based:
                 self._stdin_child_fd = os.dup(get_fileno(stdin))
                 self._stdin_parent_fd = None
 
@@ -1859,7 +1861,7 @@ class OProc(object):
             else:
                 self._stdin_child_fd, self._stdin_parent_fd = os.pipe()
 
-            if stdout_is_tty_or_pipe and not tee_out:
+            if stdout_is_fd_based and not tee_out:
                 self._stdout_child_fd = os.dup(get_fileno(stdout))
                 self._stdout_parent_fd = None
 
@@ -1881,14 +1883,14 @@ class OProc(object):
                 # we should not specify a read_fd, because stdout is dup'd
                 # directly to the stdout fd (no pipe), and so stderr won't have
                 # a slave end of a pipe either to dup
-                if stdout_is_tty_or_pipe and not tee_out:
+                if stdout_is_fd_based and not tee_out:
                     self._stderr_parent_fd = None
                 else:
                     self._stderr_parent_fd = os.dup(self._stdout_parent_fd)
                 self._stderr_child_fd = os.dup(self._stdout_child_fd)
 
 
-            elif stderr_is_tty_or_pipe and not tee_err:
+            elif stderr_is_fd_based and not tee_err:
                 self._stderr_child_fd = os.dup(get_fileno(stderr))
                 self._stderr_parent_fd = None
 
@@ -1997,7 +1999,7 @@ class OProc(object):
                 payload = ("%d,%d" % (sid, pgid)).encode(DEFAULT_ENCODING)
                 os.write(session_pipe_write, payload)
 
-                if ca["tty_out"] and not stdout_is_tty_or_pipe and not single_tty:
+                if ca["tty_out"] and not stdout_is_fd_based and not single_tty:
                     # set raw mode, so there isn't any weird translation of
                     # newlines to \r\n and other oddities.  we're not outputting
                     # to a terminal anyways
@@ -2036,7 +2038,7 @@ class OProc(object):
                     tmp_fd = os.open(os.ttyname(0), os.O_RDWR)
                     os.close(tmp_fd)
 
-                if ca["tty_out"] and not stdout_is_tty_or_pipe:
+                if ca["tty_out"] and not stdout_is_fd_based:
                     setwinsize(1, ca["tty_size"])
 
                 if ca["uid"] is not None:
@@ -2157,7 +2159,7 @@ class OProc(object):
             self._stdout = deque(maxlen=ca["internal_bufsize"])
             self._stderr = deque(maxlen=ca["internal_bufsize"])
 
-            if ca["tty_in"] and not stdin_is_tty_or_pipe:
+            if ca["tty_in"] and not stdin_is_fd_based:
                 setwinsize(self._stdin_parent_fd, ca["tty_size"])
 
 
@@ -2167,7 +2169,7 @@ class OProc(object):
             self.log.debug("started process")
 
             # disable echoing, but only if it's a tty that we created ourselves
-            if ca["tty_in"] and not stdin_is_tty_or_pipe:
+            if ca["tty_in"] and not stdin_is_fd_based:
                 attr = termios.tcgetattr(self._stdin_parent_fd)
                 attr[3] &= ~termios.ECHO
                 termios.tcsetattr(self._stdin_parent_fd, termios.TCSANOW, attr)

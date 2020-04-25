@@ -17,6 +17,7 @@
 *   execution contexts can now be used in python shell [#466](https://github.com/amoffat/sh/pull/466)
 *   bugfix `ErrorReturnCode` instances can now be pickled
 *   bugfix passing empty string or `None` for `_in` hanged [#427](https://github.com/amoffat/sh/pull/427)
+*   bugfix where passing a filename or file-like object to `_out` wasn't using os.dup2 [#449](https://github.com/amoffat/sh/issues/449)
 
 ## 1.12.14 - 6/6/17
 *   bugfix for poor sleep performance [#378](https://github.com/amoffat/sh/issues/378)
