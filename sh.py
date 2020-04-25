@@ -367,10 +367,14 @@ class ErrorReturnCode(Exception):
 
     truncate_cap = 750
 
+    def __reduce__(self):
+        return (self.__class__, (self.full_cmd, self.stdout, self.stderr, self.truncate))
+
     def __init__(self, full_cmd, stdout, stderr, truncate=True):
         self.full_cmd = full_cmd
         self.stdout = stdout
         self.stderr = stderr
+        self.truncate = truncate
 
         exc_stdout = self.stdout
         if truncate:

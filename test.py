@@ -2703,6 +2703,27 @@ class MockTests(BaseTests):
 
 
 class MiscTests(BaseTests):
+    def test_pickling(self):
+        import pickle
+
+        py = create_tmp_test("""
+import sys
+sys.stdout.write("some output")
+sys.stderr.write("some error")
+exit(1)
+""")
+
+        try:
+            python(py.name)
+        except sh.ErrorReturnCode as e:
+            restored = pickle.loads(pickle.dumps(e))
+            self.assertEqual(restored.stdout, b"some output")
+            self.assertEqual(restored.stderr, b"some error")
+            self.assertEqual(restored.exit_code, 1)
+        else:
+            self.fail("Didn't get an exception")
+
+
     @requires_poller("poll")
     def test_fd_over_1024(self):
         py = create_tmp_test("""print("hi world")""")
