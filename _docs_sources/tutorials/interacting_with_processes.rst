@@ -129,7 +129,8 @@ is, and is line-buffering STDIN.
 The second problem lies deeper in SSH.  SSH needs a TTY attached to its STDIN in
 order to work properly.  This tricks SSH into believing that it is interacting
 with a real user in a real terminal session.  To enable TTY, we can add the
-:ref:`_tty_in <tty_in>` special kwarg:
+:ref:`_tty_in <tty_in>` special kwarg.  We also need to use :ref:`_unify_ttys <unify_ttys>` special kwarg.
+This tells sh to make STDOUT and STDIN come from a single pseudo-terminal, which is a requirement of SSH:
 
 .. code-block:: python
 
@@ -145,7 +146,7 @@ with a real user in a real terminal session.  To enable TTY, we can add the
         if aggregated.endswith("password: "):
             stdin.put("correcthorsebatterystaple\n")
 
-    ssh("10.10.10.100", _out=ssh_interact, _out_bufsize=0, _tty_in=True)
+    ssh("10.10.10.100", _out=ssh_interact, _out_bufsize=0, _tty_in=True, _unify_ttys=True)
     
 And now our remote login script works!
 

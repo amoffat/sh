@@ -386,6 +386,18 @@ This is necessary for commands that require STDOUT to be a TTY.
 
 .. seealso:: :ref:`faq_tty_out`
 
+.. _unify_ttys:
+
+_unify_ttys
+--------
+
+|def| ``False``
+
+If ``True``, sh will combine the STDOUT and STDIN TTY into a single pseudo-terminal. This is sometimes required by picky
+programs which expect to be dealing with a single pseudo-terminal, like SSH.
+
+.. seealso:: :ref:`_tutorial2 <ssh tutorial>`
+
 _tty_size
 ---------
 
