@@ -400,8 +400,17 @@ look like a string.</p>
 </div>
 <dl class="method">
 <dt id="RunningCommand.wait">
-<code class="descclassname">RunningCommand.</code><code class="descname">wait</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#RunningCommand.wait" title="Permalink to this definition">¶</a></dt>
-<dd><p>Block and wait for the command to finish execution and obtain an exit code.
+<code class="descclassname">RunningCommand.</code><code class="descname">wait</code><span class="sig-paren">(</span><em>timeout=None</em><span class="sig-paren">)</span><a class="headerlink" href="#RunningCommand.wait" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> &#8211; An optional non-negative number to wait for the command to complete. If it doesn&#8217;t complete by the
+timeout, we raise <a class="reference internal" href="#timeout-exc"><span class="std std-ref">TimeoutException</span></a>.</td>
+</tr>
+</tbody>
+</table>
+<p>Block and wait for the command to finish execution and obtain an exit code.
 If the exit code represents a failure, we raise the appropriate exception.
 See <a class="reference external" href="https://docs.python.org/3.5/reference/executionmodel.html#exceptions" title="(in Python v3.5)"><span class="xref std std-ref">exceptions</span></a>.</p>
 <div class="admonition note">
@@ -656,7 +665,7 @@ the commandline if you wish.</p>
 receives a signal that causes it to exit.</p>
 </div>
 <div class="section" id="timeoutexception">
-<h3>TimeoutException<a class="headerlink" href="#timeoutexception" title="Permalink to this headline">¶</a></h3>
+<span id="timeout-exc"></span><h3>TimeoutException<a class="headerlink" href="#timeoutexception" title="Permalink to this headline">¶</a></h3>
 <p>Subclasses <a class="reference internal" href="#error-return-code"><span class="std std-ref">ErrorReturnCode</span></a>.  Raised when a command
 specifies a non-null <a class="reference internal" href="special_arguments.html#timeout"><span class="std std-ref">_timeout</span></a> and the command times out:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>

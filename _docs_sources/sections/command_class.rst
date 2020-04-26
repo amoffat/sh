@@ -98,7 +98,10 @@ this class
     ``json.dumps``, will not work on instances of RunningCommand, even though it
     look like a string.
 
-.. py:method:: RunningCommand.wait()
+.. py:method:: RunningCommand.wait(timeout=None)
+
+    :param timeout: An optional non-negative number to wait for the command to complete. If it doesn't complete by the
+        timeout, we raise :ref:`timeout_exc`.
 
     Block and wait for the command to finish execution and obtain an exit code.
     If the exit code represents a failure, we raise the appropriate exception.
@@ -298,6 +301,8 @@ SignalException
 
 Subclasses :ref:`ErrorReturnCode <error_return_code>`.  Raised when a command
 receives a signal that causes it to exit.
+
+.. _timeout_exc:
 
 TimeoutException
 ----------------
