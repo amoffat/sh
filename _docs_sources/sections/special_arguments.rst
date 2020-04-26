@@ -568,3 +568,46 @@ _log_msg
 |def| ``None``
 
 .. versionadded:: 1.12.0
+
+This allows for a custom logging header for :ref:`command_class` instances.  For example, the default logging looks like this:
+
+.. code-block:: python
+
+    import logging
+    import sh
+
+    logging.basicConfig(level=logging.INFO)
+
+    sh.ls("-l")
+
+.. code-block:: none
+
+    INFO:sh.command:<Command '/bin/ls -l'>: starting process
+    INFO:sh.command:<Command '/bin/ls -l', pid 28952>: process started
+    INFO:sh.command:<Command '/bin/ls -l', pid 28952>: process completed
+
+People can find this ``<Command ..`` section long and not relevant. ``_log_msg`` allows you to customize this:
+
+.. code-block:: python
+
+    import logging
+    import sh
+
+    logging.basicConfig(level=logging.INFO)
+
+    def custom_log(ran, call_args, pid=None):
+        return ran
+
+    sh.ls("-l", _log_msg=custom_log)
+
+.. code-block:: none
+
+    INFO:sh.command:/bin/ls -l: starting process
+    INFO:sh.command:/bin/ls -l: process started
+    INFO:sh.command:/bin/ls -l: process completed
+
+The first argument, ``ran``, is the program's execution string and arguments, as close as we can get it to be how you'd
+type in the shell.  ``call_args`` is a dictionary of all of the special kwargs that were passed to the command.  And ``pid``
+is the process id of the forked process.  It defaults to ``None`` because the ``_log_msg`` callback is actually called
+twice: first to construct the logger for the :ref:`running_command` instance, before the process itself is spawned, then
+a second time after the process is spawned via :ref:`oproc_class`, when we have a pid.

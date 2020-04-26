@@ -819,6 +819,42 @@ you absolutely have to.</p>
 <div class="versionadded">
 <p><span class="versionmodified">New in version 1.12.0.</span></p>
 </div>
+<p>This allows for a custom logging header for <a class="reference internal" href="command_class.html#command-class"><span class="std std-ref">Command Class</span></a> instances.  For example, the default logging looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">sh</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+<span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none"><div class="highlight"><pre><span></span>INFO:sh.command:&lt;Command &#39;/bin/ls -l&#39;&gt;: starting process
+INFO:sh.command:&lt;Command &#39;/bin/ls -l&#39;, pid 28952&gt;: process started
+INFO:sh.command:&lt;Command &#39;/bin/ls -l&#39;, pid 28952&gt;: process completed
+</pre></div>
+</div>
+<p>People can find this <code class="docutils literal"><span class="pre">&lt;Command</span> <span class="pre">..</span></code> section long and not relevant. <code class="docutils literal"><span class="pre">_log_msg</span></code> allows you to customize this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">sh</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">custom_log</span><span class="p">(</span><span class="n">ran</span><span class="p">,</span> <span class="n">call_args</span><span class="p">,</span> <span class="n">pid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ran</span>
+
+<span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">,</span> <span class="n">_log_msg</span><span class="o">=</span><span class="n">custom_log</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-none"><div class="highlight"><pre><span></span>INFO:sh.command:/bin/ls -l: starting process
+INFO:sh.command:/bin/ls -l: process started
+INFO:sh.command:/bin/ls -l: process completed
+</pre></div>
+</div>
+<p>The first argument, <code class="docutils literal"><span class="pre">ran</span></code>, is the program&#8217;s execution string and arguments, as close as we can get it to be how you&#8217;d
+type in the shell.  <code class="docutils literal"><span class="pre">call_args</span></code> is a dictionary of all of the special kwargs that were passed to the command.  And <code class="docutils literal"><span class="pre">pid</span></code>
+is the process id of the forked process.  It defaults to <code class="docutils literal"><span class="pre">None</span></code> because the <code class="docutils literal"><span class="pre">_log_msg</span></code> callback is actually called
+twice: first to construct the logger for the <a class="reference internal" href="command_class.html#running-command"><span class="std std-ref">RunningCommand Class</span></a> instance, before the process itself is spawned, then
+a second time after the process is spawned via <a class="reference internal" href="command_class.html#oproc-class"><span class="std std-ref">OProc Class</span></a>, when we have a pid.</p>
 </div>
 </div>
 </div>
