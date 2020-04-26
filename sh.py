@@ -717,7 +717,7 @@ class RunningCommand(object):
         self.cmd = cmd
 
         self.process = None
-        self._process_completed = False
+        self._waited_until_completion = False
         should_wait = True
         spawn_process = True
 
@@ -802,8 +802,7 @@ class RunningCommand(object):
         this function can raise a TimeoutException, either because of a `_timeout` on the command itself as it was
         launched, or because of a timeout passed into this method.
         """
-        if not self._process_completed:
-            self._process_completed = True
+        if not self._waited_until_completion:
 
             # if we've been given a timeout, we need to poll is_alive()
             if timeout is not None:
@@ -831,9 +830,13 @@ class RunningCommand(object):
                 if alive:
                     raise TimeoutException(None, self.ran)
 
-                # if we didn't time out, we fall through and let the rest of the code handle exit_code
+                # if we didn't time out, we fall through and let the rest of the code handle exit_code.
+                # notice that we set _waited_until_completion here, only if we didn't time out. this allows us to
+                # re-wait again on timeout, if we catch the TimeoutException in the parent frame
+                self._waited_until_completion = True
 
             else:
+                self._waited_until_completion = True
                 exit_code = self.process.wait()
 
             if self.process.timed_out:
