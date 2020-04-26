@@ -94,7 +94,7 @@ try:
 except ImportError:
     from pipes import quote as shlex_quote # undocumented before 2.7
 
-IS_MACOS = platform.system() == "Darwin"
+IS_MACOS = platform.system() in ("AIX", "Darwin")
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 SH_LOGGER_NAME = __name__
 

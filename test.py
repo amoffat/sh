@@ -62,7 +62,7 @@ import inspect
 # we have to use the real path because on osx, /tmp is a symlink to
 # /private/tmp, and so assertions that gettempdir() == sh.pwd() will fail
 tempdir = realpath(tempfile.gettempdir())
-IS_MACOS = platform.system() == "Darwin"
+IS_MACOS = platform.system() in ("AIX", "Darwin")
 
 
 # these 3 functions are helpers for modifying PYTHONPATH with a module's main
