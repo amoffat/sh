@@ -836,8 +836,8 @@ class RunningCommand(object):
                 self._waited_until_completion = True
 
             else:
-                self._waited_until_completion = True
                 exit_code = self.process.wait()
+                self._waited_until_completion = True
 
             if self.process.timed_out:
                 # if we timed out, our exit code represents a signal, which is
