@@ -399,7 +399,7 @@ behave more intuitively.</p>
 <code class="docutils literal"><span class="pre">json.dumps</span></code>, will not work on instances of RunningCommand, even though it
 look like a string.</p>
 </div>
-<dl class="method">
+<span class="target" id="wait-method"></span><dl class="method">
 <dt id="RunningCommand.wait">
 <code class="descclassname">RunningCommand.</code><code class="descname">wait</code><span class="sig-paren">(</span><em>timeout=None</em><span class="sig-paren">)</span><a class="headerlink" href="#RunningCommand.wait" title="Permalink to this definition">¶</a></dt>
 <dd><table class="docutils field-list" frame="void" rules="none">
@@ -667,14 +667,24 @@ receives a signal that causes it to exit.</p>
 </div>
 <div class="section" id="timeoutexception">
 <span id="timeout-exc"></span><h3>TimeoutException<a class="headerlink" href="#timeoutexception" title="Permalink to this headline">¶</a></h3>
-<p>Subclasses <a class="reference internal" href="#error-return-code"><span class="std std-ref">ErrorReturnCode</span></a>.  Raised when a command
-specifies a non-null <a class="reference internal" href="special_arguments.html#timeout"><span class="std std-ref">_timeout</span></a> and the command times out:</p>
+<p>Raised when a command specifies a non-null <a class="reference internal" href="special_arguments.html#timeout"><span class="std std-ref">_timeout</span></a> and the command times out:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="n">sh</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">_timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="k">except</span> <span class="n">sh</span><span class="o">.</span><span class="n">TimeoutException</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;we timed out, as expected&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Also raised when you specify a timeout to <a class="reference internal" href="#wait-method"><span class="std std-ref">RunningCommand.wait(timeout=None)</span></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+
+<span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">sh</span><span class="o">.</span><span class="n">TimeoutException</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;we timed out waiting&quot;</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
 </pre></div>
 </div>
 </div>

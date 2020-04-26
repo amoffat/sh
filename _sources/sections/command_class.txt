@@ -98,6 +98,8 @@ this class
     ``json.dumps``, will not work on instances of RunningCommand, even though it
     look like a string.
 
+.. _wait_method:
+
 .. py:method:: RunningCommand.wait(timeout=None)
 
     :param timeout: An optional non-negative number to wait for the command to complete. If it doesn't complete by the
@@ -307,8 +309,7 @@ receives a signal that causes it to exit.
 TimeoutException
 ----------------
 
-Subclasses :ref:`ErrorReturnCode <error_return_code>`.  Raised when a command
-specifies a non-null :ref:`timeout` and the command times out:
+Raised when a command specifies a non-null :ref:`timeout` and the command times out:
 
 .. code-block:: python
 
@@ -319,6 +320,18 @@ specifies a non-null :ref:`timeout` and the command times out:
     except sh.TimeoutException:
         print("we timed out, as expected")
 
+Also raised when you specify a timeout to :ref:`RunningCommand.wait(timeout=None)<wait_method>`:
+
+.. code-block:: python
+
+    import sh
+
+    p = sh.sleep(10, _bg=True)
+    try:
+        p.wait(timeout=1)
+    except sh.TimeoutException:
+        print("we timed out waiting")
+        p.kill()
 
 .. _not_found_exc:
 
