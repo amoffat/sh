@@ -3570,6 +3570,8 @@ class SelfWrapper(ModuleType):
                 # This depends on things like Python's calling convention and the layout of stack
                 # frames but it's a fix for a bug in a very cornery cornercase so....
                 module_name = parent[0].f_code.co_names[-1]
+            else:
+                raise
         else:
             parsed = ast.parse(code)
             try:
