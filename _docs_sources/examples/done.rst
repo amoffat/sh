@@ -14,7 +14,7 @@ time:
 
     def do_thing(arg):
         pool.acquire()
-        sh.your_parallel_command(arg, _bg=True, _done=done)
+        return sh.your_parallel_command(arg, _bg=True, _done=done)
 
     procs = []
     for arg in range(100):
