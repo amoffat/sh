@@ -21,6 +21,7 @@
 *   regression make `_fg` work with `_cwd` again [#330](https://github.com/amoffat/sh/issues/330)
 *   an invalid `_cwd` now raises a `ForkException` not an `OSError`.
 *   AIX support [#477](https://github.com/amoffat/sh/issues/477)
+*   added a `timeout=None` param to `RunningCommand.wait()` [#515](https://github.com/amoffat/sh/issues/515)
 
 ## 1.12.14 - 6/6/17
 *   bugfix for poor sleep performance [#378](https://github.com/amoffat/sh/issues/378)

@@ -410,7 +410,7 @@ class ErrorReturnCode(Exception):
 class SignalException(ErrorReturnCode): pass
 class TimeoutException(Exception):
     """ the exception thrown when a command is killed because a specified
-    timeout (via _timeout) was hit """
+    timeout (via _timeout or .wait(timeout)) was hit """
     def __init__(self, exit_code, full_cmd):
         self.exit_code = exit_code
         self.full_cmd = full_cmd
@@ -793,14 +793,49 @@ class RunningCommand(object):
                 self.wait()
 
 
-    def wait(self):
+    def wait(self, timeout=None):
         """ waits for the running command to finish.  this is called on all
         running commands, eventually, except for ones that run in the background
+
+        if timeout is a number, it is the number of seconds to wait for the process to resolve. otherwise block on wait.
+
+        this function can raise a TimeoutException, either because of a `_timeout` on the command itself as it was
+        launched, or because of a timeout passed into this method.
         """
         if not self._process_completed:
             self._process_completed = True
 
-            exit_code = self.process.wait()
+            # if we've been given a timeout, we need to poll is_alive()
+            if timeout is not None:
+                waited_for = 0
+                sleep_amt = 0.1
+                if timeout < 0:
+                    raise RuntimeError("timeout cannot be negative")
+
+                # while we still have time to wait, run this loop
+                # notice that alive and exit_code are only defined in this loop, but the loop is also guaranteed to run,
+                # defining them, given the constraints that timeout is non-negative
+                while waited_for <= timeout:
+                    alive, exit_code = self.process.is_alive()
+
+                    # if we're alive, we need to wait some more, but let's sleep before we poll again
+                    if alive:
+                        time.sleep(sleep_amt)
+                        waited_for += sleep_amt
+
+                    # but if we're not alive, we're done waiting
+                    else:
+                        break
+
+                # if we've made it this far, and we're still alive, then it means we timed out waiting
+                if alive:
+                    raise TimeoutException(None, self.ran)
+
+                # if we didn't time out, we fall through and let the rest of the code handle exit_code
+
+            else:
+                exit_code = self.process.wait()
+
             if self.process.timed_out:
                 # if we timed out, our exit code represents a signal, which is
                 # negative, so let's make it positive to store in our

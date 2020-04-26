@@ -2002,6 +2002,24 @@ sys.stdout.write("line1")
         self.assertTrue(abs(elapsed - 1) < 0.5)
 
 
+    def test_timeout_wait(self):
+        started = time.time()
+        p = sh.sleep(3, _bg=True)
+        self.assertRaises(sh.TimeoutException, p.wait, timeout=1)
+
+
+    def test_timeout_wait_overstep(self):
+        started = time.time()
+        p = sh.sleep(1, _bg=True)
+        p.wait(timeout=5)
+
+
+    def test_timeout_wait_negative(self):
+        started = time.time()
+        p = sh.sleep(3, _bg=True)
+        self.assertRaises(RuntimeError, p.wait, timeout=-3)
+
+
     def test_binary_pipe(self):
         binary = b'\xec;\xedr\xdbF'
 
