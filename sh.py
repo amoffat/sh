@@ -1063,7 +1063,7 @@ def fg_validator(passed_kwargs, merged_kwargs):
 _fg is invalid with nearly every other option, see warning and workaround here:
 
     https://amoffat.github.io/sh/sections/special_arguments.html#fg"""
-    whitelist = set(("env", "fg"))
+    whitelist = set(("env", "fg", "cwd"))
     offending = set(passed_kwargs.keys()) - whitelist
 
     if "fg" in passed_kwargs and offending:
@@ -1476,12 +1476,16 @@ class Command(object):
         # if we're running in foreground mode, we need to completely bypass
         # launching a RunningCommand and OProc and just do a spawn
         if call_args["fg"]:
+
             if call_args["env"] is None:
                 launch = lambda: os.spawnv(os.P_WAIT, cmd[0], cmd)
             else:
                 launch = lambda: os.spawnve(os.P_WAIT, cmd[0], cmd, call_args["env"])
 
-            exit_code = launch()
+            cwd = call_args["cwd"] or os.getcwd()
+            with pushd(cwd):
+                exit_code = launch()
+
             exc_class = get_exc_exit_code_would_raise(exit_code,
                     call_args["ok_code"], call_args["piped"])
             if exc_class:
@@ -1914,17 +1918,6 @@ class OProc(object):
         if needs_ctty:
             self.ctty = os.ttyname(self._stdin_child_fd)
 
-        # this is a hack, but what we're doing here is intentionally throwing an
-        # OSError exception if our child processes's directory doesn't exist,
-        # but we're doing it BEFORE we fork.  the reason for before the fork is
-        # error handling.  i'm currently too lazy to implement what
-        # subprocess.py did and set up a error pipe to handle exceptions that
-        # happen in the child between fork and exec.  it has only been seen in
-        # the wild for a missing cwd, so we'll handle it here.
-        cwd = ca["cwd"]
-        if cwd is not None and not os.path.exists(cwd):
-            os.chdir(cwd)
-
         gc_enabled = gc.isenabled()
         if gc_enabled:
             gc.disable()
@@ -2024,6 +2017,7 @@ class OProc(object):
                 os.close(session_pipe_read)
                 os.close(exc_pipe_read)
 
+                cwd = ca["cwd"]
                 if cwd:
                     os.chdir(cwd)
 

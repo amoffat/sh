@@ -1775,6 +1775,24 @@ exit(49)
         self.assertEqual(str(pwd(_cwd="/etc")), realpath("/etc") + "\n")
 
 
+    def test_cwd_fg(self):
+        td = tempfile.mkdtemp()
+        py = create_tmp_test("""
+import sh
+import os
+orig = os.getcwd()
+print(orig)
+sh.pwd(_cwd="{newdir}", _fg=True)
+print(os.getcwd())
+""".format(newdir=td))
+        
+        orig, newdir, restored = python(py.name).strip().split("\n")
+        self.assertEqual(newdir, td)
+        self.assertEqual(orig, restored)
+        self.assertNotEqual(orig, newdir)
+        os.rmdir(td)
+
+
     def test_huge_piped_data(self):
         from sh import tr
 
@@ -2259,8 +2277,7 @@ p.wait()
         # sanity check
         non_exist_dir = join(tempdir, "aowjgoahewro")
         self.assertFalse(exists(non_exist_dir))
-
-        self.assertRaises(OSError, ls, _cwd=non_exist_dir)
+        self.assertRaises(sh.ForkException, ls, _cwd=non_exist_dir)
 
 
     # https://github.com/amoffat/sh/issues/176

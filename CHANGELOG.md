@@ -18,6 +18,8 @@
 *   bugfix `ErrorReturnCode` instances can now be pickled
 *   bugfix passing empty string or `None` for `_in` hanged [#427](https://github.com/amoffat/sh/pull/427)
 *   bugfix where passing a filename or file-like object to `_out` wasn't using os.dup2 [#449](https://github.com/amoffat/sh/issues/449)
+*   regression make `_fg` work with `_cwd` again [#330](https://github.com/amoffat/sh/issues/330)
+*   an invalid `_cwd` now raises a `ForkException` not an `OSError`.
 
 ## 1.12.14 - 6/6/17
 *   bugfix for poor sleep performance [#378](https://github.com/amoffat/sh/issues/378)
