@@ -1776,17 +1776,19 @@ exit(49)
 
 
     def test_cwd_fg(self):
-        td = tempfile.mkdtemp()
+        td = realpath(tempfile.mkdtemp())
         py = create_tmp_test("""
 import sh
 import os
-orig = os.getcwd()
+from os.path import realpath
+orig = realpath(os.getcwd())
 print(orig)
 sh.pwd(_cwd="{newdir}", _fg=True)
-print(os.getcwd())
+print(realpath(os.getcwd()))
 """.format(newdir=td))
         
         orig, newdir, restored = python(py.name).strip().split("\n")
+        newdir = realpath(newdir)
         self.assertEqual(newdir, td)
         self.assertEqual(orig, restored)
         self.assertNotEqual(orig, newdir)
