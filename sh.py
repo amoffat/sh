@@ -3550,7 +3550,7 @@ class SelfWrapper(ModuleType):
             # top stack frame
             # Older versions of pypy don't set parent[1] the same way as CPython or newer versions
             # of Pypy so we have to special case that too.
-            if (parent[1] in ('<stdin>', '<string>') or
+            if parent[1] in ('<stdin>', '<string>') or (
                     parent[1] == '<module>' and platform.python_implementation().lower() == 'pypy'):
                 # This depends on things like Python's calling convention and the layout of stack
                 # frames but it's a fix for a bug in a very cornery cornercase so....
