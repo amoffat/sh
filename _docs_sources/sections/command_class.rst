@@ -320,6 +320,25 @@ specifies a non-null :ref:`timeout` and the command times out:
         print("we timed out, as expected")
 
 
+.. _not_found_exc:
+
+CommandNotFound
+---------------
+
+This exception is raised in one of the following conditions:
+
+* The program cannot be found on your path.
+* You do not have permissions to execute the program.
+* The program is not marked executable.
+
+The last two bullets may seem strange, but they fall in line with how a shell like Bash behaves when looking up a
+program to execute.
+
+.. note::
+
+    ``CommandNotFound`` subclasses ``AttributeError``. As such, the `repr` of it is simply the name of the missing
+    attribute.
+
 
 Helper Functions
 ================

@@ -209,6 +209,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#errorreturncode">ErrorReturnCode</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#signalexception">SignalException</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#timeoutexception">TimeoutException</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#commandnotfound">CommandNotFound</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#helper-functions">Helper Functions</a></li>
@@ -675,6 +676,22 @@ specifies a non-null <a class="reference internal" href="special_arguments.html#
 <span class="k">except</span> <span class="n">sh</span><span class="o">.</span><span class="n">TimeoutException</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;we timed out, as expected&quot;</span><span class="p">)</span>
 </pre></div>
+</div>
+</div>
+<div class="section" id="commandnotfound">
+<span id="not-found-exc"></span><h3>CommandNotFound<a class="headerlink" href="#commandnotfound" title="Permalink to this headline">¶</a></h3>
+<p>This exception is raised in one of the following conditions:</p>
+<ul class="simple">
+<li>The program cannot be found on your path.</li>
+<li>You do not have permissions to execute the program.</li>
+<li>The program is not marked executable.</li>
+</ul>
+<p>The last two bullets may seem strange, but they fall in line with how a shell like Bash behaves when looking up a
+program to execute.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="docutils literal"><span class="pre">CommandNotFound</span></code> subclasses <code class="docutils literal"><span class="pre">AttributeError</span></code>. As such, the <cite>repr</cite> of it is simply the name of the missing
+attribute.</p>
 </div>
 </div>
 </div>
