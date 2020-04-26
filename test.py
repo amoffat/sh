@@ -956,7 +956,7 @@ print(sys.argv[1])
 
     def test_background_exception(self):
         from sh import ls, ErrorReturnCode_1, ErrorReturnCode_2
-        p = ls("/ofawjeofj", _bg=True) # should not raise
+        p = ls("/ofawjeofj", _bg=True, _bg_exc=False) # should not raise
 
         exc_to_test = ErrorReturnCode_2
         if IS_MACOS: exc_to_test = ErrorReturnCode_1
