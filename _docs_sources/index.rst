@@ -20,13 +20,16 @@
 .. image:: https://img.shields.io/pypi/v/sh.svg?style=flat-square
     :target: https://pypi.python.org/pypi/sh
     :alt: Version
+.. image:: https://img.shields.io/pypi/dm/sh.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/sh
+    :alt: Downloads Status
 .. image:: https://img.shields.io/pypi/pyversions/sh.svg?style=flat-square
     :target: https://pypi.python.org/pypi/sh
     :alt: Python Versions
-.. image:: https://img.shields.io/travis/amoffat/sh.svg?style=flat-square
+.. image:: https://img.shields.io/travis/amoffat/sh/master.svg?style=flat-square
     :target: https://travis-ci.org/amoffat/sh
     :alt: Build Status
-.. image:: https://img.shields.io/coveralls/amoffat/sh/master.svg?style=flat-square
+.. image:: https://img.shields.io/coveralls/amoffat/sh.svg?style=flat-square
     :target: https://coveralls.io/r/amoffat/sh?branch=master
     :alt: Coverage Status
 .. image:: https://img.shields.io/github/stars/amoffat/sh.svg?style=social&label=Star
