@@ -82,7 +82,7 @@ handler, and the internal buffers).
 
 
 _truncate_exc
-----
+-------------
 .. versionadded:: 1.12.0
 
 |def| ``True``
@@ -397,7 +397,7 @@ This is necessary for commands that require STDOUT to be a TTY.
 .. _unify_ttys:
 
 _unify_ttys
---------
+-----------
 .. versionadded:: 1.13.0
 
 |def| ``False``
