@@ -7,6 +7,9 @@
 .. image:: https://img.shields.io/pypi/v/sh.svg?style=flat-square
     :target: https://pypi.python.org/pypi/sh
     :alt: Version
+.. image:: https://img.shields.io/pypi/dm/sh.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/sh
+    :alt: Downloads Status
 .. image:: https://img.shields.io/pypi/pyversions/sh.svg?style=flat-square
     :target: https://pypi.python.org/pypi/sh
     :alt: Python Versions
@@ -19,7 +22,7 @@
 
 |
 
-sh is a full-fledged subprocess replacement for Python 2.6 - 3.6, PyPy and PyPy3
+sh is a full-fledged subprocess replacement for Python 2.6 - 3.8, PyPy and PyPy3
 that allows you to call *any* program as if it were a function:
 
 .. code:: python
