@@ -16,6 +16,9 @@
 .. image:: https://img.shields.io/coveralls/amoffat/sh.svg?style=flat-square
     :target: https://coveralls.io/r/amoffat/sh?branch=master
     :alt: Coverage Status
+.. image:: https://img.shields.io/pypi/dm/amoffat/sh.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/sh
+    :alt: Downloads Status
 
 |
 
