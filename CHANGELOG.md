@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.13.0 - 4/27/20
+*   minor Travis CI fixes [#492](https://github.com/amoffat/sh/pull/492)
+*   bugfix for boolean long options not respecting `_long_prefix` [#488](https://github.com/amoffat/sh/pull/488)
+*   fix deprecation warning on Python 3.6 regexes [#482](https://github.com/amoffat/sh/pull/482)
+*   `_pass_fds` and `_close_fds` special kwargs for controlling file descriptor inheritance in child.
+*   more efficiently closing inherited fds [#406](https://github.com/amoffat/sh/issues/406)
+*   bugfix where passing invalid dictionary to `_env` will cause a mysterious child 255 exit code. [#497](https://github.com/amoffat/sh/pull/497)
+*   bugfix where `_in` using 0 or `sys.stdin` wasn't behaving like a TTY, if it was in fact a TTY. [#514](https://github.com/amoffat/sh/issues/514)
+*   bugfix where `help(sh)` raised an exception [#455](https://github.com/amoffat/sh/issues/455)
+*   bugfix fixing broken interactive ssh tutorial from docs
+*   change to automatic tty merging into a single pty if `_tty_in=True` and `_tty_out=True`
+*   introducing `_unify_ttys`, default False, which allows explicit tty merging into single pty
+*   contrib command for `ssh` connections requiring passwords
+*   performance fix for polling output too fast when using `_iter` [#462](https://github.com/amoffat/sh/issues/462)
+*   execution contexts can now be used in python shell [#466](https://github.com/amoffat/sh/pull/466)
+*   bugfix `ErrorReturnCode` instances can now be pickled
+*   bugfix passing empty string or `None` for `_in` hanged [#427](https://github.com/amoffat/sh/pull/427)
+*   bugfix where passing a filename or file-like object to `_out` wasn't using os.dup2 [#449](https://github.com/amoffat/sh/issues/449)
+*   regression make `_fg` work with `_cwd` again [#330](https://github.com/amoffat/sh/issues/330)
+*   an invalid `_cwd` now raises a `ForkException` not an `OSError`.
+*   AIX support [#477](https://github.com/amoffat/sh/issues/477)
+*   added a `timeout=None` param to `RunningCommand.wait()` [#515](https://github.com/amoffat/sh/issues/515)
+
 ## 1.12.14 - 6/6/17
 *   bugfix for poor sleep performance [#378](https://github.com/amoffat/sh/issues/378)
 *   allow passing raw integer file descriptors for `_out` and `_err` handlers

@@ -15,20 +15,23 @@ if HAS_UNICODE_LITERAL:
     run_idx = int(os.environ.pop("SH_TEST_RUN_IDX", "0"))
     first_run = run_idx == 0
 
-    import coverage
+    try:
+        import coverage
+    except ImportError:
+        pass
+    else:
+        # for some reason, we can't run auto_data on the first run, or the coverage
+        # numbers get really screwed up
+        auto_data = True
+        if first_run:
+            auto_data = False
 
-    # for some reason, we can't run auto_data on the first run, or the coverage
-    # numbers get really screwed up
-    auto_data = True
-    if first_run:
-        auto_data = False
+        cov = coverage.Coverage(auto_data=auto_data)
 
-    cov = coverage.Coverage(auto_data=auto_data)
+        if first_run:
+            cov.erase()
 
-    if first_run:
-        cov.erase()
-
-    cov.start()
+        cov.start()
 
 
 from os.path import exists, join, realpath, dirname, split
@@ -50,6 +53,7 @@ import sh
 import signal
 import errno
 import stat
+import fcntl
 import platform
 from functools import wraps
 import time
@@ -58,7 +62,7 @@ import inspect
 # we have to use the real path because on osx, /tmp is a symlink to
 # /private/tmp, and so assertions that gettempdir() == sh.pwd() will fail
 tempdir = realpath(tempfile.gettempdir())
-IS_OSX = platform.system() == "Darwin"
+IS_MACOS = platform.system() in ("AIX", "Darwin")
 
 
 # these 3 functions are helpers for modifying PYTHONPATH with a module's main
@@ -93,22 +97,21 @@ if IS_PY3:
     ioStringIO = StringIO
     from io import BytesIO as cStringIO
     iocStringIO = cStringIO
-    python = sh.Command(sh.which("python%d.%d" % sys.version_info[:2]))
 else:
     from StringIO import StringIO
     from cStringIO import StringIO as cStringIO
     from io import StringIO as ioStringIO
     from io import BytesIO as iocStringIO
-    python = sh.python
 
 THIS_DIR = dirname(os.path.abspath(__file__))
 
+system_python = sh.Command(sys.executable)
 
 # this is to ensure that our `python` helper here is able to import our local sh
 # module, and not the system one
 baked_env = os.environ.copy()
 append_module_path(baked_env, sh)
-python = python.bake(_env=baked_env)
+python = system_python.bake(_env=baked_env)
 
 
 if hasattr(logging, 'NullHandler'):
@@ -154,7 +157,7 @@ def requires_progs(*progs):
 
 requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
 requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
-not_osx = skipUnless(not IS_OSX, "Doesn't work on OSX")
+not_macos = skipUnless(not IS_MACOS, "Doesn't work on MacOS")
 requires_py3 = skipUnless(IS_PY3, "Test only works on Python 3")
 requires_py35 = skipUnless(IS_PY3 and MINOR_VER >= 5, "Test only works on Python 3.5 or higher")
 
@@ -209,8 +212,8 @@ class BaseTests(unittest.TestCase):
         with warnings.catch_warnings(record=True) as w:
             fn(*args, **kwargs)
 
-            assert len(w) == 1
-            assert issubclass(w[-1].category, DeprecationWarning)
+            self.assertEqual(len(w), 1)
+            self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
 
 
 @requires_posix
@@ -245,16 +248,15 @@ class FunctionalTests(BaseTests):
         py = create_tmp_test("exit(1)")
 
         arg = "漢字"
+        native_arg = arg
         if not IS_PY3:
             arg = arg.decode("utf8")
+
 
         try:
             python(py.name, arg, _encoding="utf8")
         except ErrorReturnCode as e:
-            if IS_PY3:
-                self.assertTrue(arg in str(e))
-            else:
-                self.assertTrue(arg in unicode(e))
+            self.assertTrue(native_arg in str(e))
         else:
             self.fail("exception wasn't raised")
 
@@ -285,6 +287,17 @@ print(args[0])
         out = python(py.name, 3).strip()
         self.assertEqual(out, "3")
 
+    def test_empty_stdin_no_hang(self):
+        py = create_tmp_test("""
+import sys
+data = sys.stdin.read()
+sys.stdout.write("no hang")
+""")
+        out = python(py.name, _in="", _timeout=2)
+        self.assertEqual(out, "no hang")
+
+        out = python(py.name, _in=None, _timeout=2)
+        self.assertEqual(out, "no hang")
 
     def test_exit_code(self):
         from sh import ErrorReturnCode
@@ -295,7 +308,7 @@ exit(3)
 
     def test_patched_glob(self):
         from glob import glob
-        
+
         py = create_tmp_test("""
 import sys
 print(sys.argv[1:])
@@ -357,7 +370,7 @@ exit(3)
 
         exc_to_test = ErrorReturnCode_2
         code_to_pass = 2
-        if IS_OSX:
+        if IS_MACOS:
             exc_to_test = ErrorReturnCode_1
             code_to_pass = 1
         self.assertRaises(exc_to_test, ls, "/aofwje/garogjao4a/eoan3on")
@@ -396,7 +409,6 @@ print(args)
         self.assertEqual(out, "[\"one two's three\"]")
 
     def test_multiple_pipes(self):
-        from sh import tr, python
         import time
 
         py = create_tmp_test("""
@@ -506,41 +518,30 @@ while True:
         # this is the environment we'll pass into our commands
         env = {"HERP": "DERP"}
 
-        # python on osx will bizarrely add some extra environment variables that
-        # i didn't ask for.  for this test, we prune those out if they exist
-        osx_cruft = [
-            "__CF_USER_TEXT_ENCODING",
-            "__PYVENV_LAUNCHER__",
-            "VERSIONER_PYTHON_PREFER_32_BIT",
-            "VERSIONER_PYTHON_VERSION",
-        ]
-
         # first we test that the environment exists in our child process as
         # we've set it
         py = create_tmp_test("""
 import os
 
-osx_cruft = %s
-for key in osx_cruft:
-    try: del os.environ[key]
-    except: pass
-print(os.environ["HERP"] + " " + str(len(os.environ)))
-""" % osx_cruft)
+for key in list(os.environ.keys()):
+    if key != "HERP":
+        del os.environ[key]
+print(dict(os.environ))
+""")
         out = python(py.name, _env=env).strip()
-        self.assertEqual(out, "DERP 1")
+        self.assertEqual(out, "{'HERP': 'DERP'}")
 
         py = create_tmp_test("""
 import os, sys
 sys.path.insert(0, os.getcwd())
 import sh
-osx_cruft = %s
-for key in osx_cruft:
-    try: del os.environ[key]
-    except: pass
-print(sh.HERP + " " + str(len(os.environ)))
-""" % osx_cruft)
+for key in list(os.environ.keys()):
+    if key != "HERP":
+        del os.environ[key]
+print(dict(HERP=sh.HERP))
+""")
         out = python(py.name, _env=env, _cwd=THIS_DIR).strip()
-        self.assertEqual(out, "DERP 1")
+        self.assertEqual(out, "{'HERP': 'DERP'}")
 
 
     def test_which(self):
@@ -563,6 +564,78 @@ print("hi")
         found_path = which(test_name, [test_path])
         self.assertEqual(found_path, py.name)
 
+    def test_no_close_fds(self):
+        # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
+        # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
+        # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
+        #
+        # https://www.python.org/dev/peps/pep-0446/
+        tmp = [tempfile.TemporaryFile() for i in range(10)]
+        for t in tmp:
+            flags = fcntl.fcntl(t.fileno(), fcntl.F_GETFD)
+            flags &= ~fcntl.FD_CLOEXEC
+            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags) 
+        first_fd = tmp[0].fileno()
+
+        py = create_tmp_test("""
+import os
+print(len(os.listdir("/dev/fd")))
+""")
+        out = python(py.name, _close_fds=False).strip()
+        # pick some number greater than 4, since it's hard to know exactly how many fds will be open/inherted in the
+        # child
+        self.assertTrue(int(out) > 7)
+
+        for t in tmp:
+            t.close()
+
+    def test_close_fds(self):
+        # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
+        # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
+        # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
+        #
+        # https://www.python.org/dev/peps/pep-0446/
+        tmp = [tempfile.TemporaryFile() for i in range(10)]
+        for t in tmp:
+            flags = fcntl.fcntl(t.fileno(), fcntl.F_GETFD)
+            flags &= ~fcntl.FD_CLOEXEC
+            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags) 
+
+        py = create_tmp_test("""
+import os
+print(os.listdir("/dev/fd"))
+""")
+        out = python(py.name).strip()
+        self.assertEqual(out, "['0', '1', '2', '3']")
+
+        for t in tmp:
+            t.close()
+
+
+    def test_pass_fds(self):
+        # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
+        # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
+        # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
+        #
+        # https://www.python.org/dev/peps/pep-0446/
+        tmp = [tempfile.TemporaryFile() for i in range(10)]
+        for t in tmp:
+            flags = fcntl.fcntl(t.fileno(), fcntl.F_GETFD)
+            flags &= ~fcntl.FD_CLOEXEC
+            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags) 
+        last_fd = tmp[-1].fileno()
+
+        py = create_tmp_test("""
+import os
+print(os.listdir("/dev/fd"))
+""")
+        out = python(py.name, _pass_fds=[last_fd]).strip()
+        inherited = [0, 1, 2, 3, last_fd]
+        inherited_str = [str(i) for i in inherited]
+        self.assertEqual(out, str(inherited_str))
+
+        for t in tmp:
+            t.close()
 
     def test_no_arg(self):
         import pwd
@@ -575,6 +648,17 @@ print("hi")
         from sh import ls
         self.assertRaises(TypeError, ls, _iter=True, _piped=True)
 
+
+    def test_invalid_env(self):
+        from sh import ls
+
+        exc = TypeError
+        if IS_PY2 and MINOR_VER == 6:
+            exc = ValueError
+
+        self.assertRaises(exc, ls, _env="XXX")
+        self.assertRaises(exc, ls, _env={"foo": 123})
+        self.assertRaises(exc, ls, _env={123: "bar"})
 
     def test_exception(self):
         from sh import ErrorReturnCode_2
@@ -595,7 +679,7 @@ sys.stdout.write("line2\\n")
 exit(2)
 """)
 
-        py2 = create_tmp_test("") 
+        py2 = create_tmp_test("")
 
         def fn():
             list(python(python(py.name, _piped=True), "-u", py2.name, _iter=True))
@@ -612,7 +696,7 @@ sys.stdout.write("line2\\n")
 exit(2)
 """)
 
-        py2 = create_tmp_test("") 
+        py2 = create_tmp_test("")
 
         def fn():
             python(python(py.name, _piped=True), "-u", py2.name)
@@ -641,6 +725,7 @@ exit(2)
         from sh import Command, ls, which
 
         self.assertEqual(Command(which("ls")), ls)
+
 
     def test_doesnt_execute_directories(self):
         save_path = os.environ['PATH']
@@ -827,10 +912,18 @@ print(sys.argv[1])
                 _long_prefix="-custom-").strip()
         self.assertEqual(out, "-custom-long-option=underscore")
 
+        out = python(py.name, {"long-option": True},
+                _long_prefix="-custom-").strip()
+        self.assertEqual(out, "-custom-long-option")
+
         # test baking too
         out = python.bake(py.name, {"long-option": "underscore"},
                 _long_prefix="-baked-")().strip()
         self.assertEqual(out, "-baked-long-option=underscore")
+
+        out = python.bake(py.name, {"long-option": True},
+                _long_prefix="-baked-")().strip()
+        self.assertEqual(out, "-baked-long-option")
 
 
     def test_command_wrapper(self):
@@ -863,10 +956,10 @@ print(sys.argv[1])
 
     def test_background_exception(self):
         from sh import ls, ErrorReturnCode_1, ErrorReturnCode_2
-        p = ls("/ofawjeofj", _bg=True) # should not raise
+        p = ls("/ofawjeofj", _bg=True, _bg_exc=False) # should not raise
 
         exc_to_test = ErrorReturnCode_2
-        if IS_OSX: exc_to_test = ErrorReturnCode_1
+        if IS_MACOS: exc_to_test = ErrorReturnCode_1
         self.assertRaises(exc_to_test, p.wait) # should raise
 
 
@@ -1321,7 +1414,7 @@ import sys
 import os
 import time
 
-for i in range(5): 
+for i in range(5):
     print(i)
     time.sleep(.5)
 """)
@@ -1357,7 +1450,7 @@ import sys
 import os
 import time
 
-for i in range(5): 
+for i in range(5):
     print(i)
     time.sleep(.5)
 """)
@@ -1396,7 +1489,7 @@ import signal
 def sig_handler(sig, frame):
     print(10)
     exit(0)
-    
+
 signal.signal(signal.SIGINT, sig_handler)
 
 for i in range(5):
@@ -1426,7 +1519,7 @@ import sys
 import os
 import time
 
-for i in range(42): 
+for i in range(42):
     print(i)
     sys.stdout.flush()
 """)
@@ -1488,7 +1581,7 @@ sys.stderr.write("stderr")
 import sys
 import os
 
-for i in range(42): 
+for i in range(42):
     sys.stderr.write(str(i)+"\\n")
 """)
 
@@ -1597,7 +1690,7 @@ import sys
 import os
 
 for i in range(42):
-    sys.stderr.write(str(i * 2)+"\\n") 
+    sys.stderr.write(str(i * 2)+"\\n")
     print(i)
 """)
 
@@ -1634,10 +1727,10 @@ sys.stdout.write(sys.argv[1])
 
     def test_fg(self):
         py = create_tmp_test("exit(0)")
-        # notice we're using `sh.python`, and not `python`.  this is because
+        # notice we're using `system_python`, and not `python`.  this is because
         # `python` has an env baked into it, and we want `_env` to be None for
         # coverage
-        sh.python(py.name, _fg=True)
+        system_python(py.name, _fg=True)
 
     def test_fg_env(self):
         py = create_tmp_test("""
@@ -1680,6 +1773,26 @@ exit(49)
         from os.path import realpath
         self.assertEqual(str(pwd(_cwd="/tmp")), realpath("/tmp") + "\n")
         self.assertEqual(str(pwd(_cwd="/etc")), realpath("/etc") + "\n")
+
+
+    def test_cwd_fg(self):
+        td = realpath(tempfile.mkdtemp())
+        py = create_tmp_test("""
+import sh
+import os
+from os.path import realpath
+orig = realpath(os.getcwd())
+print(orig)
+sh.pwd(_cwd="{newdir}", _fg=True)
+print(realpath(os.getcwd()))
+""".format(newdir=td))
+        
+        orig, newdir, restored = python(py.name).strip().split("\n")
+        newdir = realpath(newdir)
+        self.assertEqual(newdir, td)
+        self.assertEqual(orig, restored)
+        self.assertNotEqual(orig, newdir)
+        os.rmdir(td)
 
 
     def test_huge_piped_data(self):
@@ -1876,8 +1989,8 @@ sys.stdout.write("line1")
         started = time()
         try:
             sh.sleep(sleep_for, _timeout=timeout).wait()
-        except sh.TimeoutException:
-            pass
+        except sh.TimeoutException as e:
+            self.assertEqual(e.full_cmd, '/bin/sleep 3')
         else:
             self.fail("no timeout exception")
         elapsed = time() - started
@@ -1889,6 +2002,24 @@ sys.stdout.write("line1")
         sh.sleep(1, _timeout=5)
         elapsed = time.time() - started
         self.assertTrue(abs(elapsed - 1) < 0.5)
+
+
+    def test_timeout_wait(self):
+        started = time.time()
+        p = sh.sleep(3, _bg=True)
+        self.assertRaises(sh.TimeoutException, p.wait, timeout=1)
+
+
+    def test_timeout_wait_overstep(self):
+        started = time.time()
+        p = sh.sleep(1, _bg=True)
+        p.wait(timeout=5)
+
+
+    def test_timeout_wait_negative(self):
+        started = time.time()
+        p = sh.sleep(3, _bg=True)
+        self.assertRaises(RuntimeError, p.wait, timeout=-3)
 
 
     def test_binary_pipe(self):
@@ -2058,8 +2189,10 @@ time.sleep(3)
 """)
 
         parent = create_tmp_test("""
+import sys
 import sh
-p = sh.python("{child_file}", _bg=True, _new_session=False)
+python = sh.Command(sys.executable)
+p = python("{child_file}", _bg=True, _new_session=False)
 print(p.pid)
 print(p.process.pgid)
 p.wait()
@@ -2162,10 +2295,9 @@ p.wait()
         from sh import ls
 
         # sanity check
-        non_exist_dir = join(tempdir, "aowjgoahewro") 
+        non_exist_dir = join(tempdir, "aowjgoahewro")
         self.assertFalse(exists(non_exist_dir))
-
-        self.assertRaises(OSError, ls, _cwd=non_exist_dir)
+        self.assertRaises(sh.ForkException, ls, _cwd=non_exist_dir)
 
 
     # https://github.com/amoffat/sh/issues/176
@@ -2525,7 +2657,8 @@ import sys
 child_file = sys.argv[1]
 output_file = sys.argv[2]
 
-os.spawnlp(os.P_NOWAIT, "python", "python", child_file, output_file)
+python_name = os.path.basename(sys.executable)
+os.spawnlp(os.P_NOWAIT, python_name, python_name, child_file, output_file)
 time.sleep(1) # give child a chance to set up
 """)
 
@@ -2618,6 +2751,27 @@ class MockTests(BaseTests):
 
 
 class MiscTests(BaseTests):
+    def test_pickling(self):
+        import pickle
+
+        py = create_tmp_test("""
+import sys
+sys.stdout.write("some output")
+sys.stderr.write("some error")
+exit(1)
+""")
+
+        try:
+            python(py.name)
+        except sh.ErrorReturnCode as e:
+            restored = pickle.loads(pickle.dumps(e))
+            self.assertEqual(restored.stdout, b"some output")
+            self.assertEqual(restored.stderr, b"some error")
+            self.assertEqual(restored.exit_code, 1)
+        else:
+            self.fail("Didn't get an exception")
+
+
     @requires_poller("poll")
     def test_fd_over_1024(self):
         py = create_tmp_test("""print("hi world")""")
@@ -2640,13 +2794,6 @@ class MiscTests(BaseTests):
     def test_args_deprecated(self):
         self.assertRaises(DeprecationWarning, sh.args, _env={})
 
-    def test_cant_import_all(self):
-        def go():
-            # we have to use exec, because in py3, this syntax raises a
-            # SyntaxError upon compilation
-            exec("from sh import *")
-        self.assertRaises(RuntimeError, go)
-
     def test_percent_doesnt_fail_logging(self):
         """ test that a command name doesn't interfere with string formatting in
         the internal loggers """
@@ -2657,17 +2804,16 @@ print("cool")
         out = python(py.name, "%%")
         out = python(py.name, "%%%")
 
-
     # TODO
     # for some reason, i can't get a good stable baseline measured in this test
     # on osx.  so skip it for now if osx
-    @not_osx
+    @not_macos
     @requires_progs("lsof")
     def test_no_fd_leak(self):
         import sh
         import os
         from itertools import product
-        
+
         # options whose combinations can possibly cause fd leaks
         kwargs = {
             "_tty_out": (True, False),
@@ -2769,10 +2915,11 @@ print("hi")
     def test_unicode_path(self):
         from sh import Command
 
-        py = create_tmp_test("""#!/usr/bin/env python
+        python_name = os.path.basename(sys.executable)
+        py = create_tmp_test("""#!/usr/bin/env {0}
 # -*- coding: utf8 -*-
 print("字")
-""", "字", delete=False)
+""".format(python_name), prefix="字", delete=False)
 
         try:
             py.close()
@@ -2875,11 +3022,11 @@ sys.stdout.write(repr(res))
         def f1():
             with p1:
                 time.sleep(1)
-                results[0] = str(sh.python("one"))
+                results[0] = str(system_python("one"))
 
         def f2():
             with p2:
-                results[1] = str(sh.python("two"))
+                results[1] = str(system_python("two"))
 
         t1 = threading.Thread(target=f1)
         t1.start()
@@ -3007,13 +3154,38 @@ class ExecutionContextTests(unittest.TestCase):
         import sh
         _sh = sh()
         omg = _sh
-        from omg import python
+        from omg import cat
 
     def test_importer_only_works_with_sh(self):
         def unallowed_import():
             _os = os
             from _os import path
         self.assertRaises(ImportError, unallowed_import)
+
+    def test_reimport_from_cli(self):
+        # The REPL and CLI both need special handling to create an execution context that is safe to
+        # reimport
+        if IS_PY3:
+            cmdstr = '; '.join(('import sh, io, sys',
+                                'out = io.StringIO()',
+                                '_sh = sh(_out=out)',
+                                'import _sh',
+                                '_sh.echo("-n", "TEST")',
+                                'sys.stderr.write(out.getvalue())',
+                                ))
+        else:
+            cmdstr = '; '.join(('import sh, StringIO, sys',
+                                'out = StringIO.StringIO()',
+                                '_sh = sh(_out=out)',
+                                'import _sh',
+                                '_sh.echo("-n", "TEST")',
+                                'sys.stderr.write(out.getvalue())',
+                                ))
+
+        err = StringIO()
+
+        python('-c', cmdstr, _err=err)
+        self.assertEqual('TEST', err.getvalue())
 
 
 if __name__ == "__main__":

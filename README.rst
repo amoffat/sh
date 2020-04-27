@@ -7,6 +7,9 @@
 .. image:: https://img.shields.io/pypi/v/sh.svg?style=flat-square
     :target: https://pypi.python.org/pypi/sh
     :alt: Version
+.. image:: https://img.shields.io/pypi/dm/sh.svg?style=flat-square
+    :target: https://pypi.python.org/pypi/sh
+    :alt: Downloads Status
 .. image:: https://img.shields.io/pypi/pyversions/sh.svg?style=flat-square
     :target: https://pypi.python.org/pypi/sh
     :alt: Python Versions
@@ -19,8 +22,8 @@
 
 |
 
-sh is a full-fledged subprocess replacement for Python 2.6 - 3.6, PyPy and PyPy3
-that allows you to call any program as if it were a function:
+sh is a full-fledged subprocess replacement for Python 2.6 - 3.8, PyPy and PyPy3
+that allows you to call *any* program as if it were a function:
 
 .. code:: python
 
@@ -49,21 +52,24 @@ Developers
 Testing
 -------
 
-First install the development requirements::
+I've included a Docker test suite in the `docker_test_suit/` folder.  To build the image, `cd` into that directory and
+run::
 
-    $> pip install -r requirements-dev.txt
+    $> ./build.sh
 
-The run the tests for all Python versions on your system::
+This will install ubuntu 18.04 LTS and all python versions from 2.6-3.8.  Once it's done, stay in that directory and
+run::
 
-    $> python sh.py test
+    $> ./run.sh
 
-To run a single test for all environments::
+This will mount your local code directory into the container and start the test suite, which will take a long time to
+run.  If you wish to run a single test, you may pass that test to `./run.sh`::
 
-    $> python sh.py test FunctionalTests.test_unicode_arg
+    $> ./run.sh FunctionalTests.test_unicode_arg
 
 To run a single test for a single environment::
 
-    $> python sh.py test -e 3.4 FunctionalTests.test_unicode_arg
+    $> ./run.sh -e 3.4 FunctionalTests.test_unicode_arg
 
 Coverage
 --------

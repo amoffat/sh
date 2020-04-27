@@ -10,7 +10,7 @@ from setuptools import setup
 HERE = dirname(abspath(__file__))
 
 author = "Andrew Moffat"
-author_email = "andrew.robert.moffat@gmail.com"
+author_email = "arwmoffat@gmail.com"
 keywords = ["subprocess", "process", "shell", "launch", "program"]
 
 
@@ -48,6 +48,8 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Topic :: Software Development :: Build Tools",
