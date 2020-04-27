@@ -28,7 +28,7 @@ that allows you to call *any* program as if it were a function:
 .. code:: python
 
     from sh import ifconfig
-    print ifconfig("eth0")
+    print(ifconfig("eth0"))
 
 sh is *not* a collection of system commands implemented in Python.
 
