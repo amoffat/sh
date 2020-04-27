@@ -10,7 +10,7 @@ from setuptools import setup
 HERE = dirname(abspath(__file__))
 
 author = "Andrew Moffat"
-author_email = "andrew.robert.moffat@gmail.com"
+author_email = "arwmoffat@gmail.com"
 keywords = ["subprocess", "process", "shell", "launch", "program"]
 
 
@@ -23,7 +23,6 @@ setup(
     version=sh.__version__,
     description="Python subprocess replacement",
     long_description=read("README.rst"),
-    long_description_content_type="text/x-rst",
     author=author,
     author_email=author_email,
     maintainer=author,
