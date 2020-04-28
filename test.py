@@ -1731,6 +1731,19 @@ sys.stdout.write(sys.argv[1])
         # `python` has an env baked into it, and we want `_env` to be None for
         # coverage
         system_python(py.name, _fg=True)
+        
+    def test_fg_false(self):
+        """ https://github.com/amoffat/sh/issues/520 """
+        py = create_tmp_test("print('hello')")
+        buf = StringIO()
+        python(py.name, _fg=False, _out=buf)
+        self.assertEqual(buf.getvalue(), "hello\n")
+
+    def test_fg_true(self):
+        """ https://github.com/amoffat/sh/issues/520 """
+        py = create_tmp_test("print('hello')")
+        buf = StringIO()
+        self.assertRaises(TypeError, python, py.name, _fg=True, _out=buf)
 
     def test_fg_env(self):
         py = create_tmp_test("""

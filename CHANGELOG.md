@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.13.1 - 4/28/20
+*   regression fix if `_fg=False` [#520](https://github.com/amoffat/sh/issues/520)
+
 ## 1.13.0 - 4/27/20
 *   minor Travis CI fixes [#492](https://github.com/amoffat/sh/pull/492)
 *   bugfix for boolean long options not respecting `_long_prefix` [#488](https://github.com/amoffat/sh/pull/488)
