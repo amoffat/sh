@@ -24,7 +24,7 @@ http://amoffat.github.io/sh/
 #===============================================================================
 
 
-__version__ = "1.13.0"
+__version__ = "1.13.1"
 __project_url__ = "https://github.com/amoffat/sh"
 
 
@@ -1104,7 +1104,7 @@ _fg is invalid with nearly every other option, see warning and workaround here:
     whitelist = set(("env", "fg", "cwd"))
     offending = set(passed_kwargs.keys()) - whitelist
 
-    if "fg" in passed_kwargs and offending:
+    if "fg" in passed_kwargs and passed_kwargs["fg"] and offending:
         invalid.append(("fg", msg))
     return invalid
 
