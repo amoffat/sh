@@ -40,6 +40,11 @@ Installation
 ::
 
     $> pip install sh
+    
+Support
+=======
+* `Andrew Moffat <https://github.com/amoffat>`_ - author/maintainer
+* `Erik Cederstrand <https://github.com/ecederstrand>`_ - maintainer
 
 Updating the docs
 =================
