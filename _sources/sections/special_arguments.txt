@@ -431,8 +431,16 @@ _out_bufsize
 ------------
 |def| ``1``
 
-The STDOUT/ERR buffer size.  0 for unbuffered, 1 for line buffered, anything
+The STDOUT buffer size.  0 for unbuffered, 1 for line buffered, anything
 else for a buffer of that amount.
+
+.. _err_bufsize:
+
+_err_bufsize
+------------
+|def| ``1``
+
+Same as :ref:`out_bufsize`, but with STDERR.
 
 .. _internal_bufsize:
 		

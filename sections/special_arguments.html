@@ -164,6 +164,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#performance-optimization">Performance &amp; Optimization</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#in-bufsize">_in_bufsize</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#out-bufsize">_out_bufsize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#err-bufsize">_err_bufsize</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#internal-bufsize">_internal_bufsize</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#no-out">_no_out</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#no-err">_no_err</a></li>
@@ -699,11 +700,16 @@ a buffer of that amount.</p>
 <div class="section" id="out-bufsize">
 <span id="id24"></span><h3>_out_bufsize<a class="headerlink" href="#out-bufsize" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">1</span></code></p>
-<p>The STDOUT/ERR buffer size.  0 for unbuffered, 1 for line buffered, anything
+<p>The STDOUT buffer size.  0 for unbuffered, 1 for line buffered, anything
 else for a buffer of that amount.</p>
 </div>
+<div class="section" id="err-bufsize">
+<span id="id25"></span><h3>_err_bufsize<a class="headerlink" href="#err-bufsize" title="Permalink to this headline">¶</a></h3>
+<p>Default value: <code class="docutils literal"><span class="pre">1</span></code></p>
+<p>Same as <a class="reference internal" href="#out-bufsize"><span class="std std-ref">_out_bufsize</span></a>, but with STDERR.</p>
+</div>
 <div class="section" id="internal-bufsize">
-<span id="id25"></span><h3>_internal_bufsize<a class="headerlink" href="#internal-bufsize" title="Permalink to this headline">¶</a></h3>
+<span id="id26"></span><h3>_internal_bufsize<a class="headerlink" href="#internal-bufsize" title="Permalink to this headline">¶</a></h3>
 <p>Default value: <code class="docutils literal"><span class="pre">3</span> <span class="pre">*</span> <span class="pre">1024**2</span></code> chunks</p>
 <p>How much of STDOUT/ERR your command will store internally.  This value
 represents the <em>number of bufsize chunks</em> not the total number of bytes.  For
