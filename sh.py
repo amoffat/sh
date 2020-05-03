@@ -1581,7 +1581,7 @@ def compile_args(args, kwargs, sep, prefix):
                 processed_args.append(encode(sub_arg))
         elif isinstance(arg, dict):
             processed_args += aggregate_keywords(arg, sep, prefix, raw=True)
-        elif arg is None:
+        elif arg is None or arg is False:
             pass
         else:
             processed_args.append(encode(arg))

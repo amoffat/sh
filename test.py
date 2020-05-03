@@ -836,6 +836,17 @@ print(options.long_option)
         self.assertTrue(python(py.name).strip() == "False")
 
 
+    def test_false_bool_ignore(self):
+        py = create_tmp_test("""
+import sys
+print(sys.argv[1:])
+""")
+        test = True
+        self.assertEqual(python(py.name, test and "-n").strip(), "['-n']")
+        test = False
+        self.assertEqual(python(py.name, test and "-n").strip(), "[]")
+
+
     def test_composition(self):
         from sh import ls, wc
         c1 = int(wc(ls("-A1"), l=True))
