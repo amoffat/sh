@@ -383,6 +383,21 @@ exit(3)
         py = create_tmp_test("exit(0)")
         python(py.name, _ok_code=None)
 
+
+    def test_none_arg(self):
+        py = create_tmp_test("""
+import sys
+print(sys.argv[1:])
+""")
+        maybe_arg = "some"
+        out = python(py.name, maybe_arg).strip()
+        self.assertEqual(out, "['some']")
+
+        maybe_arg = None
+        out = python(py.name, maybe_arg).strip()
+        self.assertEqual(out, "[]")
+
+
     def test_quote_escaping(self):
         py = create_tmp_test("""
 from optparse import OptionParser
@@ -819,6 +834,17 @@ print(options.long_option)
 """)
         self.assertTrue(python(py.name, long_option=True).strip() == "True")
         self.assertTrue(python(py.name).strip() == "False")
+
+
+    def test_false_bool_ignore(self):
+        py = create_tmp_test("""
+import sys
+print(sys.argv[1:])
+""")
+        test = True
+        self.assertEqual(python(py.name, test and "-n").strip(), "['-n']")
+        test = False
+        self.assertEqual(python(py.name, test and "-n").strip(), "[]")
 
 
     def test_composition(self):
