@@ -1581,6 +1581,8 @@ def compile_args(args, kwargs, sep, prefix):
                 processed_args.append(encode(sub_arg))
         elif isinstance(arg, dict):
             processed_args += aggregate_keywords(arg, sep, prefix, raw=True)
+
+        # see https://github.com/amoffat/sh/issues/522
         elif arg is None or arg is False:
             pass
         else:
