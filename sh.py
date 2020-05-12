@@ -52,7 +52,7 @@ import inspect
 import tempfile
 import warnings
 import stat
-from collections import deque
+from collections import deque, Mapping
 import glob as glob_module
 import ast
 from contextlib import contextmanager
@@ -110,7 +110,6 @@ import tty
 import fcntl
 import struct
 import resource
-from collections import deque
 import logging
 import weakref
 
@@ -1146,8 +1145,8 @@ def env_validator(passed_kwargs, merged_kwargs):
     if env is None:
         return invalid
 
-    if not isinstance(env, dict):
-        invalid.append(("env", "env must be a dict. Got {!r}".format(env)))
+    if not isinstance(env, Mapping):
+        invalid.append(("env", "env must be dict-like. Got {!r}".format(env)))
         return invalid
 
     for k, v in passed_kwargs["env"].items():
