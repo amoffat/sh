@@ -558,6 +558,11 @@ print(dict(HERP=sh.HERP))
         out = python(py.name, _env=env, _cwd=THIS_DIR).strip()
         self.assertEqual(out, "{'HERP': 'DERP'}")
 
+        # Test that _env also accepts os.environ which is a mpping but not a dict.
+        os.environ["HERP"] = "DERP"
+        out = python(py.name, _env=os.environ, _cwd=THIS_DIR).strip()
+        self.assertEqual(out, "{'HERP': 'DERP'}")
+
 
     def test_which(self):
         from sh import which, ls
