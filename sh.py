@@ -958,7 +958,7 @@ class RunningCommand(object):
             return unicode("")
 
     def __eq__(self, other):
-        return id(self) == id(other)
+        return unicode(self) == unicode(other)
     __hash__ = None  # Avoid DeprecationWarning in Python < 3
 
     def __contains__(self, item):
