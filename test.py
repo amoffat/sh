@@ -256,7 +256,7 @@ class FunctionalTests(BaseTests):
         try:
             python(py.name, arg, _encoding="utf8")
         except ErrorReturnCode as e:
-            self.assertTrue(native_arg in str(e))
+            self.assertIn(native_arg, str(e))
         else:
             self.fail("exception wasn't raised")
 
@@ -604,7 +604,7 @@ print(len(os.listdir("/dev/fd")))
         out = python(py.name, _close_fds=False).strip()
         # pick some number greater than 4, since it's hard to know exactly how many fds will be open/inherted in the
         # child
-        self.assertTrue(int(out) > 7)
+        self.assertGreater(int(out), 7)
 
         for t in tmp:
             t.close()
@@ -978,11 +978,11 @@ print(sys.argv[1])
         p = sleep(sleep_time, _bg=True)
 
         now = time.time()
-        self.assertTrue(now - start < sleep_time)
+        self.assertLess(now - start, sleep_time)
 
         p.wait()
         now = time.time()
-        self.assertTrue(now - start > sleep_time)
+        self.assertGreater(now - start, sleep_time)
 
 
     def test_background_exception(self):
@@ -1010,8 +1010,8 @@ subprocess.Popen(sys.argv[1:], shell=False).wait()
         cmd1 = python.bake(py.name, _with=True)
         with cmd1:
             out = whoami()
-        self.assertTrue("with_context" in out)
-        self.assertTrue(getpass.getuser() in out)
+        self.assertIn("with_context", out)
+        self.assertIn(getpass.getuser(), out)
 
 
     def test_with_context_args(self):
@@ -1115,26 +1115,26 @@ sys.stderr.write("stderr")
         file_obj = tempfile.NamedTemporaryFile()
         out = python(py.name, _out=file_obj)
 
-        self.assertTrue(len(out) == 0)
+        self.assertEqual(len(out), 0)
 
         file_obj.seek(0)
         actual_out = file_obj.read()
         file_obj.close()
 
-        self.assertTrue(len(actual_out) != 0)
+        self.assertEqual(len(actual_out), 0)
 
 
         # test with tee
         file_obj = tempfile.NamedTemporaryFile()
         out = python(py.name, _out=file_obj, _tee=True)
 
-        self.assertTrue(len(out) != 0)
+        self.assertGreater(len(out), 0)
 
         file_obj.seek(0)
         actual_out = file_obj.read()
         file_obj.close()
 
-        self.assertTrue(len(actual_out) != 0)
+        self.assertGreater(len(actual_out), 0)
 
 
 
@@ -1155,9 +1155,9 @@ sys.stderr.write("stderr")
         stderr = file_obj.read().decode()
         file_obj.close()
 
-        self.assertTrue(p.stdout == b"stdout")
-        self.assertTrue(stderr == "stderr")
-        self.assertTrue(len(p.stderr) == 0)
+        self.assertEqual(p.stdout, b"stdout")
+        self.assertEqual(stderr, "stderr")
+        self.assertEqual(len(p.stderr), 0)
 
         # now with tee
         file_obj = tempfile.NamedTemporaryFile()
@@ -1167,9 +1167,9 @@ sys.stderr.write("stderr")
         stderr = file_obj.read().decode()
         file_obj.close()
 
-        self.assertTrue(p.stdout == b"stdout")
-        self.assertTrue(stderr == "stderr")
-        self.assertTrue(len(p.stderr) != 0)
+        self.assertEqual(p.stdout, b"stdout")
+        self.assertEqual(stderr, "stderr")
+        self.assertGreater(len(p.stderr), 0)
 
 
     def test_tty_tee(self):
@@ -1228,8 +1228,8 @@ subprocess.Popen(sys.argv[1:], shell=False).wait()
 
         cmd1 = python.bake(py.name)
         out = cmd1.whoami()
-        self.assertTrue("subcommand" in out)
-        self.assertTrue(getpass.getuser() in out)
+        self.assertIn("subcommand", out)
+        self.assertIn(getpass.getuser(), out)
 
 
     def test_multiple_bakes(self):
@@ -1261,7 +1261,7 @@ sys.stdout.write(str(sys.argv[1:]))
 
         ran = ls("-la").ran
         ft = ran.index("-h")
-        self.assertTrue("-la" in ran[ft:])
+        self.assertIn("-la", ran[ft:])
 
     def test_output_equivalence(self):
         from sh import whoami
@@ -1310,7 +1310,7 @@ for i in range(5): print(i)
         p = python("-u", py.name, _out=agg)
         p.wait()
 
-        self.assertTrue(len(stdout) == 5)
+        self.assertEqual(len(stdout), 5)
 
 
 
@@ -1336,7 +1336,7 @@ for i in range(5):
         # exists when the python process actually starts
         time.sleep(.5)
 
-        self.assertTrue(len(stdout) != 5)
+        self.assertNotEqual(len(stdout), 5)
 
 
 
@@ -1354,7 +1354,7 @@ for i in range(5): print("herpderp")
         p = python("-u", py.name, _out=agg, _out_bufsize=1)
         p.wait()
 
-        self.assertTrue(len(stdout) == 5)
+        self.assertEqual(len(stdout), 5)
 
 
 
@@ -1373,7 +1373,7 @@ for i in range(5): print("herpderp")
         p.wait()
 
         # + 5 newlines
-        self.assertTrue(len(stdout) == (len("herpderp") * 5 + 5))
+        self.assertEqual(len(stdout), len("herpderp") * 5 + 5)
 
 
     def test_stdout_callback_buffered(self):
@@ -1390,7 +1390,7 @@ for i in range(5): sys.stdout.write("herpderp")
         p = python("-u", py.name, _out=agg, _out_bufsize=4)
         p.wait()
 
-        self.assertTrue(len(stdout) == (len("herp") / 2 * 5))
+        self.assertEqual(len(stdout), len("herp") / 2 * 5)
 
 
 
@@ -1412,7 +1412,7 @@ print(derp)
         p = python("-u", py.name, _out=agg, _tee=True)
         p.wait()
 
-        self.assertTrue("derp" in p)
+        self.assertIn("derp", p)
 
 
 
@@ -1433,8 +1433,8 @@ for i in range(5): print(i)
         p = python("-u", py.name, _out=agg, _tee=True)
         p.wait()
 
-        self.assertTrue("4" in p)
-        self.assertTrue("4" not in stdout)
+        self.assertIn("4", p)
+        self.assertNotIn("4", stdout)
 
 
 
@@ -1468,8 +1468,8 @@ for i in range(5):
 
         self.assertTrue(caught_signal)
         self.assertEqual(p.process.exit_code, -signal.SIGTERM)
-        self.assertTrue("4" not in p)
-        self.assertTrue("4" not in stdout)
+        self.assertNotIn("4", p)
+        self.assertNotIn("4", stdout)
 
 
 
@@ -1504,8 +1504,8 @@ for i in range(5):
 
         self.assertTrue(caught_signal)
         self.assertEqual(p.process.exit_code, -signal.SIGKILL)
-        self.assertTrue("4" not in p)
-        self.assertTrue("4" not in stdout)
+        self.assertNotIn("4", p)
+        self.assertNotIn("4", stdout)
 
     def test_general_signal(self):
         import signal
@@ -1558,7 +1558,8 @@ for i in range(42):
         out = []
         for line in python(py.name, _iter=True):
             out.append(int(line.strip()))
-        self.assertTrue(len(out) == 42 and sum(out) == 861)
+        self.assertEqual(len(out), 42)
+        self.assertEqual(sum(out), 861)
 
     def test_iter_unicode(self):
         # issue https://github.com/amoffat/sh/issues/224
@@ -1566,7 +1567,7 @@ for i in range(42):
         txt = create_tmp_test(test_string)
         for line in sh.cat(txt.name, _iter=True):
             break
-        self.assertTrue(len(line) < 1024)
+        self.assertLess(len(line), 1024)
 
     def test_nonblocking_iter(self):
         from errno import EWOULDBLOCK
@@ -1584,7 +1585,7 @@ sys.stdout.write("stdout")
                 count += 1
             else:
                 value = line
-        self.assertTrue(count > 0)
+        self.assertGreater(count, 0)
         self.assertEqual(value, "stdout")
 
         py = create_tmp_test("""
@@ -1601,7 +1602,7 @@ sys.stderr.write("stderr")
                 count += 1
             else:
                 value = line
-        self.assertTrue(count > 0)
+        self.assertGreater(count, 0)
         self.assertEqual(value, "stderr")
 
 
@@ -1619,13 +1620,13 @@ for i in range(42):
         out = []
         for line in python("-u", py.name, _iter="err"):
             out.append(line)
-        self.assertTrue(len(out) == 42)
+        self.assertEqual(len(out), 42)
 
         # verify that nothing is going to stdout
         out = []
         for line in python("-u", py.name, _iter="out"):
             out.append(line)
-        self.assertTrue(len(out) == 0)
+        self.assertEqual(len(out), 0)
 
 
     def test_sigpipe(self):
@@ -1731,8 +1732,8 @@ for i in range(42):
         out = []
         for line in python("-u", py.name, _iter=True, _err=agg): out.append(line)
 
-        self.assertTrue(len(out) == 42)
-        self.assertTrue(sum(stderr) == 1722)
+        self.assertEqual(len(out), 42)
+        self.assertEqual(sum(stderr), 1722)
 
 
     def test_cast_bg(self):
@@ -2038,14 +2039,14 @@ sys.stdout.write("line1")
         else:
             self.fail("no timeout exception")
         elapsed = time() - started
-        self.assertTrue(abs(elapsed - timeout) < 0.5)
+        self.assertLess(abs(elapsed - timeout), 0.5)
 
 
     def test_timeout_overstep(self):
         started = time.time()
         sh.sleep(1, _timeout=5)
         elapsed = time.time() - started
-        self.assertTrue(abs(elapsed - 1) < 0.5)
+        self.assertLess(abs(elapsed - 1), 0.5)
 
 
     def test_timeout_wait(self):
@@ -2383,7 +2384,7 @@ print(time())
         wait_elapsed = time.time() - wait_start
 
         self.assertTrue(callback.called)
-        self.assertTrue(abs(wait_elapsed - 1.0) < 1.0)
+        self.assertLess(abs(wait_elapsed - 1.0), 1.0)
         self.assertEqual(callback.exit_code, 0)
         self.assertTrue(callback.success)
 
@@ -2551,9 +2552,9 @@ sys.stdout.flush()
         time1 = float(time1)
         time2 = float(time2)
         self.assertEqual(word1, "testing")
-        self.assertTrue(abs(1-time1) < 0.5)
+        self.assertLess(abs(1-time1), 0.5)
         self.assertEqual(word2, "done")
-        self.assertTrue(abs(1-time2) < 0.5)
+        self.assertLess(abs(1-time2), 0.5)
 
 
     def test_stdin_newline_bufsize(self):
@@ -2598,9 +2599,9 @@ sys.stdout.flush()
         time1 = float(time1)
         time2 = float(time2)
         self.assertEqual(word1, "testing")
-        self.assertTrue(abs(1-time1) < 0.5)
+        self.assertLess(abs(1-time1), 0.5)
         self.assertEqual(word2, "done")
-        self.assertTrue(abs(1-time2) < 0.5)
+        self.assertLess(abs(1-time2), 0.5)
 
 
     def test_custom_timeout_signal(self):
