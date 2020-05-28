@@ -2146,7 +2146,7 @@ sys.stdout.write(sys.stdin.read())
 sys.stdout.flush()
 """)
         out = python(py.name, _in="test\n", _tty_in=True)
-        self.assertEqual("test\n", out)
+        self.assertEqual("test\n", str(out))
 
 
     def test_no_err(self):
