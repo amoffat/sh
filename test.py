@@ -594,7 +594,7 @@ print("hi")
         for t in tmp:
             flags = fcntl.fcntl(t.fileno(), fcntl.F_GETFD)
             flags &= ~fcntl.FD_CLOEXEC
-            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags) 
+            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags)
         first_fd = tmp[0].fileno()
 
         py = create_tmp_test("""
@@ -619,7 +619,7 @@ print(len(os.listdir("/dev/fd")))
         for t in tmp:
             flags = fcntl.fcntl(t.fileno(), fcntl.F_GETFD)
             flags &= ~fcntl.FD_CLOEXEC
-            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags) 
+            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags)
 
         py = create_tmp_test("""
 import os
@@ -642,7 +642,7 @@ print(os.listdir("/dev/fd"))
         for t in tmp:
             flags = fcntl.fcntl(t.fileno(), fcntl.F_GETFD)
             flags &= ~fcntl.FD_CLOEXEC
-            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags) 
+            fcntl.fcntl(t.fileno(), fcntl.F_SETFD, flags)
         last_fd = tmp[-1].fileno()
 
         py = create_tmp_test("""
@@ -1762,7 +1762,7 @@ sys.stdout.write(sys.argv[1])
         # `python` has an env baked into it, and we want `_env` to be None for
         # coverage
         system_python(py.name, _fg=True)
-        
+
     def test_fg_false(self):
         """ https://github.com/amoffat/sh/issues/520 """
         py = create_tmp_test("print('hello')")
@@ -1830,7 +1830,7 @@ print(orig)
 sh.pwd(_cwd="{newdir}", _fg=True)
 print(realpath(os.getcwd()))
 """.format(newdir=td))
-        
+
         orig, newdir, restored = python(py.name).strip().split("\n")
         newdir = realpath(newdir)
         self.assertEqual(newdir, td)

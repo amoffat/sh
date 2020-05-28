@@ -349,19 +349,19 @@ class ErrorReturnCode(Exception):
     derived classes with the format: ErrorReturnCode_NNN where NNN is the exit
     code number.  the reason for this is it reduces boiler plate code when
     testing error return codes:
-    
+
         try:
             some_cmd()
         except ErrorReturnCode_12:
             print("couldn't do X")
-            
+
     vs:
         try:
             some_cmd()
         except ErrorReturnCode as e:
             if e.exit_code == 12:
                 print("couldn't do X")
-    
+
     it's not much of a savings, but i believe it makes the code easier to read """
 
     truncate_cap = 750
@@ -612,7 +612,7 @@ class Logger(object):
     script is done.  with sh, it's easy to create loggers with unique names if
     we want our loggers to include our command arguments.  for example, these
     are all unique loggers:
-        
+
             ls -l
             ls -l /tmp
             ls /tmp
@@ -746,7 +746,7 @@ class RunningCommand(object):
 
         done_callback = call_args["done"]
         if done_callback:
-            call_args["done"] = partial(done_callback, self) 
+            call_args["done"] = partial(done_callback, self)
 
 
         # set up which stream should write to the pipe
@@ -846,7 +846,7 @@ class RunningCommand(object):
 
             else:
                 self.handle_command_exit_code(exit_code)
-        
+
                 # if an iterable command is using an instance of OProc for its stdin,
                 # wait on it.  the process is probably set to "piped", which means it
                 # won't be waited on, which means exceptions won't propagate up to the
@@ -1137,7 +1137,7 @@ def bufsize_validator(passed_kwargs, merged_kwargs):
 
 
 def env_validator(passed_kwargs, merged_kwargs):
-    """ a validator to check that env is a dictionary and that all environment variable 
+    """ a validator to check that env is a dictionary and that all environment variable
     keys and values are strings. Otherwise, we would exit with a confusing exit code 255. """
     invalid = []
 
@@ -1163,7 +1163,7 @@ class Command(object):
     represents the program itself (and not a running instance of it), it should
     hold very little state.  in fact, the only state it does hold is baked
     arguments.
-    
+
     when a Command object is called, the result that is returned is a
     RunningCommand object, which represents the Command put into an execution
     state. """
@@ -1322,7 +1322,7 @@ class Command(object):
         # exception.  if CommandNotFound is raised, we need self._path and the
         # other attributes to be set correctly, so repr() works when they're
         # inspecting the stack.  issue #304
-        self._path = encode_to_py3bytes_or_py2str(found) 
+        self._path = encode_to_py3bytes_or_py2str(found)
         self.__name__ = str(self)
 
 
@@ -1544,7 +1544,7 @@ class Command(object):
         stderr = call_args["err"]
         if output_redirect_is_filename(stderr):
             stderr = open(str(stderr), "wb")
-    
+
         return RunningCommand(cmd, call_args, stdin, stdout, stderr)
 
 
@@ -1565,7 +1565,7 @@ def compile_args(args, kwargs, sep, prefix):
     and produces
 
         ['-l', '/tmp', '--color=never']
-        
+
     """
     processed_args = []
     encode = encode_to_py3bytes_or_py2str
@@ -1998,7 +1998,7 @@ class OProc(object):
             # parent reading the read end won't block (close breaks the block).
             flags = fcntl.fcntl(exc_pipe_write, fcntl.F_GETFD)
             flags |= fcntl.FD_CLOEXEC
-            fcntl.fcntl(exc_pipe_write, fcntl.F_SETFD, flags) 
+            fcntl.fcntl(exc_pipe_write, fcntl.F_SETFD, flags)
 
             try:
                 # ignoring SIGHUP lets us persist even after the parent process
@@ -2585,7 +2585,7 @@ def background_thread(timeout_fn, timeout_event, handle_exit_code, is_alive,
         quit):
     """ handles the timeout logic """
 
-    # if there's a timeout event, loop 
+    # if there's a timeout event, loop
     if timeout_event:
         while not quit.is_set():
             timed_out = event_wait(timeout_event, 0.1)
@@ -2667,7 +2667,7 @@ class NotYetReadyToRead(Exception): pass
 def determine_how_to_read_input(input_obj):
     """ given some kind of input object, return a function that knows how to
     read chunks of that input object.
-    
+
     each reader function should return a chunk and raise a DoneReadingForever
     exception, or return None, when there's no more data to read
 
@@ -3315,7 +3315,7 @@ class Environment(dict):
     def __init__(self, globs, baked_args={}):
         """ baked_args are defaults for the 'sh' execution context.  for
         example:
-            
+
             tmp = sh(_out=StringIO())
 
         'out' would end up in here as an entry in the baked_args dict """
@@ -3672,7 +3672,7 @@ class ModuleImporterFromVariables(object):
 
         sh2 = sh(_timeout=3)
         from sh2 import ls
-    
+
     """
 
     def __init__(self, restrict_to=None):
