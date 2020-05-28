@@ -1121,7 +1121,7 @@ sys.stderr.write("stderr")
         actual_out = file_obj.read()
         file_obj.close()
 
-        self.assertEqual(len(actual_out), 0)
+        self.assertNotEqual(len(actual_out), 0)
 
 
         # test with tee
