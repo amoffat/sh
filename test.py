@@ -218,6 +218,46 @@ class BaseTests(unittest.TestCase):
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
 
+    # python2.6 lacks this
+    def assertIn(self, needle, haystack):
+        s = super(BaseTests, self)
+        if hasattr(s, "assertIn"):
+            s.assertIn(needle, haystack)
+        else:
+            self.assertTrue(needle in haystack)
+
+    # python2.6 lacks this
+    def assertNotIn(self, needle, haystack):
+        s = super(BaseTests, self)
+        if hasattr(s, "assertNotIn"):
+            s.assertNotIn(needle, haystack)
+        else:
+            self.assertTrue(needle not in haystack)
+
+    # python2.6 lacks this
+    def assertLess(self, a, b):
+        s = super(BaseTests, self)
+        if hasattr(s, "assertLess"):
+            s.assertLess(a, b)
+        else:
+            self.assertTrue(a < b)
+
+    # python2.6 lacks this
+    def assertGreater(self, a, b):
+        s = super(BaseTests, self)
+        if hasattr(s, "assertGreater"):
+            s.assertGreater(a, b)
+        else:
+            self.assertTrue(a > b)
+
+    # python2.6 lacks this
+    def skipTest(self, msg):
+        s = super(BaseTests, self)
+        if hasattr(s, "skipTest"):
+            s.skipTest(msg)
+        else:
+            return
+
 
 @requires_posix
 class FunctionalTests(BaseTests):
