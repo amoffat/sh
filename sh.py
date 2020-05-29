@@ -62,8 +62,10 @@ MINOR_VER = sys.version_info[1]
 IS_PY26 = sys.version_info[0] == 2 and MINOR_VER == 6
 if IS_PY3:
     from io import StringIO
+
     ioStringIO = StringIO
     from io import BytesIO as cStringIO
+
     iocStringIO = cStringIO
     from queue import Queue, Empty
 
@@ -82,7 +84,6 @@ try:
     from shlex import quote as shlex_quote  # here from 3.3 onward
 except ImportError:
     from pipes import quote as shlex_quote  # undocumented before 2.7
-
 
 if "windows" in platform.system().lower():  # pragma: no cover
     raise ImportError("sh %s is currently only supported on linux and osx. \
@@ -108,7 +109,6 @@ FORCE_USE_SELECT = bool(int(os.environ.get("SH_TESTS_USE_SELECT", "0")))
 # with-context
 PUSHD_LOCK = threading.RLock()
 
-
 if hasattr(inspect, "getfullargspec"):
     def get_num_args(fn):
         return len(inspect.getfullargspec(fn).args)
@@ -129,7 +129,6 @@ POLLER_EVENT_READ = 1
 POLLER_EVENT_WRITE = 2
 POLLER_EVENT_HUP = 4
 POLLER_EVENT_ERROR = 8
-
 
 # here we use an use a poller interface that transparently selects the most
 # capable poller (out of either select.select or select.poll).  this was added
@@ -325,6 +324,7 @@ class ErrorReturnCodeMeta(type):
     program we're testing throws may not be the same class that we pass to
     assertRaises
     """
+
     def __subclasscheck__(self, o):
         other_bases = set([b.__name__ for b in o.__bases__])
         return self.__name__ in other_bases or o.__name__ == self.__name__
@@ -402,6 +402,7 @@ class SignalException(ErrorReturnCode):
 class TimeoutException(Exception):
     """ the exception thrown when a command is killed because a specified
     timeout (via _timeout or .wait(timeout)) was hit """
+
     def __init__(self, exit_code, full_cmd):
         self.exit_code = exit_code
         self.full_cmd = full_cmd
@@ -611,6 +612,7 @@ class Logger(object):
     "context", which will be the very unique name.  this allows us to get a
     logger with a very general name, eg: "command", and have a unique name
     appended to it via the context, eg: "ls -l /tmp" """
+
     def __init__(self, name, context=None):
         self.name = name
         self.log = logging.getLogger("%s.%s" % (SH_LOGGER_NAME, name))
@@ -937,6 +939,7 @@ class RunningCommand(object):
 
     def __eq__(self, other):
         return unicode(self) == unicode(other)
+
     __hash__ = None  # Avoid DeprecationWarning in Python < 3
 
     def __contains__(self, item):
@@ -2107,7 +2110,7 @@ class OProc(object):
                 os.close(close_pipe_write)
 
             os.close(exc_pipe_write)
-            fork_exc = os.read(exc_pipe_read, 1024**2)
+            fork_exc = os.read(exc_pipe_read, 1024 ** 2)
             os.close(exc_pipe_read)
             if fork_exc:
                 fork_exc = fork_exc.decode(DEFAULT_ENCODING)
@@ -2183,8 +2186,7 @@ class OProc(object):
             # wherever it has to go, sometimes a pipe Queue (that we will use
             # to pipe data to other processes), and also an internal deque
             # that we use to aggregate all the output
-            save_stdout = not ca["no_out"] and \
-                (tee_out or stdout is None)
+            save_stdout = not ca["no_out"] and (tee_out or stdout is None)
 
             pipe_out = ca["piped"] in ("out", True)
             pipe_err = ca["piped"] in ("err",)
@@ -2213,15 +2215,13 @@ class OProc(object):
             # stream reader for stderr, because we've already set one up for
             # stdout above
             self._stderr_stream = None
-            if stderr is not OProc.STDOUT and not single_tty and not pipe_err \
-                    and self._stderr_parent_fd:
+            if stderr is not OProc.STDOUT and not single_tty and not pipe_err and self._stderr_parent_fd:
 
                 stderr_pipe = None
                 if pipe is OProc.STDERR and not ca["no_pipe"]:
                     stderr_pipe = self._pipe_queue
 
-                save_stderr = not ca["no_err"] and \
-                    (ca["tee"] in ("err",) or stderr is None)
+                save_stderr = not ca["no_err"] and (ca["tee"] in ("err",) or stderr is None)
 
                 if callable(stderr):
                     stderr = construct_streamreader_callback(self, stderr)
@@ -2259,6 +2259,7 @@ class OProc(object):
                 def fn(exit_code):
                     with process_assign_lock:
                         return self.command.handle_command_exit_code(exit_code)
+
                 handle_exit_code = fn
 
             self._quit_threads = threading.Event()
@@ -2656,6 +2657,7 @@ def determine_how_to_read_input(input_obj):
 
         def raise_():
             raise DoneReadingForever
+
         get_chunk = raise_
 
     else:
@@ -2679,6 +2681,7 @@ def get_queue_chunk_reader(stdin):
         if chunk is None:
             raise DoneReadingForever
         return chunk
+
     return fn
 
 
@@ -2717,6 +2720,7 @@ def get_iter_chunk_reader(stdin):
             return chunk
         except StopIteration:
             raise DoneReadingForever
+
     return fn
 
 
@@ -2970,6 +2974,7 @@ def get_stringio_chunk_consumer(handler, encoding, decode_errors):
 class StreamReader(object):
     """ reads from some output (the stream) and sends what it just read to the
     handler.  """
+
     def __init__(self, log, stream, handler, buffer, bufsize_type, encoding, decode_errors, pipe_queue=None,
                  save_data=True):
         self.stream = stream
@@ -3170,7 +3175,9 @@ def with_lock(lock):
             with lock:
                 with fn(*a, **kwargs):
                     yield
+
         return wrapped2
+
     return wrapped
 
 
@@ -3327,7 +3334,6 @@ class Contrib(ModuleType):  # pragma: no cover
     @classmethod
     def __call__(cls, name):
         def wrapper1(fn):
-
             @property
             def cmd_getter(self):
                 cmd = resolve_command(name)
@@ -3567,6 +3573,7 @@ def register_importer():
         tmp = sh()
         from tmp import ls
     """
+
     def test(importer_cls):
         try:
             return importer_cls.__class__.__name__ == ModuleImporterFromVariables.__name__
@@ -3577,7 +3584,7 @@ def register_importer():
     already_registered = any([True for i in sys.meta_path if test(i)])
 
     if not already_registered:
-        importer = ModuleImporterFromVariables(restrict_to=[SelfWrapper.__name__],)
+        importer = ModuleImporterFromVariables(restrict_to=[SelfWrapper.__name__], )
         sys.meta_path.insert(0, importer)
 
     return not already_registered
