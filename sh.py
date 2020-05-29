@@ -409,7 +409,7 @@ class TimeoutException(Exception):
         super(Exception, self).__init__()
 
 
-SIGNALS_THAT_SHOULD_THROW_EXCEPTION = {
+SIGNALS_THAT_SHOULD_THROW_EXCEPTION = set((
     signal.SIGABRT,
     signal.SIGBUS,
     signal.SIGFPE,
@@ -421,7 +421,7 @@ SIGNALS_THAT_SHOULD_THROW_EXCEPTION = {
     signal.SIGSEGV,
     signal.SIGTERM,
     signal.SIGSYS,
-}
+))
 
 
 # we subclass AttributeError because:
@@ -434,7 +434,7 @@ class CommandNotFound(AttributeError):
 rc_exc_regex = re.compile(r"(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z]+)")
 rc_exc_cache = {}
 
-SIGNAL_MAPPING = {v: k for k, v in signal.__dict__.items() if re.match(r"SIG[a-zA-Z]+", k)}
+SIGNAL_MAPPING = dict([(v, k) for k, v in signal.__dict__.items() if re.match(r"SIG[a-zA-Z]+", k)])
 
 
 def get_exc_from_name(name):
@@ -670,7 +670,7 @@ class RunningCommand(object):
     exceptions. """
 
     # these are attributes that we allow to passthrough to OProc
-    _OProc_attr_whitelist = {
+    _OProc_attr_whitelist = set((
         "signal",
         "terminate",
         "kill",
@@ -684,7 +684,7 @@ class RunningCommand(object):
         "input_thread_exc",
         "output_thread_exc",
         "bg_thread_exc",
-    }
+    ))
 
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
         """
@@ -1085,7 +1085,7 @@ def fg_validator(passed_kwargs, merged_kwargs):
 _fg is invalid with nearly every other option, see warning and workaround here:
 
     https://amoffat.github.io/sh/sections/special_arguments.html#fg"""
-    whitelist = {"env", "fg", "cwd"}
+    whitelist = set(("env", "fg", "cwd"))
     offending = set(passed_kwargs.keys()) - whitelist
 
     if "fg" in passed_kwargs and passed_kwargs["fg"] and offending:
@@ -2053,7 +2053,7 @@ class OProc(object):
                     close_fds = True
 
                 if close_fds:
-                    pass_fds = {0, 1, 2, exc_pipe_write}
+                    pass_fds = set((0, 1, 2, exc_pipe_write))
                     pass_fds.update(ca["pass_fds"])
 
                     # don't inherit file descriptors
@@ -3231,7 +3231,7 @@ class Environment(dict):
     # not resolve to functions.  we don't want to accidentally shadow real
     # commands with functions/imports that we define in sh.py.  for example,
     # "import time" may override the time system program
-    whitelist = {
+    whitelist = set((
         "Command",
         "RunningCommand",
         "CommandNotFound",
@@ -3249,7 +3249,7 @@ class Environment(dict):
         "pushd",
         "glob",
         "contrib",
-    }
+    ))
 
     def __init__(self, globs, baked_args=None):
         """ baked_args are defaults for the 'sh' execution context.  for
