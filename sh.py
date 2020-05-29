@@ -772,7 +772,7 @@ class RunningCommand(object):
                                      self.call_args, pipe, process_assign_lock)
 
             logger_str = log_str_factory(self.ran, call_args, self.process.pid)
-            self.log.set_context(logger_str)
+            self.log.context = self.log.sanitize_context(logger_str)
             self.log.info("process started")
 
             if should_wait:
