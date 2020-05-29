@@ -2330,7 +2330,7 @@ p.wait()
 
     def test_cd_homedir(self):
         orig = os.getcwd()
-        my_dir = os.path.expanduser("~")
+        my_dir = os.path.realpath(os.path.expanduser("~"))  # Use realpath because homedir may be a symlink
         sh.cd()
 
         self.assertNotEqual(orig, os.getcwd())
