@@ -294,10 +294,10 @@ data = sys.stdin.read()
 sys.stdout.write("no hang")
 """)
         out = python(py.name, _in="", _timeout=2)
-        self.assertEqual(out, "no hang")
+        self.assertEqual(str(out), "no hang")
 
         out = python(py.name, _in=None, _timeout=2)
-        self.assertEqual(out, "no hang")
+        self.assertEqual(str(out), "no hang")
 
     def test_exit_code(self):
         from sh import ErrorReturnCode
@@ -489,7 +489,7 @@ while True:
         out = tr("[:lower:]", "[:upper:]", _in=test)
 
         match = "".join([t.upper() for t in test])
-        self.assertEqual(out, match)
+        self.assertEqual(str(out), match)
 
 
     def test_manual_stdin_file(self):
@@ -505,7 +505,7 @@ while True:
 
         out = tr("[:lower:]", "[:upper:]", _in=stdin)
 
-        self.assertEqual(out, test_string.upper())
+        self.assertEqual(str(out), test_string.upper())
 
 
     def test_manual_stdin_queue(self):
@@ -522,7 +522,7 @@ while True:
         out = tr("[:lower:]", "[:upper:]", _in=q)
 
         match = "".join([t.upper() for t in test])
-        self.assertEqual(out, match)
+        self.assertEqual(str(out), match)
 
 
     def test_environment(self):
@@ -544,7 +544,7 @@ for key in list(os.environ.keys()):
 print(dict(os.environ))
 """)
         out = python(py.name, _env=env).strip()
-        self.assertEqual(out, "{'HERP': 'DERP'}")
+        self.assertEqual(str(out), "{'HERP': 'DERP'}")
 
         py = create_tmp_test("""
 import os, sys
@@ -824,9 +824,9 @@ parser.add_option("-s", action="store_true", default=False, dest="short_option")
 options, args = parser.parse_args()
 print(options.short_option)
 """)
-        self.assertTrue(python(py.name, s=True).strip() == "True")
-        self.assertTrue(python(py.name, s=False).strip() == "False")
-        self.assertTrue(python(py.name).strip() == "False")
+        self.assertEqual(str(python(py.name, s=True)).strip(), "True")
+        self.assertEqual(str(python(py.name, s=False)).strip(), "False")
+        self.assertEqual(str(python(py.name)).strip(), "False")
 
 
     def test_long_bool_option(self):
@@ -837,8 +837,8 @@ parser.add_option("-l", "--long-option", action="store_true", default=False, des
 options, args = parser.parse_args()
 print(options.long_option)
 """)
-        self.assertTrue(python(py.name, long_option=True).strip() == "True")
-        self.assertTrue(python(py.name).strip() == "False")
+        self.assertEqual(str(python(py.name, long_option=True)).strip(), "True")
+        self.assertEqual(str(python(py.name)).strip(), "False")
 
 
     def test_false_bool_ignore(self):
@@ -880,8 +880,8 @@ parser.add_option("-l", "--long-option", action="store", default="", dest="long_
 options, args = parser.parse_args()
 print(options.long_option.upper())
 """)
-        self.assertTrue(python(py.name, long_option="testing").strip() == "TESTING")
-        self.assertTrue(python(py.name).strip() == "")
+        self.assertEqual(str(python(py.name, long_option="testing")).strip(), "TESTING")
+        self.assertEqual(str(python(py.name)).strip(), "")
 
     def test_raw_args(self):
         py = create_tmp_test("""
@@ -912,13 +912,13 @@ print(sys.argv[1])
         opt = {"long-option": "underscore"}
         correct = "--long-option=custom=underscore"
 
-        out = python(py.name, opt, _long_sep="=custom=").strip()
+        out = str(python(py.name, opt, _long_sep="=custom=")).strip()
         self.assertEqual(out, correct)
 
         # test baking too
         correct = "--long-option=baked=underscore"
         python_baked = python.bake(py.name, opt, _long_sep="=baked=")
-        out = python_baked().strip()
+        out = str(python_baked()).strip()
         self.assertEqual(out, correct)
 
 
@@ -1033,12 +1033,12 @@ if options.opt:
 """)
         with python(py.name, opt=True, _with=True):
             out = whoami()
-        self.assertTrue(getpass.getuser() == out.strip())
+        self.assertEqual(getpass.getuser(), str(out).strip())
 
 
         with python(py.name, _with=True):
             out = whoami()
-        self.assertTrue(out == "")
+        self.assertEqual(str(out), "")
 
 
     def test_binary_input(self):
@@ -1049,7 +1049,7 @@ sys.stdout.write(data)
 """)
         data = b'1234'
         out = python(py.name, _in=data)
-        self.assertEqual(out, "1234")
+        self.assertEqual(str(out), "1234")
 
 
     def test_err_to_out(self):
@@ -1063,7 +1063,7 @@ sys.stderr.write("stderr")
 sys.stderr.flush()
 """)
         stdout = python(py.name, _err_to_out=True)
-        self.assertEqual(stdout, "stdoutstderr")
+        self.assertEqual(str(stdout), "stdoutstderr")
 
     def test_err_to_out_and_sys_stdout(self):
         py = create_tmp_test("""
@@ -1077,7 +1077,7 @@ sys.stderr.flush()
 """)
         master, slave = os.pipe()
         stdout = python(py.name, _err_to_out=True, _out=slave)
-        self.assertEqual(stdout, "")
+        self.assertEqual(str(stdout), "")
         self.assertEqual(os.read(master, 12), b"stdoutstderr")
 
 
@@ -1097,7 +1097,7 @@ while True:
 """)
 
         out = python(python("-u", py.name, _piped="err"), "-u", py2.name)
-        self.assertEqual(out, "stderr")
+        self.assertEqual(str(out), "stderr")
 
 
 
@@ -1113,7 +1113,7 @@ sys.stderr.write("stderr")
 """)
 
         file_obj = tempfile.NamedTemporaryFile()
-        out = python(py.name, _out=file_obj)
+        out = str(python(py.name, _out=file_obj))
 
         self.assertTrue(len(out) == 0)
 
@@ -1126,7 +1126,7 @@ sys.stderr.write("stderr")
 
         # test with tee
         file_obj = tempfile.NamedTemporaryFile()
-        out = python(py.name, _out=file_obj, _tee=True)
+        out = str(python(py.name, _out=file_obj, _tee=True))
 
         self.assertTrue(len(out) != 0)
 
@@ -1210,8 +1210,8 @@ sys.stderr.write("stderr")
       file_obj.seek(0)
       stderr = file_obj.read().decode()
       file_obj.close()
-      self.assertTrue(stdout == "stdout")
-      self.assertTrue(stderr == "stderr")
+      self.assertEqual(str(stdout), "stdout")
+      self.assertEqual(stderr, "stderr")
 
     def test_subcommand_and_bake(self):
         from sh import ls
@@ -1239,7 +1239,7 @@ sys.stdout.write(str(sys.argv[1:]))
 """)
 
         out = python.bake(py.name).bake("bake1").bake("bake2")()
-        self.assertEqual("['bake1', 'bake2']", out)
+        self.assertEqual("['bake1', 'bake2']", str(out))
 
     def test_arg_preprocessor(self):
         py = create_tmp_test("""
@@ -1253,7 +1253,7 @@ sys.stdout.write(str(sys.argv[1:]))
 
         cmd = python.bake(py.name, _arg_preprocess=arg_preprocess)
         out = cmd("arg")
-        self.assertEqual("['preprocessed', 'arg', '--a-kwarg=123']", out)
+        self.assertEqual("['preprocessed', 'arg', '--a-kwarg=123']", str(out))
 
     def test_bake_args_come_first(self):
         from sh import ls
@@ -1269,7 +1269,7 @@ sys.stdout.write(str(sys.argv[1:]))
         iam1 = whoami()
         iam2 = whoami()
 
-        self.assertEqual(iam1, iam2)
+        self.assertEqual(str(iam1), str(iam2))
 
 
     # https://github.com/amoffat/sh/pull/252
@@ -1541,7 +1541,7 @@ for i in range(5):
         p.wait()
 
         self.assertEqual(p.process.exit_code, 0)
-        self.assertEqual(p, "0\n1\n2\n3\n10\n")
+        self.assertEqual(str(p), "0\n1\n2\n3\n10\n")
 
 
     def test_iter_generator(self):
@@ -1850,7 +1850,7 @@ print(realpath(os.getcwd()))
         stdin.seek(0)
 
         out = tr(tr("[:lower:]", "[:upper:]", _in=data), "[:upper:]", "[:lower:]")
-        self.assertTrue(out == data)
+        self.assertEqual(str(out), data)
 
 
     def test_tty_input(self):
@@ -1889,7 +1889,7 @@ else:
         self.assertEqual(d["stars"], expected_stars)
 
         response = python(py.name)
-        self.assertEqual(response, "no tty attached!\n")
+        self.assertEqual(str(response), "no tty attached!\n")
 
 
     def test_tty_output(self):
@@ -1906,10 +1906,10 @@ else:
 """)
 
         out = python(py.name, _tty_out=True)
-        self.assertEqual(out, "tty attached")
+        self.assertEqual(str(out), "tty attached")
 
         out = python(py.name, _tty_out=False)
-        self.assertEqual(out, "no tty attached")
+        self.assertEqual(str(out), "no tty attached")
 
 
     def test_stringio_output(self):
@@ -1940,7 +1940,7 @@ else:
         input.seek(0)
 
         out = cat(_in=input)
-        self.assertEqual(out, "herpderp")
+        self.assertEqual(str(out), "herpderp")
 
 
     def test_internal_bufsize(self):
@@ -2146,7 +2146,7 @@ sys.stdout.write(sys.stdin.read())
 sys.stdout.flush()
 """)
         out = python(py.name, _in="test\n", _tty_in=True)
-        self.assertEqual("test\n", out)
+        self.assertEqual("test\n", str(out))
 
 
     def test_no_err(self):
@@ -2208,7 +2208,7 @@ else:
         self.assertRaises(UnicodeDecodeError, s, fn)
 
         p = python(py.name, _encoding="ascii", _decode_errors="ignore")
-        self.assertEqual(p, "test")
+        self.assertEqual(str(p), "test")
 
 
     def test_signal_exception(self):
@@ -2510,7 +2510,7 @@ sys.stdout.write(sys.stdin.read())
             return stdin
 
         out = python(py.name, _in=create_stdin())
-        self.assertEqual("0123", out)
+        self.assertEqual("0123", str(out))
 
     def test_stdin_unbuffered_bufsize(self):
         import sh
@@ -2638,7 +2638,7 @@ import sys
 sys.stdout.write(sys.argv[1])
 """)
         out = python.bake(py.name).bake_()
-        self.assertEqual("bake", out)
+        self.assertEqual("bake", str(out))
 
 
     def test_no_proc_no_attr(self):

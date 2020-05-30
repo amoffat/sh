@@ -1,4 +1,8 @@
 # Changelog
+
+## 2.0.0 - X/XX/XX
+*   `RunningCommand.__eq__` no longer has the side effect of executing the command [#518](https://github.com/amoffat/sh/pull/531)
+
 ## 1.14.0 - X/XX/XX
 *   `_env` now more lenient in accepting dictionary-like objects [#527](https://github.com/amoffat/sh/issues/527)
 *   `None` and `False` arguments now do not pass through to underlying command [#525](https://github.com/amoffat/sh/pull/525)
