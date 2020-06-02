@@ -3504,7 +3504,11 @@ class SelfWrapper(ModuleType):
         # but it seems to be the only way to make reload() behave
         # nicely.  if i make these attributes dynamic lookups in
         # __getattr__, reload sometimes chokes in weird ways...
-        for attr in ["__builtins__", "__doc__", "__file__", "__name__", "__package__"]:
+        super(SelfWrapper, self).__init__(
+            name=getattr(self_module, '__name__', None),
+            doc=getattr(self_module, '__doc__', None)
+        )
+        for attr in ["__builtins__", "__file__", "__package__"]:
             setattr(self, attr, getattr(self_module, attr, None))
 
         # python 3.2 (2.7 and 3.3 work fine) breaks on osx (not ubuntu)
