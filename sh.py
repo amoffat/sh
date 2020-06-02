@@ -518,8 +518,8 @@ class GlobResults(list):
         list.__init__(self, results)
 
 
-def glob(path, *a, **kwargs):
-    expanded = GlobResults(path, _old_glob(path, *a, **kwargs))
+def glob(path, *args, **kwargs):
+    expanded = GlobResults(path, _old_glob(path, *args, **kwargs))
     return expanded
 
 
@@ -1360,7 +1360,7 @@ class Command(object):
         return call_args, kwargs
 
     # TODO needs documentation
-    def bake(self, *a, **kwargs):
+    def bake(self, *args, **kwargs):
         fn = type(self)(self._path)
         fn._partial = True
 
@@ -1379,7 +1379,7 @@ class Command(object):
         fn._partial_baked_args.extend(self._partial_baked_args)
         sep = pruned_call_args.get("long_sep", self._call_args["long_sep"])
         prefix = pruned_call_args.get("long_prefix", self._call_args["long_prefix"])
-        fn._partial_baked_args.extend(compile_args(a, kwargs, sep, prefix))
+        fn._partial_baked_args.extend(compile_args(args, kwargs, sep, prefix))
         return fn
 
     def __str__(self):
@@ -1414,9 +1414,9 @@ class Command(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         get_prepend_stack().pop()
 
-    def __call__(self, *a, **kwargs):
+    def __call__(self, *args, **kwargs):
         kwargs = kwargs.copy()
-        a = list(a)
+        args = list(args)
 
         # this will hold our final command, including arguments, that will be
         # execd
@@ -1441,7 +1441,7 @@ class Command(object):
         # this early, so that args, kwargs are accurate
         preprocessor = self._partial_call_args.get("arg_preprocess", None)
         if preprocessor:
-            a, kwargs = preprocessor(a, kwargs)
+            args, kwargs = preprocessor(args, kwargs)
 
         # here we extract the special kwargs and override any
         # special kwargs from the possibly baked command
@@ -1462,8 +1462,8 @@ class Command(object):
 
         # check if we're piping via composition
         stdin = call_args["in"]
-        if a:
-            first_arg = a.pop(0)
+        if args:
+            first_arg = args.pop(0)
             if isinstance(first_arg, RunningCommand):
                 if first_arg.call_args["piped"]:
                     stdin = first_arg.process
@@ -1471,9 +1471,9 @@ class Command(object):
                     stdin = first_arg.process._pipe_queue
 
             else:
-                a.insert(0, first_arg)
+                args.insert(0, first_arg)
 
-        processed_args = compile_args(a, kwargs, call_args["long_sep"], call_args["long_prefix"])
+        processed_args = compile_args(args, kwargs, call_args["long_sep"], call_args["long_prefix"])
 
         # makes sure our arguments are broken up correctly
         split_args = self._partial_baked_args + processed_args
@@ -1749,13 +1749,13 @@ def handle_process_exit_code(exit_code):
     return exit_code
 
 
-def no_interrupt(syscall, *a, **kwargs):
+def no_interrupt(syscall, *args, **kwargs):
     """ a helper for making system calls immune to EINTR """
     ret = None
 
     while True:
         try:
-            ret = syscall(*a, **kwargs)
+            ret = syscall(*args, **kwargs)
         except OSError as e:
             if e.errno == errno.EINTR:
                 continue
@@ -3171,9 +3171,9 @@ def with_lock(lock):
         fn = contextmanager(fn)
 
         @contextmanager
-        def wrapped2(*a, **kwargs):
+        def wrapped2(*args, **kwargs):
             with lock:
-                with fn(*a, **kwargs):
+                with fn(*args, **kwargs):
                     yield
 
         return wrapped2
@@ -3195,7 +3195,7 @@ def pushd(path):
 
 
 @contextmanager
-def args(**kwargs):
+def _args(**kwargs):
     """ allows us to temporarily override all the special keyword parameters in
     a with context """
 
@@ -3245,7 +3245,7 @@ class Environment(dict):
         "__project_url__",
         "__version__",
         "__file__",
-        "args",
+        "_args",
         "pushd",
         "glob",
         "contrib",
@@ -3270,6 +3270,10 @@ class Environment(dict):
         if k == "_disable_whitelist":
             self.disable_whitelist = True
             return None
+
+        if k == 'args':
+            # Let the deprecated '_args' context manager be imported as 'args'
+            k = '_args'
 
         # we're trying to import something real (maybe), see if it's in our
         # global scope
