@@ -669,7 +669,7 @@ class RunningCommand(object):
     finishes, RunningCommand is smart enough to translate exit codes to
     exceptions. """
 
-    # these are attributes that we allow to passthrough to OProc
+    # these are attributes that we allow to pass through to OProc
     _OProc_attr_whitelist = set((
         "signal",
         "terminate",
@@ -1095,7 +1095,7 @@ _fg is invalid with nearly every other option, see warning and workaround here:
 
 def bufsize_validator(passed_kwargs, merged_kwargs):
     """ a validator to prevent a user from saying that they want custom
-    buffering when they're using an in/out object that will be os.dup'd to the
+    buffering when they're using an in/out object that will be os.dup'ed to the
     process, and has its own buffering.  an example is a pipe or a tty.  it
     doesn't make sense to tell them to have a custom buffering, since the os
     controls this. """
@@ -1335,7 +1335,7 @@ class Command(object):
     def _extract_call_args(kwargs):
         """ takes kwargs that were passed to a command's __call__ and extracts
         out the special keyword arguments, we return a tuple of special keyword
-        args, and kwargs that will go to the execd command """
+        args, and kwargs that will go to the exec'ed command """
 
         kwargs = kwargs.copy()
         call_args = {}
@@ -1419,7 +1419,7 @@ class Command(object):
         args = list(args)
 
         # this will hold our final command, including arguments, that will be
-        # execd
+        # exec'ed
         cmd = []
 
         # this will hold a complete mapping of all our special keyword arguments
@@ -1635,10 +1635,10 @@ def _start_daemon_thread(fn, name, exc_queue, *a):
             exc_queue.put(e)
             raise
 
-    thrd = threading.Thread(target=wrap, name=name, args=a)
-    thrd.daemon = True
-    thrd.start()
-    return thrd
+    thread = threading.Thread(target=wrap, name=name, args=a)
+    thread.daemon = True
+    thread.start()
+    return thread
 
 
 def setwinsize(fd, rows_cols):
@@ -1892,7 +1892,7 @@ class OProc(object):
             # i've only seen this on OSX.
             if stderr is OProc.STDOUT:
                 # if stderr is going to stdout, but stdout is a tty or a pipe,
-                # we should not specify a read_fd, because stdout is dup'd
+                # we should not specify a read_fd, because stdout is os.dup'ed
                 # directly to the stdout fd (no pipe), and so stderr won't have
                 # a slave end of a pipe either to dup
                 if stdout_is_fd_based and not tee_out:
@@ -2288,7 +2288,7 @@ class OProc(object):
                 )
 
             # this event is for cases where the subprocess that we launch
-            # launches its OWN subprocess and dups the stdout/stderr fds to that
+            # launches its OWN subprocess and os.dup's the stdout/stderr fds to that
             # new subprocess.  in that case, stdout and stderr will never EOF,
             # so our output_thread will never finish and will hang.  this event
             # prevents that hanging
@@ -3634,7 +3634,7 @@ class ModuleImporterFromVariables(object):
             return None
 
         # this line is saying "hey, does mod_fullname exist as a name we've
-        # defind previously?"  the purpose of this is to ensure that
+        # defined previously?"  the purpose of this is to ensure that
         # mod_fullname is really a thing we've defined.  if we haven't defined
         # it before, then we "can't" import from it
         module = fetch_module_from_frame(mod_fullname, parent_frame)
