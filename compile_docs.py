@@ -1,5 +1,6 @@
 import sh
 from os.path import abspath, join, dirname 
+import os
 import logging
 import sys
 import glob
@@ -7,6 +8,7 @@ import glob
 
 THIS_DIR = dirname(abspath(__file__))
 DOCS_DIR = join(THIS_DIR, "_docs_sources")
+BUILD_DIR = join(DOCS_DIR, "build")
 
 
 if __name__ == "__main__":
@@ -23,15 +25,19 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     logging.getLogger("sh").setLevel(logging.ERROR)
 
-    clean = ["_sources", "_static", "tutorials", "sections", "examples"]
+    clean = ["_sources", "_static", "_images", "tutorials", "sections", "examples"]
     clean.extend(glob.glob("*.js"))
     clean.extend(glob.glob("*.html"))
     for o in clean:
         sh.rm(join(THIS_DIR, o), "-rf")
     
     logging.info("compiling docs with sphinx")
-    print(sh.make("html", _cwd=DOCS_DIR, _err_to_out=True))
+
+    os.chdir(DOCS_DIR)
+    sh.make("html", _fg=True)
     
     logging.info("cleaning up cruft")
-    sh.rm(join(THIS_DIR, "objects.inv"))
-    sh.rm(join(THIS_DIR, "doctrees"), "-rf")
+    sh.rm(join(BUILD_DIR, "objects.inv"))
+    sh.rm(join(BUILD_DIR, "doctrees"), "-rf")
+
+    sh.mv(glob.glob(join(BUILD_DIR, "*")), THIS_DIR)

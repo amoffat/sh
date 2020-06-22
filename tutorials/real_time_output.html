@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,49 +11,48 @@
   
 
   
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
   
 
   
-
-  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script src="../_static/js/gitads.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.13.0 documentation" href="../index.html"/>
-        <link rel="up" title="Tutorials" href="../tutorials.html"/>
-        <link rel="next" title="Entering an SSH password" href="interacting_with_processes.html"/>
-        <link rel="prev" title="Tutorials" href="../tutorials.html"/> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Entering an SSH password" href="interacting_with_processes.html" />
+    <link rel="prev" title="Tutorials" href="../tutorials.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
+   
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
-            <a href="../index.html" class="icon icon-home"> sh
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> sh
           
 
           
@@ -74,11 +72,15 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
             
-                <ul class="current">
+              
+            
+            
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../sections/passing_arguments.html">Passing Arguments</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../sections/passing_arguments.html#keyword-arguments">Keyword Arguments</a></li>
@@ -114,7 +116,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../sections/default_arguments.html">Default Arguments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/envs.html">Environments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/stdin.html">Input via STDIN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../sections/with.html">&#8216;With&#8217; Contexts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/with.html">‘With’ Contexts</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a><ul>
@@ -252,14 +254,14 @@
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-execute-a-bash-builtin">How do I execute a bash builtin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#will-windows-be-supported">Will Windows be supported?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-append-output-to-a-file">How do I append output to a file?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-does-my-command-s-output-have-color">Why does my command&#8217;s output have color?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-does-my-command-s-output-have-color">Why does my command’s output have color?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-is-tty-out-true-the-default">Why is _tty_out=True the default?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-doesn-t-work-as-a-command-argument">Why doesn&#8217;t &#8220;*&#8221; work as a command argument?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn&#8217;t in <code class="docutils literal"><span class="pre">$PATH</span></code>?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-doesn-t-work-as-a-command-argument">Why doesn’t “*” work as a command argument?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn’t in <code class="docutils literal notranslate"><span class="pre">$PATH</span></code>?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-execute-a-program-with-a-dash-in-its-name">How do I execute a program with a dash in its name?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-execute-a-program-with-a-special-character-in-its-name">How do I execute a program with a special character in its name?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-not-use-to-pipe-commands">Why not use <code class="docutils literal"><span class="pre">|</span></code> to pipe commands?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-isn-t-piping-asynchronous-by-default">Why isn&#8217;t piping asynchronous by default?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-not-use-to-pipe-commands">Why not use <code class="docutils literal notranslate"><span class="pre">|</span></code> to pipe commands?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-isn-t-piping-asynchronous-by-default">Why isn’t piping asynchronous by default?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-run-a-command-and-connect-it-to-sys-stdout-and-sys-stdin">How do I run a command and connect it to sys.stdout and sys.stdin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#why-do-my-arguments-need-to-be-separate-strings">Why do my arguments need to be separate strings?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sections/faq.html#how-do-i-order-keyword-arguments">How do I order keyword arguments?</a></li>
@@ -274,42 +276,63 @@
             
           
         </div>
+        
       </div>
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../index.html">sh</a>
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">sh</a>
+        
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="../index.html">Docs</a> &raquo;</li>
-      
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
           <li><a href="../tutorials.html">Tutorials</a> &raquo;</li>
-      
-    <li>Tailing a real-time log file</li>
+        
+      <li>Tailing a real-time log file</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
-            <a href="../_sources/tutorials/real_time_output.txt" rel="nofollow"> View page source</a>
+            
+            <a href="../_sources/tutorials/real_time_output.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -320,7 +343,7 @@
 <p>sh has the ability to respond to subprocesses in an event-driven fashion.
 A typical example of where this would be useful is tailing a log file for
 a specific pattern, then responding to that value immediately:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
 
 <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;info.log&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="k">if</span> <span class="s2">&quot;ERROR&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
@@ -330,13 +353,13 @@ a specific pattern, then responding to that value immediately:</p>
 <p>The <a class="reference internal" href="../sections/special_arguments.html#iter"><span class="std std-ref">_iter</span></a> special kwarg takes a command that would normally block
 until completion, and turns its output into a real-time iterable.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="../sections/asynchronous_execution.html#iterable"><span class="std std-ref">Incremental Iteration</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../sections/asynchronous_execution.html#iterable"><span class="std std-ref">Incremental Iteration</span></a></p>
 </div>
 <p>Of course, you can do more than just tail log files.  Any program that
 produces output can be iterated over.  Say you wanted to send an email to a
 coworker if their C code emits a warning:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">gcc</span><span class="p">,</span> <span class="n">git</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">gcc</span><span class="p">,</span> <span class="n">git</span>
 
 <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">gcc</span><span class="p">(</span><span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="s2">&quot;awesome_binary&quot;</span><span class="p">,</span> <span class="s2">&quot;awesome_source.c&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="k">if</span> <span class="s2">&quot;warning&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
@@ -352,9 +375,9 @@ coworker if their C code emits a warning:</p>
 </pre></div>
 </div>
 <p>Using <a class="reference internal" href="../sections/special_arguments.html#iter"><span class="std std-ref">_iter</span></a> is a great way to respond to events from another
-program, but your blocks while you&#8217;re looping, making you unable to do anything
+program, but your blocks while you’re looping, making you unable to do anything
 else.  To be truly event-driven, sh provides callbacks:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
 
 <span class="k">def</span> <span class="nf">process_log_line</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
     <span class="k">if</span> <span class="s2">&quot;ERROR&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
@@ -368,29 +391,30 @@ else.  To be truly event-driven, sh provides callbacks:</p>
 </pre></div>
 </div>
 <p>The <a class="reference internal" href="../sections/special_arguments.html#out"><span class="std std-ref">_out</span></a> special kwarg lets you to assign a callback to STDOUT.
-This callback will receive each line of output from <code class="docutils literal"><span class="pre">tail</span> <span class="pre">-f</span></code> and allow you to
+This callback will receive each line of output from <code class="docutils literal notranslate"><span class="pre">tail</span> <span class="pre">-f</span></code> and allow you to
 do the same processing that we did earlier.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="../sections/asynchronous_execution.html#callbacks"><span class="std std-ref">Output Callbacks</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../sections/asynchronous_execution.html#callbacks"><span class="std std-ref">Output Callbacks</span></a></p>
 </div>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="../sections/redirection.html#redirection"><span class="std std-ref">Redirection</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../sections/redirection.html#redirection"><span class="std std-ref">Redirection</span></a></p>
 </div>
 </div>
 
 
            </div>
+           
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="interacting_with_processes.html" class="btn btn-neutral float-right" title="Entering an SSH password" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="interacting_with_processes.html" class="btn btn-neutral float-right" title="Entering an SSH password" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../tutorials.html" class="btn btn-neutral" title="Tutorials" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../tutorials.html" class="btn btn-neutral float-left" title="Tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -399,11 +423,19 @@ do the same processing that we did earlier.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Andrew Moffat.
+        
+        &copy; Copyright 2020, Andrew Moffat
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -415,36 +447,15 @@ do the same processing that we did earlier.</p>
   </div>
   
 
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'1.13.0',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
-
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script>
+
+  
+  
+    
    
 
 </body>

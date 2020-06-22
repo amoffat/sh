@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,49 +11,48 @@
   
 
   
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
   
 
   
-
-  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script src="../_static/js/gitads.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.13.0 documentation" href="../index.html"/>
-        <link rel="up" title="Usage" href="../usage.html"/>
-        <link rel="next" title="Piping" href="piping.html"/>
-        <link rel="prev" title="Asynchronous Execution" href="asynchronous_execution.html"/> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Piping" href="piping.html" />
+    <link rel="prev" title="Asynchronous Execution" href="asynchronous_execution.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
+   
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
-            <a href="../index.html" class="icon icon-home"> sh
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> sh
           
 
           
@@ -74,11 +72,15 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
             
-                <ul class="current">
+              
+            
+            
+              <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="../usage.html">Usage</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="passing_arguments.html">Passing Arguments</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="passing_arguments.html#keyword-arguments">Keyword Arguments</a></li>
@@ -114,7 +116,7 @@
 <li class="toctree-l2"><a class="reference internal" href="default_arguments.html">Default Arguments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="envs.html">Environments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="stdin.html">Input via STDIN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="with.html">&#8216;With&#8217; Contexts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="with.html">‘With’ Contexts</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a><ul>
@@ -252,14 +254,14 @@
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-execute-a-bash-builtin">How do I execute a bash builtin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#will-windows-be-supported">Will Windows be supported?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-append-output-to-a-file">How do I append output to a file?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="faq.html#why-does-my-command-s-output-have-color">Why does my command&#8217;s output have color?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-does-my-command-s-output-have-color">Why does my command’s output have color?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#why-is-tty-out-true-the-default">Why is _tty_out=True the default?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="faq.html#why-doesn-t-work-as-a-command-argument">Why doesn&#8217;t &#8220;*&#8221; work as a command argument?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn&#8217;t in <code class="docutils literal"><span class="pre">$PATH</span></code>?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-doesn-t-work-as-a-command-argument">Why doesn’t “*” work as a command argument?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn’t in <code class="docutils literal notranslate"><span class="pre">$PATH</span></code>?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-execute-a-program-with-a-dash-in-its-name">How do I execute a program with a dash in its name?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-execute-a-program-with-a-special-character-in-its-name">How do I execute a program with a special character in its name?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="faq.html#why-not-use-to-pipe-commands">Why not use <code class="docutils literal"><span class="pre">|</span></code> to pipe commands?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="faq.html#why-isn-t-piping-asynchronous-by-default">Why isn&#8217;t piping asynchronous by default?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-not-use-to-pipe-commands">Why not use <code class="docutils literal notranslate"><span class="pre">|</span></code> to pipe commands?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-isn-t-piping-asynchronous-by-default">Why isn’t piping asynchronous by default?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-run-a-command-and-connect-it-to-sys-stdout-and-sys-stdin">How do I run a command and connect it to sys.stdout and sys.stdin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#why-do-my-arguments-need-to-be-separate-strings">Why do my arguments need to be separate strings?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-order-keyword-arguments">How do I order keyword arguments?</a></li>
@@ -274,42 +276,63 @@
             
           
         </div>
+        
       </div>
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../index.html">sh</a>
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">sh</a>
+        
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="../index.html">Docs</a> &raquo;</li>
-      
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
           <li><a href="../usage.html">Usage</a> &raquo;</li>
-      
-    <li>Baking</li>
+        
+      <li>Baking</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
-            <a href="../_sources/sections/baking.txt" rel="nofollow"> View page source</a>
+            
+            <a href="../_sources/sections/baking.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -317,10 +340,10 @@
             
   <div class="section" id="baking">
 <span id="id1"></span><h1>Baking<a class="headerlink" href="#baking" title="Permalink to this headline">¶</a></h1>
-<p>sh is capable of &#8220;baking&#8221; arguments into commands.  This is essentially
+<p>sh is capable of “baking” arguments into commands.  This is essentially
 <a class="reference external" href="https://en.wikipedia.org/wiki/Partial_application">partial application</a>,
-like you might do with <a class="reference external" href="https://docs.python.org/3.5/library/functools.html#functools.partial" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">functools.partial()</span></code></a>.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ls</span>
+like you might do with <a class="reference external" href="https://docs.python.org/3.5/library/functools.html#functools.partial" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">functools.partial()</span></code></a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ls</span>
 
 <span class="n">ls</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;-la&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span> <span class="c1"># &quot;/usr/bin/ls -la&quot;</span>
@@ -329,10 +352,10 @@ like you might do with <a class="reference external" href="https://docs.python.o
 <span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>The idea here is that now every call to <code class="docutils literal"><span class="pre">ls</span></code> will have the &#8220;-la&#8221; arguments
+<p>The idea here is that now every call to <code class="docutils literal notranslate"><span class="pre">ls</span></code> will have the “-la” arguments
 already specified.  Baking can become very useful when you combine it with
 <a class="reference internal" href="subcommands.html#subcommands"><span class="std std-ref">Sub-commands</span></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
 
 <span class="c1"># calling whoami on a server.  this is a lot to type out, especially if</span>
 <span class="c1"># you wanted to call many commands (not just whoami) back to back on</span>
@@ -350,9 +373,9 @@ already specified.  Baking can become very useful when you combine it with
 <span class="k">assert</span><span class="p">(</span><span class="n">iam1</span> <span class="o">==</span> <span class="n">iam2</span><span class="p">)</span> <span class="c1"># True!</span>
 </pre></div>
 </div>
-<p>Now that the &#8220;myserver&#8221; callable represents a baked ssh command, you
+<p>Now that the “myserver” callable represents a baked ssh command, you
 can call anything on the server easily:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># executes &quot;/usr/bin/ssh myserver.com -p 1393 tail /var/log/dumb_daemon.log -n 100&quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># executes &quot;/usr/bin/ssh myserver.com -p 1393 tail /var/log/dumb_daemon.log -n 100&quot;</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">myserver</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;/var/log/dumb_daemon.log&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -360,15 +383,16 @@ can call anything on the server easily:</p>
 
 
            </div>
+           
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="piping.html" class="btn btn-neutral float-right" title="Piping" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="piping.html" class="btn btn-neutral float-right" title="Piping" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="asynchronous_execution.html" class="btn btn-neutral" title="Asynchronous Execution" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="asynchronous_execution.html" class="btn btn-neutral float-left" title="Asynchronous Execution" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -377,11 +401,19 @@ can call anything on the server easily:</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Andrew Moffat.
+        
+        &copy; Copyright 2020, Andrew Moffat
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -393,36 +425,15 @@ can call anything on the server easily:</p>
   </div>
   
 
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'1.13.0',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
-
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script>
+
+  
+  
+    
    
 
 </body>

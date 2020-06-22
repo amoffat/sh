@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,47 +11,47 @@
   
 
   
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
   
 
   
-
-  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script src="../_static/js/gitads.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.13.0 documentation" href="../index.html"/>
-        <link rel="prev" title="Entering an SSH password" href="../tutorials/interacting_with_processes.html"/> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Entering an SSH password" href="../tutorials/interacting_with_processes.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
+   
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
-            <a href="../index.html" class="icon icon-home"> sh
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> sh
           
 
           
@@ -72,11 +71,15 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
             
-                <ul class="current">
+              
+            
+            
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="passing_arguments.html">Passing Arguments</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="passing_arguments.html#keyword-arguments">Keyword Arguments</a></li>
@@ -112,7 +115,7 @@
 <li class="toctree-l2"><a class="reference internal" href="default_arguments.html">Default Arguments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="envs.html">Environments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="stdin.html">Input via STDIN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="with.html">&#8216;With&#8217; Contexts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="with.html">‘With’ Contexts</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a><ul>
@@ -250,14 +253,14 @@
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-execute-a-bash-builtin">How do I execute a bash builtin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#will-windows-be-supported">Will Windows be supported?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-append-output-to-a-file">How do I append output to a file?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#why-does-my-command-s-output-have-color">Why does my command&#8217;s output have color?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-does-my-command-s-output-have-color">Why does my command’s output have color?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#why-is-tty-out-true-the-default">Why is _tty_out=True the default?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#why-doesn-t-work-as-a-command-argument">Why doesn&#8217;t &#8220;*&#8221; work as a command argument?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn&#8217;t in <code class="docutils literal"><span class="pre">$PATH</span></code>?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-doesn-t-work-as-a-command-argument">Why doesn’t “*” work as a command argument?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn’t in <code class="docutils literal notranslate"><span class="pre">$PATH</span></code>?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-execute-a-program-with-a-dash-in-its-name">How do I execute a program with a dash in its name?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-execute-a-program-with-a-special-character-in-its-name">How do I execute a program with a special character in its name?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#why-not-use-to-pipe-commands">Why not use <code class="docutils literal"><span class="pre">|</span></code> to pipe commands?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#why-isn-t-piping-asynchronous-by-default">Why isn&#8217;t piping asynchronous by default?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-not-use-to-pipe-commands">Why not use <code class="docutils literal notranslate"><span class="pre">|</span></code> to pipe commands?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#why-isn-t-piping-asynchronous-by-default">Why isn’t piping asynchronous by default?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-run-a-command-and-connect-it-to-sys-stdout-and-sys-stdin">How do I run a command and connect it to sys.stdout and sys.stdin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#why-do-my-arguments-need-to-be-separate-strings">Why do my arguments need to be separate strings?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#how-do-i-order-keyword-arguments">How do I order keyword arguments?</a></li>
@@ -272,40 +275,61 @@
             
           
         </div>
+        
       </div>
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../index.html">sh</a>
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">sh</a>
+        
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="../index.html">Docs</a> &raquo;</li>
-      
-    <li>FAQ</li>
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>FAQ</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
-            <a href="../_sources/sections/faq.txt" rel="nofollow"> View page source</a>
+            
+            <a href="../_sources/sections/faq.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -315,13 +339,13 @@
 <span id="id1"></span><h1>FAQ<a class="headerlink" href="#faq" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="how-do-i-execute-a-bash-builtin">
 <h2>How do I execute a bash builtin?<a class="headerlink" href="#how-do-i-execute-a-bash-builtin" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">bash</span><span class="p">(</span><span class="s2">&quot;-c&quot;</span><span class="p">,</span> <span class="s2">&quot;your_builtin&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Or</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">builtins</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">bash</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;-c&quot;</span><span class="p">)</span>
 <span class="n">builtins</span><span class="p">(</span><span class="s2">&quot;your_builtin&quot;</span><span class="p">)</span>
@@ -335,7 +359,7 @@
 <div class="section" id="how-do-i-append-output-to-a-file">
 <span id="faq-append"></span><h2>How do I append output to a file?<a class="headerlink" href="#how-do-i-append-output-to-a-file" title="Permalink to this headline">¶</a></h2>
 <p>Use a file object opened in the mode you desire:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">h</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/tmp/output&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span>
 
@@ -345,15 +369,15 @@
 </div>
 </div>
 <div class="section" id="why-does-my-command-s-output-have-color">
-<span id="faq-color-output"></span><h2>Why does my command&#8217;s output have color?<a class="headerlink" href="#why-does-my-command-s-output-have-color" title="Permalink to this headline">¶</a></h2>
+<span id="faq-color-output"></span><h2>Why does my command’s output have color?<a class="headerlink" href="#why-does-my-command-s-output-have-color" title="Permalink to this headline">¶</a></h2>
 <p>Typically the reason for this is that your program detected that its STDOUT was
 connected to a TTY, and therefore decided to print color escape sequences in its
 output.  The typical solution is to use <a class="reference internal" href="special_arguments.html#tty-out"><span class="std std-ref">_tty_out=False</span></a>, which
 will force a pipe to be connected to STDOUT, and probably change the behavior of
 the program.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last">Git is one of the programs that makes extensive use of terminal colors (as
+<p class="admonition-title">See also</p>
+<p>Git is one of the programs that makes extensive use of terminal colors (as
 well as pagers) in its output, so we added <a class="reference internal" href="contrib.html#contrib-git"><span class="std std-ref">a contrib version</span></a> for convenience.</p>
 </div>
 </div>
@@ -361,52 +385,52 @@ well as pagers) in its output, so we added <a class="reference internal" href="c
 <span id="faq-tty-out"></span><h2>Why is _tty_out=True the default?<a class="headerlink" href="#why-is-tty-out-true-the-default" title="Permalink to this headline">¶</a></h2>
 <p>This was a design decision made for two reasons:</p>
 <ol class="arabic simple">
-<li>To make programs behave in the same way as seen on the commandline.</li>
-<li>To provide better buffering control than pipes allow.</li>
+<li><p>To make programs behave in the same way as seen on the commandline.</p></li>
+<li><p>To provide better buffering control than pipes allow.</p></li>
 </ol>
 <p>For #1, we want sh to produce output that is identical to what the user sees
-from the commandline, because that&#8217;s typically the only output they ever see
+from the commandline, because that’s typically the only output they ever see
 from their command.  This makes the output easy to understand.</p>
 <p>For #2, using a TTY for STDOUT allows us to precisely control the buffering of a
-command&#8217;s output to sh&#8217;s internal code.</p>
+command’s output to sh’s internal code.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="architecture.html#arch-buffers"><span class="std std-ref">Buffers</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="architecture.html#arch-buffers"><span class="std std-ref">Buffers</span></a></p>
 </div>
 <p>Of course, there are some gotchas with TTY STDOUT.  One of them is commands that
 use a pager, for example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">git</span><span class="o">.</span><span class="n">log</span><span class="p">())</span>
 </pre></div>
 </div>
-<p>This will raise a <code class="docutils literal"><span class="pre">SignalException_SIGPIPE</span></code>, and it&#8217;s unclear exactly why.
-The reason is because <code class="docutils literal"><span class="pre">git</span> <span class="pre">log</span></code> detects a TTY STDOUT and forks the system&#8217;s
-pager (typically <code class="docutils literal"><span class="pre">less</span></code>) to handle the output.  The pager checks for a
+<p>This will raise a <code class="docutils literal notranslate"><span class="pre">SignalException_SIGPIPE</span></code>, and it’s unclear exactly why.
+The reason is because <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">log</span></code> detects a TTY STDOUT and forks the system’s
+pager (typically <code class="docutils literal notranslate"><span class="pre">less</span></code>) to handle the output.  The pager checks for a
 controlling terminal, and, finding none, exits with exit code 1.  The exit of
-the pager means no more readers on <code class="docutils literal"><span class="pre">git</span> <span class="pre">log</span></code>&#8216;s output, and thus a <code class="docutils literal"><span class="pre">SIGPIPE</span></code>
+the pager means no more readers on <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">log</span></code>’s output, and thus a <code class="docutils literal notranslate"><span class="pre">SIGPIPE</span></code>
 is received.</p>
-<p>The solution to the <code class="docutils literal"><span class="pre">git</span> <span class="pre">log</span></code> problem above is simply to use
-<code class="docutils literal"><span class="pre">_tty_out=False</span></code>, but this is not totally obvious.</p>
+<p>The solution to the <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">log</span></code> problem above is simply to use
+<code class="docutils literal notranslate"><span class="pre">_tty_out=False</span></code>, but this is not totally obvious.</p>
 </div>
 <div class="section" id="why-doesn-t-work-as-a-command-argument">
-<h2>Why doesn&#8217;t &#8220;*&#8221; work as a command argument?<a class="headerlink" href="#why-doesn-t-work-as-a-command-argument" title="Permalink to this headline">¶</a></h2>
+<h2>Why doesn’t “*” work as a command argument?<a class="headerlink" href="#why-doesn-t-work-as-a-command-argument" title="Permalink to this headline">¶</a></h2>
 <p>Glob expansion is a feature of a shell, like Bash, and is performed by the shell
-before passing the results to the program to be exec&#8217;d.  Because sh is not a
+before passing the results to the program to be exec’d.  Because sh is not a
 shell, but rather tool to execute programs directly, we do not handle glob
 expansion like a shell would.</p>
-<p>So in order to use <code class="docutils literal"><span class="pre">&quot;*&quot;</span></code> like you would on the commandline, pass it into
-<a class="reference external" href="https://docs.python.org/3.5/library/glob.html#glob.glob" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">glob.glob()</span></code></a> first:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<p>So in order to use <code class="docutils literal notranslate"><span class="pre">&quot;*&quot;</span></code> like you would on the commandline, pass it into
+<a class="reference external" href="https://docs.python.org/3.5/library/glob.html#glob.glob" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">glob.glob()</span></code></a> first:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="kn">import</span> <span class="nn">glob</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*.py&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="how-do-i-call-a-program-that-isn-t-in-path">
-<span id="faq-path"></span><h2>How do I call a program that isn&#8217;t in <code class="docutils literal"><span class="pre">$PATH</span></code>?<a class="headerlink" href="#how-do-i-call-a-program-that-isn-t-in-path" title="Permalink to this headline">¶</a></h2>
-<p>Use the <a class="reference internal" href="command_class.html#Command" title="Command"><code class="xref py py-meth docutils literal"><span class="pre">Command()</span></code></a> constructor to instantiate an instance of Command
+<span id="faq-path"></span><h2>How do I call a program that isn’t in <code class="docutils literal notranslate"><span class="pre">$PATH</span></code>?<a class="headerlink" href="#how-do-i-call-a-program-that-isn-t-in-path" title="Permalink to this headline">¶</a></h2>
+<p>Use the <a class="reference internal" href="command_class.html#Command" title="Command"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Command()</span></code></a> constructor to instantiate an instance of Command
 directly, then execute that:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="n">cmd</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s2">&quot;/path/to/command&quot;</span><span class="p">)</span>
 <span class="n">cmd</span><span class="p">(</span><span class="s2">&quot;-v&quot;</span><span class="p">,</span> <span class="s2">&quot;arg1&quot;</span><span class="p">)</span>
 </pre></div>
@@ -414,17 +438,17 @@ directly, then execute that:</p>
 </div>
 <div class="section" id="how-do-i-execute-a-program-with-a-dash-in-its-name">
 <h2>How do I execute a program with a dash in its name?<a class="headerlink" href="#how-do-i-execute-a-program-with-a-dash-in-its-name" title="Permalink to this headline">¶</a></h2>
-<p>If it&#8217;s in your <code class="docutils literal"><span class="pre">$PATH</span></code>, substitute the dash for an underscore:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<p>If it’s in your <code class="docutils literal notranslate"><span class="pre">$PATH</span></code>, substitute the dash for an underscore:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">google_chrome</span><span class="p">(</span><span class="s2">&quot;http://google.com&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The above will run <code class="docutils literal"><span class="pre">google-chrome</span> <span class="pre">http://google.com</span></code></p>
+<p>The above will run <code class="docutils literal notranslate"><span class="pre">google-chrome</span> <span class="pre">http://google.com</span></code></p>
 <div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">If a program named <code class="docutils literal"><span class="pre">google_chrome</span></code> exists on your system, that will be
+<p class="admonition-title">Note</p>
+<p>If a program named <code class="docutils literal notranslate"><span class="pre">google_chrome</span></code> exists on your system, that will be
 called instead.  In that case, in order to execute the program with a dash
-in the name, you&#8217;ll have to use the method described <a class="reference internal" href="#faq-special"><span class="std std-ref">here.</span></a></p>
+in the name, you’ll have to use the method described <a class="reference internal" href="#faq-special"><span class="std std-ref">here.</span></a></p>
 </div>
 </div>
 <div class="section" id="how-do-i-execute-a-program-with-a-special-character-in-its-name">
@@ -432,58 +456,58 @@ in the name, you&#8217;ll have to use the method described <a class="reference i
 <p>Programs with non-alphanumeric, non-dash characters in their names cannot be
 executed directly as an attribute on the sh module.  For example, <strong>this will not
 work:</strong></p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">mkfs</span><span class="o">.</span><span class="n">ext4</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>The reason should be fairly obvious.  In Python, characters like <code class="docutils literal"><span class="pre">.</span></code> have
+<p>The reason should be fairly obvious.  In Python, characters like <code class="docutils literal notranslate"><span class="pre">.</span></code> have
 special meaning, in this case, attribute access.  What sh is trying to do in the
-above example is find the program &#8220;mkfs&#8221; (which may or may not exist) and then
-perform a <a class="reference internal" href="subcommands.html#subcommands"><span class="std std-ref">subcommand lookup</span></a> with the name &#8220;ext4&#8221;.  In other
-words, it will try to call <code class="docutils literal"><span class="pre">mkfs</span></code> with the argument <code class="docutils literal"><span class="pre">ext4</span></code>, which is
+above example is find the program “mkfs” (which may or may not exist) and then
+perform a <a class="reference internal" href="subcommands.html#subcommands"><span class="std std-ref">subcommand lookup</span></a> with the name “ext4”.  In other
+words, it will try to call <code class="docutils literal notranslate"><span class="pre">mkfs</span></code> with the argument <code class="docutils literal notranslate"><span class="pre">ext4</span></code>, which is
 probably not what you want.</p>
 <p>The workaround is instantiating the <a class="reference internal" href="command_class.html#command-class"><span class="std std-ref">Command Class</span></a> with
-the string of the program you&#8217;re looking for:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+the string of the program you’re looking for:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="n">mkfsext4</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">Command</span><span class="p">(</span><span class="s2">&quot;mkfs.ext4&quot;</span><span class="p">)</span>
 <span class="n">mkfsext4</span><span class="p">()</span> <span class="c1"># run it</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="why-not-use-to-pipe-commands">
-<span id="faq-pipe-syntax"></span><h2>Why not use <code class="docutils literal"><span class="pre">|</span></code> to pipe commands?<a class="headerlink" href="#why-not-use-to-pipe-commands" title="Permalink to this headline">¶</a></h2>
+<span id="faq-pipe-syntax"></span><h2>Why not use <code class="docutils literal notranslate"><span class="pre">|</span></code> to pipe commands?<a class="headerlink" href="#why-not-use-to-pipe-commands" title="Permalink to this headline">¶</a></h2>
 <p>I prefer the syntax of sh to resemble function composition instead of a
 pipeline.  One of the goals of sh is to make executing processes more like
 calling functions, not making function calls more like Bash.</p>
 </div>
 <div class="section" id="why-isn-t-piping-asynchronous-by-default">
-<h2>Why isn&#8217;t piping asynchronous by default?<a class="headerlink" href="#why-isn-t-piping-asynchronous-by-default" title="Permalink to this headline">¶</a></h2>
+<h2>Why isn’t piping asynchronous by default?<a class="headerlink" href="#why-isn-t-piping-asynchronous-by-default" title="Permalink to this headline">¶</a></h2>
 <p>There is a non-obvious reason why async piping is not possible by default.
 Consider the following example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="s2">&quot;test</span><span class="se">\n</span><span class="s2">1</span><span class="se">\n</span><span class="s2">2</span><span class="se">\n</span><span class="s2">3</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>When this is run, <code class="docutils literal"><span class="pre">sh.echo</span></code> executes and finishes, then the entire output
-string is fed into <code class="docutils literal"><span class="pre">sh.cat</span></code>.  What we would really like is each
-newline-delimited chunk to flow to <code class="docutils literal"><span class="pre">sh.cat</span></code> incrementally.</p>
+<p>When this is run, <code class="docutils literal notranslate"><span class="pre">sh.echo</span></code> executes and finishes, then the entire output
+string is fed into <code class="docutils literal notranslate"><span class="pre">sh.cat</span></code>.  What we would really like is each
+newline-delimited chunk to flow to <code class="docutils literal notranslate"><span class="pre">sh.cat</span></code> incrementally.</p>
 <p>But for this example to flow data asynchronously from echo to cat, the echo
 command would need to <em>not block.</em>  But how can the inner command know the
 context of its execution, to know to block sometimes but not other times?  It
-can&#8217;t know that without something explicit.</p>
+can’t know that without something explicit.</p>
 <p>This is why the <a class="reference internal" href="special_arguments.html#piped"><span class="std std-ref">_piped</span></a> special kwarg was introduced.  By default, commands
 executed block until they are finished, so in order for an inner command to not
-block, <code class="docutils literal"><span class="pre">_piped=True</span></code> signals to the inner command that it should not block.
+block, <code class="docutils literal notranslate"><span class="pre">_piped=True</span></code> signals to the inner command that it should not block.
 This way, the inner command starts running, then very shortly after, the outer
 command starts running, and both are running simultaneously.  Data can then flow
 from the inner command to the outer command asynchronously:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="s2">&quot;test</span><span class="se">\n</span><span class="s2">1</span><span class="se">\n</span><span class="s2">2</span><span class="se">\n</span><span class="s2">3</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_piped</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
 </pre></div>
 </div>
-<p>Again, this example is contrived &#8211; a better example would be a long-running
+<p>Again, this example is contrived – a better example would be a long-running
 command that produces a lot of output that you wish to pipe through another
 program incrementally.</p>
 </div>
@@ -491,24 +515,24 @@ program incrementally.</p>
 <h2>How do I run a command and connect it to sys.stdout and sys.stdin?<a class="headerlink" href="#how-do-i-run-a-command-and-connect-it-to-sys-stdout-and-sys-stdin" title="Permalink to this headline">¶</a></h2>
 <p>There are two ways to do this</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="special_arguments.html#fg"><span class="std std-ref">_fg</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="special_arguments.html#fg"><span class="std std-ref">_fg</span></a></p>
 </div>
-<p>You can use <a class="reference external" href="https://docs.python.org/3.5/library/sys.html#sys.stdin" title="(in Python v3.5)"><code class="xref py py-data docutils literal"><span class="pre">sys.stdin</span></code></a>, <a class="reference external" href="https://docs.python.org/3.5/library/sys.html#sys.stdout" title="(in Python v3.5)"><code class="xref py py-data docutils literal"><span class="pre">sys.stdout</span></code></a>, and <a class="reference external" href="https://docs.python.org/3.5/library/sys.html#sys.stderr" title="(in Python v3.5)"><code class="xref py py-data docutils literal"><span class="pre">sys.stderr</span></code></a> as
+<p>You can use <a class="reference external" href="https://docs.python.org/3.5/library/sys.html#sys.stdin" title="(in Python v3.5)"><code class="xref py py-data docutils literal notranslate"><span class="pre">sys.stdin</span></code></a>, <a class="reference external" href="https://docs.python.org/3.5/library/sys.html#sys.stdout" title="(in Python v3.5)"><code class="xref py py-data docutils literal notranslate"><span class="pre">sys.stdout</span></code></a>, and <a class="reference external" href="https://docs.python.org/3.5/library/sys.html#sys.stderr" title="(in Python v3.5)"><code class="xref py py-data docutils literal notranslate"><span class="pre">sys.stderr</span></code></a> as
 arguments to <a class="reference internal" href="special_arguments.html#in"><span class="std std-ref">_in</span></a>, <a class="reference internal" href="special_arguments.html#out"><span class="std std-ref">_out</span></a>, <a class="reference internal" href="special_arguments.html#err"><span class="std std-ref">_err</span></a>, respectively, and it <em>should</em>
 mostly work as expected:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">your_command</span><span class="p">(</span><span class="n">_in</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>There are a few reasons why this probably won&#8217;t work.  The first reason is that
-<a class="reference external" href="https://docs.python.org/3.5/library/sys.html#sys.stdin" title="(in Python v3.5)"><code class="xref py py-data docutils literal"><span class="pre">sys.stdin</span></code></a> is probably a controlling TTY (attached to the shell that
+<p>There are a few reasons why this probably won’t work.  The first reason is that
+<a class="reference external" href="https://docs.python.org/3.5/library/sys.html#sys.stdin" title="(in Python v3.5)"><code class="xref py py-data docutils literal notranslate"><span class="pre">sys.stdin</span></code></a> is probably a controlling TTY (attached to the shell that
 launched the python process), and probably not set in raw mode
 <em class="manpage">termios(3)</em>, which means that, among other things, input is buffered
 by newlines.</p>
 <p>The real solution is to use <a class="reference internal" href="special_arguments.html#fg"><span class="std std-ref">_fg=True</span></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">top</span><span class="p">(</span><span class="n">_fg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -517,12 +541,12 @@ by newlines.</p>
 <span id="faq-separate-args"></span><h2>Why do my arguments need to be separate strings?<a class="headerlink" href="#why-do-my-arguments-need-to-be-separate-strings" title="Permalink to this headline">¶</a></h2>
 <p>This confuses many new sh users.  They want to do something like this and expect
 it to just work:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tar</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tar</span>
 <span class="n">tar</span><span class="p">(</span><span class="s2">&quot;cvf /tmp/test.tar /my/home/directory&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>But instead they&#8217;ll get a confusing error message:</p>
-<div class="highlight-none"><div class="highlight"><pre><span></span>RAN: &#39;/bin/tar cvf /tmp/test.tar /my/home/directory&#39;
+<p>But instead they’ll get a confusing error message:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>RAN: &#39;/bin/tar cvf /tmp/test.tar /my/home/directory&#39;
 
 STDOUT:
 
@@ -534,16 +558,16 @@ Try &#39;/bin/tar --help&#39; or &#39;/bin/tar --usage&#39; for more information
 <p>The reason why they expect it to work is because shells, like Bash, automatically
 parse your commandline and break up arguments for you, before sending them to
 the binary.  They have a complex set of rules (some of which are represented by
-<a class="reference external" href="https://docs.python.org/3.5/library/shlex.html#module-shlex" title="(in Python v3.5)"><code class="xref py py-mod docutils literal"><span class="pre">shlex</span></code></a>) to take a single string of a command and arguments and separate
+<a class="reference external" href="https://docs.python.org/3.5/library/shlex.html#module-shlex" title="(in Python v3.5)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">shlex</span></code></a>) to take a single string of a command and arguments and separate
 them.</p>
-<p>Even if we wanted to implement this in sh (which we don&#8217;t), it would hurt the
+<p>Even if we wanted to implement this in sh (which we don’t), it would hurt the
 ability for users to parameterize parts of their arguments.  They would have to
 use string interpolation, which would be ugly and error prone:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tar</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tar</span>
 <span class="n">tar</span><span class="p">(</span><span class="s2">&quot;cvf </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s2">&quot;/tmp/tar1.tar&quot;</span><span class="p">,</span> <span class="s2">&quot;/home/oh no a space&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>In the above example, <code class="docutils literal"><span class="pre">&quot;/home/oh&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;no&quot;</span></code>, <code class="docutils literal"><span class="pre">&quot;a&quot;</span></code>, and <code class="docutils literal"><span class="pre">&quot;space&quot;</span></code> would
+<p>In the above example, <code class="docutils literal notranslate"><span class="pre">&quot;/home/oh&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;no&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;a&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;space&quot;</span></code> would
 all be separate arguments to tar, causing the program to behave unexpectedly.
 Basically every command with parameterized arguments would need to expect
 characters that could break the parser.</p>
@@ -552,32 +576,32 @@ characters that could break the parser.</p>
 <span id="faq-arg-ordering"></span><h2>How do I order keyword arguments?<a class="headerlink" href="#how-do-i-order-keyword-arguments" title="Permalink to this headline">¶</a></h2>
 <p>Typically this question gets asked when a user is trying to execute something
 like the following commandline:</p>
-<div class="highlight-none"><div class="highlight"><pre><span></span>my-command --arg1=val1 arg2 --arg3=val3
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>my-command --arg1=val1 arg2 --arg3=val3
 </pre></div>
 </div>
 <p>This is usually the first attempt that they make:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">sh</span><span class="o">.</span><span class="n">my_command</span><span class="p">(</span><span class="n">arg1</span><span class="o">=</span><span class="s2">&quot;val1&quot;</span><span class="p">,</span> <span class="s2">&quot;arg2&quot;</span><span class="p">,</span> <span class="n">arg3</span><span class="o">=</span><span class="s2">&quot;val3&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sh</span><span class="o">.</span><span class="n">my_command</span><span class="p">(</span><span class="n">arg1</span><span class="o">=</span><span class="s2">&quot;val1&quot;</span><span class="p">,</span> <span class="s2">&quot;arg2&quot;</span><span class="p">,</span> <span class="n">arg3</span><span class="o">=</span><span class="s2">&quot;val3&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>This doesn&#8217;t work because, in Python, position arguments, like <code class="docutils literal"><span class="pre">arg2</span></code> cannot
+<p>This doesn’t work because, in Python, position arguments, like <code class="docutils literal notranslate"><span class="pre">arg2</span></code> cannot
 come after keyword arguments.</p>
-<p>Furthermore, it is entirely possible that <code class="docutils literal"><span class="pre">--arg3=val3</span></code> comes before
-<code class="docutils literal"><span class="pre">--arg1=val1</span></code>.  The reason for this is that a function&#8217;s <code class="docutils literal"><span class="pre">**kwargs</span></code> is an
+<p>Furthermore, it is entirely possible that <code class="docutils literal notranslate"><span class="pre">--arg3=val3</span></code> comes before
+<code class="docutils literal notranslate"><span class="pre">--arg1=val1</span></code>.  The reason for this is that a function’s <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> is an
 unordered mapping, and so key-value pairs are not guaranteed to resolve to a
 specific order.</p>
 <p>So the solution here is to forego the usage of the keyword argument
 <em>convenience</em>, and just use raw ordered arguments:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">sh</span><span class="o">.</span><span class="n">my_command</span><span class="p">(</span><span class="s2">&quot;--arg1=val1&quot;</span><span class="p">,</span> <span class="s2">&quot;arg2&quot;</span><span class="p">,</span> <span class="s2">&quot;--arg3=val3&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sh</span><span class="o">.</span><span class="n">my_command</span><span class="p">(</span><span class="s2">&quot;--arg1=val1&quot;</span><span class="p">,</span> <span class="s2">&quot;arg2&quot;</span><span class="p">,</span> <span class="s2">&quot;--arg3=val3&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="how-to-disable-pylint-e1101-no-member-errors">
 <span id="faq-pylint"></span><h2>How to disable pylint E1101 no-member errors?<a class="headerlink" href="#how-to-disable-pylint-e1101-no-member-errors" title="Permalink to this headline">¶</a></h2>
-<p>Pylint complains with E1101 no-member to almost all <code class="docutils literal"><span class="pre">sh.command</span></code> invocations,
-because it doesn&#8217;t know, that these members are generated dynamically.
+<p>Pylint complains with E1101 no-member to almost all <code class="docutils literal notranslate"><span class="pre">sh.command</span></code> invocations,
+because it doesn’t know, that these members are generated dynamically.
 Starting with Pylint 1.6 these messages can be suppressed using <a class="reference external" href="https://docs.pylint.org/en/1.6.0/features.html#id28">generated-members</a> option.</p>
-<p>Just add following lines to <code class="docutils literal"><span class="pre">pylintrc</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">TYPECHECK</span><span class="p">]</span>
+<p>Just add following lines to <code class="docutils literal notranslate"><span class="pre">pylintrc</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">TYPECHECK</span><span class="p">]</span>
 <span class="n">generated</span><span class="o">-</span><span class="n">members</span><span class="o">=</span><span class="n">sh</span>
 </pre></div>
 </div>
@@ -585,8 +609,8 @@ Starting with Pylint 1.6 these messages can be suppressed using <a class="refere
 <div class="section" id="how-do-i-patch-sh-in-my-tests">
 <h2>How do I patch sh in my tests?<a class="headerlink" href="#how-do-i-patch-sh-in-my-tests" title="Permalink to this headline">¶</a></h2>
 <p>sh can be patched in your tests the typical way, with
-<a class="reference external" href="https://docs.python.org/3.5/library/unittest.mock.html#unittest.mock.patch" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">unittest.mock.patch()</span></code></a>:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">unittest.mock</span> <span class="kn">import</span> <span class="n">patch</span>
+<a class="reference external" href="https://docs.python.org/3.5/library/unittest.mock.html#unittest.mock.patch" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">unittest.mock.patch()</span></code></a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">unittest.mock</span> <span class="kn">import</span> <span class="n">patch</span>
 <span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="k">def</span> <span class="nf">get_something</span><span class="p">():</span>
@@ -598,11 +622,11 @@ Starting with Pylint 1.6 these messages can be suppressed using <a class="refere
     <span class="k">assert</span> <span class="n">get_something</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span>
 </pre></div>
 </div>
-<p>The important thing to note here is that <code class="docutils literal"><span class="pre">create=True</span></code> is set.  This is
-required because sh is a bit magical and <code class="docutils literal"><span class="pre">patch</span></code> will fail to find the <code class="docutils literal"><span class="pre">pwd</span></code>
+<p>The important thing to note here is that <code class="docutils literal notranslate"><span class="pre">create=True</span></code> is set.  This is
+required because sh is a bit magical and <code class="docutils literal notranslate"><span class="pre">patch</span></code> will fail to find the <code class="docutils literal notranslate"><span class="pre">pwd</span></code>
 command as an attribute on the sh module.</p>
-<p>You may also patch the <a class="reference internal" href="command_class.html#Command" title="Command"><code class="xref py py-class docutils literal"><span class="pre">Command</span></code></a> class:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">unittest.mock</span> <span class="kn">import</span> <span class="n">patch</span>
+<p>You may also patch the <a class="reference internal" href="command_class.html#Command" title="Command"><code class="xref py py-class docutils literal notranslate"><span class="pre">Command</span></code></a> class:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">unittest.mock</span> <span class="kn">import</span> <span class="n">patch</span>
 <span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="k">def</span> <span class="nf">get_something</span><span class="p">():</span>
@@ -615,7 +639,7 @@ command as an attribute on the sh module.</p>
     <span class="k">assert</span> <span class="n">get_something</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span>
 </pre></div>
 </div>
-<p>Notice here we do not need <code class="docutils literal"><span class="pre">create=True</span></code>, because <a class="reference internal" href="command_class.html#Command" title="Command"><code class="xref py py-class docutils literal"><span class="pre">Command</span></code></a> is not an
+<p>Notice here we do not need <code class="docutils literal notranslate"><span class="pre">create=True</span></code>, because <a class="reference internal" href="command_class.html#Command" title="Command"><code class="xref py py-class docutils literal notranslate"><span class="pre">Command</span></code></a> is not an
 automatically generated object on the sh module (it actually exists).</p>
 </div>
 <div class="section" id="why-is-sh-just-a-single-file">
@@ -624,16 +648,16 @@ automatically generated object on the sh module (it actually exists).</p>
 module.  This has pros and cons:</p>
 <p>Cons:</p>
 <ul class="simple">
-<li>Auditing the code is more challenging</li>
-<li>Without file-enforced structure, adding more features and abstractions makes
-the code harder to follow</li>
-<li>Cognitively, it feels cluttered</li>
+<li><p>Auditing the code is more challenging</p></li>
+<li><p>Without file-enforced structure, adding more features and abstractions makes
+the code harder to follow</p></li>
+<li><p>Cognitively, it feels cluttered</p></li>
 </ul>
 <p>Pros:</p>
 <ul class="simple">
-<li>Can be used easily on systems without Python package managers</li>
-<li>Can be embedded/bundled together with other software more easily</li>
-<li>Cognitively, it feels more self-contained</li>
+<li><p>Can be used easily on systems without Python package managers</p></li>
+<li><p>Can be embedded/bundled together with other software more easily</p></li>
+<li><p>Cognitively, it feels more self-contained</p></li>
 </ul>
 <p>In my mind, because the primary target audience of sh users is generally more
 scrappy devops, systems people, or people just trying to stitch together some
@@ -643,19 +667,19 @@ flexible tool is a win to me.</p>
 <p>Down the road, the development disadvantages of a single file can be solved with
 additional development tools, for example, with a tool that compiles multiple
 modules into the single sh.py file.  Realistically, though, sh is pretty mature,
-so I don&#8217;t see it growing much more in complexity or code size.</p>
+so I don’t see it growing much more in complexity or code size.</p>
 </div>
 <div class="section" id="how-do-i-see-the-commands-sh-is-running">
 <h2>How do I see the commands sh is running?<a class="headerlink" href="#how-do-i-see-the-commands-sh-is-running" title="Permalink to this headline">¶</a></h2>
 <p>Use logging:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="highlight-none"><div class="highlight"><pre><span></span>INFO:sh.command:&lt;Command &#39;/bin/ls&#39;&gt;: starting process
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>INFO:sh.command:&lt;Command &#39;/bin/ls&#39;&gt;: starting process
 INFO:sh.command:&lt;Command &#39;/bin/ls&#39;, pid 32394&gt;: process started
 INFO:sh.command:&lt;Command &#39;/bin/ls&#39;, pid 32394&gt;: process completed
 ...
@@ -666,13 +690,14 @@ INFO:sh.command:&lt;Command &#39;/bin/ls&#39;, pid 32394&gt;: process completed
 
 
            </div>
+           
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="../tutorials/interacting_with_processes.html" class="btn btn-neutral" title="Entering an SSH password" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../tutorials/interacting_with_processes.html" class="btn btn-neutral float-left" title="Entering an SSH password" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -681,11 +706,19 @@ INFO:sh.command:&lt;Command &#39;/bin/ls&#39;, pid 32394&gt;: process completed
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Andrew Moffat.
+        
+        &copy; Copyright 2020, Andrew Moffat
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -697,36 +730,15 @@ INFO:sh.command:&lt;Command &#39;/bin/ls&#39;, pid 32394&gt;: process completed
   </div>
   
 
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'1.13.0',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
-
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script>
+
+  
+  
+    
    
 
 </body>

@@ -1,8 +1,7 @@
 
 
 <!DOCTYPE html>
-<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
-<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<html class="writer-html5" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -12,49 +11,48 @@
   
 
   
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+  
   
 
   
-
-  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
     
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+        <script src="../_static/js/gitads.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
 
-  
-
-  
-  
-    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
-    <link rel="top" title="sh 1.13.0 documentation" href="../index.html"/>
-        <link rel="up" title="Reference" href="../reference.html"/>
-        <link rel="next" title="Architecture Overview" href="architecture.html"/>
-        <link rel="prev" title="Reference" href="../reference.html"/> 
-
-  
-  <script src="../_static/js/modernizr.min.js"></script>
-
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Architecture Overview" href="architecture.html" />
+    <link rel="prev" title="Reference" href="../reference.html" /> 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
+   
   <div class="wy-grid-for-nav">
-
     
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search">
+        <div class="wy-side-nav-search" >
           
 
           
-            <a href="../index.html" class="icon icon-home"> sh
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> sh
           
 
           
@@ -74,11 +72,15 @@
           
         </div>
 
+        
         <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
           
             
             
-                <ul class="current">
+              
+            
+            
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="passing_arguments.html">Passing Arguments</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="passing_arguments.html#keyword-arguments">Keyword Arguments</a></li>
@@ -114,7 +116,7 @@
 <li class="toctree-l2"><a class="reference internal" href="default_arguments.html">Default Arguments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="envs.html">Environments</a></li>
 <li class="toctree-l2"><a class="reference internal" href="stdin.html">Input via STDIN</a></li>
-<li class="toctree-l2"><a class="reference internal" href="with.html">&#8216;With&#8217; Contexts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="with.html">‘With’ Contexts</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="reference internal" href="../reference.html">Reference</a><ul class="current">
@@ -252,14 +254,14 @@
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-execute-a-bash-builtin">How do I execute a bash builtin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#will-windows-be-supported">Will Windows be supported?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-append-output-to-a-file">How do I append output to a file?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="faq.html#why-does-my-command-s-output-have-color">Why does my command&#8217;s output have color?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-does-my-command-s-output-have-color">Why does my command’s output have color?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#why-is-tty-out-true-the-default">Why is _tty_out=True the default?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="faq.html#why-doesn-t-work-as-a-command-argument">Why doesn&#8217;t &#8220;*&#8221; work as a command argument?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn&#8217;t in <code class="docutils literal"><span class="pre">$PATH</span></code>?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-doesn-t-work-as-a-command-argument">Why doesn’t “*” work as a command argument?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-call-a-program-that-isn-t-in-path">How do I call a program that isn’t in <code class="docutils literal notranslate"><span class="pre">$PATH</span></code>?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-execute-a-program-with-a-dash-in-its-name">How do I execute a program with a dash in its name?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-execute-a-program-with-a-special-character-in-its-name">How do I execute a program with a special character in its name?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="faq.html#why-not-use-to-pipe-commands">Why not use <code class="docutils literal"><span class="pre">|</span></code> to pipe commands?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="faq.html#why-isn-t-piping-asynchronous-by-default">Why isn&#8217;t piping asynchronous by default?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-not-use-to-pipe-commands">Why not use <code class="docutils literal notranslate"><span class="pre">|</span></code> to pipe commands?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="faq.html#why-isn-t-piping-asynchronous-by-default">Why isn’t piping asynchronous by default?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-run-a-command-and-connect-it-to-sys-stdout-and-sys-stdin">How do I run a command and connect it to sys.stdout and sys.stdin?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#why-do-my-arguments-need-to-be-separate-strings">Why do my arguments need to be separate strings?</a></li>
 <li class="toctree-l2"><a class="reference internal" href="faq.html#how-do-i-order-keyword-arguments">How do I order keyword arguments?</a></li>
@@ -274,50 +276,71 @@
             
           
         </div>
+        
       </div>
     </nav>
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../index.html">sh</a>
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">sh</a>
+        
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="../index.html">Docs</a> &raquo;</li>
-      
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
           <li><a href="../reference.html">Reference</a> &raquo;</li>
-      
-    <li>Special Kwargs</li>
+        
+      <li>Special Kwargs</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
-            <a href="../_sources/sections/special_arguments.txt" rel="nofollow"> View page source</a>
+            
+            <a href="../_sources/sections/special_arguments.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <span class="target" id="special-arguments"></span><div class="section" id="special-kwargs">
-<h1>Special Kwargs<a class="headerlink" href="#special-kwargs" title="Permalink to this headline">¶</a></h1>
-<p>These arguments alter a command&#8217;s behavior.  They are not passed to the program.
+  <div class="section" id="special-kwargs">
+<span id="special-arguments"></span><h1>Special Kwargs<a class="headerlink" href="#special-kwargs" title="Permalink to this headline">¶</a></h1>
+<p>These arguments alter a command’s behavior.  They are not passed to the program.
 You can use them on any command that you run, but some may not be used together.
 sh will tell you if there are conflicts.</p>
 <p>To set default special keyword arguments on <em>every</em> command run, you may use
@@ -326,67 +349,67 @@ sh will tell you if there are conflicts.</p>
 <h2>Controlling Output<a class="headerlink" href="#controlling-output" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="out">
 <span id="id1"></span><h3>_out<a class="headerlink" href="#out" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 <p>What to redirect STDOUT to.  If this is a string, it will be treated as a file
 name.  You may also pass a file object (or file-like object), an int
-(representing a file descriptor, like the result of <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.pipe" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.pipe()</span></code></a>), a
-<a class="reference external" href="https://docs.python.org/3.5/library/io.html#io.StringIO" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">io.StringIO</span></code></a> object, or a callable.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+(representing a file descriptor, like the result of <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.pipe" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">os.pipe()</span></code></a>), a
+<a class="reference external" href="https://docs.python.org/3.5/library/io.html#io.StringIO" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">io.StringIO</span></code></a> object, or a callable.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="s2">&quot;/tmp/output&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="redirection.html#redirection"><span class="std std-ref">Redirection</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="redirection.html#redirection"><span class="std std-ref">Redirection</span></a></p>
 </div>
 </div>
 <div class="section" id="err">
 <span id="id2"></span><h3>_err<a class="headerlink" href="#err" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 <p>What to redirect STDERR to.  See <a class="reference internal" href="#out"><span class="std std-ref">_out</span></a>.</p>
 </div>
 <div class="section" id="err-to-out">
 <h3>_err_to_out<a class="headerlink" href="#err-to-out" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">False</span></code></p>
-<p>If <code class="docutils literal"><span class="pre">True</span></code>, duplicate the file descriptor bound to the process&#8217;s STDOUT also to
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, duplicate the file descriptor bound to the process’s STDOUT also to
 STDERR, effectively causing STDERR and STDOUT to go to the same place.</p>
 </div>
 <div class="section" id="encoding">
 <h3>_encoding<a class="headerlink" href="#encoding" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">sh.DEFAULT_ENCODING</span></code></p>
-<p>The character encoding of the process&#8217;s STDOUT.  By default, this is the
-locale&#8217;s default encoding.</p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">sh.DEFAULT_ENCODING</span></code></p>
+<p>The character encoding of the process’s STDOUT.  By default, this is the
+locale’s default encoding.</p>
 </div>
 <div class="section" id="decode-errors">
 <h3>_decode_errors<a class="headerlink" href="#decode-errors" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.07.0.</span></p>
+<p><span class="versionmodified added">New in version 1.07.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">&quot;strict&quot;</span></code></p>
-<p>This is how Python should handle decoding errors of the process&#8217;s output.
-By default, this is <code class="docutils literal"><span class="pre">&quot;strict&quot;</span></code>, but you can use any value that&#8217;s valid
-to <a class="reference external" href="https://docs.python.org/3.5/library/stdtypes.html#bytes.decode" title="(in Python v3.5)"><code class="xref py py-meth docutils literal"><span class="pre">bytes.decode()</span></code></a>, such as <code class="docutils literal"><span class="pre">&quot;ignore&quot;</span></code>.</p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">&quot;strict&quot;</span></code></p>
+<p>This is how Python should handle decoding errors of the process’s output.
+By default, this is <code class="docutils literal notranslate"><span class="pre">&quot;strict&quot;</span></code>, but you can use any value that’s valid
+to <a class="reference external" href="https://docs.python.org/3.5/library/stdtypes.html#bytes.decode" title="(in Python v3.5)"><code class="xref py py-meth docutils literal notranslate"><span class="pre">bytes.decode()</span></code></a>, such as <code class="docutils literal notranslate"><span class="pre">&quot;ignore&quot;</span></code>.</p>
 </div>
 <div class="section" id="tee">
 <h3>_tee<a class="headerlink" href="#tee" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.07.0.</span></p>
+<p><span class="versionmodified added">New in version 1.07.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 <p>As of 1.07.0, any time redirection is used, either for STDOUT or STDERR, the
-respective internal buffers are not filled.  For example, if you&#8217;re downloading
+respective internal buffers are not filled.  For example, if you’re downloading
 a file and using a callback on STDOUT, the internal STDOUT buffer, nor the pipe
 buffer be filled with data from STDOUT.  This option forces one of stderr
-(<code class="docutils literal"><span class="pre">_tee='err'</span></code>) or stdout (<code class="docutils literal"><span class="pre">_tee='out'</span></code> or <code class="docutils literal"><span class="pre">_tee=True</span></code>) to be filled
-anyways, in effect &#8220;tee-ing&#8221; the output into two places (the callback/redirect
+(<code class="docutils literal notranslate"><span class="pre">_tee='err'</span></code>) or stdout (<code class="docutils literal notranslate"><span class="pre">_tee='out'</span></code> or <code class="docutils literal notranslate"><span class="pre">_tee=True</span></code>) to be filled
+anyways, in effect “tee-ing” the output into two places (the callback/redirect
 handler, and the internal buffers).</p>
 </div>
 <div class="section" id="truncate-exc">
 <h3>_truncate_exc<a class="headerlink" href="#truncate-exc" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.12.0.</span></p>
+<p><span class="versionmodified added">New in version 1.12.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">True</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
 <p>Whether or not exception ouput should be truncated.</p>
 </div>
 </div>
@@ -395,20 +418,20 @@ handler, and the internal buffers).</p>
 <div class="section" id="fg">
 <span id="id3"></span><h3>_fg<a class="headerlink" href="#fg" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.12.0.</span></p>
+<p><span class="versionmodified added">New in version 1.12.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">False</span></code></p>
-<p>Runs a command in the foreground, meaning it is spawned using <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.spawnle" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.spawnle()</span></code></a>.  The current process&#8217;s STDIN/OUT/ERR
-is <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.dup2" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.dup2()</span></code></a>&#8216;d to the new process and so the new process becomes the <em>foreground</em> of the shell executing the
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>Runs a command in the foreground, meaning it is spawned using <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.spawnle" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">os.spawnle()</span></code></a>.  The current process’s STDIN/OUT/ERR
+is <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.dup2" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">os.dup2()</span></code></a>’d to the new process and so the new process becomes the <em>foreground</em> of the shell executing the
 script.  This is only really useful when you want to launch a lean, interactive process that sh is having trouble
 running, for example, ssh.</p>
 <div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last"><code class="docutils literal"><span class="pre">_fg=True</span></code> side-steps a lot of sh&#8217;s functionality.  You will not be returned a process object and most (likely
+<p class="admonition-title">Warning</p>
+<p><code class="docutils literal notranslate"><span class="pre">_fg=True</span></code> side-steps a lot of sh’s functionality.  You will not be returned a process object and most (likely
 all) other special kwargs will not work.</p>
 </div>
-<p>If you are looking for similar functionality, but still retaining sh&#8217;s features, use the following:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<p>If you are looking for similar functionality, but still retaining sh’s features, use the following:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">your_command</span><span class="p">(</span><span class="n">_in</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">_err</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
 </pre></div>
@@ -416,121 +439,121 @@ all) other special kwargs will not work.</p>
 </div>
 <div class="section" id="bg">
 <span id="id4"></span><h3>_bg<a class="headerlink" href="#bg" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">False</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
 <p>Runs a command in the background.  The command will return immediately, and you
-will have to run <a class="reference internal" href="command_class.html#RunningCommand.wait" title="RunningCommand.wait"><code class="xref py py-meth docutils literal"><span class="pre">RunningCommand.wait()</span></code></a> on it to ensure it terminates.</p>
+will have to run <a class="reference internal" href="command_class.html#RunningCommand.wait" title="RunningCommand.wait"><code class="xref py py-meth docutils literal notranslate"><span class="pre">RunningCommand.wait()</span></code></a> on it to ensure it terminates.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="asynchronous_execution.html#background"><span class="std std-ref">Background Processes</span></a>.</p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="asynchronous_execution.html#background"><span class="std std-ref">Background Processes</span></a>.</p>
 </div>
 </div>
 <div class="section" id="bg-exc">
 <span id="id5"></span><h3>_bg_exc<a class="headerlink" href="#bg-exc" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.12.9.</span></p>
+<p><span class="versionmodified added">New in version 1.12.9.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">True</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
 <p>Automatically report exceptions for the background command. If you set this to
-<code class="docutils literal"><span class="pre">False</span></code> you should make sure to call <a class="reference internal" href="command_class.html#RunningCommand.wait" title="RunningCommand.wait"><code class="xref py py-meth docutils literal"><span class="pre">RunningCommand.wait()</span></code></a> or you may
+<code class="docutils literal notranslate"><span class="pre">False</span></code> you should make sure to call <a class="reference internal" href="command_class.html#RunningCommand.wait" title="RunningCommand.wait"><code class="xref py py-meth docutils literal notranslate"><span class="pre">RunningCommand.wait()</span></code></a> or you may
 swallow exceptions that happen in the background command.</p>
 </div>
 <div class="section" id="env">
 <span id="id6"></span><h3>_env<a class="headerlink" href="#env" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 <p>A dictionary defining the only environment variables that will be made
-accessible to the process.  If not specified, the calling process&#8217;s environment
+accessible to the process.  If not specified, the calling process’s environment
 variables are used.</p>
 <div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">This dictionary is the authoritative environment for the process.  If you
+<p class="admonition-title">Note</p>
+<p>This dictionary is the authoritative environment for the process.  If you
 wish to change a single variable in your current environement, you must pass
 a copy of your current environment with the overriden variable to sh.</p>
 </div>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="envs.html#environments"><span class="std std-ref">Environments</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="envs.html#environments"><span class="std std-ref">Environments</span></a></p>
 </div>
 </div>
 <div class="section" id="timeout">
 <span id="id7"></span><h3>_timeout<a class="headerlink" href="#timeout" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 <p>How much time, in seconds, we should give the process to complete.  If the
 process does not finish within the timeout, it will be sent the signal defined
 by <a class="reference internal" href="#timeout-signal"><span class="std std-ref">_timeout_signal</span></a>.</p>
 </div>
 <div class="section" id="timeout-signal">
 <span id="id8"></span><h3>_timeout_signal<a class="headerlink" href="#timeout-signal" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">signal.SIGKILL</span></code></p>
-<p>The signal to be sent to the process if <a class="reference internal" href="#timeout"><span class="std std-ref">_timeout</span></a> is not <code class="docutils literal"><span class="pre">None</span></code>.</p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">signal.SIGKILL</span></code></p>
+<p>The signal to be sent to the process if <a class="reference internal" href="#timeout"><span class="std std-ref">_timeout</span></a> is not <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </div>
 <div class="section" id="cwd">
 <h3>_cwd<a class="headerlink" href="#cwd" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 <p>A string that sets the current working directory of the process.</p>
 </div>
 <div class="section" id="ok-code">
 <span id="id9"></span><h3>_ok_code<a class="headerlink" href="#ok-code" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">0</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
 <p>Either an integer, a list, or a tuple containing the exit code(s) that are
-considered &#8220;ok&#8221;, or in other words: do not raise an exception.  Some misbehaved
+considered “ok”, or in other words: do not raise an exception.  Some misbehaved
 programs use exit codes other than 0 to indicate success.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">weird_program</span><span class="p">(</span><span class="n">_ok_code</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">])</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="exit_codes.html#exit-codes"><span class="std std-ref">Exit Codes &amp; Exceptions</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="exit_codes.html#exit-codes"><span class="std std-ref">Exit Codes &amp; Exceptions</span></a></p>
 </div>
 </div>
 <div class="section" id="new-session">
 <span id="id10"></span><h3>_new_session<a class="headerlink" href="#new-session" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">True</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
 <p>Determines if our forked process will be executed in its own session via
-<a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.setsid" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.setsid()</span></code></a>.</p>
+<a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.setsid" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">os.setsid()</span></code></a>.</p>
 <div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">If <code class="docutils literal"><span class="pre">_new_session</span></code> is <code class="docutils literal"><span class="pre">False</span></code>, the forked process will be put into its
-own group via <code class="docutils literal"><span class="pre">os.setpgrp()</span></code>.  This way, the forked process, and all of
-it&#8217;s children, are always alone in their own group that may be signalled
-directly, regardless of the value of <code class="docutils literal"><span class="pre">_new_session</span></code>.</p>
+<p class="admonition-title">Note</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">_new_session</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>, the forked process will be put into its
+own group via <code class="docutils literal notranslate"><span class="pre">os.setpgrp()</span></code>.  This way, the forked process, and all of
+it’s children, are always alone in their own group that may be signalled
+directly, regardless of the value of <code class="docutils literal notranslate"><span class="pre">_new_session</span></code>.</p>
 </div>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="architecture.html#architecture"><span class="std std-ref">Architecture Overview</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="architecture.html#architecture"><span class="std std-ref">Architecture Overview</span></a></p>
 </div>
 </div>
 <div class="section" id="uid">
 <span id="id11"></span><h3>_uid<a class="headerlink" href="#uid" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.12.0.</span></p>
+<p><span class="versionmodified added">New in version 1.12.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
-<p>The user id to assume before the child process calls <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.execv" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.execv()</span></code></a>.</p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<p>The user id to assume before the child process calls <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.execv" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">os.execv()</span></code></a>.</p>
 </div>
 <div class="section" id="preexec-fn">
 <h3>_preexec_fn<a class="headerlink" href="#preexec-fn" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.12.0.</span></p>
+<p><span class="versionmodified added">New in version 1.12.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
-<p>A function to be run directly before the child process calls <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.execv" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.execv()</span></code></a>.
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<p>A function to be run directly before the child process calls <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.execv" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">os.execv()</span></code></a>.
 Typically not used by normal users.</p>
 </div>
 <div class="section" id="pass-fds">
 <span id="id12"></span><h3>_pass_fds<a class="headerlink" href="#pass-fds" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.13.0.</span></p>
+<p><span class="versionmodified added">New in version 1.13.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">{}</span></code> (empty set)</p>
-<p>A whitelist iterable of integer file descriptors to be inherited by the child. Passing anything in this argument causes <a class="reference internal" href="#close-fds"><span class="std std-ref">_close_fds</span></a> to be <code class="docutils literal"><span class="pre">True</span></code>.</p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">{}</span></code> (empty set)</p>
+<p>A whitelist iterable of integer file descriptors to be inherited by the child. Passing anything in this argument causes <a class="reference internal" href="#close-fds"><span class="std std-ref">_close_fds</span></a> to be <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </div>
 <div class="section" id="close-fds">
 <span id="id13"></span><h3>_close_fds<a class="headerlink" href="#close-fds" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.13.0.</span></p>
+<p><span class="versionmodified added">New in version 1.13.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">True</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
 <p>Causes all inherited file descriptors besides stdin, stdout, and stderr to be automatically closed. This option is
 automatically enabled when <a class="reference internal" href="#pass-fds"><span class="std std-ref">_pass_fds</span></a> is given a value.</p>
 </div>
@@ -539,48 +562,48 @@ automatically enabled when <a class="reference internal" href="#pass-fds"><span 
 <h2>Communication<a class="headerlink" href="#communication" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="in">
 <span id="id14"></span><h3>_in<a class="headerlink" href="#in" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 <p>Specifies an argument for the process to use as its standard input.  This may be
-a string, a <a class="reference external" href="https://docs.python.org/3.5/library/queue.html#queue.Queue" title="(in Python v3.5)"><code class="xref py py-class docutils literal"><span class="pre">queue.Queue</span></code></a>, a file-like object, or any iterable.</p>
+a string, a <a class="reference external" href="https://docs.python.org/3.5/library/queue.html#queue.Queue" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">queue.Queue</span></code></a>, a file-like object, or any iterable.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="stdin.html#stdin"><span class="std std-ref">Input via STDIN</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="stdin.html#stdin"><span class="std std-ref">Input via STDIN</span></a></p>
 </div>
 </div>
 <div class="section" id="piped">
 <span id="id15"></span><h3>_piped<a class="headerlink" href="#piped" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
-<p>May be <code class="docutils literal"><span class="pre">True</span></code>, <code class="docutils literal"><span class="pre">&quot;out&quot;</span></code>, or <code class="docutils literal"><span class="pre">&quot;err&quot;</span></code>.  Signals a command that it is being
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<p>May be <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;out&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;err&quot;</span></code>.  Signals a command that it is being
 used as the input to another command, so it should return its output
 incrementally as it receives it, instead of aggregating it all at once.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="piping.html#advanced-piping"><span class="std std-ref">Advanced Piping</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="piping.html#advanced-piping"><span class="std std-ref">Advanced Piping</span></a></p>
 </div>
 </div>
 <div class="section" id="iter">
 <span id="id16"></span><h3>_iter<a class="headerlink" href="#iter" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
-<p>May be <code class="docutils literal"><span class="pre">True</span></code>, <code class="docutils literal"><span class="pre">&quot;out&quot;</span></code>, or <code class="docutils literal"><span class="pre">&quot;err&quot;</span></code>.  Puts a command in iterable mode.  In
-this mode, you can use a <code class="docutils literal"><span class="pre">for</span></code> or <code class="docutils literal"><span class="pre">while</span></code> loop to iterate over a command&#8217;s
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<p>May be <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;out&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;err&quot;</span></code>.  Puts a command in iterable mode.  In
+this mode, you can use a <code class="docutils literal notranslate"><span class="pre">for</span></code> or <code class="docutils literal notranslate"><span class="pre">while</span></code> loop to iterate over a command’s
 output in real-time.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sh</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="s2">&quot;/tmp/file&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="asynchronous_execution.html#iterable"><span class="std std-ref">Incremental Iteration</span></a>.</p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="asynchronous_execution.html#iterable"><span class="std std-ref">Incremental Iteration</span></a>.</p>
 </div>
 </div>
 <div class="section" id="iter-noblock">
 <span id="id17"></span><h3>_iter_noblock<a class="headerlink" href="#iter-noblock" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 <p>Same as <a class="reference internal" href="#iter"><span class="std std-ref">_iter</span></a>, except the loop will not block if there is no
 output to iterate over.  Instead, the output from the command will be
-<code class="xref py py-attr docutils literal"><span class="pre">errno.EWOULDBLOCK</span></code>.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">errno.EWOULDBLOCK</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="kn">import</span> <span class="nn">errno</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
@@ -593,41 +616,41 @@ output to iterate over.  Instead, the output from the command will be
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="asynchronous_execution.html#iterable"><span class="std std-ref">Incremental Iteration</span></a>.</p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="asynchronous_execution.html#iterable"><span class="std std-ref">Incremental Iteration</span></a>.</p>
 </div>
 </div>
 <div class="section" id="with">
 <span id="id18"></span><h3>_with<a class="headerlink" href="#with" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">False</span></code></p>
-<p>Explicitly tells us that we&#8217;re running a command in a <code class="docutils literal"><span class="pre">with</span></code> context.  This is
-only necessary if you&#8217;re using a command in a <code class="docutils literal"><span class="pre">with</span></code> context <strong>and</strong> passing
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>Explicitly tells us that we’re running a command in a <code class="docutils literal notranslate"><span class="pre">with</span></code> context.  This is
+only necessary if you’re using a command in a <code class="docutils literal notranslate"><span class="pre">with</span></code> context <strong>and</strong> passing
 parameters to it.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">(</span><span class="n">password</span><span class="o">=</span><span class="s2">&quot;abc123&quot;</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="with.html#with-contexts"><span class="std std-ref">&#8216;With&#8217; Contexts</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="with.html#with-contexts"><span class="std std-ref">‘With’ Contexts</span></a></p>
 </div>
 </div>
 <div class="section" id="done">
 <span id="id19"></span><h3>_done<a class="headerlink" href="#done" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.11.0.</span></p>
+<p><span class="versionmodified added">New in version 1.11.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 <p>A callback that is <em>always</em> called when the command completes, even if it
 completes with an exit code that would raise an exception.  After the callback
 is run, any exception that would be raised is raised.</p>
-<p>The callback is passed the <code class="xref py py-class docutils literal"><span class="pre">RunningCommand</span></code> instance, a boolean
+<p>The callback is passed the <code class="xref py py-class docutils literal notranslate"><span class="pre">RunningCommand</span></code> instance, a boolean
 indicating success, and the exit code.</p>
-<p>Here&#8217;s an example of using <a class="reference internal" href="#done"><span class="std std-ref">_done</span></a> to create a multiprocess pool, where
-<code class="docutils literal"><span class="pre">sh.your_parallel_command</span></code> is executed concurrently at no more than 10 at a
+<p>Here’s an example of using <a class="reference internal" href="#done"><span class="std std-ref">_done</span></a> to create a multiprocess pool, where
+<code class="docutils literal notranslate"><span class="pre">sh.your_parallel_command</span></code> is executed concurrently at no more than 10 at a
 time:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="kn">from</span> <span class="nn">threading</span> <span class="kn">import</span> <span class="n">Semaphore</span>
 
 <span class="n">pool</span> <span class="o">=</span> <span class="n">Semaphore</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
@@ -653,39 +676,39 @@ time:</p>
 <h2>TTYs<a class="headerlink" href="#ttys" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="tty-in">
 <span id="id20"></span><h3>_tty_in<a class="headerlink" href="#tty-in" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">False</span></code>, meaning a <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.pipe" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.pipe()</span></code></a> will be used.</p>
-<p>If <code class="docutils literal"><span class="pre">True</span></code>, sh creates a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal">TTY</a>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">False</span></code>, meaning a <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.pipe" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">os.pipe()</span></code></a> will be used.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, sh creates a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal">TTY</a>
 for STDIN, essentially emulating a terminal, as if your command was entered from
 the commandline.  This is necessary for commands that require STDIN to be a TTY.</p>
 </div>
 <div class="section" id="tty-out">
 <span id="id21"></span><h3>_tty_out<a class="headerlink" href="#tty-out" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">True</span></code></p>
-<p>If <code class="docutils literal"><span class="pre">True</span></code>, sh creates a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal#Applications">TTY</a>
-for STDOUT, otherwise use a <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.pipe" title="(in Python v3.5)"><code class="xref py py-func docutils literal"><span class="pre">os.pipe()</span></code></a>.
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, sh creates a <a class="reference external" href="http://en.wikipedia.org/wiki/Pseudo_terminal#Applications">TTY</a>
+for STDOUT, otherwise use a <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.pipe" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">os.pipe()</span></code></a>.
 This is necessary for commands that require STDOUT to be a TTY.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="faq.html#faq-tty-out"><span class="std std-ref">Why is _tty_out=True the default?</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="faq.html#faq-tty-out"><span class="std std-ref">Why is _tty_out=True the default?</span></a></p>
 </div>
 </div>
 <div class="section" id="unify-ttys">
 <span id="id23"></span><h3>_unify_ttys<a class="headerlink" href="#unify-ttys" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.13.0.</span></p>
+<p><span class="versionmodified added">New in version 1.13.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">False</span></code></p>
-<p>If <code class="docutils literal"><span class="pre">True</span></code>, sh will combine the STDOUT and STDIN TTY into a single pseudo-terminal. This is sometimes required by picky
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, sh will combine the STDOUT and STDIN TTY into a single pseudo-terminal. This is sometimes required by picky
 programs which expect to be dealing with a single pseudo-terminal, like SSH.</p>
 <div class="admonition seealso">
-<p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="../tutorials/interacting_with_processes.html#tutorial2"><span class="std std-ref">Entering an SSH password</span></a></p>
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../tutorials/interacting_with_processes.html#tutorial2"><span class="std std-ref">Entering an SSH password</span></a></p>
 </div>
 </div>
 <div class="section" id="tty-size">
 <h3>_tty_size<a class="headerlink" href="#tty-size" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">(20,</span> <span class="pre">80)</span></code></p>
-<p>The (rows, columns) of stdout&#8217;s TTY.  Changing this may affect how much your
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">(20,</span> <span class="pre">80)</span></code></p>
+<p>The (rows, columns) of stdout’s TTY.  Changing this may affect how much your
 program prints per line, for example.</p>
 </div>
 </div>
@@ -693,24 +716,24 @@ program prints per line, for example.</p>
 <h2>Performance &amp; Optimization<a class="headerlink" href="#performance-optimization" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="in-bufsize">
 <h3>_in_bufsize<a class="headerlink" href="#in-bufsize" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">0</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">0</span></code></p>
 <p>The STDIN buffer size.  0 for unbuffered, 1 for line buffered, anything else for
 a buffer of that amount.</p>
 </div>
 <div class="section" id="out-bufsize">
 <span id="id24"></span><h3>_out_bufsize<a class="headerlink" href="#out-bufsize" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">1</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">1</span></code></p>
 <p>The STDOUT buffer size.  0 for unbuffered, 1 for line buffered, anything
 else for a buffer of that amount.</p>
 </div>
 <div class="section" id="err-bufsize">
 <span id="id25"></span><h3>_err_bufsize<a class="headerlink" href="#err-bufsize" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">1</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">1</span></code></p>
 <p>Same as <a class="reference internal" href="#out-bufsize"><span class="std std-ref">_out_bufsize</span></a>, but with STDERR.</p>
 </div>
 <div class="section" id="internal-bufsize">
 <span id="id26"></span><h3>_internal_bufsize<a class="headerlink" href="#internal-bufsize" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">3</span> <span class="pre">*</span> <span class="pre">1024**2</span></code> chunks</p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">3</span> <span class="pre">*</span> <span class="pre">1024**2</span></code> chunks</p>
 <p>How much of STDOUT/ERR your command will store internally.  This value
 represents the <em>number of bufsize chunks</em> not the total number of bytes.  For
 example, if this value is 100, and STDOUT is line buffered, you will be able to
@@ -720,32 +743,32 @@ retrieve only 100 characters.</p>
 <div class="section" id="no-out">
 <h3>_no_out<a class="headerlink" href="#no-out" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.07.0.</span></p>
+<p><span class="versionmodified added">New in version 1.07.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">False</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
 <p>Disables STDOUT being internally stored.  This is useful for commands
-that produce huge amounts of output that you don&#8217;t need, that would
+that produce huge amounts of output that you don’t need, that would
 otherwise be hogging memory if stored internally by sh.</p>
 </div>
 <div class="section" id="no-err">
 <h3>_no_err<a class="headerlink" href="#no-err" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.07.0.</span></p>
+<p><span class="versionmodified added">New in version 1.07.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">False</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
 <p>Disables STDERR being internally stored.  This is useful for commands that
-produce huge amounts of output that you don&#8217;t need, that would otherwise be
+produce huge amounts of output that you don’t need, that would otherwise be
 hogging memory if stored internally by sh.</p>
 </div>
 <div class="section" id="no-pipe">
 <h3>_no_pipe<a class="headerlink" href="#no-pipe" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.07.0.</span></p>
+<p><span class="versionmodified added">New in version 1.07.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">False</span></code></p>
-<p>Similar to <code class="docutils literal"><span class="pre">_no_out</span></code>, this explicitly tells the sh command that it will never
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>Similar to <code class="docutils literal notranslate"><span class="pre">_no_out</span></code>, this explicitly tells the sh command that it will never
 be used for piping its output into another command, so it should not fill its
-internal pipe buffer with the process&#8217;s output.  This is also useful for
+internal pipe buffer with the process’s output.  This is also useful for
 conserving memory.</p>
 </div>
 </div>
@@ -755,38 +778,38 @@ conserving memory.</p>
 <div class="section" id="long-sep">
 <h3>_long_sep<a class="headerlink" href="#long-sep" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.12.0.</span></p>
+<p><span class="versionmodified added">New in version 1.12.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">&quot;=&quot;</span></code></p>
-<p>This is the character(s) that separate a program&#8217;s long argument&#8217;s key from the
-value, when using kwargs to specify your program&#8217;s long arguments.  For example,
-if your program expects a long argument in the form <code class="docutils literal"><span class="pre">--name</span> <span class="pre">value</span></code>, the way to
-achieve this would be to set <code class="docutils literal"><span class="pre">_long_sep=&quot;</span> <span class="pre">&quot;</span></code>.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">&quot;=&quot;</span></code></p>
+<p>This is the character(s) that separate a program’s long argument’s key from the
+value, when using kwargs to specify your program’s long arguments.  For example,
+if your program expects a long argument in the form <code class="docutils literal notranslate"><span class="pre">--name</span> <span class="pre">value</span></code>, the way to
+achieve this would be to set <code class="docutils literal notranslate"><span class="pre">_long_sep=&quot;</span> <span class="pre">&quot;</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">your_program</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">_long_sep</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Would send the following list of arguments to your program:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s2">&quot;--key value&quot;</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s2">&quot;--key value&quot;</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>If your program expects the long argument name to be separate from its value,
-pass <code class="docutils literal"><span class="pre">None</span></code> into <code class="docutils literal"><span class="pre">_long_sep</span></code> instead:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+pass <code class="docutils literal notranslate"><span class="pre">None</span></code> into <code class="docutils literal notranslate"><span class="pre">_long_sep</span></code> instead:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">your_program</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">_long_sep</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Would send the following list of arguments to your program:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s2">&quot;--key&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s2">&quot;--key&quot;</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">]</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="long-prefix">
 <h3>_long_prefix<a class="headerlink" href="#long-prefix" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.12.0.</span></p>
+<p><span class="versionmodified added">New in version 1.12.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">&quot;--&quot;</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">&quot;--&quot;</span></code></p>
 <p>This is the character(s) that prefix a long argument for the program being run.
 Some programs use single dashes, for example, and do not understand double
 dashes.</p>
@@ -794,15 +817,15 @@ dashes.</p>
 <div class="section" id="arg-preprocess">
 <span id="preprocess"></span><h3>_arg_preprocess<a class="headerlink" href="#arg-preprocess" title="Permalink to this headline">¶</a></h3>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.12.0.</span></p>
+<p><span class="versionmodified added">New in version 1.12.0.</span></p>
 </div>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
-<p>This is an advanced option that allows you to rewrite a command&#8217;s arguments on
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<p>This is an advanced option that allows you to rewrite a command’s arguments on
 the fly, based on other command arguments, or some other variable.  It is really
 only useful in conjunction with <a class="reference internal" href="baking.html#baking"><span class="std std-ref">baking</span></a>, and only currently used when
 constructing <a class="reference internal" href="contrib.html#contrib"><span class="std std-ref">contrib</span></a> wrappers.</p>
 <p>Example:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="k">def</span> <span class="nf">processor</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span>
@@ -811,9 +834,9 @@ constructing <a class="reference internal" href="contrib.html#contrib"><span cla
 </pre></div>
 </div>
 <div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">The interface to the <code class="docutils literal"><span class="pre">_arg_preprocess</span></code> function may change without
-warning.  It is generally only for internal sh use, so don&#8217;t use it unless
+<p class="admonition-title">Warning</p>
+<p>The interface to the <code class="docutils literal notranslate"><span class="pre">_arg_preprocess</span></code> function may change without
+warning.  It is generally only for internal sh use, so don’t use it unless
 you absolutely have to.</p>
 </div>
 </div>
@@ -822,12 +845,12 @@ you absolutely have to.</p>
 <h2>Misc<a class="headerlink" href="#misc" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="log-msg">
 <h3>_log_msg<a class="headerlink" href="#log-msg" title="Permalink to this headline">¶</a></h3>
-<p>Default value: <code class="docutils literal"><span class="pre">None</span></code></p>
+<p>Default value: <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 <div class="versionadded">
-<p><span class="versionmodified">New in version 1.12.0.</span></p>
+<p><span class="versionmodified added">New in version 1.12.0.</span></p>
 </div>
 <p>This allows for a custom logging header for <a class="reference internal" href="command_class.html#command-class"><span class="std std-ref">Command Class</span></a> instances.  For example, the default logging looks like this:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
@@ -835,13 +858,13 @@ you absolutely have to.</p>
 <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-none"><div class="highlight"><pre><span></span>INFO:sh.command:&lt;Command &#39;/bin/ls -l&#39;&gt;: starting process
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>INFO:sh.command:&lt;Command &#39;/bin/ls -l&#39;&gt;: starting process
 INFO:sh.command:&lt;Command &#39;/bin/ls -l&#39;, pid 28952&gt;: process started
 INFO:sh.command:&lt;Command &#39;/bin/ls -l&#39;, pid 28952&gt;: process completed
 </pre></div>
 </div>
-<p>People can find this <code class="docutils literal"><span class="pre">&lt;Command</span> <span class="pre">..</span></code> section long and not relevant. <code class="docutils literal"><span class="pre">_log_msg</span></code> allows you to customize this:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
+<p>People can find this <code class="docutils literal notranslate"><span class="pre">&lt;Command</span> <span class="pre">..</span></code> section long and not relevant. <code class="docutils literal notranslate"><span class="pre">_log_msg</span></code> allows you to customize this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
@@ -852,14 +875,14 @@ INFO:sh.command:&lt;Command &#39;/bin/ls -l&#39;, pid 28952&gt;: process complet
 <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">,</span> <span class="n">_log_msg</span><span class="o">=</span><span class="n">custom_log</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-none"><div class="highlight"><pre><span></span>INFO:sh.command:/bin/ls -l: starting process
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>INFO:sh.command:/bin/ls -l: starting process
 INFO:sh.command:/bin/ls -l: process started
 INFO:sh.command:/bin/ls -l: process completed
 </pre></div>
 </div>
-<p>The first argument, <code class="docutils literal"><span class="pre">ran</span></code>, is the program&#8217;s execution string and arguments, as close as we can get it to be how you&#8217;d
-type in the shell.  <code class="docutils literal"><span class="pre">call_args</span></code> is a dictionary of all of the special kwargs that were passed to the command.  And <code class="docutils literal"><span class="pre">pid</span></code>
-is the process id of the forked process.  It defaults to <code class="docutils literal"><span class="pre">None</span></code> because the <code class="docutils literal"><span class="pre">_log_msg</span></code> callback is actually called
+<p>The first argument, <code class="docutils literal notranslate"><span class="pre">ran</span></code>, is the program’s execution string and arguments, as close as we can get it to be how you’d
+type in the shell.  <code class="docutils literal notranslate"><span class="pre">call_args</span></code> is a dictionary of all of the special kwargs that were passed to the command.  And <code class="docutils literal notranslate"><span class="pre">pid</span></code>
+is the process id of the forked process.  It defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code> because the <code class="docutils literal notranslate"><span class="pre">_log_msg</span></code> callback is actually called
 twice: first to construct the logger for the <a class="reference internal" href="command_class.html#running-command"><span class="std std-ref">RunningCommand Class</span></a> instance, before the process itself is spawned, then
 a second time after the process is spawned via <a class="reference internal" href="command_class.html#oproc-class"><span class="std std-ref">OProc Class</span></a>, when we have a pid.</p>
 </div>
@@ -868,15 +891,16 @@ a second time after the process is spawned via <a class="reference internal" hre
 
 
            </div>
+           
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="architecture.html" class="btn btn-neutral float-right" title="Architecture Overview" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="architecture.html" class="btn btn-neutral float-right" title="Architecture Overview" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../reference.html" class="btn btn-neutral" title="Reference" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="../reference.html" class="btn btn-neutral float-left" title="Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -885,11 +909,19 @@ a second time after the process is spawned via <a class="reference internal" hre
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, Andrew Moffat.
+        
+        &copy; Copyright 2020, Andrew Moffat
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -901,36 +933,15 @@ a second time after the process is spawned via <a class="reference internal" hre
   </div>
   
 
-
-  
-
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'../',
-            VERSION:'1.13.0',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
-        };
-    </script>
-      <script type="text/javascript" src="../_static/jquery.js"></script>
-      <script type="text/javascript" src="../_static/underscore.js"></script>
-      <script type="text/javascript" src="../_static/doctools.js"></script>
-
-  
-
-  
-  
-    <script type="text/javascript" src="../_static/js/theme.js"></script>
-  
-
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
   </script>
+
+  
+  
+    
    
 
 </body>
