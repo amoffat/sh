@@ -46,13 +46,19 @@ Support
 * `Andrew Moffat <https://github.com/amoffat>`_ - author/maintainer
 * `Erik Cederstrand <https://github.com/ecederstrand>`_ - maintainer
 
-Updating the docs
-=================
 
-Check out the `gh-pages <https://github.com/amoffat/sh/tree/gh-pages>`_ branch and follow the ``README.rst`` there.
+.. image:: https://raw.githubusercontent.com/amoffat/sh/master/gitads.png
+    :target: https://tracking.gitads.io/?campaign=gitads&repo=sh&redirect=gitads.io
+    :alt: Logo
+
 
 Developers
 ==========
+
+Updating the docs
+-----------------
+
+Check out the `gh-pages <https://github.com/amoffat/sh/tree/gh-pages>`_ branch and follow the ``README.rst`` there.
 
 Testing
 -------
