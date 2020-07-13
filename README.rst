@@ -47,6 +47,11 @@ Support
 * `Erik Cederstrand <https://github.com/ecederstrand>`_ - maintainer
 
 
+.. image:: https://raw.githubusercontent.com/amoffat/sh/master/gitads.png
+    :target: https://tracking.gitads.io/?campaign=gitads&repo=sh&redirect=gitads.io
+    :alt: Logo
+
+
 Developers
 ==========
 
