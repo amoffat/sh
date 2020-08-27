@@ -22,7 +22,7 @@ http://amoffat.github.io/sh/
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ===============================================================================
-__version__ = "1.13.1"
+__version__ = "1.13.2"
 __project_url__ = "https://github.com/amoffat/sh"
 
 from collections import deque, Mapping
@@ -3627,6 +3627,9 @@ class ModuleImporterFromVariables(object):
 
         parent_frame = inspect.currentframe().f_back
 
+        if parent_frame and parent_frame.f_code.co_name == "find_spec":
+            parent_frame = parent_frame.f_back
+
         while parent_frame and in_importlib(parent_frame):
             parent_frame = parent_frame.f_back
 
@@ -3650,6 +3653,13 @@ class ModuleImporterFromVariables(object):
             return None
 
         return self
+
+    def find_spec(self, fullname, path=None, target=None):
+        "find_module() is deprecated since Python 3.4 in favor of find_spec()"
+
+        from importlib.machinery import ModuleSpec
+        found = self.find_module(fullname, path)
+        return ModuleSpec(fullname, found) if found is not None else None
 
     def load_module(self, mod_fullname):
         parent_frame = inspect.currentframe().f_back
