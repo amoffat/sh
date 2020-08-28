@@ -22,7 +22,7 @@ http://amoffat.github.io/sh/
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ===============================================================================
-__version__ = "1.13.1"
+__version__ = "1.14.0"
 __project_url__ = "https://github.com/amoffat/sh"
 
 from collections import deque, Mapping
