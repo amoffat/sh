@@ -22,7 +22,7 @@ http://amoffat.github.io/sh/
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ===============================================================================
-__version__ = "1.13.2"
+__version__ = "1.13.1"
 __project_url__ = "https://github.com/amoffat/sh"
 
 from collections import deque, Mapping
@@ -3655,7 +3655,7 @@ class ModuleImporterFromVariables(object):
         return self
 
     def find_spec(self, fullname, path=None, target=None):
-        "find_module() is deprecated since Python 3.4 in favor of find_spec()"
+        """ find_module() is deprecated since Python 3.4 in favor of find_spec() """
 
         from importlib.machinery import ModuleSpec
         found = self.find_module(fullname, path)
