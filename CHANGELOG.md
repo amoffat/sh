@@ -1,4 +1,8 @@
 # Changelog
+## 1.14.0 - 8/28/20
+*   `_env` now more lenient in accepting dictionary-like objects [#527](https://github.com/amoffat/sh/issues/527)
+*   `None` and `False` arguments now do not pass through to underlying command [#525](https://github.com/amoffat/sh/pull/525)
+*   Implemented `find_spec` on the fancy importer, which fixes some Python3.4+ issues [#536](https://github.com/amoffat/sh/pull/536)
 
 ## 1.13.1 - 4/28/20
 *   regression fix if `_fg=False` [#520](https://github.com/amoffat/sh/issues/520)
@@ -166,7 +170,7 @@
 *   Bugfix where input arguments were being assumed as ascii or unicode, but never as a string in a different encoding.
 *   _long_sep keyword argument added joining together a dictionary of arguments passed in to a command
 *   Commands can now be passed a dictionary of args, and the keys will be interpretted "raw", with no underscore-to-hyphen conversion
-*   Reserved Python keywords can now be used as subcommands by appending an underscore `_` to them 
+*   Reserved Python keywords can now be used as subcommands by appending an underscore `_` to them
 
 
 ## 1.07 - 11/21/12
@@ -177,7 +181,7 @@
 *   Added `_decode_errors` to be passed to all stdout/stderr decoding of a process.
 *   Added `_no_out`, `_no_err`, and `_no_pipe` special keyword arguments.  These are used for long-running processes with lots of output.
 *   Changed custom loggers that were created for each process to fixed loggers, so there are no longer logger references laying around in the logging module after the process ends and it garbage collected.
-    
+
 
 ## 1.06 - 11/10/12
 
@@ -192,11 +196,11 @@
 
 *   Changing status from alpha to beta.
 *   Python 3.3 officially supported.
-*   Documentation fix.  The section on exceptions now references the fact that signals do not raise an exception, even for signals that might seem like they should, e.g. segfault.  
+*   Documentation fix.  The section on exceptions now references the fact that signals do not raise an exception, even for signals that might seem like they should, e.g. segfault.
 *   Bugfix with Python 3.3 where importing commands from the sh namespace resulted in an error related to `__path__`
 *   Long-form and short-form options to commands may now be given False to disable the option from being passed into the command.  This is useful to pass in a boolean flag that you flip to either True or False to enable or disable some functionality at runtime.
 
 ## 1.04 - 10/07/12
 
-*   Making `Command` class resolve the `path` parameter with `which` by default instead of expecting it to be resolved before it is passed in.  This change shouldn't affect backwards compatibility.  
+*   Making `Command` class resolve the `path` parameter with `which` by default instead of expecting it to be resolved before it is passed in.  This change shouldn't affect backwards compatibility.
 *   Fixing a bug when an exception is raised from a program, and the error output has non-ascii text.  This didn't work in Python < 3.0, because .decode()'s default encoding is typically ascii.
