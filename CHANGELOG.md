@@ -2,6 +2,7 @@
 ## 1.14.0 - 8/28/20
 *   `_env` now more lenient in accepting dictionary-like objects [#527](https://github.com/amoffat/sh/issues/527)
 *   `None` and `False` arguments now do not pass through to underlying command [#525](https://github.com/amoffat/sh/pull/525)
+*   Implemented `find_spec` on the fancy importer, which fixes some Python3.4+ issues [#536](https://github.com/amoffat/sh/pull/536)
 
 ## 1.13.1 - 4/28/20
 *   regression fix if `_fg=False` [#520](https://github.com/amoffat/sh/issues/520)
