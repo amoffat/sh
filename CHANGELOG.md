@@ -1,5 +1,5 @@
 # Changelog
-## 1.14.0 - X/XX/XX
+## 1.14.0 - 8/28/20
 *   `_env` now more lenient in accepting dictionary-like objects [#527](https://github.com/amoffat/sh/issues/527)
 *   `None` and `False` arguments now do not pass through to underlying command [#525](https://github.com/amoffat/sh/pull/525)
 

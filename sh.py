@@ -3724,7 +3724,10 @@ def main():  # pragma: no cover
         import test
         coverage = None
         if test.HAS_UNICODE_LITERAL:
-            import coverage
+            try:
+                import coverage
+            except ImportError:
+                pass
 
         env = os.environ.copy()
         env["SH_TESTS_RUNNING"] = "1"
