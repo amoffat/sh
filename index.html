@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>1.13.0 &mdash; sh 1.13.0 documentation</title>
+  <title>sh &mdash; sh 1.14.0 documentation</title>
   
 
   
@@ -316,7 +316,7 @@
     
       <li><a href="#" class="icon icon-home"></a> &raquo;</li>
         
-      <li>1.13.0</li>
+      <li>sh</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -338,8 +338,8 @@
   <div class="toctree-wrapper compound">
 </div>
 <img alt="Logo" src="_images/logo-230.png" />
-<div class="section" id="version">
-<h1>1.13.0<a class="headerlink" href="#version" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="sh">
+<h1>sh<a class="headerlink" href="#sh" title="Permalink to this headline">¶</a></h1>
 <a class="reference external image-reference" href="https://pypi.python.org/pypi/sh"><img alt="Version" src="https://img.shields.io/pypi/v/sh.svg?style=flat-square" /></a>
 <a class="reference external image-reference" href="https://pypi.python.org/pypi/sh"><img alt="Downloads Status" src="https://img.shields.io/pypi/dm/sh.svg?style=flat-square" /></a>
 <a class="reference external image-reference" href="https://pypi.python.org/pypi/sh"><img alt="Python Versions" src="https://img.shields.io/pypi/pyversions/sh.svg?style=flat-square" /></a>
@@ -367,24 +367,23 @@ that allows you to call any program as if it were a function:</p>
 on your system by dynamically resolving your <code class="docutils literal notranslate"><span class="pre">$PATH</span></code>, much like Bash does, and
 then wrapping the binary in a function.  In this way, all the programs on your
 system are easily available to you from within Python.</p>
-</div>
 <div class="section" id="installation">
-<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install sh
 </pre></div>
 </div>
 </div>
 <div class="section" id="quick-reference">
-<h1>Quick Reference<a class="headerlink" href="#quick-reference" title="Permalink to this headline">¶</a></h1>
+<h2>Quick Reference<a class="headerlink" href="#quick-reference" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="passing-arguments">
-<h2>Passing Arguments<a class="headerlink" href="#passing-arguments" title="Permalink to this headline">¶</a></h2>
+<h3>Passing Arguments<a class="headerlink" href="#passing-arguments" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;never&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><a class="reference internal" href="sections/passing_arguments.html#passing-arguments"><span class="std std-ref">Read More</span></a></p>
 </div>
 <div class="section" id="exit-codes">
-<h2>Exit Codes<a class="headerlink" href="#exit-codes" title="Permalink to this headline">¶</a></h2>
+<h3>Exit Codes<a class="headerlink" href="#exit-codes" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
     <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/doesnt/exist&quot;</span><span class="p">)</span>
 <span class="k">except</span> <span class="n">sh</span><span class="o">.</span><span class="n">ErrorReturnCode_2</span><span class="p">:</span>
@@ -394,7 +393,7 @@ system are easily available to you from within Python.</p>
 <p><a class="reference internal" href="sections/exit_codes.html#exit-codes"><span class="std std-ref">Read More</span></a></p>
 </div>
 <div class="section" id="redirection">
-<h2>Redirection<a class="headerlink" href="#redirection" title="Permalink to this headline">¶</a></h2>
+<h3>Redirection<a class="headerlink" href="#redirection" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="s2">&quot;/tmp/dir_contents&quot;</span><span class="p">)</span>
 
 <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;/tmp/dir_contents&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
@@ -408,7 +407,7 @@ system are easily available to you from within Python.</p>
 <p><a class="reference internal" href="sections/redirection.html#redirection"><span class="std std-ref">Read More</span></a></p>
 </div>
 <div class="section" id="baking">
-<h2>Baking<a class="headerlink" href="#baking" title="Permalink to this headline">¶</a></h2>
+<h3>Baking<a class="headerlink" href="#baking" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">my_ls</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">)</span>
 
 <span class="c1"># equivalent</span>
@@ -419,14 +418,14 @@ system are easily available to you from within Python.</p>
 <p><a class="reference internal" href="sections/baking.html#baking"><span class="std std-ref">Read More</span></a></p>
 </div>
 <div class="section" id="piping">
-<h2>Piping<a class="headerlink" href="#piping" title="Permalink to this headline">¶</a></h2>
+<h3>Piping<a class="headerlink" href="#piping" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sh</span><span class="o">.</span><span class="n">wc</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;-1&quot;</span><span class="p">),</span> <span class="s2">&quot;-l&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><a class="reference internal" href="sections/piping.html#piping"><span class="std std-ref">Read More</span></a></p>
 </div>
 <div class="section" id="subcommands">
-<h2>Subcommands<a class="headerlink" href="#subcommands" title="Permalink to this headline">¶</a></h2>
+<h3>Subcommands<a class="headerlink" href="#subcommands" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># equivalent</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">git</span><span class="p">(</span><span class="s2">&quot;show&quot;</span><span class="p">,</span> <span class="s2">&quot;HEAD&quot;</span><span class="p">)</span>
 <span class="n">sh</span><span class="o">.</span><span class="n">git</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="s2">&quot;HEAD&quot;</span><span class="p">)</span>
@@ -435,13 +434,14 @@ system are easily available to you from within Python.</p>
 <p><a class="reference internal" href="sections/subcommands.html#subcommands"><span class="std std-ref">Read More</span></a></p>
 </div>
 <div class="section" id="background-processes">
-<h2>Background Processes<a class="headerlink" href="#background-processes" title="Permalink to this headline">¶</a></h2>
+<h3>Background Processes<a class="headerlink" href="#background-processes" title="Permalink to this headline">¶</a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;-name&quot;</span><span class="p">,</span> <span class="s2">&quot;sh.py&quot;</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="c1"># ... do other things ...</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>
 </div>
 <p><a class="reference internal" href="sections/asynchronous_execution.html#background"><span class="std std-ref">Read More</span></a></p>
+</div>
 </div>
 </div>
 

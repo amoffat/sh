@@ -14,8 +14,8 @@
 .. image:: images/logo-230.png
     :alt: Logo
 
-|version|
-=========
+sh
+##
 
 .. image:: https://img.shields.io/pypi/v/sh.svg?style=flat-square
     :target: https://pypi.python.org/pypi/sh
