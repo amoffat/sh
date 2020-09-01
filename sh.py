@@ -25,7 +25,11 @@ http://amoffat.github.io/sh/
 __version__ = "1.14.0"
 __project_url__ = "https://github.com/amoffat/sh"
 
-from collections import deque, Mapping
+from collections import deque
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 from contextlib import contextmanager
 from functools import partial
 from io import UnsupportedOperation, open as fdopen
