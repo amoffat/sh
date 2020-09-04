@@ -3246,6 +3246,7 @@ class Environment(dict):
         "SignalException",
         "ForkException",
         "TimeoutException",
+        "StreamBufferer",
         "__project_url__",
         "__version__",
         "__file__",
@@ -3266,27 +3267,14 @@ class Environment(dict):
         self.globs = globs
         self.baked_args = baked_args or {}
 
-        # this state is for tests.
-        # it used to be a boolean, but now we use an object because we want to do some reference counting on it.
-        # the reason we reference count is to allow the tests to automatically reset this state when the test
-        # completes.
-        self.disable_whitelist = object()
-
     def __getitem__(self, k):
-        # if we first import "_disable_whitelist" from sh, we can import
-        # anything defined in the global scope of sh.py.  this is useful for our
-        # tests
-        if k == "_disable_whitelist":
-            return self.disable_whitelist
-
         if k == 'args':
             # Let the deprecated '_args' context manager be imported as 'args'
             k = '_args'
 
         # if we're trying to import something real, see if it's in our global scope.
-        # what defines "real" is that it's either in our whitelist or we've disabled our whitelist by importing
-        # `_disable_whitelist` from sh.
-        if k in self.whitelist or sys.getrefcount(self.disable_whitelist)-1 > 1:
+        # what defines "real" is that it's in our whitelist
+        if k in self.whitelist:
             return self.globs[k]
 
         # somebody tried to be funny and do "from sh import *"

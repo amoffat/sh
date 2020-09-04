@@ -3043,7 +3043,6 @@ time.sleep(2)
 
 class StreamBuffererTests(unittest.TestCase):
     def test_unbuffered(self):
-        from sh import _disable_whitelist  # noqa: F401
         from sh import StreamBufferer
         b = StreamBufferer(0)
 
@@ -3053,7 +3052,6 @@ class StreamBuffererTests(unittest.TestCase):
         self.assertEqual(b.flush(), b"")
 
     def test_newline_buffered(self):
-        from sh import _disable_whitelist  # noqa: F401
         from sh import StreamBufferer
         b = StreamBufferer(1)
 
@@ -3062,7 +3060,6 @@ class StreamBuffererTests(unittest.TestCase):
         self.assertEqual(b.flush(), b"four")
 
     def test_chunk_buffered(self):
-        from sh import _disable_whitelist  # noqa: F401
         from sh import StreamBufferer
         b = StreamBufferer(10)
 
