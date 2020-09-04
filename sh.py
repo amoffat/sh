@@ -2900,8 +2900,8 @@ def determine_how_to_feed_output(handler, encoding, decode_errors):
         try:
             handler = int(handler)
         except (ValueError, TypeError):
-            process = lambda chunk: False  # noqa: E731
-            finish = lambda: None  # noqa: E731
+            def process(chunk): return False  # noqa: E731
+            def finish(): return None  # noqa: E731
         else:
             process, finish = get_fd_chunk_consumer(handler)
 
@@ -2915,14 +2915,14 @@ def get_fd_chunk_consumer(handler):
 
 def get_file_chunk_consumer(handler):
     if getattr(handler, "encoding", None):
-        encode = lambda chunk: chunk.decode(handler.encoding)  # noqa: E731
+        def encode(chunk): return chunk.decode(handler.encoding)  # noqa: E731
     else:
-        encode = lambda chunk: chunk  # noqa: E731
+        def encode(chunk): return chunk  # noqa: E731
 
     if hasattr(handler, "flush"):
         flush = handler.flush
     else:
-        flush = lambda: None  # noqa: E731
+        def flush(): return None  # noqa: E731
 
     def process(chunk):
         handler.write(encode(chunk))
@@ -3464,15 +3464,15 @@ def ssh(orig):  # pragma: no cover
         prompt = "Please enter SSH password: "
 
         if prompt_match is None:
-            prompt_match = lambda content: content.cur_line.endswith("password: ")  # noqa: E731
+            def prompt_match(content): return content.cur_line.endswith("password: ")  # noqa: E731
 
         if password is None:
-            pass_getter = lambda: getpass.getpass(prompt=prompt)  # noqa: E731
+            def pass_getter(): return getpass.getpass(prompt=prompt)  # noqa: E731
         else:
-            pass_getter = lambda: password.rstrip("\n")  # noqa: E731
+            def pass_getter(): return password.rstrip("\n")  # noqa: E731
 
         if login_success is None:
-            login_success = lambda content: True  # noqa: E731
+            def login_success(content): return True  # noqa: E731
 
         kwargs["_out"] = SSHInteract(prompt_match, pass_getter, real_out_handler, login_success)
         return a, kwargs
