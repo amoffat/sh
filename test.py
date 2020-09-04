@@ -315,7 +315,7 @@ sys.stdout.write("a" * 1000)
 sys.stderr.write("b" * 1000)
 exit(1)
 """)
-        self.assertRaises(sh.ErrorReturnCode, python, py.name)
+        self.assertRaises(sh.ErrorReturnCode_1, python, py.name)
 
     def test_number_arg(self):
         py = create_tmp_test("""
@@ -341,11 +341,11 @@ sys.stdout.write("no hang")
         self.assertEqual(out, "no hang")
 
     def test_exit_code(self):
-        from sh import ErrorReturnCode
+        from sh import ErrorReturnCode_3
         py = create_tmp_test("""
 exit(3)
 """)
-        self.assertRaises(ErrorReturnCode, python, py.name)
+        self.assertRaises(ErrorReturnCode_3, python, py.name)
 
     def test_patched_glob(self):
         from glob import glob
@@ -371,7 +371,7 @@ print(sys.argv[1:])
         self.assertEqual(out, "['*.faowjefoajweofj']")
 
     def test_exit_code_with_hasattr(self):
-        from sh import ErrorReturnCode
+        from sh import ErrorReturnCode_3
         py = create_tmp_test("""
 exit(3)
 """)
@@ -383,16 +383,16 @@ exit(3)
             list(out)
             self.assertEqual(out.exit_code, 3)
             self.fail("Command exited with error, but no exception thrown")
-        except ErrorReturnCode:
+        except ErrorReturnCode_3:
             pass
 
     def test_exit_code_from_exception(self):
-        from sh import ErrorReturnCode
+        from sh import ErrorReturnCode_3
         py = create_tmp_test("""
 exit(3)
 """)
 
-        self.assertRaises(ErrorReturnCode, python, py.name)
+        self.assertRaises(ErrorReturnCode_3, python, py.name)
 
         try:
             python(py.name)
@@ -3043,7 +3043,6 @@ time.sleep(2)
 
 class StreamBuffererTests(unittest.TestCase):
     def test_unbuffered(self):
-        from sh import _disable_whitelist  # noqa: F401
         from sh import StreamBufferer
         b = StreamBufferer(0)
 
@@ -3053,7 +3052,6 @@ class StreamBuffererTests(unittest.TestCase):
         self.assertEqual(b.flush(), b"")
 
     def test_newline_buffered(self):
-        from sh import _disable_whitelist  # noqa: F401
         from sh import StreamBufferer
         b = StreamBufferer(1)
 
@@ -3062,7 +3060,6 @@ class StreamBuffererTests(unittest.TestCase):
         self.assertEqual(b.flush(), b"four")
 
     def test_chunk_buffered(self):
-        from sh import _disable_whitelist  # noqa: F401
         from sh import StreamBufferer
         b = StreamBufferer(10)
 
