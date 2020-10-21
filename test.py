@@ -422,6 +422,11 @@ exit(3)
         py = create_tmp_test("exit(0)")
         python(py.name, _ok_code=None)
 
+    def test_ok_code_exception(self):
+        from sh import ErrorReturnCode_0
+        py = create_tmp_test("exit(0)")
+        self.assertRaises(ErrorReturnCode_0, python, py.name, _ok_code=2)
+
     def test_none_arg(self):
         py = create_tmp_test("""
 import sys

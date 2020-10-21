@@ -486,7 +486,7 @@ def get_rc_exc(rc):
     except KeyError:
         pass
 
-    if rc > 0:
+    if rc >= 0:
         name = "ErrorReturnCode_%d" % rc
         base = ErrorReturnCode
     else:
