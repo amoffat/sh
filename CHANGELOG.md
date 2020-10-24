@@ -1,5 +1,5 @@
 # Changelog
-## 1.14.*
+## 1.14.1 - 10/24/20
 *   bugfix where setting `_ok_code` to not include 0, but 0 was the exit code [#545](https://github.com/amoffat/sh/pull/545)
 
 ## 1.14.0 - 8/28/20
