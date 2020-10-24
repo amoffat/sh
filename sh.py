@@ -22,10 +22,14 @@ http://amoffat.github.io/sh/
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ===============================================================================
-__version__ = "1.14.0"
+__version__ = "1.14.1"
 __project_url__ = "https://github.com/amoffat/sh"
 
-from collections import deque, Mapping
+from collections import deque
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 from contextlib import contextmanager
 from functools import partial
 from io import UnsupportedOperation, open as fdopen
@@ -482,7 +486,7 @@ def get_rc_exc(rc):
     except KeyError:
         pass
 
-    if rc > 0:
+    if rc >= 0:
         name = "ErrorReturnCode_%d" % rc
         base = ErrorReturnCode
     else:
@@ -2896,8 +2900,8 @@ def determine_how_to_feed_output(handler, encoding, decode_errors):
         try:
             handler = int(handler)
         except (ValueError, TypeError):
-            process = lambda chunk: False  # noqa: E731
-            finish = lambda: None  # noqa: E731
+            def process(chunk): return False  # noqa: E731
+            def finish(): return None  # noqa: E731
         else:
             process, finish = get_fd_chunk_consumer(handler)
 
@@ -2911,14 +2915,14 @@ def get_fd_chunk_consumer(handler):
 
 def get_file_chunk_consumer(handler):
     if getattr(handler, "encoding", None):
-        encode = lambda chunk: chunk.decode(handler.encoding)  # noqa: E731
+        def encode(chunk): return chunk.decode(handler.encoding)  # noqa: E731
     else:
-        encode = lambda chunk: chunk  # noqa: E731
+        def encode(chunk): return chunk  # noqa: E731
 
     if hasattr(handler, "flush"):
         flush = handler.flush
     else:
-        flush = lambda: None  # noqa: E731
+        def flush(): return None  # noqa: E731
 
     def process(chunk):
         handler.write(encode(chunk))
@@ -3242,6 +3246,7 @@ class Environment(dict):
         "SignalException",
         "ForkException",
         "TimeoutException",
+        "StreamBufferer",
         "__project_url__",
         "__version__",
         "__file__",
@@ -3261,23 +3266,15 @@ class Environment(dict):
         super(dict, self).__init__()
         self.globs = globs
         self.baked_args = baked_args or {}
-        self.disable_whitelist = False
 
     def __getitem__(self, k):
-        # if we first import "_disable_whitelist" from sh, we can import
-        # anything defined in the global scope of sh.py.  this is useful for our
-        # tests
-        if k == "_disable_whitelist":
-            self.disable_whitelist = True
-            return None
-
         if k == 'args':
             # Let the deprecated '_args' context manager be imported as 'args'
             k = '_args'
 
-        # we're trying to import something real (maybe), see if it's in our
-        # global scope
-        if k in self.whitelist or self.disable_whitelist:
+        # if we're trying to import something real, see if it's in our global scope.
+        # what defines "real" is that it's in our whitelist
+        if k in self.whitelist:
             return self.globs[k]
 
         # somebody tried to be funny and do "from sh import *"
@@ -3455,15 +3452,15 @@ def ssh(orig):  # pragma: no cover
         prompt = "Please enter SSH password: "
 
         if prompt_match is None:
-            prompt_match = lambda content: content.cur_line.endswith("password: ")  # noqa: E731
+            def prompt_match(content): return content.cur_line.endswith("password: ")  # noqa: E731
 
         if password is None:
-            pass_getter = lambda: getpass.getpass(prompt=prompt)  # noqa: E731
+            def pass_getter(): return getpass.getpass(prompt=prompt)  # noqa: E731
         else:
-            pass_getter = lambda: password.rstrip("\n")  # noqa: E731
+            def pass_getter(): return password.rstrip("\n")  # noqa: E731
 
         if login_success is None:
-            login_success = lambda content: True  # noqa: E731
+            def login_success(content): return True  # noqa: E731
 
         kwargs["_out"] = SSHInteract(prompt_match, pass_getter, real_out_handler, login_success)
         return a, kwargs
