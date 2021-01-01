@@ -1,4 +1,4 @@
-.. image:: https://raw.githubusercontent.com/amoffat/sh/master/logo-230.png
+.. image:: https://raw.githubusercontent.com/amoffat/sh/master/images/logo-230.png
     :target: https://amoffat.github.com/sh
     :alt: Logo
 
@@ -22,7 +22,7 @@
 
 |
 
-sh is a full-fledged subprocess replacement for Python 2.6 - 3.8, PyPy and PyPy3
+sh is a full-fledged subprocess replacement for Python 3.6 - 3.8, PyPy and PyPy3
 that allows you to call *any* program as if it were a function:
 
 .. code:: python
@@ -63,7 +63,7 @@ run::
 
     $> ./build.sh
 
-This will install ubuntu 18.04 LTS and all python versions from 2.6-3.8.  Once it's done, stay in that directory and
+This will install ubuntu 18.04 LTS and all python versions.  Once it's done, stay in that directory and
 run::
 
     $> ./run.sh
@@ -75,7 +75,7 @@ run.  If you wish to run a single test, you may pass that test to `./run.sh`::
 
 To run a single test for a single environment::
 
-    $> ./run.sh -e 3.4 FunctionalTests.test_unicode_arg
+    $> ./run.sh -e 3.6 FunctionalTests.test_unicode_arg
 
 Coverage
 --------
