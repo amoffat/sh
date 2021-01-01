@@ -24,7 +24,13 @@ from io import StringIO, BytesIO
 from hashlib import md5
 
 
+THIS_DIR = Path(__file__).resolve().parent
 RAND_BYTES = os.urandom(10)
+
+# we have to use the real path because on osx, /tmp is a symlink to
+# /private/tmp, and so assertions that gettempdir() == sh.pwd() will fail
+tempdir = Path(tempfile.gettempdir()).resolve()
+IS_MACOS = platform.system() in ("AIX", "Darwin")
 
 
 def hash(a: str):
@@ -44,13 +50,6 @@ def randomize_order(a, b):
 
 
 unittest.TestLoader.sortTestMethodsUsing = staticmethod(randomize_order)
-
-THIS_DIR = Path(__file__).resolve().parent
-
-# we have to use the real path because on osx, /tmp is a symlink to
-# /private/tmp, and so assertions that gettempdir() == sh.pwd() will fail
-tempdir = Path(tempfile.gettempdir()).resolve()
-IS_MACOS = platform.system() in ("AIX", "Darwin")
 
 
 # these 3 functions are helpers for modifying PYTHONPATH with a module's main
@@ -79,8 +78,6 @@ def append_module_path(env, m):
     append_pythonpath(env, get_module_import_dir(m))
 
 
-THIS_DIR = dirname(os.path.abspath(__file__))
-
 system_python = sh.Command(sys.executable)
 
 # this is to ensure that our `python` helper here is able to import our local sh
@@ -88,10 +85,6 @@ system_python = sh.Command(sys.executable)
 baked_env = os.environ.copy()
 append_module_path(baked_env, sh)
 python = system_python.bake(_env=baked_env)
-
-
-skipUnless = unittest.skipUnless
-skip_unless = skipUnless
 
 
 def requires_progs(*progs):
@@ -103,22 +96,24 @@ def requires_progs(*progs):
             missing.append(prog)
 
     friendly_missing = ", ".join(missing)
-    return skipUnless(
+    return unittest.skipUnless(
         len(missing) == 0, "Missing required system programs: %s" % friendly_missing
     )
 
 
-requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
-requires_utf8 = skipUnless(
+requires_posix = unittest.skipUnless(os.name == "posix", "Requires POSIX")
+requires_utf8 = unittest.skipUnless(
     sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8"
 )
-not_macos = skipUnless(not IS_MACOS, "Doesn't work on MacOS")
+not_macos = unittest.skipUnless(not IS_MACOS, "Doesn't work on MacOS")
 
 
 def requires_poller(poller):
     use_select = bool(int(os.environ.get("SH_TESTS_USE_SELECT", "0")))
     cur_poller = "select" if use_select else "poll"
-    return skipUnless(cur_poller == poller, "Only enabled for select.%s" % cur_poller)
+    return unittest.skipUnless(
+        cur_poller == poller, "Only enabled for select.%s" % cur_poller
+    )
 
 
 @contextmanager
