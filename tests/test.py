@@ -24,8 +24,11 @@ from io import StringIO, BytesIO
 from hashlib import md5
 
 
+RAND_BYTES = os.urandom(10)
+
+
 def hash(a: str):
-    h = md5(a.encode("utf8") + os.environ["PYTHONHASHSEED"].encode("utf8"))
+    h = md5(a.encode("utf8") + RAND_BYTES)
     return h.hexdigest()
 
 
@@ -2644,9 +2647,9 @@ time.sleep(3)
 """
         )
         try:
-            python(py.name, _timeout=1, _timeout_signal=signal.SIGQUIT)
+            python(py.name, _timeout=1, _timeout_signal=signal.SIGHUP)
         except TimeoutException as e:
-            self.assertEqual(e.exit_code, signal.SIGQUIT)
+            self.assertEqual(e.exit_code, signal.SIGHUP)
         else:
             self.fail("we should have handled a TimeoutException")
 
