@@ -3191,7 +3191,7 @@ def pushd(path):
     context, unlike the _cwd arg this will work with other built-ins such as
     sh.glob correctly """
     orig_path = os.getcwd()
-    os.chdir(path)
+    os.chdir(str(path))
     try:
         yield
     finally:
