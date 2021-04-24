@@ -26,7 +26,6 @@ __version__ = "2.0.0"
 __project_url__ = "https://github.com/amoffat/sh"
 
 from collections import deque
-from pathlib import Path
 
 try:
     from collections.abc import Mapping
