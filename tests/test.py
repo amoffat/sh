@@ -740,7 +740,7 @@ exit(2)
             import sh
             from sh import gcc
 
-            self.assertEqual(gcc._path, gcc_file2.encode(sh.DEFAULT_ENCODING))
+            self.assertEqual(gcc._path, gcc_file2)
             self.assertEqual(gcc("no-error").stdout.strip(), "no-error".encode("ascii"))
 
         finally:
@@ -2135,7 +2135,7 @@ exit(1)
         from sh import ls, ErrorReturnCode
 
         test = "/á"
-        self.assertRaises(ErrorReturnCode, ls, test)
+        self.assertRaises(ErrorReturnCode, ls, test, _encoding="utf8")
 
     def test_no_out(self):
         py = create_tmp_test(

@@ -1315,9 +1315,7 @@ class Command(object):
         return fn
 
     def __str__(self):
-        baked_args = " ".join(
-            item.decode(DEFAULT_ENCODING) for item in self._partial_baked_args
-        )
+        baked_args = " ".join(self._partial_baked_args)
         if baked_args:
             baked_args = " " + baked_args
         return self._path + baked_args
@@ -1419,7 +1417,7 @@ class Command(object):
                 exit_code, call_args["ok_code"], call_args["piped"]
             )
             if exc_class:
-                ran = " ".join([arg.decode(DEFAULT_ENCODING, "ignore") for arg in cmd])
+                ran = " ".join(cmd)
                 exc = exc_class(ran, b"", b"", call_args["truncate_exc"])
                 raise exc
             return None
@@ -1473,7 +1471,7 @@ def compile_args(a, kwargs, sep, prefix):
         elif arg is None or arg is False:
             pass
         else:
-            processed_args.append(arg)
+            processed_args.append(str(arg))
 
     # aggregate the keyword arguments
     processed_args += aggregate_keywords(kwargs, sep, prefix)
@@ -1991,7 +1989,7 @@ class OProc(object):
                     close_fds = True
 
                 if close_fds:
-                    pass_fds = set((0, 1, 2, exc_pipe_write))
+                    pass_fds = {0, 1, 2, exc_pipe_write}
                     pass_fds.update(ca["pass_fds"])
 
                     # don't inherit file descriptors
@@ -2003,11 +2001,16 @@ class OProc(object):
                         except OSError:
                             pass
 
+                # python=3.6, locale=c will fail test_unicode_arg if we don't
+                # explicitly encode to bytes via our desired encoding. this does
+                # not seem to be the case in other python versions, even if locale=c
+                bytes_cmd = [c.encode(ca["encoding"]) for c in cmd]
+
                 # actually execute the process
                 if ca["env"] is None:
-                    os.execv(cmd[0], cmd)
+                    os.execv(bytes_cmd[0], bytes_cmd)
                 else:
-                    os.execve(cmd[0], cmd, ca["env"])
+                    os.execve(bytes_cmd[0], bytes_cmd, ca["env"])
 
             # we must ensure that we carefully exit the child process on
             # exception, otherwise the parent process code will be executed
