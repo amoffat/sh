@@ -634,7 +634,7 @@ class RunningCommand(object):
         # self.ran is used for auditing what actually ran.  for example, in
         # exceptions, or if you just want to know what was ran after the
         # command ran
-        self.ran = " ".join([shlex_quote(arg) for arg in cmd])
+        self.ran = " ".join([shlex_quote(str(arg)) for arg in cmd])
 
         self.call_args = call_args
         self.cmd = cmd
