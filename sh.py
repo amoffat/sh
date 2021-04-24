@@ -26,6 +26,7 @@ __version__ = "2.0.0"
 __project_url__ = "https://github.com/amoffat/sh"
 
 from collections import deque
+from pathlib import Path
 
 try:
     from collections.abc import Mapping
@@ -236,26 +237,6 @@ else:
             for f in _err:
                 results.append((f, POLLER_EVENT_ERROR))
             return results
-
-
-def encode_to_bytes(s):
-    """takes anything and attempts to return py3 bytes.  this
-    is typically used when creating command + arguments to be executed via
-    os.exec*"""
-
-    fallback_encoding = "utf8"
-
-    # if we're already bytes, do nothing
-    if isinstance(s, bytes):
-        pass
-    else:
-        s = str(s)
-        try:
-            s = bytes(s, DEFAULT_ENCODING)
-        except UnicodeEncodeError:
-            s = bytes(s, fallback_encoding)
-
-    return s
 
 
 def _indent_text(text, num=4):
@@ -651,20 +632,10 @@ class RunningCommand(object):
     }
 
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
-        """
-        cmd is a list, where each element is encoded as bytes (PY3) or str (PY2)
-        """
-
         # self.ran is used for auditing what actually ran.  for example, in
         # exceptions, or if you just want to know what was ran after the
         # command ran
-        #
-        # here we're making a consistent unicode string out if our cmd.
-        # we're also assuming (correctly, i think) that the command and its
-        # arguments are the encoding we pass into _encoding, which falls back to
-        # the system's encoding
-        enc = call_args["encoding"]
-        self.ran = " ".join([shlex_quote(arg.decode(enc, "ignore")) for arg in cmd])
+        self.ran = " ".join([shlex_quote(arg) for arg in cmd])
 
         self.call_args = call_args
         self.cmd = cmd
@@ -1204,7 +1175,7 @@ class Command(object):
         "done": None,
         # a tuple (rows, columns) of the desired size of both the stdout and
         # stdin ttys, if ttys are being used
-        "tty_size": (20, 80),
+        "tty_size": (24, 80),
         # whether or not our exceptions should be truncated
         "truncate_exc": True,
         # a function to call after the child forks but before the process execs
@@ -1248,7 +1219,7 @@ class Command(object):
     def __init__(self, path, search_paths=None):
         found = which(path, search_paths)
 
-        self._path = encode_to_bytes("")
+        self._path = ""
 
         # is the command baked (aka, partially applied)?
         self._partial = False
@@ -1266,7 +1237,7 @@ class Command(object):
         # exception.  if CommandNotFound is raised, we need self._path and the
         # other attributes to be set correctly, so repr() works when they're
         # inspecting the stack.  issue #304
-        self._path = encode_to_bytes(found)
+        self._path = found
         self.__name__ = str(self)
 
     def __getattribute__(self, name):
@@ -1350,7 +1321,7 @@ class Command(object):
         )
         if baked_args:
             baked_args = " " + baked_args
-        return self._path.decode(DEFAULT_ENCODING) + baked_args
+        return self._path + baked_args
 
     def __eq__(self, other):
         return str(self) == str(other)
@@ -1483,11 +1454,10 @@ def compile_args(a, kwargs, sep, prefix):
 
     and produces
 
-        ['-l', '/tmp', '--color=never']
+        ['-l', '/tmp', '--color=geneticnever']
 
     """
     processed_args = []
-    encode = encode_to_bytes
 
     # aggregate positional args
     for arg in a:
@@ -1496,7 +1466,7 @@ def compile_args(a, kwargs, sep, prefix):
                 arg = [arg.path]
 
             for sub_arg in arg:
-                processed_args.append(encode(sub_arg))
+                processed_args.append(sub_arg)
         elif isinstance(arg, dict):
             processed_args += aggregate_keywords(arg, sep, prefix, raw=True)
 
@@ -1504,7 +1474,7 @@ def compile_args(a, kwargs, sep, prefix):
         elif arg is None or arg is False:
             pass
         else:
-            processed_args.append(encode(arg))
+            processed_args.append(arg)
 
     # aggregate the keyword arguments
     processed_args += aggregate_keywords(kwargs, sep, prefix)
@@ -1548,16 +1518,15 @@ def aggregate_keywords(keywords, sep, prefix, raw=False):
     """
 
     processed = []
-    encode = encode_to_bytes
 
     for k, v in keywords.items():
         # we're passing a short arg as a kwarg, example:
         # cut(d="\t")
         if len(k) == 1:
             if v is not False:
-                processed.append(encode("-" + k))
+                processed.append("-" + k)
                 if v is not True:
-                    processed.append(encode(v))
+                    processed.append(v)
 
         # we're doing a long arg
         else:
@@ -1565,14 +1534,14 @@ def aggregate_keywords(keywords, sep, prefix, raw=False):
                 k = k.replace("_", "-")
 
             if v is True:
-                processed.append(encode(prefix + k))
+                processed.append(prefix + k)
             elif v is False:
                 pass
             elif sep is None or sep == " ":
-                processed.append(encode(prefix + k))
-                processed.append(encode(v))
+                processed.append(prefix + k)
+                processed.append(v)
             else:
-                arg = encode("%s%s%s%s" % (prefix, k, sep, v))
+                arg = f"{prefix}{k}{sep}{v}"
                 processed.append(arg)
 
     return processed

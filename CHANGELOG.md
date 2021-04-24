@@ -1,4 +1,7 @@
 # Changelog
+## 2.0.0 -
+*   Bumped default tty size to more standard (24, 80)
+
 ## 1.14.1 - 10/24/20
 *   bugfix where setting `_ok_code` to not include 0, but 0 was the exit code [#545](https://github.com/amoffat/sh/pull/545)
 
