@@ -84,7 +84,7 @@ system_python = sh.Command(sys.executable)
 # module, and not the system one
 baked_env = os.environ.copy()
 append_module_path(baked_env, sh)
-python = system_python.bake(_env=baked_env)
+python = system_python.bake(_env=baked_env, _return_cmd=True)
 
 
 def requires_progs(*progs):
@@ -741,7 +741,10 @@ exit(2)
             from sh import gcc
 
             self.assertEqual(gcc._path, gcc_file2)
-            self.assertEqual(gcc("no-error").stdout.strip(), "no-error".encode("ascii"))
+            self.assertEqual(
+                gcc("no-error", _return_cmd=True).stdout.strip(),
+                "no-error".encode("ascii"),
+            )
 
         finally:
             os.environ["PATH"] = save_path
@@ -826,18 +829,40 @@ print(sys.argv[1:])
         self.assertEqual(python(py.name, test and "-n").strip(), "[]")
 
     def test_composition(self):
-        from sh import ls, wc
+        py1 = create_tmp_test(
+            """
+import sys
+print(int(sys.argv[1]) * 2)
+        """
+        )
 
-        c1 = int(wc(ls("-A1", THIS_DIR), l=True))  # noqa: E741
-        c2 = len(os.listdir(THIS_DIR))
-        self.assertEqual(c1, c2)
+        py2 = create_tmp_test(
+            """
+import sys
+print(int(sys.argv[1]) + 1)
+        """
+        )
+
+        res = python(py2.name, python(py1.name, 8)).strip()
+        self.assertEqual("17", res)
 
     def test_incremental_composition(self):
-        from sh import ls, wc
+        py1 = create_tmp_test(
+            """
+import sys
+print(int(sys.argv[1]) * 2)
+        """
+        )
 
-        c1 = int(wc(ls("-A1", THIS_DIR, _piped=True), l=True).strip())  # noqa: E741
-        c2 = len(os.listdir(THIS_DIR))
-        self.assertEqual(c1, c2)
+        py2 = create_tmp_test(
+            """
+import sys
+print(int(sys.argv[1]) + 1)
+        """
+        )
+
+        res = python(py2.name, python(py1.name, 8, _piped=True)).strip()
+        self.assertEqual("17", res)
 
     def test_short_option(self):
         from sh import sh
@@ -2204,18 +2229,18 @@ sys.stderr.write("stderr")
         from sh import ls
 
         # calling a command regular should fill up the pipe_queue
-        p = ls()
+        p = ls(_return_cmd=True)
         self.assertFalse(p.process._pipe_queue.empty())
 
         # calling a command with a callback should not
         def callback(line):
             pass
 
-        p = ls(_out=callback)
+        p = ls(_out=callback, _return_cmd=True)
         self.assertTrue(p.process._pipe_queue.empty())
 
         # calling a command regular with no_pipe also should not
-        p = ls(_no_pipe=True)
+        p = ls(_no_pipe=True, _return_cmd=True)
         self.assertTrue(p.process._pipe_queue.empty())
 
     def test_decode_error_handling(self):
@@ -2967,7 +2992,7 @@ print("字")
             str(cmd)
             repr(cmd)
 
-            running = cmd()
+            running = cmd(_return_cmd=True)
             str(running)
             repr(running)
 

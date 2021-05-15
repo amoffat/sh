@@ -1196,6 +1196,9 @@ class Command(object):
         # a whitelist of the integer fds to pass through to the child process. setting
         # this forces close_fds to be True
         "pass_fds": set(),
+        # return an instance of RunningCommand always. if this isn't True, then
+        # sometimes we may return just a plain unicode string
+        "return_cmd": False,
     }
 
     # this is a collection of validators to make sure the special kwargs make
@@ -1432,7 +1435,11 @@ class Command(object):
         if output_redirect_is_filename(stderr):
             stderr = open(str(stderr), "wb")
 
-        return RunningCommand(cmd, call_args, stdin, stdout, stderr)
+        rc = RunningCommand(cmd, call_args, stdin, stdout, stderr)
+        if rc._spawned_and_waited and not call_args["return_cmd"]:
+            return str(rc)
+        else:
+            return rc
 
 
 def compile_args(a, kwargs, sep, prefix):
