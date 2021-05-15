@@ -32,7 +32,7 @@ that allows you to call *any* program as if it were a function:
 
 sh is *not* a collection of system commands implemented in Python.
 
-`Complete documentation here <https://amoffat.github.com/sh>`_
+`Complete documentation here <https://amoffat.github.io/sh>`_
 
 Installation
 ============
