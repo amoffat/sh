@@ -1382,10 +1382,8 @@ class Command(object):
             call_args["ok_code"] = [call_args["ok_code"]]
 
         # determine what our real STDIN is. is it something explicitly passed into
-        # _in? or maybe it is a first argument, which is a RunningCommand
+        # _in?
         stdin = call_args["in"]
-        if args and isinstance(args[0], RunningCommand):
-            stdin = args.pop(0)
 
         # now that we have our stdin, let's figure out how we should handle it
         if isinstance(stdin, RunningCommand):

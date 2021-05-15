@@ -403,8 +403,8 @@ while True:
 """
         )
 
-        def inc(proc, *args, **kwargs):
-            return python(proc, "-u", inc_py.name, *args, **kwargs)
+        def inc(*args, **kwargs):
+            return python("-u", inc_py.name, *args, **kwargs)
 
         class Derp(object):
             def __init__(self):
@@ -422,7 +422,10 @@ while True:
         derp = Derp()
 
         p = inc(
-            inc(inc(python("-u", py.name, _piped=True), _piped=True), _piped=True),
+            _in=inc(
+                _in=inc(_in=python("-u", py.name, _piped=True), _piped=True),
+                _piped=True,
+            ),
             _out=derp.agg,
         )
 
@@ -857,11 +860,11 @@ print(int(sys.argv[1]) * 2)
         py2 = create_tmp_test(
             """
 import sys
-print(int(sys.argv[1]) + 1)
+print(int(sys.stdin.read()) + 1)
         """
         )
 
-        res = python(py2.name, python(py1.name, 8, _piped=True)).strip()
+        res = python(py2.name, _in=python(py1.name, 8, _piped=True)).strip()
         self.assertEqual("17", res)
 
     def test_short_option(self):
@@ -972,7 +975,7 @@ print(sys.argv[1])
         ls = Command(which("ls"))
         wc = Command(which("wc"))
 
-        c1 = int(wc(ls("-A1", THIS_DIR), l=True))  # noqa: E741
+        c1 = int(wc(l=True, _in=ls("-A1", THIS_DIR, _return_cmd=True)))  # noqa: E741
         c2 = len(os.listdir(THIS_DIR))
 
         self.assertEqual(c1, c2)
@@ -1113,7 +1116,7 @@ while True:
 """
         )
 
-        out = python(python("-u", py.name, _piped="err"), "-u", py2.name)
+        out = python("-u", py2.name, _in=python("-u", py.name, _piped="err"))
         self.assertEqual(out, "stderr")
 
     def test_out_redirection(self):
@@ -1284,7 +1287,7 @@ sys.stdout.write(str(sys.argv[1:]))
 
         ls = ls.bake(h=True)
 
-        ran = ls("-la").ran
+        ran = ls("-la", _return_cmd=True).ran
         ft = ran.index("-h")
         self.assertIn("-la", ran[ft:])
 
@@ -1713,7 +1716,11 @@ while True:
         )
 
         p1 = python("-u", py1.name, _piped="out")
-        p2 = python(p1, "-u", py2.name)
+        p2 = python(
+            "-u",
+            py2.name,
+            _in=p1,
+        )
 
         # SIGPIPE should happen, but it shouldn't be an error, since _piped is
         # truthful
@@ -1754,7 +1761,7 @@ while True:
 
         letters = ""
         for line in python(
-            python("-u", py1.name, _piped="out"), "-u", py2.name, _iter=True
+            "-u", py2.name, _iter=True, _in=python("-u", py1.name, _piped="out")
         ):
             letters += line.strip()
 
@@ -1911,7 +1918,7 @@ print(realpath(os.getcwd()))
         stdin.flush()
         stdin.seek(0)
 
-        out = tr(tr("[:lower:]", "[:upper:]", _in=data), "[:upper:]", "[:lower:]")
+        out = tr("[:upper:]", "[:lower:]", _in=tr("[:lower:]", "[:upper:]", _in=data))
         self.assertTrue(out == data)
 
     def test_tty_input(self):
@@ -2138,7 +2145,7 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
 sys.stdout.write(sys.stdin.read())
 """
         )
-        out = python(python(py1.name), py2.name)
+        out = python(py2.name, _in=python(py1.name))
         self.assertEqual(out.stdout, binary)
 
     # designed to trigger the "... (%d more, please see e.stdout)" output
@@ -2833,7 +2840,7 @@ for line in sys.stdin:
 
         producer_normal_pipe = python(producer.name, _piped=True)
         middleman_normal_pipe = python(
-            producer_normal_pipe, middleman.name, _piped=True
+            middleman.name, _piped=True, _in=producer_normal_pipe
         )
         self.assertRaises(
             ErrorReturnCode_2, python, middleman_normal_pipe, consumer.name
