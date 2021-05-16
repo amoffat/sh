@@ -26,7 +26,6 @@ __version__ = "2.0.0"
 __project_url__ = "https://github.com/amoffat/sh"
 
 from collections import deque
-from pathlib import Path
 
 try:
     from collections.abc import Mapping
@@ -635,7 +634,7 @@ class RunningCommand(object):
         # self.ran is used for auditing what actually ran.  for example, in
         # exceptions, or if you just want to know what was ran after the
         # command ran
-        self.ran = " ".join([shlex_quote(arg) for arg in cmd])
+        self.ran = " ".join([shlex_quote(str(arg)) for arg in cmd])
 
         self.call_args = call_args
         self.cmd = cmd
@@ -1197,6 +1196,9 @@ class Command(object):
         # a whitelist of the integer fds to pass through to the child process. setting
         # this forces close_fds to be True
         "pass_fds": set(),
+        # return an instance of RunningCommand always. if this isn't True, then
+        # sometimes we may return just a plain unicode string
+        "return_cmd": False,
     }
 
     # this is a collection of validators to make sure the special kwargs make
@@ -1316,9 +1318,7 @@ class Command(object):
         return fn
 
     def __str__(self):
-        baked_args = " ".join(
-            item.decode(DEFAULT_ENCODING) for item in self._partial_baked_args
-        )
+        baked_args = " ".join(self._partial_baked_args)
         if baked_args:
             baked_args = " " + baked_args
         return self._path + baked_args
@@ -1382,10 +1382,8 @@ class Command(object):
             call_args["ok_code"] = [call_args["ok_code"]]
 
         # determine what our real STDIN is. is it something explicitly passed into
-        # _in? or maybe it is a first argument, which is a RunningCommand
+        # _in?
         stdin = call_args["in"]
-        if args and isinstance(args[0], RunningCommand):
-            stdin = args.pop(0)
 
         # now that we have our stdin, let's figure out how we should handle it
         if isinstance(stdin, RunningCommand):
@@ -1420,7 +1418,7 @@ class Command(object):
                 exit_code, call_args["ok_code"], call_args["piped"]
             )
             if exc_class:
-                ran = " ".join([arg.decode(DEFAULT_ENCODING, "ignore") for arg in cmd])
+                ran = " ".join(cmd)
                 exc = exc_class(ran, b"", b"", call_args["truncate_exc"])
                 raise exc
             return None
@@ -1435,7 +1433,11 @@ class Command(object):
         if output_redirect_is_filename(stderr):
             stderr = open(str(stderr), "wb")
 
-        return RunningCommand(cmd, call_args, stdin, stdout, stderr)
+        rc = RunningCommand(cmd, call_args, stdin, stdout, stderr)
+        if rc._spawned_and_waited and not call_args["return_cmd"]:
+            return str(rc)
+        else:
+            return rc
 
 
 def compile_args(a, kwargs, sep, prefix):
@@ -1474,7 +1476,7 @@ def compile_args(a, kwargs, sep, prefix):
         elif arg is None or arg is False:
             pass
         else:
-            processed_args.append(arg)
+            processed_args.append(str(arg))
 
     # aggregate the keyword arguments
     processed_args += aggregate_keywords(kwargs, sep, prefix)
@@ -1992,7 +1994,7 @@ class OProc(object):
                     close_fds = True
 
                 if close_fds:
-                    pass_fds = set((0, 1, 2, exc_pipe_write))
+                    pass_fds = {0, 1, 2, exc_pipe_write}
                     pass_fds.update(ca["pass_fds"])
 
                     # don't inherit file descriptors
@@ -2004,11 +2006,16 @@ class OProc(object):
                         except OSError:
                             pass
 
+                # python=3.6, locale=c will fail test_unicode_arg if we don't
+                # explicitly encode to bytes via our desired encoding. this does
+                # not seem to be the case in other python versions, even if locale=c
+                bytes_cmd = [c.encode(ca["encoding"]) for c in cmd]
+
                 # actually execute the process
                 if ca["env"] is None:
-                    os.execv(cmd[0], cmd)
+                    os.execv(bytes_cmd[0], bytes_cmd)
                 else:
-                    os.execve(cmd[0], cmd, ca["env"])
+                    os.execve(bytes_cmd[0], bytes_cmd, ca["env"])
 
             # we must ensure that we carefully exit the child process on
             # exception, otherwise the parent process code will be executed
