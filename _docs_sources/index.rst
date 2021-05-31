@@ -63,6 +63,9 @@ on your system by dynamically resolving your ``$PATH``, much like Bash does, and
 then wrapping the binary in a function.  In this way, all the programs on your
 system are easily available to you from within Python.
 
+sh relies on various Unix system calls and only works on Unix-like operating
+systems - Linux, macOS, BSDs etc. Specifically, Windows is not supported.
+
 
 Installation
 ============
