@@ -32,6 +32,9 @@ that allows you to call *any* program as if it were a function:
 
 sh is *not* a collection of system commands implemented in Python.
 
+sh relies on various Unix system calls and only works on Unix-like operating
+systems - Linux, macOS, BSDs etc. Specifically, Windows is not supported.
+
 `Complete documentation here <https://amoffat.github.io/sh>`_
 
 Installation
