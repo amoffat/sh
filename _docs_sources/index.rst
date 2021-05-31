@@ -64,7 +64,7 @@ then wrapping the binary in a function.  In this way, all the programs on your
 system are easily available to you from within Python.
 
 sh relies on various Unix system calls and only works on Unix-like operating
-systems - Linux, macOS, BSD's etc. Specifically, Windows is not supported.
+systems - Linux, macOS, BSDs etc. Specifically, Windows is not supported.
 
 
 Installation
