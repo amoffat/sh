@@ -3523,6 +3523,9 @@ class SelfWrapper(ModuleType):
         baked_args = self.__env.baked_args.copy()
         baked_args.update(kwargs)
         new_mod = self.__class__(self.__self_module, baked_args)
+        # Update baked call args on the new Command class
+        call_args, _ = new_mod.Command._extract_call_args(baked_args)
+        new_mod.Command._call_args.update(call_args)
 
         # inspect the line in the parent frame that calls and assigns the new sh
         # variable, and get the name of the new variable we're assigning to.
