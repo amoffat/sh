@@ -3512,7 +3512,18 @@ class SelfWrapper(ModuleType):
         # if we set this to None.  and 3.3 needs a value for __path__
         self.__path__ = []
         self.__self_module = self_module
-        self.__env = Environment(globals(), baked_args=baked_args)
+
+        # Copy the Command class and add any baked call kwargs to it
+        cls_attrs = Command.__dict__.copy()
+        if baked_args:
+            call_args, _ = Command._extract_call_args(baked_args)
+            cls_attrs['_call_args'] = cls_attrs['_call_args'].copy()
+            cls_attrs['_call_args'].update(call_args)
+        command_cls = type(Command.__name__, Command.__bases__, cls_attrs)
+        globs = globals().copy()
+        globs[Command.__name__] = command_cls
+
+        self.__env = Environment(globs, baked_args=baked_args)
 
     def __getattr__(self, name):
         return self.__env[name]
@@ -3523,9 +3534,6 @@ class SelfWrapper(ModuleType):
         baked_args = self.__env.baked_args.copy()
         baked_args.update(kwargs)
         new_mod = self.__class__(self.__self_module, baked_args)
-        # Update baked call args on the new Command class
-        call_args, _ = new_mod.Command._extract_call_args(baked_args)
-        new_mod.Command._call_args.update(call_args)
 
         # inspect the line in the parent frame that calls and assigns the new sh
         # variable, and get the name of the new variable we're assigning to.
