@@ -28,7 +28,8 @@ RUN apt-get -y install\
     python3.5\
     python3.6\
     python3.7\
-    python3.8
+    python3.8\
+    python3.9
 
 RUN apt-get -y install python3-distutils\
     && curl https://bootstrap.pypa.io/get-pip.py | python -
