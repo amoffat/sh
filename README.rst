@@ -22,7 +22,7 @@
 
 |
 
-sh is a full-fledged subprocess replacement for Python 2.6 - 3.8, PyPy and PyPy3
+sh is a full-fledged subprocess replacement for Python 2, Python 3, PyPy and PyPy3
 that allows you to call *any* program as if it were a function:
 
 .. code:: python
@@ -66,7 +66,7 @@ run::
 
     $> ./build.sh
 
-This will install ubuntu 18.04 LTS and all python versions from 2.6-3.8.  Once it's done, stay in that directory and
+This will install ubuntu 18.04 LTS and all supported python versions.  Once it's done, stay in that directory and
 run::
 
     $> ./run.sh
