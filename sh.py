@@ -3512,7 +3512,18 @@ class SelfWrapper(ModuleType):
         # if we set this to None.  and 3.3 needs a value for __path__
         self.__path__ = []
         self.__self_module = self_module
-        self.__env = Environment(globals(), baked_args=baked_args)
+
+        # Copy the Command class and add any baked call kwargs to it
+        cls_attrs = Command.__dict__.copy()
+        if baked_args:
+            call_args, _ = Command._extract_call_args(baked_args)
+            cls_attrs['_call_args'] = cls_attrs['_call_args'].copy()
+            cls_attrs['_call_args'].update(call_args)
+        command_cls = type(Command.__name__, Command.__bases__, cls_attrs)
+        globs = globals().copy()
+        globs[Command.__name__] = command_cls
+
+        self.__env = Environment(globs, baked_args=baked_args)
 
     def __getattr__(self, name):
         return self.__env[name]
