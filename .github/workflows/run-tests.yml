@@ -34,4 +34,8 @@ jobs:
         python sh.py travis
         python -m flake8 sh.py test.py
         if python -c 'import sys; sys.exit(int(not sys.version_info >= (3, 5)))' ; then python setup.py check --restructuredtext --metadata --strict ; fi
-        coveralls --service=github
+
+    - name: Report coverage to Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
