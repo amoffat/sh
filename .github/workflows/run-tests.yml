@@ -37,4 +37,4 @@ jobs:
 
     - name: Report coverage
       run: |
-        coveralls
+        coveralls --service=github
