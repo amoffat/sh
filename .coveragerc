@@ -2,6 +2,7 @@
 branch = True
 source =
     sh.py
+relative_files = True
 
 [report]
 exclude_lines =
