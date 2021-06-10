@@ -30,7 +30,7 @@ jobs:
 
     - name: Test with coverage
       run: |
-        python sh.py test
+        python sh.py travis
         python -m flake8 sh.py test.py
         if python -c 'import sys; sys.exit(int(not sys.version_info >= (3, 5)))' ; then python setup.py check --restructuredtext --metadata --strict ; fi
 
