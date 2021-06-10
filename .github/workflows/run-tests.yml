@@ -3,8 +3,7 @@
 
 name: Run tests
 
-on:
-  [push]
+on: [push, pull_request]
 
 jobs:
   test:
@@ -31,11 +30,11 @@ jobs:
 
     - name: Test with coverage
       run: |
-        python sh.py travis
+        python sh.py test
         python -m flake8 sh.py test.py
         if python -c 'import sys; sys.exit(int(not sys.version_info >= (3, 5)))' ; then python setup.py check --restructuredtext --metadata --strict ; fi
 
-    - name: Report coverage to Coveralls
+    - name: Coveralls
       uses: AndreMiras/coveralls-python-action@develop
       with:
         parallel: true
