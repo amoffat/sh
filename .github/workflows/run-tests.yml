@@ -28,16 +28,19 @@ jobs:
       run: |
         python -m pip install -r requirements-dev.txt
 
-    - name: Run tests
+    - name: 'Python2: Run tests'
+      if: matrix.python-version == '2.7' || matrix.python-version == 'pypy2'
       run: |
         python sh.py travis
         python -m flake8 sh.py test.py
-        if python -c 'import sys; sys.exit(int(not sys.version_info >= (3, 5)))' ; then python setup.py check --restructuredtext --metadata --strict ; fi
 
-    - name: Report to Coveralls
+    - name: 'Python3: Run tests and report to Coveralls'
       env:
        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: matrix.python-version != '2.7' && matrix.python-version != 'pypy2'
       run: |
+        python sh.py travis
+        python -m flake8 sh.py test.py
+        python setup.py check --restructuredtext --metadata --strict
         python -m pip install coveralls==3.1.0
         coveralls --service=github
