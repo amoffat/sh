@@ -31,7 +31,6 @@ jobs:
     - name: 'Python2: Run tests'
       if: matrix.python-version == '2.7' || matrix.python-version == 'pypy2'
       run: |
-        python -m flake8 sh.py test.py
         SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=0 LANG=C python -m unittest test.py
         SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=1 LANG=C python -m unittest test.py
         SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=0 LANG=en_US.UTF-8 python -m unittest test.py
