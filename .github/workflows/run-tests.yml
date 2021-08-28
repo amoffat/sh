@@ -31,16 +31,22 @@ jobs:
     - name: 'Python2: Run tests'
       if: matrix.python-version == '2.7' || matrix.python-version == 'pypy2'
       run: |
-        python sh.py travis
         python -m flake8 sh.py test.py
+        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=0 LANG=C python -m unittest test.py
+        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=1 LANG=C python -m unittest test.py
+        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=0 LANG=en_US.UTF-8 python -m unittest test.py
+        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=1 LANG=en_US.UTF-8 python -m unittest test.py
 
     - name: 'Python3: Run tests and report to Coveralls'
       env:
        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       if: matrix.python-version != '2.7' && matrix.python-version != 'pypy2'
       run: |
-        python sh.py travis
+        python -m pip install coveralls==3.1.0
         python -m flake8 sh.py test.py
         python setup.py check --restructuredtext --metadata --strict
-        python -m pip install coveralls==3.1.0
+        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=0 LANG=C coverage run -a --source=sh -m unittest
+        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=1 LANG=C coverage run -a --source=sh -m unittest
+        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=0 LANG=en_US.UTF-8 coverage run -a --source=sh -m unittest
+        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=1 LANG=en_US.UTF-8 coverage run -a --source=sh -m unittest
         coveralls --service=github

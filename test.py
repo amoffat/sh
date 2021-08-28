@@ -23,33 +23,6 @@ IS_PY3 = sys.version_info[0] == 3
 IS_PY2 = not IS_PY3
 MINOR_VER = sys.version_info[1]
 
-# coverage doesn't work in python 3.1, 3.2 due to it just being a shit
-# python
-HAS_UNICODE_LITERAL = not (IS_PY3 and MINOR_VER in (1, 2))
-
-cov = None
-if HAS_UNICODE_LITERAL:
-    run_idx = int(os.environ.pop("SH_TEST_RUN_IDX", "0"))
-    first_run = run_idx == 0
-
-    try:
-        import coverage
-    except ImportError:
-        pass
-    else:
-        # for some reason, we can't run auto_data on the first run, or the coverage
-        # numbers get really screwed up
-        auto_data = True
-        if first_run:
-            auto_data = False
-
-        cov = coverage.Coverage(auto_data=auto_data)
-
-        if first_run:
-            cov.erase()
-
-        cov.start()
-
 try:
     import unittest.mock
 except ImportError:
@@ -3212,6 +3185,4 @@ if __name__ == "__main__":
                 exit(1)
 
     finally:
-        if cov:
-            cov.stop()
-            cov.save()
+        pass
