@@ -1204,7 +1204,7 @@ class Command(object):
         "done": None,
         # a tuple (rows, columns) of the desired size of both the stdout and
         # stdin ttys, if ttys are being used
-        "tty_size": (20, 80),
+        "tty_size": (24, 80),
         # whether or not our exceptions should be truncated
         "truncate_exc": True,
         # a function to call after the child forks but before the process execs
