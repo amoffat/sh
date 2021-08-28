@@ -3217,8 +3217,8 @@ class ExecutionContextTests(unittest.TestCase):
         self.assertRaises(ImportError, unallowed_import)
 
     def test_reimport_from_cli(self):
-        # The REPL and CLI both need special handling to create an execution context that is safe to
-        # reimport
+        # The REPL and CLI both need special handling to create an execution context
+        # that is safe to reimport
         cmdstr = "; ".join(
             (
                 "import sh, io, sys",
