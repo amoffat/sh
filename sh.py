@@ -482,7 +482,7 @@ def canonicalize(path):
     return os.path.abspath(os.path.expanduser(path))
 
 
-def which(program, paths=None):
+def _which(program, paths=None):
     """takes a program name or full path, plus an optional collection of search
     paths, and returns the full path of the requested executable.  if paths is
     specified, it is the entire list of search paths, and the PATH env is not
@@ -526,14 +526,14 @@ def which(program, paths=None):
 
 
 def resolve_command_path(program):
-    path = which(program)
+    path = _which(program)
     if not path:
         # our actual command might have a dash in it, but we can't call
         # that from python (we have to use underscores), so we'll check
         # if a dash version of our underscore command exists and use that
         # if it does
         if "_" in program:
-            path = which(program.replace("_", "-"))
+            path = _which(program.replace("_", "-"))
         if not path:
             return None
     return path
@@ -1300,7 +1300,7 @@ class Command(object):
     )
 
     def __init__(self, path, search_paths=None):
-        found = which(path, search_paths)
+        found = _which(path, search_paths)
 
         self._path = ""
 
@@ -3445,7 +3445,7 @@ class Environment(dict):
     # people are used to, but which may not have an executable equivalent.
     @staticmethod
     def b_which(program, paths=None):
-        return which(program, paths)
+        return _which(program, paths)
 
 
 class Cd(object):
