@@ -2234,13 +2234,15 @@ p.wait()
 
     def test_pushd(self):
         """ test basic pushd functionality """
+        child = realpath(tempfile.mkdtemp())
+
         old_wd1 = sh.pwd().strip()
         old_wd2 = os.getcwd()
 
         self.assertEqual(old_wd1, old_wd2)
-        self.assertNotEqual(old_wd1, tempdir)
+        self.assertNotEqual(old_wd1, child)
 
-        with sh.pushd(tempdir):
+        with sh.pushd(child):
             new_wd1 = sh.pwd().strip()
             new_wd2 = os.getcwd()
 
@@ -2249,8 +2251,8 @@ p.wait()
         self.assertEqual(old_wd3, old_wd4)
         self.assertEqual(old_wd1, old_wd3)
 
-        self.assertEqual(new_wd1, tempdir)
-        self.assertEqual(new_wd2, tempdir)
+        self.assertEqual(new_wd1, child)
+        self.assertEqual(new_wd2, child)
 
     def test_pushd_cd(self):
         """ test that pushd works like pushd/popd with built-in cd correctly """
