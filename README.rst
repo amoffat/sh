@@ -32,7 +32,10 @@ that allows you to call *any* program as if it were a function:
 
 sh is *not* a collection of system commands implemented in Python.
 
-`Complete documentation here <https://amoffat.github.com/sh>`_
+sh relies on various Unix system calls and only works on Unix-like operating
+systems - Linux, macOS, BSDs etc. Specifically, Windows is not supported.
+
+`Complete documentation here <https://amoffat.github.io/sh>`_
 
 Installation
 ============
@@ -40,7 +43,7 @@ Installation
 ::
 
     $> pip install sh
-    
+
 Support
 =======
 * `Andrew Moffat <https://github.com/amoffat>`_ - author/maintainer
@@ -71,7 +74,7 @@ Coverage
 
 First run all of the tests::
 
-    $> python sh.py test
+    $> SH_TESTS_RUNNING=1 coverage run --source=sh -m unittest
 
 This will aggregate a ``.coverage``.  You may then visualize the report with::
 

@@ -26,7 +26,6 @@ __version__ = "2.0.0"
 __project_url__ = "https://github.com/amoffat/sh"
 
 from collections import deque
-
 try:
     from collections.abc import Mapping
 except ImportError:
@@ -3545,7 +3544,18 @@ class SelfWrapper(ModuleType):
         # if we set this to None.  and 3.3 needs a value for __path__
         self.__path__ = []
         self.__self_module = self_module
-        self.__env = Environment(globals(), baked_args=baked_args)
+
+        # Copy the Command class and add any baked call kwargs to it
+        cls_attrs = Command.__dict__.copy()
+        if baked_args:
+            call_args, _ = Command._extract_call_args(baked_args)
+            cls_attrs['_call_args'] = cls_attrs['_call_args'].copy()
+            cls_attrs['_call_args'].update(call_args)
+        command_cls = type(Command.__name__, Command.__bases__, cls_attrs)
+        globs = globals().copy()
+        globs[Command.__name__] = command_cls
+
+        self.__env = Environment(globs, baked_args=baked_args)
 
     def __getattr__(self, name):
         return self.__env[name]
@@ -3721,14 +3731,10 @@ class ModuleImporterFromVariables(object):
         return module
 
 
-def main():  # pragma: no cover
-    env = Environment(globals())
-    run_repl(env)
-
-
 if __name__ == "__main__":  # pragma: no cover
     # we're being run as a stand-alone script
-    main()
+    env = Environment(globals())
+    run_repl(env)
 else:
     # we're being imported from somewhere
     sys.modules[__name__] = SelfWrapper(sys.modules[__name__])

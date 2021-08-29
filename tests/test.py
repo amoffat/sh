@@ -3234,6 +3234,13 @@ class ExecutionContextTests(unittest.TestCase):
         _sh.echo("-n", "TEST")
         self.assertEqual("TEST", out.getvalue())
 
+    def test_command_with_baked_call_args(self):
+        # Test that sh.Command() knows about baked call args
+        import sh
+        _sh = sh(_ok_code=1)
+        self.assertEqual(sh.Command._call_args['ok_code'], 0)
+        self.assertEqual(_sh.Command._call_args['ok_code'], 1)
+
     def test_importer_detects_module_name(self):
         import sh
 
@@ -3289,3 +3296,6 @@ if __name__ == "__main__":
 
         if not result.wasSuccessful():
             exit(1)
+
+    finally:
+        pass
