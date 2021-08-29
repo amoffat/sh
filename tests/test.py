@@ -185,7 +185,7 @@ class FunctionalTests(BaseTests):
     def test_print_command(self):
         from sh import ls, which
 
-        actual_location = which("ls")
+        actual_location = which("ls").strip()
         out = str(ls)
         self.assertEqual(out, actual_location)
 
@@ -553,14 +553,16 @@ print(dict(HERP=sh.HERP))
         self.assertEqual(out, "{'HERP': 'DERP'}")
 
     def test_which(self):
-        from sh import ls, which
+        # Test 'which' as built-in function
+        from sh import ls
 
+        which = sh._SelfWrapper__env.b_which
         self.assertEqual(which("fjoawjefojawe"), None)
         self.assertEqual(which("ls"), str(ls))
 
     def test_which_paths(self):
-        from sh import which
-
+        # Test 'which' as built-in function
+        which = sh._SelfWrapper__env.b_which
         py = create_tmp_test(
             """
 print("hi")
@@ -755,7 +757,7 @@ exit(2)
     def test_command_wrapper_equivalence(self):
         from sh import Command, ls, which
 
-        self.assertEqual(Command(which("ls")), ls)
+        self.assertEqual(Command(str(which("ls")).strip()), ls)
 
     def test_doesnt_execute_directories(self):
         save_path = os.environ["PATH"]
@@ -1006,8 +1008,8 @@ print(sys.argv[1])
     def test_command_wrapper(self):
         from sh import Command, which
 
-        ls = Command(which("ls"))
-        wc = Command(which("wc"))
+        ls = Command(str(which("ls")).strip())
+        wc = Command(str(which("wc")).strip())
 
         c1 = int(wc(l=True, _in=ls("-A1", THIS_DIR, _return_cmd=True)))  # noqa: E741
         c2 = len(os.listdir(THIS_DIR))
@@ -2554,22 +2556,6 @@ p.wait()
 
         self.assertEqual(new_wd1, str(tempdir))
         self.assertEqual(new_wd2, str(tempdir))
-
-    def test_pushd_cd(self):
-        """test that pushd works like pushd/popd with built-in cd correctly"""
-        import sh
-
-        child = realpath(tempfile.mkdtemp())
-        try:
-            old_wd = os.getcwd()
-            with sh.pushd(tempdir):
-                self.assertEqual(str(tempdir), os.getcwd())
-                os.chdir(child)
-                self.assertEqual(child, os.getcwd())
-
-            self.assertEqual(old_wd, os.getcwd())
-        finally:
-            os.rmdir(child)
 
     def test_non_existant_cwd(self):
         from sh import ls
