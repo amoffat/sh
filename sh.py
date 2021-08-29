@@ -3408,15 +3408,15 @@ class Environment(dict):
         if k.startswith("__") and k.endswith("__"):
             raise AttributeError
 
-        # is it a custom builtin?
-        builtin = getattr(self, "b_" + k, None)
-        if builtin:
-            return builtin
-
         # is it a command?
         cmd = resolve_command(k, self.baked_args)
         if cmd:
             return cmd
+
+        # is it a custom builtin?
+        builtin = getattr(self, "b_" + k, None)
+        if builtin:
+            return builtin
 
         # how about an environment variable?
         # this check must come after testing if its a command, because on some
