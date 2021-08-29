@@ -2,8 +2,9 @@
 
 ## 2.0.0 -
 
-* Removed Python < 3.6 support
+* Dropped support for Python < 3.6
 * Bumped default tty size to more standard (24, 80)
+* First argument being a RunningCommand no longer automatically passes it as stdin
 
 ## 1.14.1 - 10/24/20
 

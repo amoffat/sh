@@ -84,7 +84,7 @@ system_python = sh.Command(sys.executable)
 # module, and not the system one
 baked_env = os.environ.copy()
 append_module_path(baked_env, sh)
-python = system_python.bake(_env=baked_env)
+python = system_python.bake(_env=baked_env, _return_cmd=True)
 
 
 def requires_progs(*progs):
@@ -403,8 +403,8 @@ while True:
 """
         )
 
-        def inc(proc, *args, **kwargs):
-            return python(proc, "-u", inc_py.name, *args, **kwargs)
+        def inc(*args, **kwargs):
+            return python("-u", inc_py.name, *args, **kwargs)
 
         class Derp(object):
             def __init__(self):
@@ -422,7 +422,10 @@ while True:
         derp = Derp()
 
         p = inc(
-            inc(inc(python("-u", py.name, _piped=True), _piped=True), _piped=True),
+            _in=inc(
+                _in=inc(_in=python("-u", py.name, _piped=True), _piped=True),
+                _piped=True,
+            ),
             _out=derp.agg,
         )
 
@@ -740,8 +743,11 @@ exit(2)
             import sh
             from sh import gcc
 
-            self.assertEqual(gcc._path, gcc_file2.encode(sh.DEFAULT_ENCODING))
-            self.assertEqual(gcc("no-error").stdout.strip(), "no-error".encode("ascii"))
+            self.assertEqual(gcc._path, gcc_file2)
+            self.assertEqual(
+                gcc("no-error", _return_cmd=True).stdout.strip(),
+                "no-error".encode("ascii"),
+            )
 
         finally:
             os.environ["PATH"] = save_path
@@ -826,18 +832,40 @@ print(sys.argv[1:])
         self.assertEqual(python(py.name, test and "-n").strip(), "[]")
 
     def test_composition(self):
-        from sh import ls, wc
+        py1 = create_tmp_test(
+            """
+import sys
+print(int(sys.argv[1]) * 2)
+        """
+        )
 
-        c1 = int(wc(ls("-A1", THIS_DIR), l=True))  # noqa: E741
-        c2 = len(os.listdir(THIS_DIR))
-        self.assertEqual(c1, c2)
+        py2 = create_tmp_test(
+            """
+import sys
+print(int(sys.argv[1]) + 1)
+        """
+        )
+
+        res = python(py2.name, python(py1.name, 8)).strip()
+        self.assertEqual("17", res)
 
     def test_incremental_composition(self):
-        from sh import ls, wc
+        py1 = create_tmp_test(
+            """
+import sys
+print(int(sys.argv[1]) * 2)
+        """
+        )
 
-        c1 = int(wc(ls("-A1", THIS_DIR, _piped=True), l=True).strip())  # noqa: E741
-        c2 = len(os.listdir(THIS_DIR))
-        self.assertEqual(c1, c2)
+        py2 = create_tmp_test(
+            """
+import sys
+print(int(sys.stdin.read()) + 1)
+        """
+        )
+
+        res = python(py2.name, _in=python(py1.name, 8, _piped=True)).strip()
+        self.assertEqual("17", res)
 
     def test_short_option(self):
         from sh import sh
@@ -947,7 +975,7 @@ print(sys.argv[1])
         ls = Command(which("ls"))
         wc = Command(which("wc"))
 
-        c1 = int(wc(ls("-A1", THIS_DIR), l=True))  # noqa: E741
+        c1 = int(wc(l=True, _in=ls("-A1", THIS_DIR, _return_cmd=True)))  # noqa: E741
         c2 = len(os.listdir(THIS_DIR))
 
         self.assertEqual(c1, c2)
@@ -1088,7 +1116,7 @@ while True:
 """
         )
 
-        out = python(python("-u", py.name, _piped="err"), "-u", py2.name)
+        out = python("-u", py2.name, _in=python("-u", py.name, _piped="err"))
         self.assertEqual(out, "stderr")
 
     def test_out_redirection(self):
@@ -1259,7 +1287,7 @@ sys.stdout.write(str(sys.argv[1:]))
 
         ls = ls.bake(h=True)
 
-        ran = ls("-la").ran
+        ran = ls("-la", _return_cmd=True).ran
         ft = ran.index("-h")
         self.assertIn("-la", ran[ft:])
 
@@ -1688,7 +1716,11 @@ while True:
         )
 
         p1 = python("-u", py1.name, _piped="out")
-        p2 = python(p1, "-u", py2.name)
+        p2 = python(
+            "-u",
+            py2.name,
+            _in=p1,
+        )
 
         # SIGPIPE should happen, but it shouldn't be an error, since _piped is
         # truthful
@@ -1729,7 +1761,7 @@ while True:
 
         letters = ""
         for line in python(
-            python("-u", py1.name, _piped="out"), "-u", py2.name, _iter=True
+            "-u", py2.name, _iter=True, _in=python("-u", py1.name, _piped="out")
         ):
             letters += line.strip()
 
@@ -1886,7 +1918,7 @@ print(realpath(os.getcwd()))
         stdin.flush()
         stdin.seek(0)
 
-        out = tr(tr("[:lower:]", "[:upper:]", _in=data), "[:upper:]", "[:lower:]")
+        out = tr("[:upper:]", "[:lower:]", _in=tr("[:lower:]", "[:upper:]", _in=data))
         self.assertTrue(out == data)
 
     def test_tty_input(self):
@@ -2113,7 +2145,7 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), "wb", 0)
 sys.stdout.write(sys.stdin.read())
 """
         )
-        out = python(python(py1.name), py2.name)
+        out = python(py2.name, _in=python(py1.name))
         self.assertEqual(out.stdout, binary)
 
     # designed to trigger the "... (%d more, please see e.stdout)" output
@@ -2135,7 +2167,7 @@ exit(1)
         from sh import ls, ErrorReturnCode
 
         test = "/á"
-        self.assertRaises(ErrorReturnCode, ls, test)
+        self.assertRaises(ErrorReturnCode, ls, test, _encoding="utf8")
 
     def test_no_out(self):
         py = create_tmp_test(
@@ -2204,18 +2236,18 @@ sys.stderr.write("stderr")
         from sh import ls
 
         # calling a command regular should fill up the pipe_queue
-        p = ls()
+        p = ls(_return_cmd=True)
         self.assertFalse(p.process._pipe_queue.empty())
 
         # calling a command with a callback should not
         def callback(line):
             pass
 
-        p = ls(_out=callback)
+        p = ls(_out=callback, _return_cmd=True)
         self.assertTrue(p.process._pipe_queue.empty())
 
         # calling a command regular with no_pipe also should not
-        p = ls(_no_pipe=True)
+        p = ls(_no_pipe=True, _return_cmd=True)
         self.assertTrue(p.process._pipe_queue.empty())
 
     def test_decode_error_handling(self):
@@ -2808,7 +2840,7 @@ for line in sys.stdin:
 
         producer_normal_pipe = python(producer.name, _piped=True)
         middleman_normal_pipe = python(
-            producer_normal_pipe, middleman.name, _piped=True
+            middleman.name, _piped=True, _in=producer_normal_pipe
         )
         self.assertRaises(
             ErrorReturnCode_2, python, middleman_normal_pipe, consumer.name
@@ -2967,7 +2999,7 @@ print("字")
             str(cmd)
             repr(cmd)
 
-            running = cmd()
+            running = cmd(_return_cmd=True)
             str(running)
             repr(running)
 

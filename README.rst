@@ -58,24 +58,13 @@ Check out the `gh-pages <https://github.com/amoffat/sh/tree/gh-pages>`_ branch a
 Testing
 -------
 
-I've included a Docker test suite in the `docker_test_suit/` folder.  To build the image, `cd` into that directory and
-run::
+Tests are run in a docker container against all supported Python versions. To run, make the following target::
 
-    $> ./build.sh
+    $> make test
 
-This will install ubuntu 18.04 LTS and all python versions.  Once it's done, stay in that directory and
-run::
+To run a single test::
 
-    $> ./run.sh
-
-This will mount your local code directory into the container and start the test suite, which will take a long time to
-run.  If you wish to run a single test, you may pass that test to `./run.sh`::
-
-    $> ./run.sh FunctionalTests.test_unicode_arg
-
-To run a single test for a single environment::
-
-    $> ./run.sh -e 3.6 FunctionalTests.test_unicode_arg
+    $> make test='FunctionalTests.test_background' test_one
 
 Coverage
 --------
