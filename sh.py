@@ -26,6 +26,7 @@ __version__ = "2.0.0"
 __project_url__ = "https://github.com/amoffat/sh"
 
 from collections import deque
+
 try:
     from collections.abc import Mapping
 except ImportError:
@@ -633,7 +634,7 @@ class RunningCommand(object):
         # self.ran is used for auditing what actually ran.  for example, in
         # exceptions, or if you just want to know what was ran after the
         # command ran
-        self.ran = " ".join([shlex_quote(arg) for arg in cmd])
+        self.ran = " ".join([shlex_quote(str(arg)) for arg in cmd])
 
         self.call_args = call_args
         self.cmd = cmd
@@ -840,7 +841,7 @@ class RunningCommand(object):
         return self
 
     def next(self):
-        """ allow us to iterate over the output of our command """
+        """allow us to iterate over the output of our command"""
 
         if self._stopped_iteration:
             raise StopIteration()
@@ -977,7 +978,7 @@ def ob_is_fd_based(ob):
 
 
 def ob_is_tty(ob):
-    """ checks if an object (like a file-like object) is a tty.  """
+    """checks if an object (like a file-like object) is a tty."""
     fileno = get_fileno(ob)
     is_tty = False
     if fileno is not None:
@@ -1022,7 +1023,7 @@ def tty_in_validator(passed_kwargs, merged_kwargs):
 
 
 def fg_validator(passed_kwargs, merged_kwargs):
-    """ fg is not valid with basically every other option """
+    """fg is not valid with basically every other option"""
 
     invalid = []
     msg = """\
@@ -1475,7 +1476,7 @@ def compile_args(a, kwargs, sep, prefix):
         elif arg is None or arg is False:
             pass
         else:
-            processed_args.append(arg)
+            processed_args.append(str(arg))
 
     # aggregate the keyword arguments
     processed_args += aggregate_keywords(kwargs, sep, prefix)
@@ -1657,7 +1658,7 @@ def get_exc_exit_code_would_raise(exit_code, ok_codes, sigpipe_ok):
 
 
 def handle_process_exit_code(exit_code):
-    """ this should only ever be called once for each child process """
+    """this should only ever be called once for each child process"""
     # if we exited from a signal, let our exit code reflect that
     if os.WIFSIGNALED(exit_code):
         exit_code = -os.WTERMSIG(exit_code)
@@ -1671,7 +1672,7 @@ def handle_process_exit_code(exit_code):
 
 
 def no_interrupt(syscall, *args, **kwargs):
-    """ a helper for making system calls immune to EINTR """
+    """a helper for making system calls immune to EINTR"""
     ret = None
 
     while True:
@@ -2431,7 +2432,7 @@ class OProc(object):
             os.close(self._stdin_parent_fd)
 
     def wait(self):
-        """ waits for the process to complete, handles the exit code """
+        """waits for the process to complete, handles the exit code"""
 
         self.log.debug("acquiring wait lock to wait for completion")
         # using the lock in a with-context blocks, which is what we want if
@@ -2518,7 +2519,7 @@ def event_wait(ev, timeout=None):
 def background_thread(
     timeout_fn, timeout_event, handle_exit_code, is_alive, quit_thread
 ):
-    """ handles the timeout logic """
+    """handles the timeout logic"""
 
     # if there's a timeout event, loop
     if timeout_event:
@@ -3377,7 +3378,7 @@ sys.modules[mod_name] = contrib
 
 @contrib("git")
 def git(orig):  # pragma: no cover
-    """ most git commands play nicer without a TTY """
+    """most git commands play nicer without a TTY"""
     cmd = orig.bake(_tty_out=False)
     return cmd
 
@@ -3410,7 +3411,7 @@ def sudo(orig):  # pragma: no cover
 
 @contrib("ssh")
 def ssh(orig):  # pragma: no cover
-    """ An ssh command for automatic password login """
+    """An ssh command for automatic password login"""
 
     class SessionContent(object):
         def __init__(self):
@@ -3549,8 +3550,8 @@ class SelfWrapper(ModuleType):
         cls_attrs = Command.__dict__.copy()
         if baked_args:
             call_args, _ = Command._extract_call_args(baked_args)
-            cls_attrs['_call_args'] = cls_attrs['_call_args'].copy()
-            cls_attrs['_call_args'].update(call_args)
+            cls_attrs["_call_args"] = cls_attrs["_call_args"].copy()
+            cls_attrs["_call_args"].update(call_args)
         command_cls = type(Command.__name__, Command.__bases__, cls_attrs)
         globs = globals().copy()
         globs[Command.__name__] = command_cls
@@ -3616,7 +3617,7 @@ class SelfWrapper(ModuleType):
 
 
 def in_importlib(frame):
-    """ helper for checking if a filename is in importlib guts """
+    """helper for checking if a filename is in importlib guts"""
     return frame.f_code.co_filename == "<frozen importlib._bootstrap>"
 
 
@@ -3706,7 +3707,7 @@ class ModuleImporterFromVariables(object):
         return self
 
     def find_spec(self, fullname, path=None, target=None):
-        """ find_module() is deprecated since Python 3.4 in favor of find_spec() """
+        """find_module() is deprecated since Python 3.4 in favor of find_spec()"""
 
         from importlib.machinery import ModuleSpec
 

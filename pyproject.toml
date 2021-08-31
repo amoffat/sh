@@ -30,17 +30,18 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = ">=3.6.2,<4.0"
 
 [tool.poetry.dev-dependencies]
-tox = "^3.20.1"
-black = "^20.8b1"
-coveralls = "^2.2.0"
-flake8 = "^3.8.4"
+tox = "^3.24.3"
+black = "^21.7b0"
+coveralls = "^3.2.0"
+flake8 = "^3.9.2"
 rstcheck = "^3.3.1"
-sphinx = "^3.4.1"
-sphinx-rtd-theme = "^0.5.0"
-pytest = "^6.2.1"
+Sphinx = "^4.1.2"
+sphinx-rtd-theme = "^0.5.2"
+pytest = "^6.2.4"
+readme-renderer = "^29.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0a5"]

@@ -6,48 +6,124 @@ name: Run tests
 on: [push, pull_request]
 
 jobs:
-  test:
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/cache@v2
+        name: Cache pip directory
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-3.8
+
+      - uses: actions/cache@v2
+        name: Cache poetry deps
+        with:
+          path: .venv
+          key: ${{ runner.os }}-build-${{ hashFiles('poetry.lock') }}-3.8
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install poetry
+        run: |
+          pip install poetry
+
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install
+
+      - name: Lint
+        run: |
+          poetry run python -m flake8 sh.py tests/*.py
+          poetry run black --check --diff sh.py tests/*.py
+          poetry run python -m readme_renderer README.rst >/dev/null
+
+  test:
+    name: Run tests
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8, 3.9, pypy2, pypy3]
+        os: [ubuntu-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+        use-select: [0, 1]
+        lang: [C, en_US.UTF-8]
 
     steps:
     - uses: actions/checkout@v2
+
+    - uses: actions/cache@v2
+      name: Cache pip directory
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-3.8
+
+    - uses: actions/cache@v2
+      name: Cache poetry deps
+      env:
+        cache-name: poetry-deps
+      with:
+        path: .venv
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('poetry.lock') }}-${{ matrix.python-version }}
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Upgrade pip
+    - name: Install poetry
       run: |
-        python -m pip install --upgrade pip
+        pip install poetry
 
     - name: Install dependencies
       run: |
-        python -m pip install -r requirements-dev.txt
+        poetry config virtualenvs.in-project true
+        poetry install
 
-    - name: 'Python2: Run tests'
-      if: matrix.python-version == '2.7' || matrix.python-version == 'pypy2'
+    - name: Run tests
       run: |
-        python -m pip install .
-        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=0 LANG=C python -m unittest test
-        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=1 LANG=C python -m unittest test
-        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=0 LANG=en_US.UTF-8 python -m unittest test
-        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=1 LANG=en_US.UTF-8 python -m unittest test
+        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=${{ matrix.use-select }} LANG=${{ matrix.lang }} poetry run coverage run -a -m unittest
 
-    - name: 'Python3: Run tests and report to Coveralls'
-      env:
-       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: matrix.python-version != '2.7' && matrix.python-version != 'pypy2'
-      run: |
-        python -m pip install coveralls==3.1.0
-        python -m pip install .
-        python -m flake8 sh.py test.py
-        python setup.py check --restructuredtext --metadata --strict
-        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=0 LANG=C coverage run -a --source=sh -m unittest
-        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=1 LANG=C coverage run -a --source=sh -m unittest
-        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=0 LANG=en_US.UTF-8 coverage run -a --source=sh -m unittest
-        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=1 LANG=en_US.UTF-8 coverage run -a --source=sh -m unittest
-        coveralls --service=github
+    - name: Store coverage
+      uses: actions/upload-artifact@v2
+      with:
+        name: coverage.${{ matrix.use-select }}.${{ matrix.lang }}.${{ matrix.python-version }}
+        path: .coverage
+
+  report:
+    name: Report Coverage
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      # required because coveralls complains if we're not in a git dir
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install dependencies
+        run: |
+          pip install coverage coveralls
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: coverage-artifacts
+
+      - name: Combine coverage
+        run: |
+          find coverage-artifacts -name .coverage | xargs coverage combine -a
+
+      - name: Report coverage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          coverage report
+          coveralls --service=github

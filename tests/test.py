@@ -149,6 +149,12 @@ def create_tmp_test(code, prefix="tmp", delete=True, **kwargs):
 
 
 class BaseTests(unittest.TestCase):
+    def setUp(self):
+        warnings.simplefilter("ignore", ResourceWarning)
+
+    def tearDown(self):
+        warnings.simplefilter("default", ResourceWarning)
+
     def assert_oserror(self, num, fn, *args, **kwargs):
         try:
             fn(*args, **kwargs)
@@ -167,9 +173,11 @@ class BaseTests(unittest.TestCase):
 class FunctionalTests(BaseTests):
     def setUp(self):
         self._environ = os.environ.copy()
+        super().setUp()
 
     def tearDown(self):
         os.environ = self._environ
+        super().tearDown()
 
     def test_print_command(self):
         from sh import ls, which
@@ -549,9 +557,11 @@ print("hi")
         self.assertEqual(found_path, py.name)
 
     def test_no_close_fds(self):
-        # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
-        # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
-        # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
+        # guarantee some extra fds in our parent process that don't close on exec. we
+        # have to explicitly do this because at some point (I believe python 3.4),
+        # python started being more stringent with closing fds to prevent security
+        # vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on
+        # tempfile.TemporaryFile()s
         #
         # https://www.python.org/dev/peps/pep-0446/
         tmp = [tempfile.TemporaryFile() for i in range(10)]
@@ -567,17 +577,19 @@ print(len(os.listdir("/dev/fd")))
 """
         )
         out = python(py.name, _close_fds=False).strip()
-        # pick some number greater than 4, since it's hard to know exactly how many fds will be open/inherted in the
-        # child
+        # pick some number greater than 4, since it's hard to know exactly how many fds
+        # will be open/inherted in the child
         self.assertGreater(int(out), 7)
 
         for t in tmp:
             t.close()
 
     def test_close_fds(self):
-        # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
-        # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
-        # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
+        # guarantee some extra fds in our parent process that don't close on exec.
+        # we have to explicitly do this because at some point (I believe python 3.4),
+        # python started being more stringent with closing fds to prevent security
+        # vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on
+        # tempfile.TemporaryFile()s
         #
         # https://www.python.org/dev/peps/pep-0446/
         tmp = [tempfile.TemporaryFile() for i in range(10)]
@@ -599,9 +611,11 @@ print(os.listdir("/dev/fd"))
             t.close()
 
     def test_pass_fds(self):
-        # guarantee some extra fds in our parent process that don't close on exec.  we have to explicitly do this
-        # because at some point (I believe python 3.4), python started being more stringent with closing fds to prevent
-        # security vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on tempfile.TemporaryFile()s
+        # guarantee some extra fds in our parent process that don't close on exec.
+        # we have to explicitly do this because at some point (I believe python 3.4),
+        # python started being more stringent with closing fds to prevent security
+        # vulnerabilities.  python 2.7, for example, doesn't set CLOEXEC on
+        # tempfile.TemporaryFile()s
         #
         # https://www.python.org/dev/peps/pep-0446/
         tmp = [tempfile.TemporaryFile() for i in range(10)]
@@ -740,7 +754,6 @@ exit(2)
                 h.write(bunk_header)
             os.chmod(gcc_file2, int(0o755))
 
-            import sh
             from sh import gcc
 
             self.assertEqual(gcc._path, gcc_file2)
@@ -811,7 +824,8 @@ print(options.short_option)
             """
 from optparse import OptionParser
 parser = OptionParser()
-parser.add_option("-l", "--long-option", action="store_true", default=False, dest="long_option")
+parser.add_option("-l", "--long-option", action="store_true", default=False, \
+    dest="long_option")
 options, args = parser.parse_args()
 print(options.long_option)
 """
@@ -1827,14 +1841,14 @@ sys.stdout.write(sys.argv[1])
         system_python(py.name, _fg=True)
 
     def test_fg_false(self):
-        """ https://github.com/amoffat/sh/issues/520 """
+        """https://github.com/amoffat/sh/issues/520"""
         py = create_tmp_test("print('hello')")
         buf = StringIO()
         python(py.name, _fg=False, _out=buf)
         self.assertEqual(buf.getvalue(), "hello\n")
 
     def test_fg_true(self):
-        """ https://github.com/amoffat/sh/issues/520 """
+        """https://github.com/amoffat/sh/issues/520"""
         py = create_tmp_test("print('hello')")
         buf = StringIO()
         self.assertRaises(TypeError, python, py.name, _fg=True, _out=buf)
@@ -2085,7 +2099,8 @@ sys.stdout.write("line1")
 
     def test_encoding(self):
         return self.skipTest(
-            "what's the best way to test a different '_encoding' special keyword argument?"
+            "what's the best way to test a different '_encoding' special keyword"
+            "argument?"
         )
 
     def test_timeout(self):
@@ -2353,7 +2368,7 @@ p.wait()
         assert_dead(child_pid)
 
     def test_pushd(self):
-        """ test basic pushd functionality """
+        """test basic pushd functionality"""
         old_wd1 = sh.pwd().strip()
         old_wd2 = os.getcwd()
 
@@ -2373,7 +2388,7 @@ p.wait()
         self.assertEqual(new_wd2, str(tempdir))
 
     def test_pushd_cd(self):
-        """ test that pushd works like pushd/popd with built-in cd correctly """
+        """test that pushd works like pushd/popd with built-in cd correctly"""
         import sh
 
         child = realpath(tempfile.mkdtemp())
@@ -3237,9 +3252,10 @@ class ExecutionContextTests(unittest.TestCase):
     def test_command_with_baked_call_args(self):
         # Test that sh.Command() knows about baked call args
         import sh
+
         _sh = sh(_ok_code=1)
-        self.assertEqual(sh.Command._call_args['ok_code'], 0)
-        self.assertEqual(_sh.Command._call_args['ok_code'], 1)
+        self.assertEqual(sh.Command._call_args["ok_code"], 0)
+        self.assertEqual(_sh.Command._call_args["ok_code"], 1)
 
     def test_importer_detects_module_name(self):
         import sh
@@ -3280,7 +3296,7 @@ if __name__ == "__main__":
     root.setLevel(logging.DEBUG)
     root.addHandler(logging.NullHandler())
 
-    test_kwargs = {}
+    test_kwargs = {"warnings": "ignore"}
 
     # if we're running a specific test, we can let unittest framework figure out
     # that test and run it itself.  it will also handle setting the return code
@@ -3296,6 +3312,3 @@ if __name__ == "__main__":
 
         if not result.wasSuccessful():
             exit(1)
-
-    finally:
-        pass

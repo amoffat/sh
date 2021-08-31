@@ -1,7 +1,6 @@
 [run]
 branch = True
-source =
-    sh.py
+source = sh
 relative_files = True
 
 [report]
