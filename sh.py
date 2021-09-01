@@ -883,8 +883,7 @@ class RunningCommand(object):
         return ""
 
     def __eq__(self, other):
-        return str(self) == str(other)
-
+        return id(self) == id(other)
     __hash__ = None  # Avoid DeprecationWarning in Python < 3
 
     def __contains__(self, item):

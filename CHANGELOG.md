@@ -5,6 +5,7 @@
 * Dropped support for Python < 3.6
 * Bumped default tty size to more standard (24, 80)
 * First argument being a RunningCommand no longer automatically passes it as stdin
+* `RunningCommand.__eq__` no longer has the side effect of executing the command [#518](https://github.com/amoffat/sh/pull/531)
 
 ## 1.14.3
 * Bugfix where `Command` was not aware of default call args when wrapping the module [#559](https://github.com/amoffat/sh/pull/573)

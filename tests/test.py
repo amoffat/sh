@@ -1061,11 +1061,11 @@ if options.opt:
         )
         with python(py.name, opt=True, _with=True):
             out = whoami()
-        self.assertTrue(getpass.getuser() == out.strip())
+        self.assertEqual(getpass.getuser(), out.strip())
 
         with python(py.name, _with=True):
             out = whoami()
-        self.assertTrue(out == "")
+        self.assertEqual(out, "")
 
     def test_binary_input(self):
         py = create_tmp_test(
@@ -1246,8 +1246,8 @@ sys.stderr.write("stderr")
         file_obj.seek(0)
         stderr = file_obj.read().decode()
         file_obj.close()
-        self.assertTrue(stdout == "stdout")
-        self.assertTrue(stderr == "stderr")
+        self.assertEqual(stdout, "stdout")
+        self.assertEqual(stderr, "stderr")
 
     def test_subcommand_and_bake(self):
         import getpass
