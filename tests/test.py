@@ -85,6 +85,7 @@ system_python = sh.Command(sys.executable)
 baked_env = os.environ.copy()
 append_module_path(baked_env, sh)
 python = system_python.bake(_env=baked_env, _return_cmd=True)
+pythons = python.bake(_return_cmd=False)
 
 
 def requires_progs(*progs):
@@ -248,10 +249,10 @@ data = sys.stdin.read()
 sys.stdout.write("no hang")
 """
         )
-        out = python(py.name, _in="", _timeout=2)
+        out = pythons(py.name, _in="", _timeout=2)
         self.assertEqual(out, "no hang")
 
-        out = python(py.name, _in=None, _timeout=2)
+        out = pythons(py.name, _in=None, _timeout=2)
         self.assertEqual(out, "no hang")
 
     def test_exit_code(self):
@@ -1065,7 +1066,7 @@ if options.opt:
 
         with python(py.name, _with=True):
             out = whoami()
-        self.assertEqual(out, "")
+        self.assertEqual(out.strip(), "")
 
     def test_binary_input(self):
         py = create_tmp_test(
@@ -1076,7 +1077,7 @@ sys.stdout.write(data)
 """
         )
         data = b"1234"
-        out = python(py.name, _in=data)
+        out = pythons(py.name, _in=data)
         self.assertEqual(out, "1234")
 
     def test_err_to_out(self):
@@ -1091,7 +1092,7 @@ sys.stderr.write("stderr")
 sys.stderr.flush()
 """
         )
-        stdout = python(py.name, _err_to_out=True)
+        stdout = pythons(py.name, _err_to_out=True)
         self.assertEqual(stdout, "stdoutstderr")
 
     def test_err_to_out_and_sys_stdout(self):
@@ -1107,7 +1108,7 @@ sys.stderr.flush()
 """
         )
         master, slave = os.pipe()
-        stdout = python(py.name, _err_to_out=True, _out=slave)
+        stdout = pythons(py.name, _err_to_out=True, _out=slave)
         self.assertEqual(stdout, "")
         self.assertEqual(os.read(master, 12), b"stdoutstderr")
 
@@ -1130,7 +1131,7 @@ while True:
 """
         )
 
-        out = python("-u", py2.name, _in=python("-u", py.name, _piped="err"))
+        out = pythons("-u", py2.name, _in=python("-u", py.name, _piped="err"))
         self.assertEqual(out, "stderr")
 
     def test_out_redirection(self):
@@ -1242,7 +1243,7 @@ sys.stdout.write("stdout")
 sys.stderr.write("stderr")
 """
         )
-        stdout = python("-u", py.name, _err=file_obj.name).wait()
+        stdout = pythons("-u", py.name, _err=file_obj.name)
         file_obj.seek(0)
         stderr = file_obj.read().decode()
         file_obj.close()
@@ -1277,7 +1278,7 @@ sys.stdout.write(str(sys.argv[1:]))
         )
 
         out = python.bake(py.name).bake("bake1").bake("bake2")()
-        self.assertEqual("['bake1', 'bake2']", out)
+        self.assertEqual("['bake1', 'bake2']", str(out))
 
     def test_arg_preprocessor(self):
         py = create_tmp_test(
@@ -1292,7 +1293,7 @@ sys.stdout.write(str(sys.argv[1:]))
             kwargs["a-kwarg"] = 123
             return args, kwargs
 
-        cmd = python.bake(py.name, _arg_preprocess=arg_preprocess)
+        cmd = pythons.bake(py.name, _arg_preprocess=arg_preprocess)
         out = cmd("arg")
         self.assertEqual("['preprocessed', 'arg', '--a-kwarg=123']", out)
 
@@ -1604,7 +1605,7 @@ for i in range(5):
         p.wait()
 
         self.assertEqual(p.process.exit_code, 0)
-        self.assertEqual(p, "0\n1\n2\n3\n10\n")
+        self.assertEqual(str(p), "0\n1\n2\n3\n10\n")
 
     def test_iter_generator(self):
         py = create_tmp_test(
@@ -1974,7 +1975,7 @@ else:
         self.assertEqual(d["stars"], expected_stars)
 
         response = python(py.name)
-        self.assertEqual(response, "no tty attached!\n")
+        self.assertEqual(str(response), "no tty attached!\n")
 
     def test_tty_output(self):
         py = create_tmp_test(
@@ -1991,10 +1992,10 @@ else:
 """
         )
 
-        out = python(py.name, _tty_out=True)
+        out = pythons(py.name, _tty_out=True)
         self.assertEqual(out, "tty attached")
 
-        out = python(py.name, _tty_out=False)
+        out = pythons(py.name, _tty_out=False)
         self.assertEqual(out, "no tty attached")
 
     def test_stringio_output(self):
@@ -2218,7 +2219,7 @@ sys.stdout.write(sys.stdin.read())
 sys.stdout.flush()
 """
         )
-        out = python(py.name, _in="test\n", _tty_in=True)
+        out = pythons(py.name, _in="test\n", _tty_in=True)
         self.assertEqual("test\n", out)
 
     def test_no_err(self):
@@ -2277,14 +2278,11 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb')
 sys.stdout.write(bytes("te漢字st", "utf8"))
 """
         )
-        fn = partial(python, py.name, _encoding="ascii")
+        fn = partial(pythons, py.name, _encoding="ascii")
 
-        def s(fn):
-            str(fn())
+        self.assertRaises(UnicodeDecodeError, fn)
 
-        self.assertRaises(UnicodeDecodeError, s, fn)
-
-        p = python(py.name, _encoding="ascii", _decode_errors="ignore")
+        p = pythons(py.name, _encoding="ascii", _decode_errors="ignore")
         self.assertEqual(p, "test")
 
     def test_signal_exception(self):
@@ -2586,7 +2584,7 @@ sys.stdout.write(sys.stdin.read())
 
             return stdin
 
-        out = python(py.name, _in=create_stdin())
+        out = pythons(py.name, _in=create_stdin())
         self.assertEqual("0123", out)
 
     def test_stdin_unbuffered_bufsize(self):
@@ -2717,7 +2715,7 @@ import sys
 sys.stdout.write(sys.argv[1])
 """
         )
-        out = python.bake(py.name).bake_()
+        out = pythons.bake(py.name).bake_()
         self.assertEqual("bake", out)
 
     def test_no_proc_no_attr(self):

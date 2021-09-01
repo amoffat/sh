@@ -884,6 +884,7 @@ class RunningCommand(object):
 
     def __eq__(self, other):
         return id(self) == id(other)
+
     __hash__ = None  # Avoid DeprecationWarning in Python < 3
 
     def __contains__(self, item):
@@ -1295,24 +1296,17 @@ class Command(object):
 
     # TODO needs documentation
     def bake(self, *args, **kwargs):
+        # construct the base Command
         fn = type(self)(self._path)
         fn._partial = True
 
         call_args, kwargs = self._extract_call_args(kwargs)
 
-        pruned_call_args = call_args
-        for k, v in Command._call_args.items():
-            try:
-                if pruned_call_args[k] == v:
-                    del pruned_call_args[k]
-            except KeyError:
-                continue
-
         fn._partial_call_args.update(self._partial_call_args)
-        fn._partial_call_args.update(pruned_call_args)
+        fn._partial_call_args.update(call_args)
         fn._partial_baked_args.extend(self._partial_baked_args)
-        sep = pruned_call_args.get("long_sep", self._call_args["long_sep"])
-        prefix = pruned_call_args.get("long_prefix", self._call_args["long_prefix"])
+        sep = call_args.get("long_sep", self._call_args["long_sep"])
+        prefix = call_args.get("long_prefix", self._call_args["long_prefix"])
         fn._partial_baked_args.extend(compile_args(args, kwargs, sep, prefix))
         return fn
 
