@@ -36,7 +36,7 @@ from functools import partial
 from io import UnsupportedOperation, open as fdopen
 from locale import getpreferredencoding
 from types import ModuleType, GeneratorType
-from typing import Union, Type
+from typing import Union, Type, Dict
 import ast
 import errno
 import fcntl
@@ -379,7 +379,7 @@ class CommandNotFound(AttributeError):
 
 
 rc_exc_regex = re.compile(r"(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z]+)")
-rc_exc_cache = {}
+rc_exc_cache: Dict[str, Type[ErrorReturnCode]] = {}
 
 SIGNAL_MAPPING = dict(
     [(v, k) for k, v in signal.__dict__.items() if re.match(r"SIG[a-zA-Z]+", k)]
