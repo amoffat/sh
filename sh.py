@@ -888,8 +888,6 @@ class RunningCommand(object):
     def __eq__(self, other):
         return id(self) == id(other)
 
-    __hash__ = None  # Avoid DeprecationWarning in Python < 3
-
     def __contains__(self, item):
         return item in str(self)
 
@@ -3337,12 +3335,18 @@ class Environment(dict):
     # program that exists in our path.  this is useful for things like
     # common shell builtins that people are used to, but which aren't actually
     # full-fledged system binaries
+
+    # FIXME remove this fully in 2.1.*
     @staticmethod
     def b_cd(path=None):
-        if path:
-            os.chdir(path)
-        else:
-            os.chdir(os.path.expanduser("~"))
+        raise DeprecationWarning(
+            """
+`sh.cd(path)` has been removed. Please use sh.pushd instead:
+
+  with sh.pushd("/tmp"):
+      sh.ls()
+""".strip()
+        )
 
     @staticmethod
     def b_which(program, paths=None):

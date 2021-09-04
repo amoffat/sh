@@ -2,6 +2,8 @@
     :target: https://amoffat.github.com/sh
     :alt: Logo
 
+**If you are migrating from 1.* to 2.*, please see MIGRATION.md**
+
 |
 
 .. image:: https://img.shields.io/pypi/v/sh.svg?style=flat-square

@@ -7,6 +7,7 @@
 * First argument being a RunningCommand no longer automatically passes it as stdin
 * `RunningCommand.__eq__` no longer has the side effect of executing the command [#518](https://github.com/amoffat/sh/pull/531)
 * `_tee` now supports both "err" and "out" [#215](https://github.com/amoffat/sh/issues/215)
+* Removed the builtin override `cd` [link](https://github.com/amoffat/sh/pull/584#discussion_r698055681)
 
 ## 1.14.3
 * Bugfix where `Command` was not aware of default call args when wrapping the module [#559](https://github.com/amoffat/sh/pull/573)
