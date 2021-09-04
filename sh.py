@@ -468,7 +468,7 @@ class GlobResults(list):
 
 
 def glob(path, recursive=False):
-    expanded = GlobResults(path, _old_glob(path, recursive))
+    expanded = GlobResults(path, _old_glob(path, recursive=recursive))
     return expanded
 
 
