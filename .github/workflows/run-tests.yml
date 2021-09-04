@@ -43,6 +43,7 @@ jobs:
           poetry run python -m flake8 sh.py tests/*.py
           poetry run black --check --diff sh.py tests/*.py
           poetry run python -m readme_renderer README.rst >/dev/null
+          poetry run mypy sh.py
 
   test:
     name: Run tests
