@@ -1655,6 +1655,36 @@ for i in range(42):
         self.assertEqual(len(out), 42)
         self.assertEqual(sum(out), 861)
 
+    def test_handle_both_out_and_err(self):
+        py = create_tmp_test(
+            """
+import sys
+import os
+import time
+
+for i in range(42):
+    sys.stdout.write(str(i) + "\\n")
+    sys.stdout.flush()
+    if i % 2 == 0:
+        sys.stderr.write(str(i) + "\\n")
+        sys.stderr.flush()
+"""
+        )
+
+        out = []
+        def handle_out(line):
+            out.append(int(line.strip()))
+
+        err = []
+        def handle_err(line):
+            err.append(int(line.strip()))
+
+        p = python(py.name, _err=handle_err, _out=handle_out, _bg=True)
+        p.wait()
+
+        self.assertEqual(sum(out), 861)
+        self.assertEqual(sum(err), 420)
+
     def test_iter_unicode(self):
         # issue https://github.com/amoffat/sh/issues/224
         test_string = "\xe4\xbd\x95\xe4\xbd\x95\n" * 150  # len > buffer_s
