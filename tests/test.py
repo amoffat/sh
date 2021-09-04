@@ -1672,10 +1672,12 @@ for i in range(42):
         )
 
         out = []
+
         def handle_out(line):
             out.append(int(line.strip()))
 
         err = []
+
         def handle_err(line):
             err.append(int(line.strip()))
 
