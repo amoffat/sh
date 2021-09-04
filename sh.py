@@ -888,8 +888,6 @@ class RunningCommand(object):
     def __eq__(self, other):
         return id(self) == id(other)
 
-    __hash__ = None  # Avoid DeprecationWarning in Python < 3
-
     def __contains__(self, item):
         return item in str(self)
 
