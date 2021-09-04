@@ -73,6 +73,9 @@ support."
         % __version__
     )
 
+TEE_STDOUT = {True, "out", 1}
+TEE_STDERR = {"err", 2}
+
 DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
 
 IS_MACOS = platform.system() in ("AIX", "Darwin")
@@ -1747,8 +1750,12 @@ class OProc(object):
         stdout_is_fd_based = ob_is_fd_based(stdout)
         stderr_is_fd_based = ob_is_fd_based(stderr)
 
-        tee_out = ca["tee"] in (True, "out")
-        tee_err = ca["tee"] == "err"
+        if isinstance(ca["tee"], (str, bool, int)) or ca["tee"] is None:
+            tee = {ca["tee"]}
+        else:
+            tee = set(ca["tee"])
+        tee_out = TEE_STDOUT.intersection(tee)
+        tee_err = TEE_STDERR.intersection(tee)
 
         single_tty = ca["tty_in"] and ca["tty_out"] and ca["unify_ttys"]
 
@@ -2178,9 +2185,7 @@ class OProc(object):
                 if pipe is OProc.STDERR and not ca["no_pipe"]:
                     stderr_pipe = self._pipe_queue
 
-                save_stderr = not ca["no_err"] and (
-                    ca["tee"] in ("err",) or stderr is None
-                )
+                save_stderr = not ca["no_err"] and (tee_err or stderr is None)
 
                 if callable(stderr):
                     stderr = construct_streamreader_callback(self, stderr)

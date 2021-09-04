@@ -1205,6 +1205,35 @@ sys.stderr.write("stderr")
         self.assertEqual(stderr, "stderr")
         self.assertGreater(len(p.stderr), 0)
 
+    def test_out_and_err_redirection(self):
+        import tempfile
+
+        py = create_tmp_test(
+            """
+import sys
+import os
+
+sys.stdout.write("stdout")
+sys.stderr.write("stderr")
+"""
+        )
+        err_file_obj = tempfile.NamedTemporaryFile()
+        out_file_obj = tempfile.NamedTemporaryFile()
+        p = python(py.name, _out=out_file_obj, _err=err_file_obj, _tee=("err", "out"))
+
+        out_file_obj.seek(0)
+        stdout = out_file_obj.read().decode()
+        out_file_obj.close()
+
+        err_file_obj.seek(0)
+        stderr = err_file_obj.read().decode()
+        err_file_obj.close()
+
+        self.assertEqual(stdout, "stdout")
+        self.assertEqual(p.stdout, b"stdout")
+        self.assertEqual(stderr, "stderr")
+        self.assertEqual(p.stderr, b"stderr")
+
     def test_tty_tee(self):
         py = create_tmp_test(
             """
