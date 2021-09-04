@@ -36,6 +36,7 @@ from functools import partial
 from io import UnsupportedOperation, open as fdopen
 from locale import getpreferredencoding
 from types import ModuleType, GeneratorType
+from typing import Union, Type, Dict, Any
 import ast
 import errno
 import fcntl
@@ -108,137 +109,139 @@ POLLER_EVENT_WRITE = 2
 POLLER_EVENT_HUP = 4
 POLLER_EVENT_ERROR = 8
 
+
+class PollPoller(object):
+    def __init__(self):
+        self._poll = select.poll()
+        # file descriptor <-> file object bidirectional maps
+        self.fd_lookup = {}
+        self.fo_lookup = {}
+
+    def __nonzero__(self):
+        return len(self.fd_lookup) != 0
+
+    def __len__(self):
+        return len(self.fd_lookup)
+
+    def _set_fileobject(self, f):
+        if hasattr(f, "fileno"):
+            fd = f.fileno()
+            self.fd_lookup[fd] = f
+            self.fo_lookup[f] = fd
+        else:
+            self.fd_lookup[f] = f
+            self.fo_lookup[f] = f
+
+    def _remove_fileobject(self, f):
+        if hasattr(f, "fileno"):
+            fd = f.fileno()
+            del self.fd_lookup[fd]
+            del self.fo_lookup[f]
+        else:
+            del self.fd_lookup[f]
+            del self.fo_lookup[f]
+
+    def _get_file_descriptor(self, f):
+        return self.fo_lookup.get(f)
+
+    def _get_file_object(self, fd):
+        return self.fd_lookup.get(fd)
+
+    def _register(self, f, events):
+        # f can be a file descriptor or file object
+        self._set_fileobject(f)
+        fd = self._get_file_descriptor(f)
+        self._poll.register(fd, events)
+
+    def register_read(self, f):
+        self._register(f, select.POLLIN | select.POLLPRI)
+
+    def register_write(self, f):
+        self._register(f, select.POLLOUT)
+
+    def register_error(self, f):
+        self._register(f, select.POLLERR | select.POLLHUP | select.POLLNVAL)
+
+    def unregister(self, f):
+        fd = self._get_file_descriptor(f)
+        self._poll.unregister(fd)
+        self._remove_fileobject(f)
+
+    def poll(self, timeout):
+        if timeout is not None:
+            # convert from seconds to milliseconds
+            timeout *= 1000
+        changes = self._poll.poll(timeout)
+        results = []
+        for fd, events in changes:
+            f = self._get_file_object(fd)
+            if events & (select.POLLIN | select.POLLPRI):
+                results.append((f, POLLER_EVENT_READ))
+            elif events & select.POLLOUT:
+                results.append((f, POLLER_EVENT_WRITE))
+            elif events & select.POLLHUP:
+                results.append((f, POLLER_EVENT_HUP))
+            elif events & (select.POLLERR | select.POLLNVAL):
+                results.append((f, POLLER_EVENT_ERROR))
+        return results
+
+
+class SelectPoller(object):
+    def __init__(self):
+        self.rlist = []
+        self.wlist = []
+        self.xlist = []
+
+    def __nonzero__(self):
+        return len(self.rlist) + len(self.wlist) + len(self.xlist) != 0
+
+    def __len__(self):
+        return len(self.rlist) + len(self.wlist) + len(self.xlist)
+
+    @staticmethod
+    def _register(f, events):
+        if f not in events:
+            events.append(f)
+
+    @staticmethod
+    def _unregister(f, events):
+        if f in events:
+            events.remove(f)
+
+    def register_read(self, f):
+        self._register(f, self.rlist)
+
+    def register_write(self, f):
+        self._register(f, self.wlist)
+
+    def register_error(self, f):
+        self._register(f, self.xlist)
+
+    def unregister(self, f):
+        self._unregister(f, self.rlist)
+        self._unregister(f, self.wlist)
+        self._unregister(f, self.xlist)
+
+    def poll(self, timeout):
+        _in, _out, _err = select.select(self.rlist, self.wlist, self.xlist, timeout)
+        results = []
+        for f in _in:
+            results.append((f, POLLER_EVENT_READ))
+        for f in _out:
+            results.append((f, POLLER_EVENT_WRITE))
+        for f in _err:
+            results.append((f, POLLER_EVENT_ERROR))
+        return results
+
+
 # here we use an use a poller interface that transparently selects the most
 # capable poller (out of either select.select or select.poll).  this was added
 # by zhangyafeikimi when he discovered that if the fds created internally by sh
 # numbered > 1024, select.select failed (a limitation of select.select).  this
 # can happen if your script opens a lot of files
+Poller: Union[Type[SelectPoller], Type[PollPoller]] = SelectPoller
 if HAS_POLL and not FORCE_USE_SELECT:
-
-    class Poller(object):
-        def __init__(self):
-            self._poll = select.poll()
-            # file descriptor <-> file object bidirectional maps
-            self.fd_lookup = {}
-            self.fo_lookup = {}
-
-        def __nonzero__(self):
-            return len(self.fd_lookup) != 0
-
-        def __len__(self):
-            return len(self.fd_lookup)
-
-        def _set_fileobject(self, f):
-            if hasattr(f, "fileno"):
-                fd = f.fileno()
-                self.fd_lookup[fd] = f
-                self.fo_lookup[f] = fd
-            else:
-                self.fd_lookup[f] = f
-                self.fo_lookup[f] = f
-
-        def _remove_fileobject(self, f):
-            if hasattr(f, "fileno"):
-                fd = f.fileno()
-                del self.fd_lookup[fd]
-                del self.fo_lookup[f]
-            else:
-                del self.fd_lookup[f]
-                del self.fo_lookup[f]
-
-        def _get_file_descriptor(self, f):
-            return self.fo_lookup.get(f)
-
-        def _get_file_object(self, fd):
-            return self.fd_lookup.get(fd)
-
-        def _register(self, f, events):
-            # f can be a file descriptor or file object
-            self._set_fileobject(f)
-            fd = self._get_file_descriptor(f)
-            self._poll.register(fd, events)
-
-        def register_read(self, f):
-            self._register(f, select.POLLIN | select.POLLPRI)
-
-        def register_write(self, f):
-            self._register(f, select.POLLOUT)
-
-        def register_error(self, f):
-            self._register(f, select.POLLERR | select.POLLHUP | select.POLLNVAL)
-
-        def unregister(self, f):
-            fd = self._get_file_descriptor(f)
-            self._poll.unregister(fd)
-            self._remove_fileobject(f)
-
-        def poll(self, timeout):
-            if timeout is not None:
-                # convert from seconds to milliseconds
-                timeout *= 1000
-            changes = self._poll.poll(timeout)
-            results = []
-            for fd, events in changes:
-                f = self._get_file_object(fd)
-                if events & (select.POLLIN | select.POLLPRI):
-                    results.append((f, POLLER_EVENT_READ))
-                elif events & select.POLLOUT:
-                    results.append((f, POLLER_EVENT_WRITE))
-                elif events & select.POLLHUP:
-                    results.append((f, POLLER_EVENT_HUP))
-                elif events & (select.POLLERR | select.POLLNVAL):
-                    results.append((f, POLLER_EVENT_ERROR))
-            return results
-
-
-else:
-
-    class Poller(object):
-        def __init__(self):
-            self.rlist = []
-            self.wlist = []
-            self.xlist = []
-
-        def __nonzero__(self):
-            return len(self.rlist) + len(self.wlist) + len(self.xlist) != 0
-
-        def __len__(self):
-            return len(self.rlist) + len(self.wlist) + len(self.xlist)
-
-        @staticmethod
-        def _register(f, events):
-            if f not in events:
-                events.append(f)
-
-        @staticmethod
-        def _unregister(f, events):
-            if f in events:
-                events.remove(f)
-
-        def register_read(self, f):
-            self._register(f, self.rlist)
-
-        def register_write(self, f):
-            self._register(f, self.wlist)
-
-        def register_error(self, f):
-            self._register(f, self.xlist)
-
-        def unregister(self, f):
-            self._unregister(f, self.rlist)
-            self._unregister(f, self.wlist)
-            self._unregister(f, self.xlist)
-
-        def poll(self, timeout):
-            _in, _out, _err = select.select(self.rlist, self.wlist, self.xlist, timeout)
-            results = []
-            for f in _in:
-                results.append((f, POLLER_EVENT_READ))
-            for f in _out:
-                results.append((f, POLLER_EVENT_WRITE))
-            for f in _err:
-                results.append((f, POLLER_EVENT_ERROR))
-            return results
+    Poller = PollPoller
 
 
 def _indent_text(text, num=4):
@@ -376,7 +379,7 @@ class CommandNotFound(AttributeError):
 
 
 rc_exc_regex = re.compile(r"(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z]+)")
-rc_exc_cache = {}
+rc_exc_cache: Dict[str, Type[ErrorReturnCode]] = {}
 
 SIGNAL_MAPPING = dict(
     [(v, k) for k, v in signal.__dict__.items() if re.match(r"SIG[a-zA-Z]+", k)]
@@ -464,8 +467,8 @@ class GlobResults(list):
         list.__init__(self, results)
 
 
-def glob(path, *args, **kwargs):
-    expanded = GlobResults(path, _old_glob(path, *args, **kwargs))
+def glob(path, recursive=False):
+    expanded = GlobResults(path, _old_glob(path, recursive=recursive))
     return expanded
 
 
@@ -1104,7 +1107,7 @@ class Command(object):
 
     thread_local = threading.local()
 
-    _call_args = {
+    _call_args: Dict[str, Any] = {
         "fg": False,  # run command in foreground
         # run a command in the background.  commands run in the background
         # ignore SIGHUP and do not automatically exit when the parent process
