@@ -41,7 +41,6 @@ rstcheck = "^3.3.1"
 Sphinx = "^4.1.2"
 sphinx-rtd-theme = "^0.5.2"
 pytest = "^6.2.4"
-readme-renderer = "^29.0"
 mypy = "^0.910"
 
 [build-system]

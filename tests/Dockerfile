@@ -24,8 +24,7 @@ RUN apt-get -y install\
     python3.9
 
 RUN apt-get -y install python3.9-distutils\
-    && curl https://bootstrap.pypa.io/get-pip.py | python3.9 -\
-    && pip3.9 install poetry tox
+    && curl https://bootstrap.pypa.io/get-pip.py | python3.9 -
 
 ARG uid=1000
 RUN groupadd -g $uid shtest\
@@ -36,3 +35,8 @@ RUN groupadd -g $uid shtest\
 ENV TOX_PARALLEL_NO_SPINNER=1
 USER shtest
 WORKDIR /home/shtest/sh
+
+RUN pip3.9 install poetry tox
+ENV PATH="/home/shtest/.local/bin:$PATH"
+COPY poetry.lock pyproject.toml /home/shtest/sh/
+RUN poetry install
