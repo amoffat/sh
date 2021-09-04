@@ -1525,20 +1525,24 @@ def aggregate_keywords(keywords, sep, prefix, raw=False):
             if v is not False:
                 processed.append("-" + k)
                 if v is not True:
-                    processed.append(v)
+                    processed.append(str(v))
 
         # we're doing a long arg
         else:
             if not raw:
                 k = k.replace("_", "-")
 
+            # if it's true, it has no value, just pass the name
             if v is True:
                 processed.append(prefix + k)
+            # if it's false, skip passing it
             elif v is False:
                 pass
+            # we may need to break the argument up into multiple arguments
             elif sep is None or sep == " ":
                 processed.append(prefix + k)
-                processed.append(v)
+                processed.append(str(v))
+            # otherwise just join it together into a single argument
             else:
                 arg = f"{prefix}{k}{sep}{v}"
                 processed.append(arg)

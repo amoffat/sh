@@ -241,6 +241,21 @@ print(args[0])
         out = python(py.name, 3).strip()
         self.assertEqual(out, "3")
 
+    def test_arg_string_coercion(self):
+        py = create_tmp_test(
+            """
+from argparse import ArgumentParser
+parser = ArgumentParser()
+parser.add_argument("-n", type=int)
+parser.add_argument("--number", type=int)
+ns = parser.parse_args()
+print(ns.n + ns.number)
+"""
+        )
+
+        out = python(py.name, n=3, number=4, _long_sep=None).strip()
+        self.assertEqual(out, "7")
+
     def test_empty_stdin_no_hang(self):
         py = create_tmp_test(
             """
