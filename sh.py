@@ -36,7 +36,7 @@ from functools import partial
 from io import UnsupportedOperation, open as fdopen
 from locale import getpreferredencoding
 from types import ModuleType, GeneratorType
-from typing import Union, Type, Dict
+from typing import Union, Type, Dict, Any
 import ast
 import errno
 import fcntl
@@ -1107,7 +1107,7 @@ class Command(object):
 
     thread_local = threading.local()
 
-    _call_args = {
+    _call_args: Dict[str, Any] = {
         "fg": False,  # run command in foreground
         # run a command in the background.  commands run in the background
         # ignore SIGHUP and do not automatically exit when the parent process
