@@ -1,6 +1,6 @@
 # -*- coding: utf8 -*-
 from contextlib import contextmanager
-from functools import wraps
+from functools import wraps, partial
 from os.path import exists, join, realpath, dirname, split
 import errno
 import fcntl
@@ -2399,7 +2399,7 @@ p.wait()
         )
 
         def launch():
-            p = python(parent.name, _bg=True, _iter=True)
+            p = python(parent.name, _bg=True, _iter=True, _new_group=True)
             child_pid = int(next(p).strip())
             child_pgid = int(next(p).strip())
             parent_pid = p.pid
@@ -2539,7 +2539,7 @@ print(time())
 
         self.assertRaises(ForkException, python, py.name, _preexec_fn=fail)
 
-    def test_new_session(self):
+    def test_new_session_new_group(self):
         from threading import Event
 
         py = create_tmp_test(
@@ -2558,53 +2558,60 @@ time.sleep(0.5)
 
         event = Event()
 
-        def handle(line, stdin, p):
+        def handle(run_asserts, line, stdin, p):
             pid, pgid, sid = line.strip().split(",")
             pid = int(pid)
             pgid = int(pgid)
             sid = int(sid)
+            test_pid = os.getpgid(os.getpid())
 
             self.assertEqual(p.pid, pid)
-            self.assertEqual(pid, pgid)
             self.assertEqual(p.pgid, pgid)
             self.assertEqual(pgid, p.get_pgid())
-            self.assertEqual(pid, sid)
-            self.assertEqual(sid, pgid)
             self.assertEqual(p.sid, sid)
             self.assertEqual(sid, p.get_sid())
 
+            run_asserts(pid, pgid, sid, test_pid)
             event.set()
 
-        # new session
-        p = python(py.name, _out=handle)
+        def session_true_group_false(pid, pgid, sid, test_pid):
+            self.assertEqual(pid, sid)
+            self.assertEqual(pid, pgid)
+
+        p = python(
+            py.name, _out=partial(handle, session_true_group_false), _new_session=True
+        )
         p.wait()
         self.assertTrue(event.is_set())
 
         event.clear()
 
-        def handle(line, stdin, p):
-            pid, pgid, sid = line.strip().split(",")
-            pid = int(pid)
-            pgid = int(pgid)
-            sid = int(sid)
-
-            test_pid = os.getpgid(os.getpid())
-
-            self.assertEqual(p.pid, pid)
-            self.assertNotEqual(test_pid, pgid)
-            self.assertEqual(p.pgid, pgid)
-            self.assertEqual(pgid, p.get_pgid())
+        def session_false_group_false(pid, pgid, sid, test_pid):
+            self.assertEqual(test_pid, pgid)
             self.assertNotEqual(pid, sid)
-            self.assertNotEqual(sid, pgid)
-            self.assertEqual(p.sid, sid)
-            self.assertEqual(sid, p.get_sid())
 
-            event.set()
-
-        # no new session
-        p = python(py.name, _out=handle, _new_session=False)
+        p = python(
+            py.name, _out=partial(handle, session_false_group_false), _new_session=False
+        )
         p.wait()
         self.assertTrue(event.is_set())
+
+        event.clear()
+
+        def session_false_group_true(pid, pgid, sid, test_pid):
+            self.assertEqual(pid, pgid)
+            self.assertNotEqual(pid, sid)
+
+        p = python(
+            py.name,
+            _out=partial(handle, session_false_group_true),
+            _new_session=False,
+            _new_group=True,
+        )
+        p.wait()
+        self.assertTrue(event.is_set())
+
+        event.clear()
 
     def test_done_cb_exc(self):
         from sh import ErrorReturnCode

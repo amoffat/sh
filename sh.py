@@ -1187,7 +1187,9 @@ class Command(object):
         # Windows.
         "uid": None,
         # put the forked process in its own process session?
-        "new_session": True,
+        "new_session": False,
+        # put the forked process in its own process group?
+        "new_group": False,
         # pre-process args passed into __call__.  only really useful when used
         # in .bake()
         "arg_preprocess": None,
@@ -1860,7 +1862,14 @@ class OProc(object):
             self._pipe_fd = os.dup(fd_to_use)
 
         new_session = ca["new_session"]
-        needs_ctty = ca["tty_in"] and new_session
+        new_group = ca["new_group"]
+        needs_ctty = ca["tty_in"]
+
+        # if we need a controlling terminal, we have to be in a new session where we
+        # are the session leader, otherwise we would need to take over the existing
+        # process session, and we can't do that(?)
+        if needs_ctty:
+            new_session = True
 
         self.ctty = None
         if needs_ctty:
@@ -1930,14 +1939,7 @@ class OProc(object):
                 # process init
                 if new_session:
                     os.setsid()
-                # if we're not going in a new session, we should go in a new
-                # process group.  this way, our process, and any children it
-                # spawns, are alone, contained entirely in one group.  if we
-                # didn't do this, and didn't use a new session, then our exec'd
-                # process *could* exist in the same group as our python process,
-                # depending on how we launch the process (from a shell, or some
-                # other way)
-                else:
+                elif new_group:
                     os.setpgrp()
 
                 sid = os.getsid(0)

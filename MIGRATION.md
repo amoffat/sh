@@ -45,3 +45,15 @@ import sh
 with sh.pushd("/tmp"):
     sh.ls()
 ```
+
+## New processes don't launch in new session
+In `1.*`, `_new_session` defaulted to `True`. It now defaults to `False`. The reason
+for this is that it makes more sense for launched processes to default to being in
+the process group of the python script, so that they receive SIGINTs correctly.
+
+### Workaround
+```python
+import sh as sh2
+
+sh = sh2(_new_session=True)
+```
