@@ -846,7 +846,7 @@ class RunningCommand(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         """allow us to iterate over the output of our command"""
 
         if self._stopped_iteration:
@@ -874,8 +874,6 @@ class RunningCommand(object):
                 except UnicodeDecodeError:
                     return chunk
 
-    # python 3
-    __next__ = next
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.call_args["with"] and get_prepend_stack():
@@ -2368,6 +2366,12 @@ class OProc(object):
         # and handle the status, otherwise let us do it.
         acquired = self._wait_lock.acquire(False)
         if not acquired:
+            # this sleep here is a hack. occasionally, is_alive can get called so
+            # rapidly that it appears to not let the wait lock be acquired in the main
+            # thread, which is attempting to call wait(). by introducing a tiny sleep
+            # (ugh), this seems to prevent other threads from equally attempting to
+            # acquire the lock. TODO find out if this is a general python bug
+            time.sleep(0.00001)
             if self.exit_code is not None:
                 return False, self.exit_code
             return True, self.exit_code
