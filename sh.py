@@ -2299,34 +2299,6 @@ class OProc(object):
     def __repr__(self):
         return "<Process %d %r>" % (self.pid, self.cmd[:500])
 
-    # these next 3 properties are primary for tests
-    @property
-    def output_thread_exc(self):
-        exc = None
-        try:
-            exc = self._output_thread_exc_queue.get(False)
-        except Empty:
-            pass
-        return exc
-
-    @property
-    def input_thread_exc(self):
-        exc = None
-        try:
-            exc = self._input_thread_exc_queue.get(False)
-        except Empty:
-            pass
-        return exc
-
-    @property
-    def bg_thread_exc(self):
-        exc = None
-        try:
-            exc = self._bg_thread_exc_queue.get(False)
-        except Empty:
-            pass
-        return exc
-
     def change_in_bufsize(self, buf):
         self._stdin_stream.stream_bufferer.change_buffering(buf)
 
