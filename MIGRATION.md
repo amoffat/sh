@@ -13,9 +13,9 @@ more natural.
  the top of files that use `sh`:
 
 ```python
-import sh as sh2
+import sh
 
-sh = sh2(_return_cmd=True)
+sh = sh(_return_cmd=True)
 ```
 
 ## Piping to STDIN
@@ -53,7 +53,7 @@ the process group of the python script, so that they receive SIGINTs correctly.
 
 ### Workaround
 ```python
-import sh as sh2
+import sh
 
-sh = sh2(_new_session=True)
+sh = sh(_new_session=True)
 ```

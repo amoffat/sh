@@ -3285,16 +3285,6 @@ class ExecutionContextTests(unittest.TestCase):
         echo("-n", "TEST")
         self.assertEqual("", out.getvalue())
 
-    def test_no_bad_name(self):
-        out = StringIO()
-
-        def fn():
-            import sh
-
-            sh = sh(_out=out)
-
-        self.assertRaises(RuntimeError, fn)
-
     def test_set_in_parent_function(self):
         import sh
 

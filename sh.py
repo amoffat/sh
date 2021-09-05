@@ -3602,13 +3602,14 @@ class SelfWrapper(ModuleType):
                 # This depends on things like Python's calling convention and the layout
                 # of stack frames but it's a fix for a bug in a very cornery cornercase
                 # so....
-                module_name = parent[0].f_code.co_names[-1]
+                dst_module_name = parent[0].f_code.co_names[-1]
             else:
                 raise
         else:
             parsed = ast.parse(code)
             try:
-                module_name = parsed.body[0].targets[0].id
+                # src_module_name = parsed.body[0].value.func.id
+                dst_module_name = parsed.body[0].targets[0].id
             except Exception:
                 # Diagnose what went wrong
                 if not isinstance(parsed.body[0], ast.Assign):
@@ -3617,13 +3618,7 @@ class SelfWrapper(ModuleType):
                     )
                 raise
 
-        if module_name == __name__:
-            raise RuntimeError(
-                "Cannot use the name '%s' as an execution context" % __name__
-            )
-
-        sys.modules.pop(module_name, None)
-
+        sys.modules.pop(dst_module_name, None)
         return new_mod
 
 
