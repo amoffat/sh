@@ -10,6 +10,9 @@ import os
 import platform
 import pty
 import resource
+
+import asyncio
+
 import sh
 import signal
 import stat
@@ -1669,6 +1672,43 @@ for i in range(42):
             out.append(int(line.strip()))
         self.assertEqual(len(out), 42)
         self.assertEqual(sum(out), 861)
+
+    def test_async_iter(self):
+        py = create_tmp_test(
+            """
+import os
+import time
+
+for i in range(5):
+    print(i)
+"""
+        )
+        from asyncio.queues import Queue as AQueue
+
+        q = AQueue()
+
+        # this list will prove that our coroutines are yielding to eachother as each
+        # line is produced
+        alternating = []
+
+        async def producer(q):
+            async for line in python(py.name, _iter=True):
+                alternating.append(1)
+                await q.put(int(line.strip()))
+
+            await q.put(None)
+
+        async def consumer(q):
+            while True:
+                line = await q.get()
+                if line is None:
+                    return
+                alternating.append(2)
+
+        loop = asyncio.get_event_loop()
+        res = asyncio.gather(producer(q), consumer(q))
+        loop.run_until_complete(res)
+        self.assertListEqual(alternating, [1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
 
     def test_handle_both_out_and_err(self):
         py = create_tmp_test(

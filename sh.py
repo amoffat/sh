@@ -27,6 +27,8 @@ __project_url__ = "https://github.com/amoffat/sh"
 
 from collections import deque
 
+import asyncio
+
 try:
     from collections.abc import Mapping
 except ImportError:
@@ -63,6 +65,7 @@ import tty
 import warnings
 import weakref
 from queue import Queue, Empty
+from asyncio import Queue as AQueue
 from io import StringIO, BytesIO
 from shlex import quote as shlex_quote
 
@@ -650,6 +653,12 @@ class RunningCommand(object):
         should_wait = True
         spawn_process = True
 
+        # if we're using an async for loop on this object, we need to put the underlying
+        # iterable in no-block mode. however, we will only know if we're using an async
+        # for loop after this object is constructed. so we'll set it to False now, but
+        # then later set it to True if we need it
+        self._force_noblock = False
+
         # this is used to track if we've already raised StopIteration, and if we
         # have, raise it immediately again if the user tries to call next() on
         # us.  https://github.com/amoffat/sh/issues/273
@@ -860,7 +869,7 @@ class RunningCommand(object):
                     True, self.call_args["iter_poll_time"]
                 )
             except Empty:
-                if self.call_args["iter_noblock"]:
+                if self.call_args["iter_noblock"] or self._force_noblock:
                     return errno.EWOULDBLOCK
             else:
                 if chunk is None:
@@ -874,6 +883,39 @@ class RunningCommand(object):
                 except UnicodeDecodeError:
                     return chunk
 
+    def __aiter__(self):
+        # maxsize is critical to making sure our queue_connector function below yields
+        # when it awaits _aio_queue.put(chunk). if we didn't have a maxsize, our loop
+        # would happily iterate through `chunk in self` and put onto the queue without
+        # any blocking, and therefore no yielding, which would prevent other coroutines
+        # from running.
+        self._aio_queue = AQueue(maxsize=1)
+        self._force_noblock = True
+
+        # the sole purpose of this coroutine is to connect our pipe_queue (which is
+        # being populated by a thread) to an asyncio-friendly queue. then, in __anext__,
+        # we can iterate over that asyncio queue.
+        async def queue_connector():
+            for chunk in self:
+                if chunk == errno.EWOULDBLOCK:
+                    pass
+                else:
+                    await self._aio_queue.put(chunk)
+            await self._aio_queue.put(None)
+
+        if sys.version_info < (3, 7, 0):
+            asyncio.ensure_future(queue_connector())
+        else:
+            asyncio.create_task(queue_connector())
+
+        return self
+
+    async def __anext__(self):
+        chunk = await self._aio_queue.get()
+        if chunk is not None:
+            return chunk
+        else:
+            raise StopAsyncIteration
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.call_args["with"] and get_prepend_stack():
@@ -1138,6 +1180,7 @@ class Command(object):
         "piped": None,
         "iter": None,
         "iter_noblock": None,
+        "async": False,
         # the amount of time to sleep between polling for the iter output queue
         "iter_poll_time": 0.1,
         "ok_code": 0,
@@ -2371,7 +2414,7 @@ class OProc(object):
             # thread, which is attempting to call wait(). by introducing a tiny sleep
             # (ugh), this seems to prevent other threads from equally attempting to
             # acquire the lock. TODO find out if this is a general python bug
-            time.sleep(0.00001)
+            time.sleep(0.1)
             if self.exit_code is not None:
                 return False, self.exit_code
             return True, self.exit_code
