@@ -2309,6 +2309,8 @@ class OProc(object):
             if (
                 not self.command._spawned_and_waited
                 and ca["bg_exc"]
+                # we don't want background exceptions if we're doing async stuff,
+                # because we want those to bubble up.
                 and not ca["async"]
             ):
 
@@ -2468,6 +2470,8 @@ class OProc(object):
             # thread, which is attempting to call wait(). by introducing a tiny sleep
             # (ugh), this seems to prevent other threads from equally attempting to
             # acquire the lock. TODO find out if this is a general python bug
+            # if we don't do this, if we're unlucky, some commands may hang for a
+            # second before terminating, due to their threads spamming is_alive() calls.
             time.sleep(0.1)
             if self.exit_code is not None:
                 return False, self.exit_code
