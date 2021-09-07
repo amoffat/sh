@@ -1030,14 +1030,9 @@ print(sys.argv[1])
         self.assertGreater(now - start, sleep_time)
 
     def test_background_exception(self):
-        from sh import ls, ErrorReturnCode_1, ErrorReturnCode_2
-
-        p = ls("/ofawjeofj", _bg=True, _bg_exc=False)  # should not raise
-
-        exc_to_test = ErrorReturnCode_2
-        if IS_MACOS:
-            exc_to_test = ErrorReturnCode_1
-        self.assertRaises(exc_to_test, p.wait)  # should raise
+        py = create_tmp_test("exit(1)")
+        p = python(py.name, _bg=True, _bg_exc=False)  # should not raise
+        self.assertRaises(sh.ErrorReturnCode_1, p.wait)  # should raise
 
     def test_with_context(self):
         from sh import whoami

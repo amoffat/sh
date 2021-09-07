@@ -1978,8 +1978,8 @@ class OProc(object):
             fcntl.fcntl(exc_pipe_write, fcntl.F_SETFD, flags)
 
             try:
-                # ignoring SIGHUP lets us persist even after the parent process
-                # exits.  only ignore if we're backgrounded
+                # ignoring SIGHUP lets us persist even after the controlling terminal
+                # is closed
                 if ca["bg"] is True:
                     signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
