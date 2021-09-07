@@ -1742,13 +1742,16 @@ for i in range(5):
         self.assertListEqual(alternating, [1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
 
     def test_async_iter_exc(self):
-        py = create_tmp_test("""
+        py = create_tmp_test(
+            """
 for i in range(5):
     print(i)
 exit(34)
-""")
+"""
+        )
 
         lines = []
+
         async def producer():
             async for line in python(py.name, _async=True):
                 lines.append(int(line.strip()))

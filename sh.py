@@ -887,9 +887,7 @@ class RunningCommand(object):
         # so the slight timeout allows for that.
         while True:
             try:
-                chunk = pq.get(
-                    block_pq_read, self.call_args["iter_poll_time"]
-                )
+                chunk = pq.get(block_pq_read, self.call_args["iter_poll_time"])
             except Empty:
                 if self.call_args["iter_noblock"] or self._force_noblock_iter:
                     return errno.EWOULDBLOCK
@@ -2308,7 +2306,11 @@ class OProc(object):
             # RunningCommand.wait() does), because we want the exception to be
             # re-raised in the future, if we DO call .wait()
             handle_exit_code = None
-            if not self.command._spawned_and_waited and ca["bg_exc"] and not ca["async"]:
+            if (
+                not self.command._spawned_and_waited
+                and ca["bg_exc"]
+                and not ca["async"]
+            ):
 
                 def fn(exit_code):
                     with process_assign_lock:
