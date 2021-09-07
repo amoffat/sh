@@ -659,6 +659,15 @@ class RunningCommand(object):
         # then later set it to True if we need it
         self._force_noblock = False
 
+        # this event is used when we want to `await` a RunningCommand. see how it gets
+        # used in self.__await__
+        try:
+            asyncio.get_event_loop()
+        except RuntimeError:
+            self.aio_output_complete = None
+        else:
+            self.aio_output_complete = asyncio.Event()
+
         # this is used to track if we've already raised StopIteration, and if we
         # have, raise it immediately again if the user tries to call next() on
         # us.  https://github.com/amoffat/sh/issues/273
@@ -882,6 +891,13 @@ class RunningCommand(object):
                     )
                 except UnicodeDecodeError:
                     return chunk
+
+    def __await__(self):
+        async def wait_for_completion():
+            await self.aio_output_complete.wait()
+            return str(self)
+
+        return wait_for_completion().__await__()
 
     def __aiter__(self):
         # maxsize is critical to making sure our queue_connector function below yields
@@ -1180,7 +1196,6 @@ class Command(object):
         "piped": None,
         "iter": None,
         "iter_noblock": None,
-        "async": False,
         # the amount of time to sleep between polling for the iter output queue
         "iter_poll_time": 0.1,
         "ok_code": 0,
@@ -2322,6 +2337,23 @@ class OProc(object):
             # prevents that hanging
             self._stop_output_event = threading.Event()
 
+            # we need to set up a callback to fire when our `output_thread` is about
+            # to exit. this callback will set an asyncio Event, so that coroutiens can
+            # be notified that our output is finished.
+            # if the `sh` command was launched from within a thread (so we're not in
+            # the main thread), then we won't have an event loop.
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+
+                def output_complete():
+                    pass
+
+            else:
+
+                def output_complete():
+                    loop.call_soon_threadsafe(self.command.aio_output_complete.set)
+
             self._output_thread_exc_queue = Queue(1)
             thread_name = "STDOUT/ERR thread for pid %d" % self.pid
             self._output_thread = _start_daemon_thread(
@@ -2335,6 +2367,7 @@ class OProc(object):
                 self.is_alive,
                 self._quit_threads,
                 self._stop_output_event,
+                output_complete,
             )
 
     def __repr__(self):
@@ -2571,7 +2604,14 @@ def background_thread(
 
 
 def output_thread(
-    log, stdout, stderr, timeout_event, is_alive, quit_thread, stop_output_event
+    log,
+    stdout,
+    stderr,
+    timeout_event,
+    is_alive,
+    quit_thread,
+    stop_output_event,
+    output_complete,
 ):
     """this function is run in a separate thread.  it reads from the
     process's stdout stream (a streamreader), and waits for it to claim that
@@ -2620,6 +2660,8 @@ def output_thread(
 
     if stderr:
         stderr.close()
+
+    output_complete()
 
 
 class DoneReadingForever(Exception):

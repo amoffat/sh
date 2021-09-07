@@ -4,6 +4,7 @@ from functools import wraps, partial
 from os.path import exists, join, realpath, dirname, split
 import errno
 import fcntl
+from asyncio.queues import Queue as AQueue
 import inspect
 import logging
 import os
@@ -1673,6 +1674,37 @@ for i in range(42):
         self.assertEqual(len(out), 42)
         self.assertEqual(sum(out), 861)
 
+    def test_async(self):
+        py = create_tmp_test(
+            """
+import os
+import time
+time.sleep(0.5)
+print("hello")
+"""
+        )
+
+        alternating = []
+        q = AQueue()
+
+        async def producer(q):
+            alternating.append(1)
+            msg = await python(py.name, _bg=True)
+            alternating.append(1)
+            await q.put(msg.strip())
+
+        async def consumer(q):
+            await asyncio.sleep(0.1)
+            alternating.append(2)
+            msg = await q.get()
+            self.assertEqual(msg, "hello")
+            alternating.append(2)
+
+        loop = asyncio.get_event_loop()
+        fut = asyncio.gather(producer(q), consumer(q))
+        loop.run_until_complete(fut)
+        self.assertListEqual(alternating, [1, 2, 1, 2])
+
     def test_async_iter(self):
         py = create_tmp_test(
             """
@@ -1683,8 +1715,6 @@ for i in range(5):
     print(i)
 """
         )
-        from asyncio.queues import Queue as AQueue
-
         q = AQueue()
 
         # this list will prove that our coroutines are yielding to eachother as each
