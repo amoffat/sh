@@ -657,7 +657,7 @@ class RunningCommand(object):
         # iterable in no-block mode. however, we will only know if we're using an async
         # for loop after this object is constructed. so we'll set it to False now, but
         # then later set it to True if we need it
-        self._force_noblock = False
+        self._force_noblock_iter = False
 
         # this event is used when we want to `await` a RunningCommand. see how it gets
         # used in self.__await__
@@ -680,6 +680,9 @@ class RunningCommand(object):
             get_prepend_stack().append(self)
 
         if call_args["piped"] or call_args["iter"] or call_args["iter_noblock"]:
+            should_wait = False
+
+        if call_args["async"]:
             should_wait = False
 
         # we're running in the background, return self and let us lazily
@@ -870,15 +873,25 @@ class RunningCommand(object):
         if self._stopped_iteration:
             raise StopIteration()
 
+        pq = self.process._pipe_queue
+
+        # the idea with this is, if we're using regular `_iter` (non-asyncio), then we
+        # want to have blocking be True when we read from the pipe queue, so our cpu
+        # doesn't spin too fast. however, if we *are* using asyncio (an async for loop),
+        # then we want non-blocking pipe queue reads, because we'll do an asyncio.sleep,
+        # in the coroutine that is doing the iteration, this way coroutines have better
+        # yielding (see queue_connector in __aiter__).
+        block_pq_read = not self._force_noblock_iter
+
         # we do this because if get blocks, we can't catch a KeyboardInterrupt
         # so the slight timeout allows for that.
         while True:
             try:
-                chunk = self.process._pipe_queue.get(
-                    True, self.call_args["iter_poll_time"]
+                chunk = pq.get(
+                    block_pq_read, self.call_args["iter_poll_time"]
                 )
             except Empty:
-                if self.call_args["iter_noblock"] or self._force_noblock:
+                if self.call_args["iter_noblock"] or self._force_noblock_iter:
                     return errno.EWOULDBLOCK
             else:
                 if chunk is None:
@@ -906,18 +919,23 @@ class RunningCommand(object):
         # any blocking, and therefore no yielding, which would prevent other coroutines
         # from running.
         self._aio_queue = AQueue(maxsize=1)
-        self._force_noblock = True
+        self._force_noblock_iter = True
 
         # the sole purpose of this coroutine is to connect our pipe_queue (which is
         # being populated by a thread) to an asyncio-friendly queue. then, in __anext__,
         # we can iterate over that asyncio queue.
         async def queue_connector():
-            for chunk in self:
-                if chunk == errno.EWOULDBLOCK:
-                    pass
-                else:
-                    await self._aio_queue.put(chunk)
-            await self._aio_queue.put(None)
+            try:
+                # this will spin as fast as possible if there's no data to read,
+                # thanks to self._force_noblock_iter. so we sleep below.
+                for chunk in self:
+                    if chunk == errno.EWOULDBLOCK:
+                        # let us have better coroutine yielding.
+                        await asyncio.sleep(0.01)
+                    else:
+                        await self._aio_queue.put(chunk)
+            finally:
+                await self._aio_queue.put(None)
 
         if sys.version_info < (3, 7, 0):
             asyncio.ensure_future(queue_connector())
@@ -1261,6 +1279,7 @@ class Command(object):
         # return an instance of RunningCommand always. if this isn't True, then
         # sometimes we may return just a plain unicode string
         "return_cmd": False,
+        "async": False,
     }
 
     # this is a collection of validators to make sure the special kwargs make
@@ -2289,7 +2308,7 @@ class OProc(object):
             # RunningCommand.wait() does), because we want the exception to be
             # re-raised in the future, if we DO call .wait()
             handle_exit_code = None
-            if not self.command._spawned_and_waited and ca["bg_exc"]:
+            if not self.command._spawned_and_waited and ca["bg_exc"] and not ca["async"]:
 
                 def fn(exit_code):
                     with process_assign_lock:

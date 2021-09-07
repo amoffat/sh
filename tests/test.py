@@ -1684,7 +1684,7 @@ print("hello")
 
         async def producer(q):
             alternating.append(1)
-            msg = await python(py.name, _bg=True)
+            msg = await python(py.name, _async=True)
             alternating.append(1)
             await q.put(msg.strip())
 
@@ -1700,12 +1700,18 @@ print("hello")
         loop.run_until_complete(fut)
         self.assertListEqual(alternating, [1, 2, 1, 2])
 
+    def test_async_exc(self):
+        py = create_tmp_test("""exit(34)""")
+
+        async def producer():
+            await python(py.name, _async=True)
+
+        loop = asyncio.get_event_loop()
+        self.assertRaises(sh.ErrorReturnCode_34, loop.run_until_complete, producer())
+
     def test_async_iter(self):
         py = create_tmp_test(
             """
-import os
-import time
-
 for i in range(5):
     print(i)
 """
@@ -1734,6 +1740,21 @@ for i in range(5):
         res = asyncio.gather(producer(q), consumer(q))
         loop.run_until_complete(res)
         self.assertListEqual(alternating, [1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
+
+    def test_async_iter_exc(self):
+        py = create_tmp_test("""
+for i in range(5):
+    print(i)
+exit(34)
+""")
+
+        lines = []
+        async def producer():
+            async for line in python(py.name, _async=True):
+                lines.append(int(line.strip()))
+
+        loop = asyncio.get_event_loop()
+        self.assertRaises(sh.ErrorReturnCode_34, loop.run_until_complete, producer())
 
     def test_handle_both_out_and_err(self):
         py = create_tmp_test(
