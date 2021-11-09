@@ -1627,13 +1627,16 @@ import os
 import time
 import signal
 
+i = 0
 def sig_handler(sig, frame):
-    exit(0)
+    global i
+    i = 42
 
 signal.signal(signal.SIGINT, sig_handler)
 
-for i in range(5):
+for _ in range(6):
     print(i)
+    i += 1
     sys.stdout.flush()
     time.sleep(0.5)
 """
@@ -1652,7 +1655,7 @@ for i in range(5):
         p.wait()
 
         self.assertEqual(p.process.exit_code, 0)
-        self.assertEqual(str(p), "0\n1\n2\n3\n")
+        self.assertEqual(str(p), "0\n1\n2\n3\n42\n43\n")
 
     def test_iter_generator(self):
         py = create_tmp_test(
