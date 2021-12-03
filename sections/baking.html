@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -346,10 +346,10 @@ like you might do with <a class="reference external" href="https://docs.python.o
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ls</span>
 
 <span class="n">ls</span> <span class="o">=</span> <span class="n">ls</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;-la&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span> <span class="c1"># &quot;/usr/bin/ls -la&quot;</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">)</span> <span class="c1"># &quot;/usr/bin/ls -la&quot;</span>
 
 <span class="c1"># resolves to &quot;ls -la /&quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>The idea here is that now every call to <code class="docutils literal notranslate"><span class="pre">ls</span></code> will have the “-la” arguments
@@ -365,7 +365,7 @@ already specified.  Baking can become very useful when you combine it with
 <span class="c1"># wouldn&#39;t it be nice to bake the common parameters into the ssh command?</span>
 <span class="n">myserver</span> <span class="o">=</span> <span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;myserver.com&quot;</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">1393</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="n">myserver</span><span class="p">)</span> <span class="c1"># &quot;/usr/bin/ssh myserver.com -p 1393&quot;</span>
+<span class="k">print</span><span class="p">(</span><span class="n">myserver</span><span class="p">)</span> <span class="c1"># &quot;/usr/bin/ssh myserver.com -p 1393&quot;</span>
 
 <span class="c1"># resolves to &quot;/usr/bin/ssh myserver.com -p 1393 whoami&quot;</span>
 <span class="n">iam2</span> <span class="o">=</span> <span class="n">myserver</span><span class="o">.</span><span class="n">whoami</span><span class="p">()</span>
@@ -376,7 +376,7 @@ already specified.  Baking can become very useful when you combine it with
 <p>Now that the “myserver” callable represents a baked ssh command, you
 can call anything on the server easily:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># executes &quot;/usr/bin/ssh myserver.com -p 1393 tail /var/log/dumb_daemon.log -n 100&quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">myserver</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;/var/log/dumb_daemon.log&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">myserver</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;/var/log/dumb_daemon.log&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>

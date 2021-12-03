@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -346,15 +346,15 @@
 one command as the input to another, and sh will send the output of the inner
 command to the input of the outer command:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># sort this directory by biggest file</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">sort</span><span class="p">(</span><span class="n">du</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">),</span> <span class="s2">&quot;-sb&quot;</span><span class="p">),</span> <span class="s2">&quot;-rn&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">sort</span><span class="p">(</span><span class="n">du</span><span class="p">(</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">),</span> <span class="s2">&quot;-sb&quot;</span><span class="p">),</span> <span class="s2">&quot;-rn&quot;</span><span class="p">))</span>
 
 <span class="c1"># print(the number of folders and files in /etc</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">wc</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/etc&quot;</span><span class="p">,</span> <span class="s2">&quot;-1&quot;</span><span class="p">),</span> <span class="s2">&quot;-l&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">wc</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/etc&quot;</span><span class="p">,</span> <span class="s2">&quot;-1&quot;</span><span class="p">),</span> <span class="s2">&quot;-l&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This basic piping does not flow data through asynchronously; the inner
+<p class="first admonition-title">Note</p>
+<p class="last">This basic piping does not flow data through asynchronously; the inner
 command blocks until it finishes, before sending its data to the outer
 command.</p>
 </div>
@@ -367,21 +367,21 @@ its data, but to send its data incrementally.  Read ahead for examples of this.<
 <span id="advanced-piping"></span><h2>Advanced<a class="headerlink" href="#advanced" title="Permalink to this headline">¶</a></h2>
 <p>By default, all piped commands execute sequentially.  What this means is that the
 inner command executes first, then sends its data to the outer command:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">wc</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/etc&quot;</span><span class="p">,</span> <span class="s2">&quot;-1&quot;</span><span class="p">),</span> <span class="s2">&quot;-l&quot;</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">wc</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/etc&quot;</span><span class="p">,</span> <span class="s2">&quot;-1&quot;</span><span class="p">),</span> <span class="s2">&quot;-l&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>In the above example, <code class="docutils literal notranslate"><span class="pre">ls</span></code> executes, gathers its output, then sends that output
 to <code class="docutils literal notranslate"><span class="pre">wc</span></code>.  This is fine for simple commands, but for commands where you need
 parallelism, this isn’t good enough.  Take the following example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;test.log&quot;</span><span class="p">),</span> <span class="s2">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="s2">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;test.log&quot;</span><span class="p">),</span> <span class="s2">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="s2">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>This won’t work</strong> because the <code class="docutils literal notranslate"><span class="pre">tail</span> <span class="pre">-f</span></code> command never finishes.  What you
 need is for <code class="docutils literal notranslate"><span class="pre">tail</span></code> to send its output to <code class="docutils literal notranslate"><span class="pre">tr</span></code> as it receives it.  This is where
 the <a class="reference internal" href="special_arguments.html#piped"><span class="std std-ref">_piped</span></a> special kwarg comes in handy:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;test.log&quot;</span><span class="p">,</span> <span class="n">_piped</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="s2">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="s2">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tr</span><span class="p">(</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;test.log&quot;</span><span class="p">,</span> <span class="n">_piped</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span> <span class="s2">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="s2">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>This works by telling <code class="docutils literal notranslate"><span class="pre">tail</span> <span class="pre">-f</span></code> that it is being used in a pipeline, and that

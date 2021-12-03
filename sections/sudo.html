@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -355,12 +355,12 @@ time via terminal input, or as a string in your script.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Or alternatively via <a class="reference internal" href="subcommands.html#subcommands"><span class="std std-ref">subcommands</span></a>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Output:</p>
@@ -375,8 +375,8 @@ insecure, like including your password in your python script, or by saying that
 a particular user can execute anything inside of a particular script (the
 NOPASSWD method).</p>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p><code class="docutils literal notranslate"><span class="pre">sh.contrib.sudo</span></code> does not do password caching like the sudo binary does.
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="docutils literal notranslate"><span class="pre">sh.contrib.sudo</span></code> does not do password caching like the sudo binary does.
 Thie means that each time a sudo command is run in your script, you will be
 asked to type in a password.</p>
 </div>
@@ -388,13 +388,13 @@ asked to type in a password.</p>
 
 <span class="n">password</span> <span class="o">=</span> <span class="n">get_your_password</span><span class="p">()</span>
 
-<span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
+<span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">(</span><span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>This method is less secure because it becomes tempting to hard-code your
+<p class="first admonition-title">Warning</p>
+<p class="last">This method is less secure because it becomes tempting to hard-code your
 password into the python script, and that’s a bad idea.  However, it is more
 flexible, because it allows you to obtain your password from another source,
 so long as the end result is a string.</p>
@@ -418,8 +418,8 @@ first requires you set up your user to have root execution privileges</p>
 only root <code class="docutils literal notranslate"><span class="pre">(root)</span></code> (no other users), and that no password <code class="docutils literal notranslate"><span class="pre">NOPASSWD</span></code> will be
 asked of <code class="docutils literal notranslate"><span class="pre">/path/to/your/program</span></code>.</p>
 <div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>This method can be insecure if an unprivileged user can edit your script,
+<p class="first admonition-title">Warning</p>
+<p class="last">This method can be insecure if an unprivileged user can edit your script,
 because the entire script will be exited as a privileged user.  A malicious
 user could put something bad in this script.</p>
 </div>
@@ -440,7 +440,7 @@ discussed generally for educational purposes; if you take the time to wire up
 <span class="c1"># -S says &quot;get the password from stdin&quot;</span>
 <span class="n">my_sudo</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">sudo</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;-S&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="n">my_password</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="n">my_sudo</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;root&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">my_sudo</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;root&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
@@ -453,7 +453,7 @@ asking you for a password if it requires one.  The downsides of using
 <a class="reference internal" href="special_arguments.html#fg"><span class="std std-ref">_fg=True</span></a>, however, are that you cannot capture its output – everything is
 just printed to your terminal as if you ran it from a shell.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">sudo</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">,</span> <span class="n">_fg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">sudo</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">,</span> <span class="n">_fg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>

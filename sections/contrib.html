@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -342,8 +342,8 @@
 Typically, the commands being wrapped are unintuitive, and the contrib version
 makes them intuitive.</p>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Contrib commands should be considered generally unstable. They will grow and change as the community figures out the
+<p class="first admonition-title">Note</p>
+<p class="last">Contrib commands should be considered generally unstable. They will grow and change as the community figures out the
 best interface for them.</p>
 </div>
 <div class="section" id="commands">
@@ -354,14 +354,14 @@ best interface for them.</p>
 in your script.</p>
 <dl class="py function">
 <dt id="id0">
-<code class="sig-name descname">sudo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">password</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<code class="descname">sudo</code><span class="sig-paren">(</span><em><span class="n">password</span><span class="o">=</span><span class="default_value">None</span></em>, <em><span class="o">*</span><span class="n">args</span></em>, <em><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call sudo with <code class="docutils literal notranslate"><span class="pre">password</span></code>, if specified, else ask the executing user for a
 password at runtime via <a class="reference external" href="https://docs.python.org/3.5/library/getpass.html#getpass.getpass" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">getpass.getpass()</span></code></a>.</p>
 </dd></dl>
 
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="sudo.html#contrib-sudo"><span class="std std-ref">sh.contrib.sudo</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="sudo.html#contrib-sudo"><span class="std std-ref">sh.contrib.sudo</span></a></p>
 </div>
 </div>
 <div class="section" id="git">
@@ -371,7 +371,7 @@ when run through sh.  To account for this, the contrib version sets
 <code class="docutils literal notranslate"><span class="pre">_tty_out=False</span></code> for all git commands.</p>
 <dl class="py function">
 <dt id="id1">
-<code class="sig-name descname">git</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<code class="descname">git</code><span class="sig-paren">(</span><em><span class="o">*</span><span class="n">args</span></em>, <em><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
 <dd><p>Call git with STDOUT connected to a pipe, instead of a TTY.</p>
 </dd></dl>
 
@@ -380,8 +380,8 @@ when run through sh.  To account for this, the contrib version sets
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="faq.html#faq-tty-out"><span class="std std-ref">Why is _tty_out=True the default?</span></a> and <a class="reference internal" href="faq.html#faq-color-output"><span class="std std-ref">Why does my command’s output have color?</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="faq.html#faq-tty-out"><span class="std std-ref">Why is _tty_out=True the default?</span></a> and <a class="reference internal" href="faq.html#faq-color-output"><span class="std std-ref">Why does my command’s output have color?</span></a></p>
 </div>
 </div>
 <div class="section" id="ssh">
@@ -393,34 +393,42 @@ when run through sh.  To account for this, the contrib version sets
 provides a clean interface to using SSH.</p>
 <dl class="py function">
 <dt id="id2">
-<code class="sig-name descname">ssh</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">interact</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">password</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">prompt_match</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">login_success</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#id2" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>interact</strong> – A callback to handle SSH session interaction <em>after</em> login is successful. Required.</p></li>
-<li><p><strong>password</strong> – A password string or a function that returns a password string. Optional. If not provided, <a class="reference external" href="https://docs.python.org/3.5/library/getpass.html#getpass.getpass" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">getpass.getpass()</span></code></a> is used.</p></li>
-<li><p><strong>prompt_match</strong> – The string to match in order to determine when to provide SSH with the password. Or a function
-that matches on the output. Optional.</p></li>
-<li><p><strong>login_success</strong> – A function to determine if SSH login is successful. Optional.</p></li>
+<code class="descname">ssh</code><span class="sig-paren">(</span><em><span class="n">interact</span><span class="o">=</span><span class="default_value">None</span></em>, <em><span class="n">password</span><span class="o">=</span><span class="default_value">None</span></em>, <em><span class="n">prompt_match</span><span class="o">=</span><span class="default_value">None</span></em>, <em><span class="n">login_success</span><span class="o">=</span><span class="default_value">None</span></em>, <em><span class="o">*</span><span class="n">args</span></em>, <em><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#id2" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>interact</strong> – A callback to handle SSH session interaction <em>after</em> login is successful. Required.</li>
+<li><strong>password</strong> – A password string or a function that returns a password string. Optional. If not provided, <a class="reference external" href="https://docs.python.org/3.5/library/getpass.html#getpass.getpass" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">getpass.getpass()</span></code></a> is used.</li>
+<li><strong>prompt_match</strong> – The string to match in order to determine when to provide SSH with the password. Or a function
+that matches on the output. Optional.</li>
+<li><strong>login_success</strong> – A function to determine if SSH login is successful. Optional.</li>
 </ul>
-</dd>
-</dl>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <p>The <code class="docutils literal notranslate"><span class="pre">interact</span></code> parameter takes a callback with a signature that is slightly different to the function callbacks for
 <a class="reference internal" href="redirection.html#red-func"><span class="std std-ref">redirection</span></a>:</p>
 <dl class="py function">
 <dt id="fn">
-<code class="sig-name descname">fn</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">content</span></em>, <em class="sig-param"><span class="n">stdin_queue</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fn" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>content</strong> – An instance of an ephemeral <a class="reference internal" href="#session-content"><span class="std std-ref">SessionContent</span></a> class whose job is to hold the
-characters that the SSH session has written to STDOUT.</p></li>
-<li><p><strong>stdin_queue</strong> – A <a class="reference external" href="https://docs.python.org/3.5/library/queue.html#queue.Queue" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">queue.Queue</span></code></a> object to communicate with STDIN programmatically.</p></li>
+<code class="descname">fn</code><span class="sig-paren">(</span><em><span class="n">content</span></em>, <em><span class="n">stdin_queue</span></em><span class="sig-paren">)</span><a class="headerlink" href="#fn" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>content</strong> – An instance of an ephemeral <a class="reference internal" href="#session-content"><span class="std std-ref">SessionContent</span></a> class whose job is to hold the
+characters that the SSH session has written to STDOUT.</li>
+<li><strong>stdin_queue</strong> – A <a class="reference external" href="https://docs.python.org/3.5/library/queue.html#queue.Queue" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">queue.Queue</span></code></a> object to communicate with STDIN programmatically.</li>
 </ul>
-</dd>
-</dl>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <p><code class="docutils literal notranslate"><span class="pre">password</span></code> can be simply a string that will be used to type the password. If it’s not provided, it will be read from STDIN
@@ -434,74 +442,92 @@ any password submission results in a successful login (obviously not always corr
 this.</p>
 <span class="target" id="session-content"></span><dl class="py class">
 <dt id="SessionContent">
-<em class="property">class </em><code class="sig-name descname">SessionContent</code><a class="headerlink" href="#SessionContent" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descname">SessionContent</code><a class="headerlink" href="#SessionContent" title="Permalink to this definition">¶</a></dt>
 <dd><p>This class contains a record lines and characters written to the SSH processes’s STDOUT. It should be all you need
 from the callbacks to determine how to interact with the SSH process.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="SessionContent.chars">
-<code class="sig-prename descclassname">SessionContent.</code><code class="sig-name descname">chars</code><a class="headerlink" href="#SessionContent.chars" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.5/library/collections.html#collections.deque" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.deque</span></code></a></p>
-</dd>
-</dl>
+<code class="descclassname">SessionContent.</code><code class="descname">chars</code><a class="headerlink" href="#SessionContent.chars" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3.5/library/collections.html#collections.deque" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.deque</span></code></a></td>
+</tr>
+</tbody>
+</table>
 <p>The previous 50,000 characters.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="SessionContent.lines">
-<code class="sig-prename descclassname">SessionContent.</code><code class="sig-name descname">lines</code><a class="headerlink" href="#SessionContent.lines" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.5/library/collections.html#collections.deque" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.deque</span></code></a></p>
-</dd>
-</dl>
+<code class="descclassname">SessionContent.</code><code class="descname">lines</code><a class="headerlink" href="#SessionContent.lines" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3.5/library/collections.html#collections.deque" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.deque</span></code></a></td>
+</tr>
+</tbody>
+</table>
 <p>The previous 5,000 lines.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="SessionContent.line_chars">
-<code class="sig-prename descclassname">SessionContent.</code><code class="sig-name descname">line_chars</code><a class="headerlink" href="#SessionContent.line_chars" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.5/library/stdtypes.html#list" title="(in Python v3.5)">list</a></p>
-</dd>
-</dl>
+<code class="descclassname">SessionContent.</code><code class="descname">line_chars</code><a class="headerlink" href="#SessionContent.line_chars" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/3.5/library/stdtypes.html#list" title="(in Python v3.5)">list</a></td>
+</tr>
+</tbody>
+</table>
 <p>The characters in the line currently being aggregated.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="SessionContent.cur_line">
-<code class="sig-prename descclassname">SessionContent.</code><code class="sig-name descname">cur_line</code><a class="headerlink" href="#SessionContent.cur_line" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>string</p>
-</dd>
-</dl>
+<code class="descclassname">SessionContent.</code><code class="descname">cur_line</code><a class="headerlink" href="#SessionContent.cur_line" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">string</td>
+</tr>
+</tbody>
+</table>
 <p>A string of the line currently being aggregated.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="SessionContent.last_line">
-<code class="sig-prename descclassname">SessionContent.</code><code class="sig-name descname">last_line</code><a class="headerlink" href="#SessionContent.last_line" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>string</p>
-</dd>
-</dl>
+<code class="descclassname">SessionContent.</code><code class="descname">last_line</code><a class="headerlink" href="#SessionContent.last_line" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">string</td>
+</tr>
+</tbody>
+</table>
 <p>The previous line.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="SessionContent.cur_char">
-<code class="sig-prename descclassname">SessionContent.</code><code class="sig-name descname">cur_char</code><a class="headerlink" href="#SessionContent.cur_char" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Type</dt>
-<dd class="field-odd"><p>string</p>
-</dd>
-</dl>
+<code class="descclassname">SessionContent.</code><code class="descname">cur_char</code><a class="headerlink" href="#SessionContent.cur_char" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">string</td>
+</tr>
+</tbody>
+</table>
 <p>The currently written character.</p>
 </dd></dl>
 
@@ -524,7 +550,7 @@ using the command returned from your decorated function:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh.contrib</span> <span class="kn">import</span> <span class="n">ls</span>
 
 <span class="c1"># executing: ls -l</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>For even more flexibility, you can design your contrib command to rewrite its

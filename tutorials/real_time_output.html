@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -343,7 +343,7 @@
 <p>sh has the ability to respond to subprocesses in an event-driven fashion.
 A typical example of where this would be useful is tailing a log file for
 a specific pattern, then responding to that value immediately:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="k">import</span> <span class="n">tail</span>
 
 <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;info.log&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="k">if</span> <span class="s2">&quot;ERROR&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
@@ -353,15 +353,15 @@ a specific pattern, then responding to that value immediately:</p>
 <p>The <a class="reference internal" href="../sections/special_arguments.html#iter"><span class="std std-ref">_iter</span></a> special kwarg takes a command that would normally block
 until completion, and turns its output into a real-time iterable.</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="../sections/asynchronous_execution.html#iterable"><span class="std std-ref">Incremental Iteration</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="../sections/asynchronous_execution.html#iterable"><span class="std std-ref">Incremental Iteration</span></a></p>
 </div>
 <p>Of course, you can do more than just tail log files.  Any program that
 produces output can be iterated over.  Say you wanted to send an email to a
 coworker if their C code emits a warning:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">gcc</span><span class="p">,</span> <span class="n">git</span>
 
-<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">gcc</span><span class="p">(</span><span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="s2">&quot;awesome_binary&quot;</span><span class="p">,</span> <span class="s2">&quot;awesome_source.c&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">gcc</span><span class="p">(</span><span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="s2">&quot;awesome_binary&quot;</span><span class="p">,</span> <span class="s2">&quot;awesome_source.c&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="k">if</span> <span class="s2">&quot;warning&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
         <span class="c1"># parse out the relevant info</span>
         <span class="n">filename</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">char</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
@@ -383,7 +383,7 @@ else.  To be truly event-driven, sh provides callbacks:</p>
     <span class="k">if</span> <span class="s2">&quot;ERROR&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
         <span class="n">send_an_email_to_support</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 
-<span class="n">process</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;info.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_log_line</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">process</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;info.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_log_line</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="c1"># ... do other stuff here ...</span>
 
@@ -394,12 +394,12 @@ else.  To be truly event-driven, sh provides callbacks:</p>
 This callback will receive each line of output from <code class="docutils literal notranslate"><span class="pre">tail</span> <span class="pre">-f</span></code> and allow you to
 do the same processing that we did earlier.</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="../sections/asynchronous_execution.html#callbacks"><span class="std std-ref">Output Callbacks</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="../sections/asynchronous_execution.html#callbacks"><span class="std std-ref">Output Callbacks</span></a></p>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="../sections/redirection.html#redirection"><span class="std std-ref">Redirection</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="../sections/redirection.html#redirection"><span class="std std-ref">Redirection</span></a></p>
 </div>
 </div>
 

@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -346,18 +346,18 @@ a sub-command).  sh handles subcommands through attribute access:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">git</span><span class="p">,</span> <span class="n">sudo</span>
 
 <span class="c1"># resolves to &quot;git branch -v&quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">branch</span><span class="p">(</span><span class="s2">&quot;-v&quot;</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">git</span><span class="p">(</span><span class="s2">&quot;branch&quot;</span><span class="p">,</span> <span class="s2">&quot;-v&quot;</span><span class="p">))</span> <span class="c1"># the same command</span>
+<span class="k">print</span><span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">branch</span><span class="p">(</span><span class="s2">&quot;-v&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">git</span><span class="p">(</span><span class="s2">&quot;branch&quot;</span><span class="p">,</span> <span class="s2">&quot;-v&quot;</span><span class="p">))</span> <span class="c1"># the same command</span>
 
 <span class="c1"># resolves to &quot;sudo /bin/ls /root&quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">sudo</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">sudo</span><span class="p">(</span><span class="s2">&quot;/bin/ls&quot;</span><span class="p">,</span> <span class="s2">&quot;/root&quot;</span><span class="p">))</span> <span class="c1"># the same command</span>
+<span class="k">print</span><span class="p">(</span><span class="n">sudo</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">sudo</span><span class="p">(</span><span class="s2">&quot;/bin/ls&quot;</span><span class="p">,</span> <span class="s2">&quot;/root&quot;</span><span class="p">))</span> <span class="c1"># the same command</span>
 </pre></div>
 </div>
 <p>Sub-commands are mainly syntax sugar that makes calling some programs look conceptually nicer.</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p>If you’re using <code class="docutils literal notranslate"><span class="pre">sudo</span></code> as a subcommand, please be sure to see <a class="reference internal" href="sudo.html#sudo"><span class="std std-ref">Using Sudo</span></a>.</p>
+<p class="first admonition-title">See also</p>
+<p class="last">If you’re using <code class="docutils literal notranslate"><span class="pre">sudo</span></code> as a subcommand, please be sure to see <a class="reference internal" href="sudo.html#sudo"><span class="std std-ref">Using Sudo</span></a>.</p>
 </div>
 </div>
 

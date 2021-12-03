@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -376,8 +376,8 @@ output.  The typical solution is to use <a class="reference internal" href="spec
 will force a pipe to be connected to STDOUT, and probably change the behavior of
 the program.</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p>Git is one of the programs that makes extensive use of terminal colors (as
+<p class="first admonition-title">See also</p>
+<p class="last">Git is one of the programs that makes extensive use of terminal colors (as
 well as pagers) in its output, so we added <a class="reference internal" href="contrib.html#contrib-git"><span class="std std-ref">a contrib version</span></a> for convenience.</p>
 </div>
 </div>
@@ -385,8 +385,8 @@ well as pagers) in its output, so we added <a class="reference internal" href="c
 <span id="faq-tty-out"></span><h2>Why is _tty_out=True the default?<a class="headerlink" href="#why-is-tty-out-true-the-default" title="Permalink to this headline">¶</a></h2>
 <p>This was a design decision made for two reasons:</p>
 <ol class="arabic simple">
-<li><p>To make programs behave in the same way as seen on the commandline.</p></li>
-<li><p>To provide better buffering control than pipes allow.</p></li>
+<li>To make programs behave in the same way as seen on the commandline.</li>
+<li>To provide better buffering control than pipes allow.</li>
 </ol>
 <p>For #1, we want sh to produce output that is identical to what the user sees
 from the commandline, because that’s typically the only output they ever see
@@ -394,23 +394,27 @@ from their command.  This makes the output easy to understand.</p>
 <p>For #2, using a TTY for STDOUT allows us to precisely control the buffering of a
 command’s output to sh’s internal code.</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="architecture.html#arch-buffers"><span class="std std-ref">Buffers</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="architecture.html#arch-buffers"><span class="std std-ref">Buffers</span></a></p>
 </div>
 <p>Of course, there are some gotchas with TTY STDOUT.  One of them is commands that
 use a pager, for example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">git</span><span class="o">.</span><span class="n">log</span><span class="p">())</span>
+<span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">git</span><span class="o">.</span><span class="n">log</span><span class="p">())</span>
 </pre></div>
 </div>
-<p>This will raise a <code class="docutils literal notranslate"><span class="pre">SignalException_SIGPIPE</span></code>, and it’s unclear exactly why.
-The reason is because <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">log</span></code> detects a TTY STDOUT and forks the system’s
-pager (typically <code class="docutils literal notranslate"><span class="pre">less</span></code>) to handle the output.  The pager checks for a
-controlling terminal, and, finding none, exits with exit code 1.  The exit of
-the pager means no more readers on <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">log</span></code>’s output, and thus a <code class="docutils literal notranslate"><span class="pre">SIGPIPE</span></code>
-is received.</p>
-<p>The solution to the <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">log</span></code> problem above is simply to use
-<code class="docutils literal notranslate"><span class="pre">_tty_out=False</span></code>, but this is not totally obvious.</p>
+<p>This will sometimes raise a <code class="docutils literal notranslate"><span class="pre">SignalException_SIGPIPE</span></code>. The reason is because
+<code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">log</span></code> detects a TTY STDOUT and forks the system’s pager (typically
+<code class="docutils literal notranslate"><span class="pre">less</span></code>) to handle the output. The pager checks for a controlling terminal,
+and, finding none, exits with exit code 1. The exit of the pager means no more
+readers on <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">log</span></code>’s output, and thus a <code class="docutils literal notranslate"><span class="pre">SIGPIPE</span></code> is received.</p>
+<p>One solution to the <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">log</span></code> problem above is simply to use
+<code class="docutils literal notranslate"><span class="pre">_tty_out=False</span></code>. Another option, specifically for git, is to use the
+<code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">--no-pager</span></code> option:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
+<span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">git</span><span class="p">(</span><span class="s1">&#39;--no-pager&#39;</span><span class="p">,</span> <span class="s1">&#39;log&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="why-doesn-t-work-as-a-command-argument">
 <h2>Why doesn’t “*” work as a command argument?<a class="headerlink" href="#why-doesn-t-work-as-a-command-argument" title="Permalink to this headline">¶</a></h2>
@@ -445,8 +449,8 @@ directly, then execute that:</p>
 </div>
 <p>The above will run <code class="docutils literal notranslate"><span class="pre">google-chrome</span> <span class="pre">http://google.com</span></code></p>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If a program named <code class="docutils literal notranslate"><span class="pre">google_chrome</span></code> exists on your system, that will be
+<p class="first admonition-title">Note</p>
+<p class="last">If a program named <code class="docutils literal notranslate"><span class="pre">google_chrome</span></code> exists on your system, that will be
 called instead.  In that case, in order to execute the program with a dash
 in the name, you’ll have to use the method described <a class="reference internal" href="#faq-special"><span class="std std-ref">here.</span></a></p>
 </div>
@@ -504,7 +508,7 @@ command starts running, and both are running simultaneously.  Data can then flow
 from the inner command to the outer command asynchronously:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
-<span class="n">sh</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="s2">&quot;test</span><span class="se">\n</span><span class="s2">1</span><span class="se">\n</span><span class="s2">2</span><span class="se">\n</span><span class="s2">3</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_piped</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="s2">&quot;test</span><span class="se">\n</span><span class="s2">1</span><span class="se">\n</span><span class="s2">2</span><span class="se">\n</span><span class="s2">3</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">_piped</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Again, this example is contrived – a better example would be a long-running
@@ -515,8 +519,8 @@ program incrementally.</p>
 <h2>How do I run a command and connect it to sys.stdout and sys.stdin?<a class="headerlink" href="#how-do-i-run-a-command-and-connect-it-to-sys-stdout-and-sys-stdin" title="Permalink to this headline">¶</a></h2>
 <p>There are two ways to do this</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="special_arguments.html#fg"><span class="std std-ref">_fg</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="special_arguments.html#fg"><span class="std std-ref">_fg</span></a></p>
 </div>
 <p>You can use <a class="reference external" href="https://docs.python.org/3.5/library/sys.html#sys.stdin" title="(in Python v3.5)"><code class="xref py py-data docutils literal notranslate"><span class="pre">sys.stdin</span></code></a>, <a class="reference external" href="https://docs.python.org/3.5/library/sys.html#sys.stdout" title="(in Python v3.5)"><code class="xref py py-data docutils literal notranslate"><span class="pre">sys.stdout</span></code></a>, and <a class="reference external" href="https://docs.python.org/3.5/library/sys.html#sys.stderr" title="(in Python v3.5)"><code class="xref py py-data docutils literal notranslate"><span class="pre">sys.stderr</span></code></a> as
 arguments to <a class="reference internal" href="special_arguments.html#in"><span class="std std-ref">_in</span></a>, <a class="reference internal" href="special_arguments.html#out"><span class="std std-ref">_out</span></a>, <a class="reference internal" href="special_arguments.html#err"><span class="std std-ref">_err</span></a>, respectively, and it <em>should</em>
@@ -533,7 +537,7 @@ launched the python process), and probably not set in raw mode
 by newlines.</p>
 <p>The real solution is to use <a class="reference internal" href="special_arguments.html#fg"><span class="std std-ref">_fg=True</span></a>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">top</span><span class="p">(</span><span class="n">_fg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">top</span><span class="p">(</span><span class="n">_fg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -616,7 +620,7 @@ Starting with Pylint 1.6 these messages can be suppressed using <a class="refere
 <span class="k">def</span> <span class="nf">get_something</span><span class="p">():</span>
     <span class="k">return</span> <span class="n">sh</span><span class="o">.</span><span class="n">pwd</span><span class="p">()</span>
 
-<span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;sh.pwd&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nd">@patch</span><span class="p">(</span><span class="s2">&quot;sh.pwd&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">test_something</span><span class="p">(</span><span class="n">pwd</span><span class="p">):</span>
     <span class="n">pwd</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span>
     <span class="k">assert</span> <span class="n">get_something</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;/&quot;</span>
@@ -648,16 +652,16 @@ automatically generated object on the sh module (it actually exists).</p>
 module.  This has pros and cons:</p>
 <p>Cons:</p>
 <ul class="simple">
-<li><p>Auditing the code is more challenging</p></li>
-<li><p>Without file-enforced structure, adding more features and abstractions makes
-the code harder to follow</p></li>
-<li><p>Cognitively, it feels cluttered</p></li>
+<li>Auditing the code is more challenging</li>
+<li>Without file-enforced structure, adding more features and abstractions makes
+the code harder to follow</li>
+<li>Cognitively, it feels cluttered</li>
 </ul>
 <p>Pros:</p>
 <ul class="simple">
-<li><p>Can be used easily on systems without Python package managers</p></li>
-<li><p>Can be embedded/bundled together with other software more easily</p></li>
-<li><p>Cognitively, it feels more self-contained</p></li>
+<li>Can be used easily on systems without Python package managers</li>
+<li>Can be embedded/bundled together with other software more easily</li>
+<li>Cognitively, it feels more self-contained</li>
 </ul>
 <p>In my mind, because the primary target audience of sh users is generally more
 scrappy devops, systems people, or people just trying to stitch together some

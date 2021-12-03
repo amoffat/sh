@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -342,8 +342,8 @@
 <span id="tutorial2"></span><h1>Entering an SSH password<a class="headerlink" href="#entering-an-ssh-password" title="Permalink to this headline">¶</a></h1>
 <p>Here we will attempt to SSH into a server and enter a password programmatically.</p>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>It is recommended that you just <code class="docutils literal notranslate"><span class="pre">ssh-copy-id</span></code> to copy your public key to
+<p class="first admonition-title">Note</p>
+<p class="last">It is recommended that you just <code class="docutils literal notranslate"><span class="pre">ssh-copy-id</span></code> to copy your public key to
 the server so you don’t need to enter your password, but for the purposes of
 this demonstration, we try to enter a password.</p>
 </div>
@@ -351,15 +351,15 @@ this demonstration, we try to enter a password.</p>
 callback signature we’ll use will take a <a class="reference external" href="https://docs.python.org/3.5/library/queue.html#queue.Queue" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">queue.Queue</span></code></a> object for the
 second argument, and we’ll use that to send STDIN back to the process.</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="../sections/redirection.html#red-func"><span class="std std-ref">Function Callback</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="../sections/redirection.html#red-func"><span class="std std-ref">Function Callback</span></a></p>
 </div>
 <p>Here’s our first attempt:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ssh</span>
 
 <span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
     <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password:&quot;</span><span class="p">):</span>
         <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
 
@@ -382,7 +382,7 @@ it to 0 for unbuffered output:</p>
 
 <span class="k">def</span> <span class="nf">ssh_interact</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">):</span>
     <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password:&quot;</span><span class="p">):</span>
         <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple&quot;</span><span class="p">)</span>
 
@@ -468,7 +468,7 @@ This tells sh to make STDOUT and STDIN come from a single pseudo-terminal, which
     <span class="k">if</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;password: &quot;</span><span class="p">):</span>
         <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;correcthorsebatterystaple</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
-<span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_tty_in</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">_unify_ttys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;10.10.10.100&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">ssh_interact</span><span class="p">,</span> <span class="n">_out_bufsize</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_tty_in</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">_unify_ttys</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>And now our remote login script works!</p>
@@ -527,7 +527,7 @@ without having to use that server’s shell directly:</p>
 <p>Translating this to sh, it becomes:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">,</span> <span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">,</span> <span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>We can make this even nicer by taking advantage of sh’s <a class="reference internal" href="../sections/baking.html#baking"><span class="std std-ref">Baking</span></a> to bind
@@ -535,8 +535,8 @@ our server username/ip to a command object:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">my_server</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;whoami&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;ifconfig&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="p">(</span><span class="s2">&quot;whoami&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Now we have a reusable command object that we can use to call remote commands.
@@ -546,8 +546,8 @@ arguments:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
 
 <span class="n">my_server</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">ssh</span><span class="o">.</span><span class="n">bake</span><span class="p">(</span><span class="s2">&quot;amoffat@10.10.10.100&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">ifconfig</span><span class="p">())</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">whoami</span><span class="p">())</span>
+<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">ifconfig</span><span class="p">())</span>
+<span class="k">print</span><span class="p">(</span><span class="n">my_server</span><span class="o">.</span><span class="n">whoami</span><span class="p">())</span>
 </pre></div>
 </div>
 </div>

@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -359,8 +359,8 @@ name.  You may also pass a file object (or file-like object), an int
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="redirection.html#redirection"><span class="std std-ref">Redirection</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="redirection.html#redirection"><span class="std std-ref">Redirection</span></a></p>
 </div>
 </div>
 <div class="section" id="err">
@@ -426,8 +426,8 @@ is <a class="reference external" href="https://docs.python.org/3.5/library/os.ht
 script.  This is only really useful when you want to launch a lean, interactive process that sh is having trouble
 running, for example, ssh.</p>
 <div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p><code class="docutils literal notranslate"><span class="pre">_fg=True</span></code> side-steps a lot of sh’s functionality.  You will not be returned a process object and most (likely
+<p class="first admonition-title">Warning</p>
+<p class="last"><code class="docutils literal notranslate"><span class="pre">_fg=True</span></code> side-steps a lot of sh’s functionality.  You will not be returned a process object and most (likely
 all) other special kwargs will not work.</p>
 </div>
 <p>If you are looking for similar functionality, but still retaining sh’s features, use the following:</p>
@@ -443,8 +443,8 @@ all) other special kwargs will not work.</p>
 <p>Runs a command in the background.  The command will return immediately, and you
 will have to run <a class="reference internal" href="command_class.html#RunningCommand.wait" title="RunningCommand.wait"><code class="xref py py-meth docutils literal notranslate"><span class="pre">RunningCommand.wait()</span></code></a> on it to ensure it terminates.</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="asynchronous_execution.html#background"><span class="std std-ref">Background Processes</span></a>.</p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="asynchronous_execution.html#background"><span class="std std-ref">Background Processes</span></a>.</p>
 </div>
 </div>
 <div class="section" id="bg-exc">
@@ -464,14 +464,14 @@ swallow exceptions that happen in the background command.</p>
 accessible to the process.  If not specified, the calling process’s environment
 variables are used.</p>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This dictionary is the authoritative environment for the process.  If you
+<p class="first admonition-title">Note</p>
+<p class="last">This dictionary is the authoritative environment for the process.  If you
 wish to change a single variable in your current environement, you must pass
 a copy of your current environment with the overriden variable to sh.</p>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="envs.html#environments"><span class="std std-ref">Environments</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="envs.html#environments"><span class="std std-ref">Environments</span></a></p>
 </div>
 </div>
 <div class="section" id="timeout">
@@ -502,8 +502,8 @@ programs use exit codes other than 0 to indicate success.</p>
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="exit_codes.html#exit-codes"><span class="std std-ref">Exit Codes &amp; Exceptions</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="exit_codes.html#exit-codes"><span class="std std-ref">Exit Codes &amp; Exceptions</span></a></p>
 </div>
 </div>
 <div class="section" id="new-session">
@@ -512,15 +512,15 @@ programs use exit codes other than 0 to indicate success.</p>
 <p>Determines if our forked process will be executed in its own session via
 <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.setsid" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">os.setsid()</span></code></a>.</p>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If <code class="docutils literal notranslate"><span class="pre">_new_session</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>, the forked process will be put into its
+<p class="first admonition-title">Note</p>
+<p class="last">If <code class="docutils literal notranslate"><span class="pre">_new_session</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code>, the forked process will be put into its
 own group via <code class="docutils literal notranslate"><span class="pre">os.setpgrp()</span></code>.  This way, the forked process, and all of
 it’s children, are always alone in their own group that may be signalled
 directly, regardless of the value of <code class="docutils literal notranslate"><span class="pre">_new_session</span></code>.</p>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="architecture.html#architecture"><span class="std std-ref">Architecture Overview</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="architecture.html#architecture"><span class="std std-ref">Architecture Overview</span></a></p>
 </div>
 </div>
 <div class="section" id="uid">
@@ -566,8 +566,8 @@ automatically enabled when <a class="reference internal" href="#pass-fds"><span 
 <p>Specifies an argument for the process to use as its standard input.  This may be
 a string, a <a class="reference external" href="https://docs.python.org/3.5/library/queue.html#queue.Queue" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">queue.Queue</span></code></a>, a file-like object, or any iterable.</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="stdin.html#stdin"><span class="std std-ref">Input via STDIN</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="stdin.html#stdin"><span class="std std-ref">Input via STDIN</span></a></p>
 </div>
 </div>
 <div class="section" id="piped">
@@ -577,8 +577,8 @@ a string, a <a class="reference external" href="https://docs.python.org/3.5/libr
 used as the input to another command, so it should return its output
 incrementally as it receives it, instead of aggregating it all at once.</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="piping.html#advanced-piping"><span class="std std-ref">Advanced Piping</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="piping.html#advanced-piping"><span class="std std-ref">Advanced Piping</span></a></p>
 </div>
 </div>
 <div class="section" id="iter">
@@ -588,13 +588,13 @@ incrementally as it receives it, instead of aggregating it all at once.</p>
 this mode, you can use a <code class="docutils literal notranslate"><span class="pre">for</span></code> or <code class="docutils literal notranslate"><span class="pre">while</span></code> loop to iterate over a command’s
 output in real-time.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
-<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sh</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="s2">&quot;/tmp/file&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sh</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="s2">&quot;/tmp/file&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="asynchronous_execution.html#iterable"><span class="std std-ref">Incremental Iteration</span></a>.</p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="asynchronous_execution.html#iterable"><span class="std std-ref">Incremental Iteration</span></a>.</p>
 </div>
 </div>
 <div class="section" id="iter-noblock">
@@ -607,17 +607,17 @@ output to iterate over.  Instead, the output from the command will be
 <span class="kn">import</span> <span class="nn">errno</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
-<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sh</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;stuff.log&quot;</span><span class="p">,</span> <span class="n">_iter_noblock</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sh</span><span class="o">.</span><span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;stuff.log&quot;</span><span class="p">,</span> <span class="n">_iter_noblock</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">EWOULDBLOCK</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;doing something else...&quot;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;doing something else...&quot;</span><span class="p">)</span>
         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;processing line!&quot;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;processing line!&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="asynchronous_execution.html#iterable"><span class="std std-ref">Incremental Iteration</span></a>.</p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="asynchronous_execution.html#iterable"><span class="std std-ref">Incremental Iteration</span></a>.</p>
 </div>
 </div>
 <div class="section" id="with">
@@ -627,13 +627,13 @@ output to iterate over.  Instead, the output from the command will be
 only necessary if you’re using a command in a <code class="docutils literal notranslate"><span class="pre">with</span></code> context <strong>and</strong> passing
 parameters to it.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
-<span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">(</span><span class="n">password</span><span class="o">=</span><span class="s2">&quot;abc123&quot;</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
+<span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">(</span><span class="n">password</span><span class="o">=</span><span class="s2">&quot;abc123&quot;</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="with.html#with-contexts"><span class="std std-ref">‘With’ Contexts</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="with.html#with-contexts"><span class="std std-ref">‘With’ Contexts</span></a></p>
 </div>
 </div>
 <div class="section" id="done">
@@ -660,7 +660,7 @@ time:</p>
 
 <span class="k">def</span> <span class="nf">do_thing</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
     <span class="n">pool</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">sh</span><span class="o">.</span><span class="n">your_parallel_command</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">_done</span><span class="o">=</span><span class="n">done</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sh</span><span class="o">.</span><span class="n">your_parallel_command</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">_done</span><span class="o">=</span><span class="n">done</span><span class="p">)</span>
 
 <span class="n">procs</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
@@ -688,8 +688,8 @@ the commandline.  This is necessary for commands that require STDIN to be a TTY.
 for STDOUT, otherwise use a <a class="reference external" href="https://docs.python.org/3.5/library/os.html#os.pipe" title="(in Python v3.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">os.pipe()</span></code></a>.
 This is necessary for commands that require STDOUT to be a TTY.</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="faq.html#faq-tty-out"><span class="std std-ref">Why is _tty_out=True the default?</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="faq.html#faq-tty-out"><span class="std std-ref">Why is _tty_out=True the default?</span></a></p>
 </div>
 </div>
 <div class="section" id="unify-ttys">
@@ -701,8 +701,8 @@ This is necessary for commands that require STDOUT to be a TTY.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, sh will combine the STDOUT and STDIN TTY into a single pseudo-terminal. This is sometimes required by picky
 programs which expect to be dealing with a single pseudo-terminal, like SSH.</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="../tutorials/interacting_with_processes.html#tutorial2"><span class="std std-ref">Entering an SSH password</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="../tutorials/interacting_with_processes.html#tutorial2"><span class="std std-ref">Entering an SSH password</span></a></p>
 </div>
 </div>
 <div class="section" id="tty-size">
@@ -796,7 +796,7 @@ achieve this would be to set <code class="docutils literal notranslate"><span cl
 <p>If your program expects the long argument name to be separate from its value,
 pass <code class="docutils literal notranslate"><span class="pre">None</span></code> into <code class="docutils literal notranslate"><span class="pre">_long_sep</span></code> instead:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">sh</span>
-<span class="n">sh</span><span class="o">.</span><span class="n">your_program</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">_long_sep</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">sh</span><span class="o">.</span><span class="n">your_program</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">_long_sep</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Would send the following list of arguments to your program:</p>
@@ -834,8 +834,8 @@ constructing <a class="reference internal" href="contrib.html#contrib"><span cla
 </pre></div>
 </div>
 <div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>The interface to the <code class="docutils literal notranslate"><span class="pre">_arg_preprocess</span></code> function may change without
+<p class="first admonition-title">Warning</p>
+<p class="last">The interface to the <code class="docutils literal notranslate"><span class="pre">_arg_preprocess</span></code> function may change without
 warning.  It is generally only for internal sh use, so don’t use it unless
 you absolutely have to.</p>
 </div>
@@ -869,7 +869,7 @@ INFO:sh.command:&lt;Command &#39;/bin/ls -l&#39;, pid 28952&gt;: process complet
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
 
-<span class="k">def</span> <span class="nf">custom_log</span><span class="p">(</span><span class="n">ran</span><span class="p">,</span> <span class="n">call_args</span><span class="p">,</span> <span class="n">pid</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">custom_log</span><span class="p">(</span><span class="n">ran</span><span class="p">,</span> <span class="n">call_args</span><span class="p">,</span> <span class="n">pid</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">ran</span>
 
 <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;-l&quot;</span><span class="p">,</span> <span class="n">_log_msg</span><span class="o">=</span><span class="n">custom_log</span><span class="p">)</span>

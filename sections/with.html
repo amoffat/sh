@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -343,18 +343,18 @@
 <p>Commands can be run within a Python <code class="docutils literal notranslate"><span class="pre">with</span></code> context.  Popular commands using
 this might be <code class="docutils literal notranslate"><span class="pre">sudo</span></code> or <code class="docutils literal notranslate"><span class="pre">fakeroot</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="sudo.html#contrib-sudo"><span class="std std-ref">sh.contrib.sudo</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="sudo.html#contrib-sudo"><span class="std std-ref">sh.contrib.sudo</span></a></p>
 </div>
 <p>If you need to run a command in a with context and pass in arguments, for
 example, specifying a -p prompt with sudo, you need to use the <a class="reference internal" href="special_arguments.html#with"><span class="std std-ref">_with=True</span></a> This let’s the command know that it’s being run from a with context so
 it can behave correctly:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">sh</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">sudo</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">_with</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/root&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>

@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -350,8 +350,8 @@ that you can loop over:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
 
 <span class="c1"># runs forever</span>
-<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_iter</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>By default, <a class="reference internal" href="special_arguments.html#iter"><span class="std std-ref">_iter</span></a> iterates over STDOUT, but you can change set this
@@ -360,8 +360,8 @@ specifically by passing either <code class="docutils literal notranslate"><span 
 will only run when your process produces a newline.  You can change this by
 changing the buffer size of the command’s output with <a class="reference internal" href="special_arguments.html#out-bufsize"><span class="std std-ref">_out_bufsize</span></a>.</p>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If you need a <em>fully</em> non-blocking iterator, use <a class="reference internal" href="special_arguments.html#iter-noblock"><span class="std std-ref">_iter_noblock</span></a>.  If
+<p class="first admonition-title">Note</p>
+<p class="last">If you need a <em>fully</em> non-blocking iterator, use <a class="reference internal" href="special_arguments.html#iter-noblock"><span class="std std-ref">_iter_noblock</span></a>.  If
 the current iteration would block, <code class="xref py py-attr docutils literal notranslate"><span class="pre">errno.EWOULDBLOCK</span></code> will be
 returned, otherwise you’ll receive a chunk of output, as normal.</p>
 </div>
@@ -372,13 +372,13 @@ returned, otherwise you’ll receive a chunk of output, as normal.</p>
 long-running command, you can put it in the background with the <a class="reference internal" href="special_arguments.html#bg"><span class="std std-ref">_bg=True</span></a> special kwarg:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># blocks</span>
 <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...3 seconds later&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;...3 seconds later&quot;</span><span class="p">)</span>
 
 <span class="c1"># doesn&#39;t block</span>
-<span class="n">p</span> <span class="o">=</span> <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;prints immediately!&quot;</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;prints immediately!&quot;</span><span class="p">)</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...and 3 seconds later&quot;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;...and 3 seconds later&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>You’ll notice that you need to call <a class="reference internal" href="command_class.html#RunningCommand.wait" title="RunningCommand.wait"><code class="xref py py-meth docutils literal notranslate"><span class="pre">RunningCommand.wait()</span></code></a> in order to exit
@@ -392,8 +392,8 @@ time ignoring <code class="docutils literal notranslate"><span class="pre">SIGHU
 from which you launched python, and exiting that shell would normally send a
 <code class="docutils literal notranslate"><span class="pre">SIGHUP</span></code> to all child processes.</p>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p>For more information on the exact launch process, see <a class="reference internal" href="architecture.html#architecture"><span class="std std-ref">Architecture Overview</span></a>.</p>
+<p class="first admonition-title">See also</p>
+<p class="last">For more information on the exact launch process, see <a class="reference internal" href="architecture.html#architecture"><span class="std std-ref">Architecture Overview</span></a>.</p>
 </div>
 <div class="section" id="output-callbacks">
 <span id="callbacks"></span><h3>Output Callbacks<a class="headerlink" href="#output-callbacks" title="Permalink to this headline">¶</a></h3>
@@ -404,9 +404,9 @@ outputs:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">tail</span>
 
     <span class="k">def</span> <span class="nf">process_output</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
 
-    <span class="n">p</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_output</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_output</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -414,14 +414,14 @@ outputs:</p>
 <a class="reference internal" href="special_arguments.html#out-bufsize"><span class="std std-ref">_out_bufsize</span></a>.  To “quit” your callback, simply return <code class="docutils literal notranslate"><span class="pre">True</span></code>.  This
 tells the command not to call your callback anymore.</p>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Returning <code class="docutils literal notranslate"><span class="pre">True</span></code> does not kill the process, it only keeps the callback
+<p class="first admonition-title">Note</p>
+<p class="last">Returning <code class="docutils literal notranslate"><span class="pre">True</span></code> does not kill the process, it only keeps the callback
 from being called again.  See <a class="reference internal" href="#interactive-callbacks"><span class="std std-ref">Interactive callbacks</span></a> for how to kill a
 process from a callback.</p>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="redirection.html#red-func"><span class="std std-ref">Function Callback</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="redirection.html#red-func"><span class="std std-ref">Function Callback</span></a></p>
 </div>
 </div>
 <div class="section" id="interactive-callbacks">
@@ -436,37 +436,37 @@ that can be used from callbacks:</p>
 
         <span class="k">elif</span> <span class="n">line</span> <span class="o">==</span> <span class="s2">&quot;Huh? I... I don&#39;t know that....AAAAGHHHHHH&quot;</span><span class="p">:</span>
             <span class="n">cross_bridge</span><span class="p">()</span>
-            <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="bp">True</span>
 
         <span class="k">else</span><span class="p">:</span>
             <span class="n">stdin</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s2">&quot;I don&#39;t know....AAGGHHHHH&quot;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="bp">True</span>
 
-    <span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">bridgekeeper</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="n">interact</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">bridgekeeper</span><span class="p">(</span><span class="n">_out</span><span class="o">=</span><span class="n">interact</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>
 </div>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If you use a queue, you can signal the end of the input (EOF) with <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<p class="first admonition-title">Note</p>
+<p class="last">If you use a queue, you can signal the end of the input (EOF) with <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 </div>
 <p>You can also kill or terminate your process (or send any signal, really) from
 your callback by adding a third argument to receive the process object:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">process_output</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">stdin</span><span class="p">,</span> <span class="n">process</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
     <span class="k">if</span> <span class="s2">&quot;ERROR&quot;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
         <span class="n">process</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
-        <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="bp">True</span>
 
-<span class="n">p</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_output</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">tail</span><span class="p">(</span><span class="s2">&quot;-f&quot;</span><span class="p">,</span> <span class="s2">&quot;/var/log/some_log_file.log&quot;</span><span class="p">,</span> <span class="n">_out</span><span class="o">=</span><span class="n">process_output</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The above code will run, printing lines from <code class="docutils literal notranslate"><span class="pre">some_log_file.log</span></code> until the
 word <code class="docutils literal notranslate"><span class="pre">&quot;ERROR&quot;</span></code> appears in a line, at which point the tail process will be
 killed and the script will end.</p>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>You may also use <a class="reference internal" href="command_class.html#RunningCommand.terminate" title="RunningCommand.terminate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">RunningCommand.terminate()</span></code></a> to send a SIGTERM, or
+<p class="first admonition-title">Note</p>
+<p class="last">You may also use <a class="reference internal" href="command_class.html#RunningCommand.terminate" title="RunningCommand.terminate"><code class="xref py py-meth docutils literal notranslate"><span class="pre">RunningCommand.terminate()</span></code></a> to send a SIGTERM, or
 <a class="reference internal" href="command_class.html#RunningCommand.signal" title="RunningCommand.signal"><code class="xref py py-meth docutils literal notranslate"><span class="pre">RunningCommand.signal()</span></code></a> to send a general signal.</p>
 </div>
 </div>
@@ -487,7 +487,7 @@ time:</p>
 
 <span class="k">def</span> <span class="nf">do_thing</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
     <span class="n">pool</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">sh</span><span class="o">.</span><span class="n">your_parallel_command</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">_done</span><span class="o">=</span><span class="n">done</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sh</span><span class="o">.</span><span class="n">your_parallel_command</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">_done</span><span class="o">=</span><span class="n">done</span><span class="p">)</span>
 
 <span class="n">procs</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>

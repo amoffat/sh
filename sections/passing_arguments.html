@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -352,29 +352,29 @@ string:</p>
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="faq.html#faq-separate-args"><span class="std std-ref">Why do my arguments need to be separate strings?</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="faq.html#faq-separate-args"><span class="std std-ref">Why do my arguments need to be separate strings?</span></a></p>
 </div>
 <div class="section" id="keyword-arguments">
 <h2>Keyword Arguments<a class="headerlink" href="#keyword-arguments" title="Permalink to this headline">¶</a></h2>
 <p>sh supports short-form <code class="docutils literal notranslate"><span class="pre">-a</span></code> and long-form <code class="docutils literal notranslate"><span class="pre">--arg</span></code> arguments as
 keyword arguments:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># resolves to &quot;curl http://duckduckgo.com/ -o page.html --silent&quot;</span>
-<span class="n">curl</span><span class="p">(</span><span class="s2">&quot;http://duckduckgo.com/&quot;</span><span class="p">,</span> <span class="n">o</span><span class="o">=</span><span class="s2">&quot;page.html&quot;</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">curl</span><span class="p">(</span><span class="s2">&quot;http://duckduckgo.com/&quot;</span><span class="p">,</span> <span class="n">o</span><span class="o">=</span><span class="s2">&quot;page.html&quot;</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="c1"># or if you prefer not to use keyword arguments, this does the same thing:</span>
 <span class="n">curl</span><span class="p">(</span><span class="s2">&quot;http://duckduckgo.com/&quot;</span><span class="p">,</span> <span class="s2">&quot;-o&quot;</span><span class="p">,</span> <span class="s2">&quot;page.html&quot;</span><span class="p">,</span> <span class="s2">&quot;--silent&quot;</span><span class="p">)</span>
 
 <span class="c1"># resolves to &quot;adduser amoffat --system --shell=/bin/bash --no-create-home&quot;</span>
-<span class="n">adduser</span><span class="p">(</span><span class="s2">&quot;amoffat&quot;</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="s2">&quot;/bin/bash&quot;</span><span class="p">,</span> <span class="n">no_create_home</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">adduser</span><span class="p">(</span><span class="s2">&quot;amoffat&quot;</span><span class="p">,</span> <span class="n">system</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="s2">&quot;/bin/bash&quot;</span><span class="p">,</span> <span class="n">no_create_home</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="c1"># or</span>
 <span class="n">adduser</span><span class="p">(</span><span class="s2">&quot;amoffat&quot;</span><span class="p">,</span> <span class="s2">&quot;--system&quot;</span><span class="p">,</span> <span class="s2">&quot;--shell&quot;</span><span class="p">,</span> <span class="s2">&quot;/bin/bash&quot;</span><span class="p">,</span> <span class="s2">&quot;--no-create-home&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p><a class="reference internal" href="faq.html#faq-arg-ordering"><span class="std std-ref">How do I order keyword arguments?</span></a></p>
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="faq.html#faq-arg-ordering"><span class="std std-ref">How do I order keyword arguments?</span></a></p>
 </div>
 </div>
 </div>

@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -349,7 +349,7 @@
 <p>sh is a full-fledged subprocess replacement for Python 2.6 - 3.8, PyPy and PyPy3
 that allows you to call any program as if it were a function:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sh</span> <span class="kn">import</span> <span class="n">ifconfig</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">ifconfig</span><span class="p">(</span><span class="s2">&quot;wlan0&quot;</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="n">ifconfig</span><span class="p">(</span><span class="s2">&quot;wlan0&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Output:</p>
@@ -367,6 +367,8 @@ that allows you to call any program as if it were a function:</p>
 on your system by dynamically resolving your <code class="docutils literal notranslate"><span class="pre">$PATH</span></code>, much like Bash does, and
 then wrapping the binary in a function.  In this way, all the programs on your
 system are easily available to you from within Python.</p>
+<p>sh relies on various Unix system calls and only works on Unix-like operating
+systems - Linux, macOS, BSDs etc. Specifically, Windows is not supported.</p>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install sh
@@ -387,7 +389,7 @@ system are easily available to you from within Python.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
     <span class="n">sh</span><span class="o">.</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/doesnt/exist&quot;</span><span class="p">)</span>
 <span class="k">except</span> <span class="n">sh</span><span class="o">.</span><span class="n">ErrorReturnCode_2</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;directory doesn&#39;t exist&quot;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;directory doesn&#39;t exist&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><a class="reference internal" href="sections/exit_codes.html#exit-codes"><span class="std std-ref">Read More</span></a></p>
@@ -435,7 +437,7 @@ system are easily available to you from within Python.</p>
 </div>
 <div class="section" id="background-processes">
 <h3>Background Processes<a class="headerlink" href="#background-processes" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;-name&quot;</span><span class="p">,</span> <span class="s2">&quot;sh.py&quot;</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;-name&quot;</span><span class="p">,</span> <span class="s2">&quot;sh.py&quot;</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="c1"># ... do other things ...</span>
 <span class="n">p</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
 </pre></div>

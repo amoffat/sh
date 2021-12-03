@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -343,24 +343,24 @@
 <p>Normal processes exit with exit code 0.  This can be seen through a
 <a class="reference internal" href="command_class.html#RunningCommand.exit_code" title="RunningCommand.exit_code"><code class="xref py py-attr docutils literal notranslate"><span class="pre">RunningCommand.exit_code</span></code></a>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">exit_code</span><span class="p">)</span> <span class="c1"># should be 0</span>
+<span class="k">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">exit_code</span><span class="p">)</span> <span class="c1"># should be 0</span>
 </pre></div>
 </div>
 <p>If a process terminates, and the exit code is not 0, an exception is generated
 dynamically.  This lets you catch a specific return code, or catch all error
 return codes through the base class <a class="reference internal" href="command_class.html#ErrorReturnCode" title="ErrorReturnCode"><code class="xref py py-class docutils literal notranslate"><span class="pre">ErrorReturnCode</span></code></a>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/some/non-existant/folder&quot;</span><span class="p">))</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">ls</span><span class="p">(</span><span class="s2">&quot;/some/non-existant/folder&quot;</span><span class="p">))</span>
 <span class="k">except</span> <span class="n">ErrorReturnCode_2</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;folder doesn&#39;t exist!&quot;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;folder doesn&#39;t exist!&quot;</span><span class="p">)</span>
     <span class="n">create_the_folder</span><span class="p">()</span>
 <span class="k">except</span> <span class="n">ErrorReturnCode</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;unknown error&quot;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;unknown error&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition seealso">
-<p class="admonition-title">See also</p>
-<p>You can customize which exit codes indicate an error with <a class="reference internal" href="special_arguments.html#ok-code"><span class="std std-ref">_ok_code</span></a>.</p>
+<p class="first admonition-title">See also</p>
+<p class="last">You can customize which exit codes indicate an error with <a class="reference internal" href="special_arguments.html#ok-code"><span class="std std-ref">_ok_code</span></a>.</p>
 </div>
 <div class="section" id="signals">
 <h2>Signals<a class="headerlink" href="#signals" title="Permalink to this headline">¶</a></h2>
@@ -368,17 +368,17 @@ return codes through the base class <a class="reference internal" href="command_
 exception raised in this situation is <a class="reference internal" href="command_class.html#signal-exc"><span class="std std-ref">SignalException</span></a>, which subclasses
 <a class="reference internal" href="command_class.html#error-return-code"><span class="std std-ref">ErrorReturnCode</span></a>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
-    <span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">sh</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_bg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
     <span class="n">p</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
 <span class="k">except</span> <span class="n">sh</span><span class="o">.</span><span class="n">SignalException_SIGKILL</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;killed&quot;</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;killed&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
+<p class="first admonition-title">Note</p>
 <p>You can catch <a class="reference internal" href="command_class.html#signal-exc"><span class="std std-ref">SignalException</span></a> by using either a number or a signal name.
 For example, the following two exception classes are equivalent:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">sh</span><span class="o">.</span><span class="n">SignalException_SIGKILL</span> <span class="o">==</span> <span class="n">sh</span><span class="o">.</span><span class="n">SignalException_9</span>
+<div class="last highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">assert</span> <span class="n">sh</span><span class="o">.</span><span class="n">SignalException_SIGKILL</span> <span class="o">==</span> <span class="n">sh</span><span class="o">.</span><span class="n">SignalException_9</span>
 </pre></div>
 </div>
 </div>

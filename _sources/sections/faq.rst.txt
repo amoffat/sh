@@ -87,15 +87,22 @@ use a pager, for example:
     import sh
     print(sh.git.log())
 
-This will raise a ``SignalException_SIGPIPE``, and it's unclear exactly why.
-The reason is because ``git log`` detects a TTY STDOUT and forks the system's
-pager (typically ``less``) to handle the output.  The pager checks for a
-controlling terminal, and, finding none, exits with exit code 1.  The exit of
-the pager means no more readers on ``git log``'s output, and thus a ``SIGPIPE``
-is received.
 
-The solution to the ``git log`` problem above is simply to use
-``_tty_out=False``, but this is not totally obvious.
+This will sometimes raise a ``SignalException_SIGPIPE``. The reason is because
+``git log`` detects a TTY STDOUT and forks the system’s pager (typically
+``less``) to handle the output. The pager checks for a controlling terminal,
+and, finding none, exits with exit code 1. The exit of the pager means no more
+readers on ``git log``’s output, and thus a ``SIGPIPE`` is received.
+
+One solution to the ``git log`` problem above is simply to use
+``_tty_out=False``. Another option, specifically for git, is to use the
+``git --no-pager`` option:
+
+.. code-block:: python
+
+    import sh
+    print(sh.git('--no-pager', 'log'))
+
 
 Why doesn't "*" work as a command argument?
 -------------------------------------------

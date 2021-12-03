@@ -1,7 +1,7 @@
 
 
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html4" lang="en" >
 <head>
   <meta charset="utf-8">
   
@@ -342,11 +342,11 @@
 <span id="stdin"></span><h1>Input via STDIN<a class="headerlink" href="#input-via-stdin" title="Permalink to this headline">¶</a></h1>
 <p>STDIN is sent to a process directly by using a command’s <a class="reference internal" href="special_arguments.html#in"><span class="std std-ref">_in</span></a> special
 kwarg:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">cat</span><span class="p">(</span><span class="n">_in</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">cat</span><span class="p">(</span><span class="n">_in</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Any command that takes input from STDIN can be used this way:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">tr</span><span class="p">(</span><span class="s2">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s2">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="s2">&quot;sh is awesome&quot;</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">tr</span><span class="p">(</span><span class="s2">&quot;[:lower:]&quot;</span><span class="p">,</span> <span class="s2">&quot;[:upper:]&quot;</span><span class="p">,</span> <span class="n">_in</span><span class="o">=</span><span class="s2">&quot;sh is awesome&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>You’re also not limited to using just strings.  You may use a file object, a
@@ -356,8 +356,8 @@ kwarg:</p>
 </pre></div>
 </div>
 <div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>If you use a queue, you can signal the end of the queue (EOF) with <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
+<p class="first admonition-title">Note</p>
+<p class="last">If you use a queue, you can signal the end of the queue (EOF) with <code class="docutils literal notranslate"><span class="pre">None</span></code></p>
 </div>
 </div>
 
