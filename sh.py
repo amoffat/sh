@@ -1003,7 +1003,7 @@ class RunningCommand(object):
 
 
 def output_redirect_is_filename(out):
-    return isinstance(out, str)
+    return isinstance(out, str) or hasattr(out, "__fspath__")
 
 
 def get_prepend_stack():
