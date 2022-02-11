@@ -2309,7 +2309,7 @@ class OProc(object):
             )
 
     def __repr__(self):
-        return "<Process %d %r>" % (self.pid, self.command[:500])
+        return "<Process %d %r>" % (self.pid, self.command.cmd[:500])
 
     # these next 3 properties are primary for tests
     @property
