@@ -97,6 +97,10 @@ To control whether the callback receives a line or a chunk, use
 :ref:`out_bufsize`.  To "quit" your callback, simply return ``True``.  This
 tells the command not to call your callback anymore.
 
+The line or chunk received by the callback can either be of type ``str`` or
+``bytes``. If the output could be decoded using the provided :ref:`encoding`, a
+``str`` will be passed to the callback, otherwise it would be raw ``bytes``.
+
 .. note::
 
     Returning ``True`` does not kill the process, it only keeps the callback
