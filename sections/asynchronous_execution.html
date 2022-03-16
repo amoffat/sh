@@ -413,6 +413,9 @@ outputs:</p>
 <p>To control whether the callback receives a line or a chunk, use
 <a class="reference internal" href="special_arguments.html#out-bufsize"><span class="std std-ref">_out_bufsize</span></a>.  To “quit” your callback, simply return <code class="docutils literal notranslate"><span class="pre">True</span></code>.  This
 tells the command not to call your callback anymore.</p>
+<p>The line or chunk received by the callback can either be of type <code class="docutils literal notranslate"><span class="pre">str</span></code> or
+<code class="docutils literal notranslate"><span class="pre">bytes</span></code>. If the output could be decoded using the provided <span class="xref std std-ref">encoding</span>, a
+<code class="docutils literal notranslate"><span class="pre">str</span></code> will be passed to the callback, otherwise it would be raw <code class="docutils literal notranslate"><span class="pre">bytes</span></code>.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">Returning <code class="docutils literal notranslate"><span class="pre">True</span></code> does not kill the process, it only keeps the callback
