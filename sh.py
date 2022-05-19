@@ -575,22 +575,25 @@ def which(program, paths=None):
     return found_path
 
 
-def resolve_command_path(program):
-    path = which(program)
+def resolve_command_path(program, paths=None):
+    path = which(program, paths)
     if not path:
         # our actual command might have a dash in it, but we can't call
         # that from python (we have to use underscores), so we'll check
         # if a dash version of our underscore command exists and use that
         # if it does
         if "_" in program:
-            path = which(program.replace("_", "-"))
+            path = which(program.replace("_", "-"), paths)
         if not path:
             return None
     return path
 
 
 def resolve_command(name, baked_args=None):
-    path = resolve_command_path(name)
+    paths = None
+    if baked_args and '_env' in baked_args:
+        paths = baked_args['_env'].get('PATH').split(os.pathsep)
+    path = resolve_command_path(name, paths)
     cmd = None
     if path:
         cmd = Command(path)
