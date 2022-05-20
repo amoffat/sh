@@ -592,7 +592,7 @@ def resolve_command_path(program, paths=None):
 def resolve_command(name, baked_args=None):
     paths = None
     if baked_args and '_env' in baked_args:
-        paths = baked_args['_env'].get('PATH').split(os.pathsep)
+        paths = baked_args['_env'].get('PATH', '').split(os.pathsep)
     path = resolve_command_path(name, paths)
     cmd = None
     if path:
