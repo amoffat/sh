@@ -3408,6 +3408,12 @@ class Environment(dict):
         if k.startswith("__") and k.endswith("__"):
             raise AttributeError
 
+        if k == "cd":
+            # Don't resolve the system binary. It's useful in scripts to be
+            # able to switch directories in the current process. Can also be
+            # used as a context manager.
+            return Cd
+
         # is it a command?
         cmd = resolve_command(k, self.baked_args)
         if cmd:
@@ -3431,26 +3437,25 @@ class Environment(dict):
         # nothing found, raise an exception
         raise CommandNotFound(k)
 
-    # methods that begin with "b_" are custom builtins and will override any
-    # program that exists in our path.  this is useful for things like
-    # common shell builtins that people are used to, but which aren't actually
-    # full-fledged system binaries
-
-    # FIXME remove this fully in 2.1.*
-    @staticmethod
-    def b_cd(path=None):
-        raise DeprecationWarning(
-            """
-`sh.cd(path)` has been removed. Please use sh.pushd instead:
-
-  with sh.pushd("/tmp"):
-      sh.ls()
-""".strip()
-        )
-
+    # Methods that begin with "b_" are implementations of shell built-ins that
+    # people are used to, but which may not have an executable equivalent.
     @staticmethod
     def b_which(program, paths=None):
         return which(program, paths)
+
+
+class Cd(object):
+    def __new__(cls, path=None):
+        res = super(Cd, cls).__new__(cls)
+        res.old_path = os.getcwd()
+        os.chdir(path or os.path.expanduser("~"))
+        return res
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        os.chdir(self.old_path)
 
 
 class Contrib(ModuleType):  # pragma: no cover
