@@ -2257,14 +2257,12 @@ p.wait()
 
     def test_pushd_cd(self):
         """ test that pushd works like pushd/popd with built-in cd correctly """
-        cd = sh._SelfWrapper__env.b_cd
-
         child = realpath(tempfile.mkdtemp())
         try:
             old_wd = os.getcwd()
             with sh.pushd(tempdir):
                 self.assertEqual(tempdir, os.getcwd())
-                cd(child)
+                sh.cd(child)
                 self.assertEqual(child, os.getcwd())
 
             self.assertEqual(old_wd, os.getcwd())
@@ -2272,14 +2270,18 @@ p.wait()
             os.rmdir(child)
 
     def test_cd_homedir(self):
-        # Test 'cd' as built-in function
-        cd = sh._SelfWrapper__env.b_cd
         orig = os.getcwd()
         my_dir = os.path.realpath(os.path.expanduser("~"))  # Use realpath because homedir may be a symlink
-        cd()
+        sh.cd()
 
         self.assertNotEqual(orig, os.getcwd())
         self.assertEqual(my_dir, os.getcwd())
+
+    def test_cd_context_manager(self):
+        orig = os.getcwd()
+        with sh.cd(tempdir):
+            self.assertEqual(tempdir, os.getcwd())
+        self.assertEqual(orig, os.getcwd())
 
     def test_non_existant_cwd(self):
         from sh import ls
