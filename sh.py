@@ -2483,6 +2483,7 @@ class OProc(object):
                 return False, self.exit_code
             return True, self.exit_code
 
+        witnessed_end = False
         try:
             # WNOHANG is just that...we're calling waitpid without hanging...
             # essentially polling the process.  the return result is (0, 0) if
@@ -2491,7 +2492,7 @@ class OProc(object):
             pid, exit_code = no_interrupt(os.waitpid, self.pid, os.WNOHANG)
             if pid == self.pid:
                 self.exit_code = handle_process_exit_code(exit_code)
-                self._process_just_ended()
+                witnessed_end = True
 
                 return False, self.exit_code
 
@@ -2502,6 +2503,8 @@ class OProc(object):
             return True, self.exit_code
         finally:
             self._wait_lock.release()
+            if witnessed_end:
+                self._process_just_ended()
 
     def _process_just_ended(self):
         if self._timeout_timer:
@@ -2539,31 +2542,32 @@ class OProc(object):
                 self.log.debug(
                     "exit code already set (%d), no need to wait", self.exit_code
                 )
+        self._process_exit_cleanup(witnessed_end=witnessed_end)
+        return self.exit_code
 
-            self._quit_threads.set()
+    def _process_exit_cleanup(self, witnessed_end):
+        self._quit_threads.set()
 
-            # we may not have a thread for stdin, if the pipe has been connected
-            # via _piped="direct"
-            if self._input_thread:
-                self._input_thread.join()
+        # we may not have a thread for stdin, if the pipe has been connected
+        # via _piped="direct"
+        if self._input_thread:
+            self._input_thread.join()
 
-            # wait, then signal to our output thread that the child process is
-            # done, and we should have finished reading all the stdout/stderr
-            # data that we can by now
-            timer = threading.Timer(2.0, self._stop_output_event.set)
-            timer.start()
+        # wait, then signal to our output thread that the child process is
+        # done, and we should have finished reading all the stdout/stderr
+        # data that we can by now
+        timer = threading.Timer(2.0, self._stop_output_event.set)
+        timer.start()
 
-            # wait for our stdout and stderr streamreaders to finish reading and
-            # aggregating the process output
-            self._output_thread.join()
-            timer.cancel()
+        # wait for our stdout and stderr streamreaders to finish reading and
+        # aggregating the process output
+        self._output_thread.join()
+        timer.cancel()
 
-            self._background_thread.join()
+        self._background_thread.join()
 
-            if witnessed_end:
-                self._process_just_ended()
-
-            return self.exit_code
+        if witnessed_end:
+            self._process_just_ended()
 
 
 def input_thread(log, stdin, is_alive, quit_thread, close_before_term):

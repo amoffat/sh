@@ -2652,6 +2652,29 @@ print(time())
         self.assertEqual(callback.exit_code, 0)
         self.assertTrue(callback.success)
 
+    # https://github.com/amoffat/sh/issues/564
+    def test_done_callback_no_deadlock(self):
+        import time
+
+        py = create_tmp_test("""
+from sh import sleep
+
+def done(cmd, success, exit_code):
+    print(cmd, success, exit_code)
+
+sleep('1', _done=done)
+""")
+
+        p = python(py.name, _bg=True, _timeout=2)
+
+        # do a little setup to prove that a command with a _done callback is run
+        # in the background
+        wait_start = time.time()
+        p.wait()
+        wait_elapsed = time.time() - wait_start
+
+        self.assertLess(abs(wait_elapsed - 1.0), 1.0)
+
     def test_fork_exc(self):
         from sh import ForkException
 
