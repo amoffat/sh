@@ -2054,6 +2054,15 @@ exit(code)
         outfile.seek(0)
         self.assertEqual(b"output\n", outfile.read())
 
+    @requires_py35
+    def test_out_pathlike(self):
+        from pathlib import Path
+        outfile = tempfile.NamedTemporaryFile()
+        py = create_tmp_test("print('output')")
+        python(py.name, _out=Path(outfile.name))
+        outfile.seek(0)
+        self.assertEqual(b"output\n", outfile.read())
+
     def test_bg_exit_code(self):
         py = create_tmp_test(
             """
