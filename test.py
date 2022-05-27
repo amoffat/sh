@@ -136,6 +136,7 @@ requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must
 not_macos = skipUnless(not IS_MACOS, "Doesn't work on MacOS")
 requires_py3 = skipUnless(IS_PY3, "Test only works on Python 3")
 requires_py35 = skipUnless(IS_PY3 and MINOR_VER >= 5, "Test only works on Python 3.5 or higher")
+requires_py36 = skipUnless(IS_PY3 and MINOR_VER >= 6, "Test only works on Python 3.6 or higher")
 
 
 def requires_poller(poller):
@@ -1772,7 +1773,7 @@ exit(code)
         outfile.seek(0)
         self.assertEqual(b"output\n", outfile.read())
 
-    @requires_py35
+    @requires_py36
     def test_out_pathlike(self):
         from pathlib import Path
         outfile = tempfile.NamedTemporaryFile()
