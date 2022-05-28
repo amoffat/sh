@@ -2,3 +2,5 @@ __pycache__/
 *.py[co]
 .tox
 .coverage
+.vscode
+.venv

@@ -1097,6 +1097,16 @@ _fg is invalid with nearly every other option, see warning and workaround here:
     return invalid
 
 
+def callable_validator(passed_kwargs, merged_kwargs):
+    fn = passed_kwargs.get("callable", None)
+    invalid = []
+
+    if fn is not None and not callable(fn):
+        invalid.append(("callable", "not an instance of callable"))
+
+    return invalid
+
+
 def bufsize_validator(passed_kwargs, merged_kwargs):
     """ a validator to prevent a user from saying that they want custom
     buffering when they're using an in/out object that will be os.dup'ed to the
@@ -1273,6 +1283,9 @@ class Command(object):
 
         # a whitelist of the integer fds to pass through to the child process. setting this forces close_fds to be True
         "pass_fds": set(),
+
+        # whether a callable should be applied to the returned CommandResult object
+        "callable": None,
     }
 
     # this is a collection of validators to make sure the special kwargs make
@@ -1287,6 +1300,7 @@ class Command(object):
         bufsize_validator,
         env_validator,
         fg_validator,
+        callable_validator,
     )
 
     def __init__(self, path, search_paths=None):
@@ -1517,7 +1531,9 @@ class Command(object):
         if output_redirect_is_filename(stderr):
             stderr = open(str(stderr), "wb")
 
-        return RunningCommand(cmd, call_args, stdin, stdout, stderr)
+        cmd_callable = call_args["callable"]
+        result = RunningCommand(cmd, call_args, stdin, stdout, stderr)
+        return cmd_callable(result) if cmd_callable is not None else result
 
 
 def compile_args(a, kwargs, sep, prefix):
