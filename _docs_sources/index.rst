@@ -8,9 +8,9 @@
     sections/contrib
     sections/sudo
 
-    tutorials 
+    tutorials
     sections/faq
-    
+
 .. image:: images/logo-230.png
     :alt: Logo
 
@@ -44,20 +44,20 @@ that allows you to call any program as if it were a function:
 
 	from sh import ifconfig
 	print(ifconfig("wlan0"))
-	
+
 Output:
 
 .. code-block:: none
 
-	wlan0	Link encap:Ethernet  HWaddr 00:00:00:00:00:00  
+	wlan0	Link encap:Ethernet  HWaddr 00:00:00:00:00:00
 		inet addr:192.168.1.100  Bcast:192.168.1.255  Mask:255.255.255.0
 		inet6 addr: ffff::ffff:ffff:ffff:fff/64 Scope:Link
 		UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
 		RX packets:0 errors:0 dropped:0 overruns:0 frame:0
 		TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
-		collisions:0 txqueuelen:1000 
+		collisions:0 txqueuelen:1000
 		RX bytes:0 (0 GB)  TX bytes:0 (0 GB)
-	
+
 Note that these aren't Python functions, these are running the binary commands
 on your system by dynamically resolving your ``$PATH``, much like Bash does, and
 then wrapping the binary in a function.  In this way, all the programs on your
@@ -82,7 +82,7 @@ Passing Arguments
 -----------------
 
 .. code-block:: python
-    
+
     sh.ls("-l", "/tmp", color="never")
 
 :ref:`Read More <passing_arguments>`
@@ -159,3 +159,15 @@ Background Processes
     p.wait()
 
 :ref:`Read More <background>`
+
+
+Callable bindings
+-----------------
+
+.. code-block:: python
+
+    jq = sh.bake(jq, _callable=lambda x: json.loads(str(x)))
+    p = jq('.data.val', _in='{"data":{"val":[1,2,3]}}')
+    p # a python list with the values [1, 2, 3]
+
+:ref:`Read More <callable_bindings>`
