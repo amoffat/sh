@@ -534,7 +534,7 @@ def canonicalize(path):
     return os.path.abspath(os.path.expanduser(path))
 
 
-def which(program, paths=None):
+def _which(program, paths=None):
     """ takes a program name or full path, plus an optional collection of search
     paths, and returns the full path of the requested executable.  if paths is
     specified, it is the entire list of search paths, and the PATH env is not
@@ -576,14 +576,14 @@ def which(program, paths=None):
 
 
 def resolve_command_path(program):
-    path = which(program)
+    path = _which(program)
     if not path:
         # our actual command might have a dash in it, but we can't call
         # that from python (we have to use underscores), so we'll check
         # if a dash version of our underscore command exists and use that
         # if it does
         if "_" in program:
-            path = which(program.replace("_", "-"))
+            path = _which(program.replace("_", "-"))
         if not path:
             return None
     return path
@@ -1290,7 +1290,7 @@ class Command(object):
     )
 
     def __init__(self, path, search_paths=None):
-        found = which(path, search_paths)
+        found = _which(path, search_paths)
 
         self._path = encode_to_py3bytes_or_py2str("")
 
@@ -3296,15 +3296,21 @@ class Environment(dict):
         if k.startswith("__") and k.endswith("__"):
             raise AttributeError
 
-        # is it a custom builtin?
-        builtin = getattr(self, "b_" + k, None)
-        if builtin:
-            return builtin
+        if k == 'cd':
+            # Don't resolve the system binary. It's useful in scripts to be
+            # able to switch directories in the current process. Can also be
+            # used as a context manager.
+            return Cd
 
         # is it a command?
         cmd = resolve_command(k, self.baked_args)
         if cmd:
             return cmd
+
+        # is it a custom builtin?
+        builtin = getattr(self, "b_" + k, None)
+        if builtin:
+            return builtin
 
         # how about an environment variable?
         # this check must come after testing if its a command, because on some
@@ -3319,20 +3325,25 @@ class Environment(dict):
         # nothing found, raise an exception
         raise CommandNotFound(k)
 
-    # methods that begin with "b_" are custom builtins and will override any
-    # program that exists in our path.  this is useful for things like
-    # common shell builtins that people are used to, but which aren't actually
-    # full-fledged system binaries
-    @staticmethod
-    def b_cd(path=None):
-        if path:
-            os.chdir(path)
-        else:
-            os.chdir(os.path.expanduser('~'))
-
+    # Methods that begin with "b_" are implementations of shell built-ins that
+    # people are used to, but which may not have an executable equivalent.
     @staticmethod
     def b_which(program, paths=None):
-        return which(program, paths)
+        return _which(program, paths)
+
+
+class Cd(object):
+    def __new__(cls, path=None):
+        res = super(Cd, cls).__new__(cls)
+        res.old_path = os.getcwd()
+        os.chdir(path or os.path.expanduser('~'))
+        return res
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        os.chdir(self.old_path)
 
 
 class Contrib(ModuleType):  # pragma: no cover
