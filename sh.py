@@ -668,7 +668,7 @@ class RunningCommand(object):
     this is the class that gets manipulated the most by user code, and so it
     implements various convenience methods and logical mechanisms for the
     underlying process.  for example, if a user tries to access a
-    backgrounded-process's stdout/err, the RunningCommand object is smart enough
+    background-process's stdout/err, the RunningCommand object is smart enough
     to know to wait() on the process to finish first.  and when the process
     finishes, RunningCommand is smart enough to translate exit codes to
     exceptions. """
@@ -1972,7 +1972,7 @@ class OProc(object):
 
             try:
                 # ignoring SIGHUP lets us persist even after the parent process
-                # exits.  only ignore if we're backgrounded
+                # exits.  only ignore if we're background
                 if ca["bg"] is True:
                     signal.signal(signal.SIGHUP, signal.SIG_IGN)
 

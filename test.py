@@ -617,7 +617,7 @@ import os
 print(len(os.listdir("/dev/fd")))
 """)
         out = python(py.name, _close_fds=False).strip()
-        # pick some number greater than 4, since it's hard to know exactly how many fds will be open/inherted in the
+        # pick some number greater than 4, since it's hard to know exactly how many fds will be open/inherited in the
         # child
         self.assertGreater(int(out), 7)
 
