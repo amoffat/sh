@@ -2,3 +2,6 @@ __pycache__/
 *.py[co]
 .tox
 .coverage
+/.cache/
+/.venv/
+/build
