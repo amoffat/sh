@@ -26,15 +26,12 @@ __version__ = "1.14.1"
 __project_url__ = "https://github.com/amoffat/sh"
 
 from collections import deque
+
 try:
     from collections.abc import Mapping
 except ImportError:
     from collections import Mapping
-from contextlib import contextmanager
-from functools import partial
-from io import UnsupportedOperation, open as fdopen
-from locale import getpreferredencoding
-from types import ModuleType, GeneratorType
+
 import ast
 import errno
 import fcntl
@@ -60,6 +57,12 @@ import traceback
 import tty
 import warnings
 import weakref
+from contextlib import contextmanager
+from functools import partial
+from io import UnsupportedOperation
+from io import open as fdopen
+from locale import getpreferredencoding
+from types import GeneratorType, ModuleType
 
 IS_PY3 = sys.version_info[0] == 3
 MINOR_VER = sys.version_info[1]
@@ -71,18 +74,19 @@ if IS_PY3:
     from io import BytesIO as cStringIO
 
     iocStringIO = cStringIO
-    from queue import Queue, Empty
+    from queue import Empty, Queue
 
     # for some reason, python 3.1 removed the builtin "callable", wtf
     if not hasattr(__builtins__, "callable"):
         def callable(ob):
             return hasattr(ob, "__call__")
 else:
-    from StringIO import StringIO
-    from cStringIO import OutputType as cStringIO
-    from io import StringIO as ioStringIO
     from io import BytesIO as iocStringIO
-    from Queue import Queue, Empty
+    from io import StringIO as ioStringIO
+
+    from cStringIO import OutputType as cStringIO
+    from Queue import Empty, Queue
+    from StringIO import StringIO
 
 try:
     from shlex import quote as shlex_quote  # here from 3.3 onward
