@@ -22,7 +22,7 @@
 
 |
 
-sh is a full-fledged subprocess replacement for Python 2.6 - 3.8, PyPy and PyPy3
+sh is a full-fledged subprocess replacement for Python 2, Python 3, PyPy and PyPy3
 that allows you to call *any* program as if it were a function:
 
 .. code:: python
@@ -32,6 +32,9 @@ that allows you to call *any* program as if it were a function:
 
 sh is *not* a collection of system commands implemented in Python.
 
+sh relies on various Unix system calls and only works on Unix-like operating
+systems - Linux, macOS, BSDs etc. Specifically, Windows is not supported.
+
 `Complete documentation here <https://amoffat.github.io/sh>`_
 
 Installation
@@ -40,7 +43,7 @@ Installation
 ::
 
     $> pip install sh
-    
+
 Support
 =======
 * `Andrew Moffat <https://github.com/amoffat>`_ - author/maintainer
@@ -63,7 +66,7 @@ run::
 
     $> ./build.sh
 
-This will install ubuntu 18.04 LTS and all python versions from 2.6-3.8.  Once it's done, stay in that directory and
+This will install ubuntu 18.04 LTS and all supported python versions.  Once it's done, stay in that directory and
 run::
 
     $> ./run.sh
@@ -82,7 +85,7 @@ Coverage
 
 First run all of the tests::
 
-    $> python sh.py test
+    $> SH_TESTS_RUNNING=1 coverage run --source=sh -m unittest
 
 This will aggregate a ``.coverage``.  You may then visualize the report with::
 

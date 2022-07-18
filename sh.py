@@ -2,7 +2,7 @@
 http://amoffat.github.io/sh/
 """
 # ===============================================================================
-# Copyright (C) 2011-2020 by Andrew Moffat
+# Copyright (C) 2011-2022 by Andrew Moffat
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,19 +22,16 @@ http://amoffat.github.io/sh/
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ===============================================================================
-__version__ = "1.14.2"
+__version__ = "1.14.3"
 __project_url__ = "https://github.com/amoffat/sh"
 
 from collections import deque
+
 try:
     from collections.abc import Mapping
 except ImportError:
     from collections import Mapping
-from contextlib import contextmanager
-from functools import partial
-from io import UnsupportedOperation, open as fdopen
-from locale import getpreferredencoding
-from types import ModuleType, GeneratorType
+
 import ast
 import errno
 import fcntl
@@ -60,6 +57,12 @@ import traceback
 import tty
 import warnings
 import weakref
+from contextlib import contextmanager
+from functools import partial
+from io import UnsupportedOperation
+from io import open as fdopen
+from locale import getpreferredencoding
+from types import GeneratorType, ModuleType
 
 IS_PY3 = sys.version_info[0] == 3
 MINOR_VER = sys.version_info[1]
@@ -71,18 +74,19 @@ if IS_PY3:
     from io import BytesIO as cStringIO
 
     iocStringIO = cStringIO
-    from queue import Queue, Empty
+    from queue import Empty, Queue
 
     # for some reason, python 3.1 removed the builtin "callable", wtf
     if not hasattr(__builtins__, "callable"):
         def callable(ob):
             return hasattr(ob, "__call__")
 else:
-    from StringIO import StringIO
-    from cStringIO import OutputType as cStringIO
-    from io import StringIO as ioStringIO
     from io import BytesIO as iocStringIO
-    from Queue import Queue, Empty
+    from io import StringIO as ioStringIO
+
+    from cStringIO import OutputType as cStringIO
+    from Queue import Empty, Queue
+    from StringIO import StringIO
 
 try:
     from shlex import quote as shlex_quote  # here from 3.3 onward
@@ -534,7 +538,7 @@ def canonicalize(path):
     return os.path.abspath(os.path.expanduser(path))
 
 
-def which(program, paths=None):
+def _which(program, paths=None):
     """ takes a program name or full path, plus an optional collection of search
     paths, and returns the full path of the requested executable.  if paths is
     specified, it is the entire list of search paths, and the PATH env is not
@@ -576,14 +580,14 @@ def which(program, paths=None):
 
 
 def resolve_command_path(program):
-    path = which(program)
+    path = _which(program)
     if not path:
         # our actual command might have a dash in it, but we can't call
         # that from python (we have to use underscores), so we'll check
         # if a dash version of our underscore command exists and use that
         # if it does
         if "_" in program:
-            path = which(program.replace("_", "-"))
+            path = _which(program.replace("_", "-"))
         if not path:
             return None
     return path
@@ -990,7 +994,7 @@ class RunningCommand(object):
 
 
 def output_redirect_is_filename(out):
-    return isinstance(out, basestring)
+    return isinstance(out, basestring) or hasattr(out, '__fspath__')
 
 
 def get_prepend_stack():
@@ -1290,7 +1294,7 @@ class Command(object):
     )
 
     def __init__(self, path, search_paths=None):
-        found = which(path, search_paths)
+        found = _which(path, search_paths)
 
         self._path = encode_to_py3bytes_or_py2str("")
 
@@ -2412,6 +2416,7 @@ class OProc(object):
                 return False, self.exit_code
             return True, self.exit_code
 
+        witnessed_end = False
         try:
             # WNOHANG is just that...we're calling waitpid without hanging...
             # essentially polling the process.  the return result is (0, 0) if
@@ -2420,7 +2425,7 @@ class OProc(object):
             pid, exit_code = no_interrupt(os.waitpid, self.pid, os.WNOHANG)
             if pid == self.pid:
                 self.exit_code = handle_process_exit_code(exit_code)
-                self._process_just_ended()
+                witnessed_end = True
 
                 return False, self.exit_code
 
@@ -2431,6 +2436,8 @@ class OProc(object):
             return True, self.exit_code
         finally:
             self._wait_lock.release()
+            if witnessed_end:
+                self._process_just_ended()
 
     def _process_just_ended(self):
         if self._timeout_timer:
@@ -2466,31 +2473,32 @@ class OProc(object):
 
             else:
                 self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
+        self._process_exit_cleanup(witnessed_end=witnessed_end)
+        return self.exit_code
 
-            self._quit_threads.set()
+    def _process_exit_cleanup(self, witnessed_end):
+        self._quit_threads.set()
 
-            # we may not have a thread for stdin, if the pipe has been connected
-            # via _piped="direct"
-            if self._input_thread:
-                self._input_thread.join()
+        # we may not have a thread for stdin, if the pipe has been connected
+        # via _piped="direct"
+        if self._input_thread:
+            self._input_thread.join()
 
-            # wait, then signal to our output thread that the child process is
-            # done, and we should have finished reading all the stdout/stderr
-            # data that we can by now
-            timer = threading.Timer(2.0, self._stop_output_event.set)
-            timer.start()
+        # wait, then signal to our output thread that the child process is
+        # done, and we should have finished reading all the stdout/stderr
+        # data that we can by now
+        timer = threading.Timer(2.0, self._stop_output_event.set)
+        timer.start()
 
-            # wait for our stdout and stderr streamreaders to finish reading and
-            # aggregating the process output
-            self._output_thread.join()
-            timer.cancel()
+        # wait for our stdout and stderr streamreaders to finish reading and
+        # aggregating the process output
+        self._output_thread.join()
+        timer.cancel()
 
-            self._background_thread.join()
+        self._background_thread.join()
 
-            if witnessed_end:
-                self._process_just_ended()
-
-            return self.exit_code
+        if witnessed_end:
+            self._process_just_ended()
 
 
 def input_thread(log, stdin, is_alive, quit_thread, close_before_term):
@@ -3292,15 +3300,21 @@ class Environment(dict):
         if k.startswith("__") and k.endswith("__"):
             raise AttributeError
 
-        # is it a custom builtin?
-        builtin = getattr(self, "b_" + k, None)
-        if builtin:
-            return builtin
+        if k == 'cd':
+            # Don't resolve the system binary. It's useful in scripts to be
+            # able to switch directories in the current process. Can also be
+            # used as a context manager.
+            return Cd
 
         # is it a command?
         cmd = resolve_command(k, self.baked_args)
         if cmd:
             return cmd
+
+        # is it a custom builtin?
+        builtin = getattr(self, "b_" + k, None)
+        if builtin:
+            return builtin
 
         # how about an environment variable?
         # this check must come after testing if its a command, because on some
@@ -3315,20 +3329,25 @@ class Environment(dict):
         # nothing found, raise an exception
         raise CommandNotFound(k)
 
-    # methods that begin with "b_" are custom builtins and will override any
-    # program that exists in our path.  this is useful for things like
-    # common shell builtins that people are used to, but which aren't actually
-    # full-fledged system binaries
-    @staticmethod
-    def b_cd(path=None):
-        if path:
-            os.chdir(path)
-        else:
-            os.chdir(os.path.expanduser('~'))
-
+    # Methods that begin with "b_" are implementations of shell built-ins that
+    # people are used to, but which may not have an executable equivalent.
     @staticmethod
     def b_which(program, paths=None):
-        return which(program, paths)
+        return _which(program, paths)
+
+
+class Cd(object):
+    def __new__(cls, path=None):
+        res = super(Cd, cls).__new__(cls)
+        res.old_path = os.getcwd()
+        os.chdir(path or os.path.expanduser('~'))
+        return res
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        os.chdir(self.old_path)
 
 
 class Contrib(ModuleType):  # pragma: no cover
@@ -3512,7 +3531,18 @@ class SelfWrapper(ModuleType):
         # if we set this to None.  and 3.3 needs a value for __path__
         self.__path__ = []
         self.__self_module = self_module
-        self.__env = Environment(globals(), baked_args=baked_args)
+
+        # Copy the Command class and add any baked call kwargs to it
+        cls_attrs = Command.__dict__.copy()
+        if baked_args:
+            call_args, _ = Command._extract_call_args(baked_args)
+            cls_attrs['_call_args'] = cls_attrs['_call_args'].copy()
+            cls_attrs['_call_args'].update(call_args)
+        command_cls = type(Command.__name__, Command.__bases__, cls_attrs)
+        globs = globals().copy()
+        globs[Command.__name__] = command_cls
+
+        self.__env = Environment(globs, baked_args=baked_args)
 
     def __getattr__(self, name):
         return self.__env[name]
@@ -3676,114 +3706,10 @@ class ModuleImporterFromVariables(object):
         return module
 
 
-def run_tests(env, locale, a, version, force_select, **extra_env):  # pragma: no cover
-    py_version = "python"
-    py_version += str(version)
-
-    py_bin = which(py_version)
-    return_code = None
-
-    poller = "poll"
-    if force_select:
-        poller = "select"
-
-    if py_bin:
-        print("Testing %s, locale %r, poller: %s" % (py_version.capitalize(), locale, poller))
-
-        env["SH_TESTS_USE_SELECT"] = str(int(force_select))
-        env["LANG"] = locale
-
-        for k, v in extra_env.items():
-            env[k] = str(v)
-
-        cmd = [py_bin, "-W", "ignore", os.path.join(THIS_DIR, "test.py")] + a[1:]
-        print("Running %r" % cmd)
-        return_code = os.spawnve(os.P_WAIT, cmd[0], cmd, env)
-
-    return return_code
-
-
-def main():  # pragma: no cover
-    from optparse import OptionParser
-
-    parser = OptionParser()
-    parser.add_option("-e", "--envs", dest="envs", default=None, action="append")
-    parser.add_option("-l", "--locales", dest="constrain_locales", default=None, action="append")
-    options, parsed_args = parser.parse_args()
-
-    # these are essentially restrictions on what envs/constrain_locales to restrict to for
-    # the tests.  if they're empty lists, it means use all available
-    action = None
-    if parsed_args:
-        action = parsed_args[0]
-
-    if action in ("test", "travis", "tox"):
-        import test
-        coverage = None
-        if test.HAS_UNICODE_LITERAL:
-            try:
-                import coverage
-            except ImportError:
-                pass
-
-        env = os.environ.copy()
-        env["SH_TESTS_RUNNING"] = "1"
-        if coverage:
-            test.append_module_path(env, coverage)
-
-        # if we're testing locally, run all versions of python on the system
-        if action == "test":
-            all_versions = ("2.6", "2.7", "3.1", "3.2", "3.3", "3.4", "3.5", "3.6", "3.7", "3.8")
-
-        # if we're testing on travis or tox, just use the system's default python, since travis will spawn a vm per
-        # python version in our .travis.yml file, and tox will run its matrix via tox.ini
-        else:
-            v = sys.version_info
-            sys_ver = "%d.%d" % (v[0], v[1])
-            all_versions = (sys_ver,)
-
-        all_force_select = [True]
-        if HAS_POLL:
-            all_force_select.append(False)
-
-        all_locales = ("en_US.UTF-8", "C")
-        i = 0
-        ran_versions = set()
-        for locale in all_locales:
-            # make sure this locale is allowed
-            if options.constrain_locales and locale not in options.constrain_locales:
-                continue
-
-            for version in all_versions:
-                # make sure this version is allowed
-                if options.envs and version not in options.envs:
-                    continue
-
-                for force_select in all_force_select:
-                    env_copy = env.copy()
-
-                    ran_versions.add(version)
-                    exit_code = run_tests(env_copy, locale, parsed_args, version, force_select, SH_TEST_RUN_IDX=i)
-
-                    if exit_code is None:
-                        print("Couldn't find %s, skipping" % version)
-
-                    elif exit_code != 0:
-                        print("Failed for %s, %s" % (version, locale))
-                        exit(1)
-
-                    i += 1
-
-        print("Tested Python versions: %s" % ",".join(sorted(list(ran_versions))))
-
-    else:
-        env = Environment(globals())
-        run_repl(env)
-
-
 if __name__ == "__main__":  # pragma: no cover
     # we're being run as a stand-alone script
-    main()
+    env = Environment(globals())
+    run_repl(env)
 else:
     # we're being imported from somewhere
     sys.modules[__name__] = SelfWrapper(sys.modules[__name__])

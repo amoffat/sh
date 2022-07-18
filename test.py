@@ -23,33 +23,6 @@ IS_PY3 = sys.version_info[0] == 3
 IS_PY2 = not IS_PY3
 MINOR_VER = sys.version_info[1]
 
-# coverage doesn't work in python 3.1, 3.2 due to it just being a shit
-# python
-HAS_UNICODE_LITERAL = not (IS_PY3 and MINOR_VER in (1, 2))
-
-cov = None
-if HAS_UNICODE_LITERAL:
-    run_idx = int(os.environ.pop("SH_TEST_RUN_IDX", "0"))
-    first_run = run_idx == 0
-
-    try:
-        import coverage
-    except ImportError:
-        pass
-    else:
-        # for some reason, we can't run auto_data on the first run, or the coverage
-        # numbers get really screwed up
-        auto_data = True
-        if first_run:
-            auto_data = False
-
-        cov = coverage.Coverage(auto_data=auto_data)
-
-        if first_run:
-            cov.erase()
-
-        cov.start()
-
 try:
     import unittest.mock
 except ImportError:
@@ -163,6 +136,7 @@ requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must
 not_macos = skipUnless(not IS_MACOS, "Doesn't work on MacOS")
 requires_py3 = skipUnless(IS_PY3, "Test only works on Python 3")
 requires_py35 = skipUnless(IS_PY3 and MINOR_VER >= 5, "Test only works on Python 3.5 or higher")
+requires_py36 = skipUnless(IS_PY3 and MINOR_VER >= 6, "Test only works on Python 3.6 or higher")
 
 
 def requires_poller(poller):
@@ -270,7 +244,7 @@ class FunctionalTests(BaseTests):
 
     def test_print_command(self):
         from sh import ls, which
-        actual_location = which("ls")
+        actual_location = str(which("ls")).strip()
         out = str(ls)
         self.assertEqual(out, actual_location)
 
@@ -605,12 +579,15 @@ print(dict(HERP=sh.HERP))
         self.assertEqual(out, "{'HERP': 'DERP'}")
 
     def test_which(self):
-        from sh import which, ls
+        # Test 'which' as built-in function
+        from sh import ls
+        which = sh._SelfWrapper__env.b_which
         self.assertEqual(which("fjoawjefojawe"), None)
         self.assertEqual(which("ls"), str(ls))
 
     def test_which_paths(self):
-        from sh import which
+        # Test 'which' as built-in function
+        which = sh._SelfWrapper__env.b_which
         py = create_tmp_test("""
 print("hi")
 """)
@@ -781,7 +758,7 @@ exit(2)
     def test_command_wrapper_equivalence(self):
         from sh import Command, ls, which
 
-        self.assertEqual(Command(which("ls")), ls)
+        self.assertEqual(Command(str(which("ls")).strip()), ls)
 
     def test_doesnt_execute_directories(self):
         save_path = os.environ['PATH']
@@ -986,8 +963,8 @@ print(sys.argv[1])
     def test_command_wrapper(self):
         from sh import Command, which
 
-        ls = Command(which("ls"))
-        wc = Command(which("wc"))
+        ls = Command(str(which("ls")).strip())
+        wc = Command(str(which("wc")).strip())
 
         c1 = int(wc(ls("-A1"), l=True))  # noqa: E741
         c2 = len(os.listdir("."))
@@ -1520,14 +1497,16 @@ import os
 import time
 import signal
 
+i = 0
 def sig_handler(sig, frame):
-    print(10)
-    exit(0)
+    global i
+    i = 42
 
 signal.signal(signal.SIGINT, sig_handler)
 
-for i in range(5):
+for _ in range(6):
     print(i)
+    i += 1
     sys.stdout.flush()
     time.sleep(0.5)
 """)
@@ -1545,7 +1524,7 @@ for i in range(5):
         p.wait()
 
         self.assertEqual(p.process.exit_code, 0)
-        self.assertEqual(p, "0\n1\n2\n3\n10\n")
+        self.assertEqual(p, "0\n1\n2\n3\n42\n43\n")
 
     def test_iter_generator(self):
         py = create_tmp_test("""
@@ -1794,6 +1773,15 @@ exit(code)
         outfile = tempfile.NamedTemporaryFile()
         py = create_tmp_test("print('output')")
         python(py.name, _out=outfile.name)
+        outfile.seek(0)
+        self.assertEqual(b"output\n", outfile.read())
+
+    @requires_py36
+    def test_out_pathlike(self):
+        from pathlib import Path
+        outfile = tempfile.NamedTemporaryFile()
+        py = create_tmp_test("print('output')")
+        python(py.name, _out=Path(outfile.name))
         outfile.seek(0)
         self.assertEqual(b"output\n", outfile.read())
 
@@ -2261,13 +2249,15 @@ p.wait()
 
     def test_pushd(self):
         """ test basic pushd functionality """
+        child = realpath(tempfile.mkdtemp())
+
         old_wd1 = sh.pwd().strip()
         old_wd2 = os.getcwd()
 
         self.assertEqual(old_wd1, old_wd2)
-        self.assertNotEqual(old_wd1, tempdir)
+        self.assertNotEqual(old_wd1, child)
 
-        with sh.pushd(tempdir):
+        with sh.pushd(child):
             new_wd1 = sh.pwd().strip()
             new_wd2 = os.getcwd()
 
@@ -2276,13 +2266,11 @@ p.wait()
         self.assertEqual(old_wd3, old_wd4)
         self.assertEqual(old_wd1, old_wd3)
 
-        self.assertEqual(new_wd1, tempdir)
-        self.assertEqual(new_wd2, tempdir)
+        self.assertEqual(new_wd1, child)
+        self.assertEqual(new_wd2, child)
 
     def test_pushd_cd(self):
         """ test that pushd works like pushd/popd with built-in cd correctly """
-        import sh
-
         child = realpath(tempfile.mkdtemp())
         try:
             old_wd = os.getcwd()
@@ -2302,6 +2290,12 @@ p.wait()
 
         self.assertNotEqual(orig, os.getcwd())
         self.assertEqual(my_dir, os.getcwd())
+
+    def test_cd_context_manager(self):
+        orig = os.getcwd()
+        with sh.cd(tempdir):
+            self.assertEqual(tempdir, os.getcwd())
+        self.assertEqual(orig, os.getcwd())
 
     def test_non_existant_cwd(self):
         from sh import ls
@@ -2352,6 +2346,29 @@ print(time())
         self.assertLess(abs(wait_elapsed - 1.0), 1.0)
         self.assertEqual(callback.exit_code, 0)
         self.assertTrue(callback.success)
+
+    # https://github.com/amoffat/sh/issues/564
+    def test_done_callback_no_deadlock(self):
+        import time
+
+        py = create_tmp_test("""
+from sh import sleep
+
+def done(cmd, success, exit_code):
+    print(cmd, success, exit_code)
+
+sleep('1', _done=done)
+""")
+
+        p = python(py.name, _bg=True, _timeout=2)
+
+        # do a little setup to prove that a command with a _done callback is run
+        # in the background
+        wait_start = time.time()
+        p.wait()
+        wait_elapsed = time.time() - wait_start
+
+        self.assertLess(abs(wait_elapsed - 1.0), 1.0)
 
     def test_fork_exc(self):
         from sh import ForkException
@@ -3138,6 +3155,13 @@ class ExecutionContextTests(unittest.TestCase):
         _sh.echo("-n", "TEST")
         self.assertEqual("TEST", out.getvalue())
 
+    def test_command_with_baked_call_args(self):
+        # Test that sh.Command() knows about baked call args
+        import sh
+        _sh = sh(_ok_code=1)
+        self.assertEqual(sh.Command._call_args['ok_code'], 0)
+        self.assertEqual(_sh.Command._call_args['ok_code'], 1)
+
     def test_importer_detects_module_name(self):
         import sh
         _sh = sh()
@@ -3205,6 +3229,4 @@ if __name__ == "__main__":
                 exit(1)
 
     finally:
-        if cov:
-            cov.stop()
-            cov.save()
+        pass
