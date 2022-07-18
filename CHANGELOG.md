@@ -1,5 +1,5 @@
 # Changelog
-## 1.14.3
+## 1.14.3 - 7/17/22
 *   bugfix where `Command` was not aware of default call args when wrapping the module [#559](https://github.com/amoffat/sh/pull/573)
 
 ## 1.14.1 - 10/24/20
