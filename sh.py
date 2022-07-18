@@ -538,7 +538,7 @@ def canonicalize(path):
     return os.path.abspath(os.path.expanduser(path))
 
 
-def which(program, paths=None):
+def _which(program, paths=None):
     """ takes a program name or full path, plus an optional collection of search
     paths, and returns the full path of the requested executable.  if paths is
     specified, it is the entire list of search paths, and the PATH env is not
@@ -580,14 +580,14 @@ def which(program, paths=None):
 
 
 def resolve_command_path(program):
-    path = which(program)
+    path = _which(program)
     if not path:
         # our actual command might have a dash in it, but we can't call
         # that from python (we have to use underscores), so we'll check
         # if a dash version of our underscore command exists and use that
         # if it does
         if "_" in program:
-            path = which(program.replace("_", "-"))
+            path = _which(program.replace("_", "-"))
         if not path:
             return None
     return path
@@ -994,7 +994,7 @@ class RunningCommand(object):
 
 
 def output_redirect_is_filename(out):
-    return isinstance(out, basestring)
+    return isinstance(out, basestring) or hasattr(out, '__fspath__')
 
 
 def get_prepend_stack():
@@ -1294,7 +1294,7 @@ class Command(object):
     )
 
     def __init__(self, path, search_paths=None):
-        found = which(path, search_paths)
+        found = _which(path, search_paths)
 
         self._path = encode_to_py3bytes_or_py2str("")
 
@@ -2416,6 +2416,7 @@ class OProc(object):
                 return False, self.exit_code
             return True, self.exit_code
 
+        witnessed_end = False
         try:
             # WNOHANG is just that...we're calling waitpid without hanging...
             # essentially polling the process.  the return result is (0, 0) if
@@ -2424,7 +2425,7 @@ class OProc(object):
             pid, exit_code = no_interrupt(os.waitpid, self.pid, os.WNOHANG)
             if pid == self.pid:
                 self.exit_code = handle_process_exit_code(exit_code)
-                self._process_just_ended()
+                witnessed_end = True
 
                 return False, self.exit_code
 
@@ -2435,6 +2436,8 @@ class OProc(object):
             return True, self.exit_code
         finally:
             self._wait_lock.release()
+            if witnessed_end:
+                self._process_just_ended()
 
     def _process_just_ended(self):
         if self._timeout_timer:
@@ -2470,31 +2473,32 @@ class OProc(object):
 
             else:
                 self.log.debug("exit code already set (%d), no need to wait", self.exit_code)
+        self._process_exit_cleanup(witnessed_end=witnessed_end)
+        return self.exit_code
 
-            self._quit_threads.set()
+    def _process_exit_cleanup(self, witnessed_end):
+        self._quit_threads.set()
 
-            # we may not have a thread for stdin, if the pipe has been connected
-            # via _piped="direct"
-            if self._input_thread:
-                self._input_thread.join()
+        # we may not have a thread for stdin, if the pipe has been connected
+        # via _piped="direct"
+        if self._input_thread:
+            self._input_thread.join()
 
-            # wait, then signal to our output thread that the child process is
-            # done, and we should have finished reading all the stdout/stderr
-            # data that we can by now
-            timer = threading.Timer(2.0, self._stop_output_event.set)
-            timer.start()
+        # wait, then signal to our output thread that the child process is
+        # done, and we should have finished reading all the stdout/stderr
+        # data that we can by now
+        timer = threading.Timer(2.0, self._stop_output_event.set)
+        timer.start()
 
-            # wait for our stdout and stderr streamreaders to finish reading and
-            # aggregating the process output
-            self._output_thread.join()
-            timer.cancel()
+        # wait for our stdout and stderr streamreaders to finish reading and
+        # aggregating the process output
+        self._output_thread.join()
+        timer.cancel()
 
-            self._background_thread.join()
+        self._background_thread.join()
 
-            if witnessed_end:
-                self._process_just_ended()
-
-            return self.exit_code
+        if witnessed_end:
+            self._process_just_ended()
 
 
 def input_thread(log, stdin, is_alive, quit_thread, close_before_term):
@@ -3296,15 +3300,21 @@ class Environment(dict):
         if k.startswith("__") and k.endswith("__"):
             raise AttributeError
 
-        # is it a custom builtin?
-        builtin = getattr(self, "b_" + k, None)
-        if builtin:
-            return builtin
+        if k == 'cd':
+            # Don't resolve the system binary. It's useful in scripts to be
+            # able to switch directories in the current process. Can also be
+            # used as a context manager.
+            return Cd
 
         # is it a command?
         cmd = resolve_command(k, self.baked_args)
         if cmd:
             return cmd
+
+        # is it a custom builtin?
+        builtin = getattr(self, "b_" + k, None)
+        if builtin:
+            return builtin
 
         # how about an environment variable?
         # this check must come after testing if its a command, because on some
@@ -3319,20 +3329,25 @@ class Environment(dict):
         # nothing found, raise an exception
         raise CommandNotFound(k)
 
-    # methods that begin with "b_" are custom builtins and will override any
-    # program that exists in our path.  this is useful for things like
-    # common shell builtins that people are used to, but which aren't actually
-    # full-fledged system binaries
-    @staticmethod
-    def b_cd(path=None):
-        if path:
-            os.chdir(path)
-        else:
-            os.chdir(os.path.expanduser('~'))
-
+    # Methods that begin with "b_" are implementations of shell built-ins that
+    # people are used to, but which may not have an executable equivalent.
     @staticmethod
     def b_which(program, paths=None):
-        return which(program, paths)
+        return _which(program, paths)
+
+
+class Cd(object):
+    def __new__(cls, path=None):
+        res = super(Cd, cls).__new__(cls)
+        res.old_path = os.getcwd()
+        os.chdir(path or os.path.expanduser('~'))
+        return res
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        os.chdir(self.old_path)
 
 
 class Contrib(ModuleType):  # pragma: no cover

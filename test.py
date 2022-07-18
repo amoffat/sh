@@ -136,6 +136,7 @@ requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must
 not_macos = skipUnless(not IS_MACOS, "Doesn't work on MacOS")
 requires_py3 = skipUnless(IS_PY3, "Test only works on Python 3")
 requires_py35 = skipUnless(IS_PY3 and MINOR_VER >= 5, "Test only works on Python 3.5 or higher")
+requires_py36 = skipUnless(IS_PY3 and MINOR_VER >= 6, "Test only works on Python 3.6 or higher")
 
 
 def requires_poller(poller):
@@ -243,7 +244,7 @@ class FunctionalTests(BaseTests):
 
     def test_print_command(self):
         from sh import ls, which
-        actual_location = which("ls")
+        actual_location = str(which("ls")).strip()
         out = str(ls)
         self.assertEqual(out, actual_location)
 
@@ -578,12 +579,15 @@ print(dict(HERP=sh.HERP))
         self.assertEqual(out, "{'HERP': 'DERP'}")
 
     def test_which(self):
-        from sh import which, ls
+        # Test 'which' as built-in function
+        from sh import ls
+        which = sh._SelfWrapper__env.b_which
         self.assertEqual(which("fjoawjefojawe"), None)
         self.assertEqual(which("ls"), str(ls))
 
     def test_which_paths(self):
-        from sh import which
+        # Test 'which' as built-in function
+        which = sh._SelfWrapper__env.b_which
         py = create_tmp_test("""
 print("hi")
 """)
@@ -754,7 +758,7 @@ exit(2)
     def test_command_wrapper_equivalence(self):
         from sh import Command, ls, which
 
-        self.assertEqual(Command(which("ls")), ls)
+        self.assertEqual(Command(str(which("ls")).strip()), ls)
 
     def test_doesnt_execute_directories(self):
         save_path = os.environ['PATH']
@@ -959,8 +963,8 @@ print(sys.argv[1])
     def test_command_wrapper(self):
         from sh import Command, which
 
-        ls = Command(which("ls"))
-        wc = Command(which("wc"))
+        ls = Command(str(which("ls")).strip())
+        wc = Command(str(which("wc")).strip())
 
         c1 = int(wc(ls("-A1"), l=True))  # noqa: E741
         c2 = len(os.listdir("."))
@@ -1772,6 +1776,15 @@ exit(code)
         outfile.seek(0)
         self.assertEqual(b"output\n", outfile.read())
 
+    @requires_py36
+    def test_out_pathlike(self):
+        from pathlib import Path
+        outfile = tempfile.NamedTemporaryFile()
+        py = create_tmp_test("print('output')")
+        python(py.name, _out=Path(outfile.name))
+        outfile.seek(0)
+        self.assertEqual(b"output\n", outfile.read())
+
     def test_bg_exit_code(self):
         py = create_tmp_test("""
 import time
@@ -2258,8 +2271,6 @@ p.wait()
 
     def test_pushd_cd(self):
         """ test that pushd works like pushd/popd with built-in cd correctly """
-        import sh
-
         child = realpath(tempfile.mkdtemp())
         try:
             old_wd = os.getcwd()
@@ -2279,6 +2290,12 @@ p.wait()
 
         self.assertNotEqual(orig, os.getcwd())
         self.assertEqual(my_dir, os.getcwd())
+
+    def test_cd_context_manager(self):
+        orig = os.getcwd()
+        with sh.cd(tempdir):
+            self.assertEqual(tempdir, os.getcwd())
+        self.assertEqual(orig, os.getcwd())
 
     def test_non_existant_cwd(self):
         from sh import ls
@@ -2329,6 +2346,29 @@ print(time())
         self.assertLess(abs(wait_elapsed - 1.0), 1.0)
         self.assertEqual(callback.exit_code, 0)
         self.assertTrue(callback.success)
+
+    # https://github.com/amoffat/sh/issues/564
+    def test_done_callback_no_deadlock(self):
+        import time
+
+        py = create_tmp_test("""
+from sh import sleep
+
+def done(cmd, success, exit_code):
+    print(cmd, success, exit_code)
+
+sleep('1', _done=done)
+""")
+
+        p = python(py.name, _bg=True, _timeout=2)
+
+        # do a little setup to prove that a command with a _done callback is run
+        # in the background
+        wait_start = time.time()
+        p.wait()
+        wait_elapsed = time.time() - wait_start
+
+        self.assertLess(abs(wait_elapsed - 1.0), 1.0)
 
     def test_fork_exc(self):
         from sh import ForkException
