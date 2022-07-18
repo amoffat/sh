@@ -2,7 +2,7 @@
 http://amoffat.github.io/sh/
 """
 # ===============================================================================
-# Copyright (C) 2011-2020 by Andrew Moffat
+# Copyright (C) 2011-2022 by Andrew Moffat
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@ http://amoffat.github.io/sh/
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ===============================================================================
-__version__ = "1.14.1"
+__version__ = "1.14.3"
 __project_url__ = "https://github.com/amoffat/sh"
 
 from collections import deque
