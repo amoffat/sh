@@ -593,11 +593,11 @@ def resolve_command_path(program):
     return path
 
 
-def resolve_command(name, baked_args=None):
+def resolve_command(name, command_cls, baked_args=None):
     path = resolve_command_path(name)
     cmd = None
     if path:
-        cmd = Command(path)
+        cmd = command_cls(path)
         if baked_args:
             cmd = cmd.bake(**baked_args)
     return cmd
@@ -3308,7 +3308,7 @@ class Environment(dict):
             return Cd
 
         # is it a command?
-        cmd = resolve_command(k, self.baked_args)
+        cmd = resolve_command(k, self.globs[Command.__name__], self.baked_args)
         if cmd:
             return cmd
 
@@ -3357,7 +3357,7 @@ class Contrib(ModuleType):  # pragma: no cover
         def wrapper1(fn):
             @property
             def cmd_getter(self):
-                cmd = resolve_command(name)
+                cmd = resolve_command(name, Command)
 
                 if not cmd:
                     raise CommandNotFound(name)
