@@ -1161,7 +1161,6 @@ class Command(object):
     RunningCommand object, which represents the Command put into an execution
     state. """
     thread_local = threading.local()
-    RunningCommandCls = RunningCommand
 
     _call_args = {
         "fg": False,  # run command in foreground
@@ -1522,7 +1521,7 @@ class Command(object):
         if output_redirect_is_filename(stderr):
             stderr = open(str(stderr), "wb")
 
-        return self.__class__.RunningCommandCls(cmd, call_args, stdin, stdout, stderr)
+        return RunningCommand(cmd, call_args, stdin, stdout, stderr)
 
 
 def compile_args(a, kwargs, sep, prefix):
