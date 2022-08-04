@@ -1180,6 +1180,7 @@ class Command(object):
     state."""
 
     thread_local = threading.local()
+    RunningCommandCls = RunningCommand
 
     _call_args: Dict[str, Any] = {
         "fg": False,  # run command in foreground
@@ -1512,7 +1513,7 @@ class Command(object):
         if output_redirect_is_filename(stderr):
             stderr = open(str(stderr), "wb")
 
-        rc = RunningCommand(cmd, call_args, stdin, stdout, stderr)
+        rc = self.__class__.RunningCommandCls(cmd, call_args, stdin, stdout, stderr)
         if rc._spawned_and_waited and not call_args["return_cmd"]:
             return str(rc)
         else:
