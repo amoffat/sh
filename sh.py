@@ -3536,6 +3536,7 @@ class SelfWrapper(ModuleType):
         # Copy the Command class and add any baked call kwargs to it
         command_cls = Command
         cls_attrs = command_cls.__dict__.copy()
+        cls_attrs.pop("__dict__", None)
         if baked_args:
             call_args, _ = command_cls._extract_call_args(baked_args)
             cls_attrs['_call_args'] = cls_attrs['_call_args'].copy()
