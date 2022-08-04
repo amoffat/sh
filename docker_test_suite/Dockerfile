@@ -13,26 +13,17 @@ RUN apt-get -y install\
     software-properties-common\
     curl\
     sudo\
-    python\
     lsof
 
 RUN add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update
-RUN apt-get -y install\
-    python2.6\
-    python2.7\
-    python3.1\
-    python3.2\
-    python3.3\
-    python3.4\
-    python3.5\
-    python3.6\
-    python3.7\
-    python3.8\
-    python3.9
-
-RUN apt-get -y install python3-distutils\
-    && curl https://bootstrap.pypa.io/get-pip.py | python -
+RUN apt-get -y install \
+    python2.7-dev \
+    python3.5-dev \
+    python3.6-dev python3.6-distutils \
+    python3.7-dev python3.7-distutils \
+    python3.8-dev python3.8-distutils \
+    python3.9-dev python3.9-distutils
 
 ARG uid=1000
 RUN groupadd -g $uid shtest\
@@ -41,8 +32,18 @@ RUN groupadd -g $uid shtest\
     && echo "shtest:shtest" | chpasswd
 
 COPY requirements-dev.txt /tmp/
-RUN pip install -r /tmp/requirements-dev.txt
+RUN curl https://bootstrap.pypa.io/pip/2.7/get-pip.py | python2.7 - && python2.7 -m pip install -r /tmp/requirements-dev.txt
+RUN curl https://bootstrap.pypa.io/pip/3.5/get-pip.py | python3.5 - && python3.5 -m pip install -r /tmp/requirements-dev.txt
+RUN curl https://bootstrap.pypa.io/pip/3.6/get-pip.py | python3.6 - && python3.6 -m pip install -r /tmp/requirements-dev.txt
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3.7 - && python3.7 -m pip install -r /tmp/requirements-dev.txt
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3.8 - && python3.8 -m pip install -r /tmp/requirements-dev.txt
+RUN curl https://bootstrap.pypa.io/get-pip.py | python3.9 - && python3.9 -m pip install -r /tmp/requirements-dev.txt
 
 USER shtest
 WORKDIR /home/shtest/sh
-ENTRYPOINT ["python", "sh.py", "test"]
+CMD python2.7 -m unittest discover -v && \
+    python3.5 -m unittest -v && \
+    python3.6 -m unittest -v && \
+    python3.7 -m unittest -v && \
+    python3.8 -m unittest -v && \
+    python3.9 -m unittest -v
