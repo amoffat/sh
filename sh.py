@@ -1346,25 +1346,25 @@ class Command(object):
 
         return val
 
-    @staticmethod
-    def _extract_call_args(kwargs):
+    @classmethod
+    def _extract_call_args(cls, kwargs):
         """takes kwargs that were passed to a command's __call__ and extracts
         out the special keyword arguments, we return a tuple of special keyword
         args, and kwargs that will go to the exec'ed command"""
 
         kwargs = kwargs.copy()
         call_args = {}
-        for parg, default in Command._call_args.items():
+        for parg, default in cls._call_args.items():
             key = "_" + parg
 
             if key in kwargs:
                 call_args[parg] = kwargs[key]
                 del kwargs[key]
 
-        merged_args = Command._call_args.copy()
+        merged_args = cls._call_args.copy()
         merged_args.update(call_args)
         invalid_kwargs = special_kwarg_validator(
-            call_args, merged_args, Command._kwarg_validators
+            call_args, merged_args, cls._kwarg_validators
         )
 
         if invalid_kwargs:
@@ -1426,7 +1426,7 @@ class Command(object):
 
         # this will hold a complete mapping of all our special keyword arguments
         # and their values
-        call_args = Command._call_args.copy()
+        call_args = self.__class__._call_args.copy()
 
         # aggregate any 'with' contexts
         for prepend in get_prepend_stack():
@@ -3659,14 +3659,16 @@ class SelfWrapper(ModuleType):
         self.__self_module = self_module
 
         # Copy the Command class and add any baked call kwargs to it
-        cls_attrs = Command.__dict__.copy()
+        command_cls = Command
+        cls_attrs = command_cls.__dict__.copy()
         if baked_args:
-            call_args, _ = Command._extract_call_args(baked_args)
+            call_args, _ = command_cls._extract_call_args(baked_args)
             cls_attrs["_call_args"] = cls_attrs["_call_args"].copy()
             cls_attrs["_call_args"].update(call_args)
-        command_cls = type(Command.__name__, Command.__bases__, cls_attrs)
         globs = globals().copy()
-        globs[Command.__name__] = command_cls
+        globs[command_cls.__name__] = type(
+            command_cls.__name__, command_cls.__bases__, cls_attrs
+        )
 
         self.__env = Environment(globs, baked_args=baked_args)
 
