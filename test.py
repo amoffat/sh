@@ -740,18 +740,20 @@ exit(2)
 
         def do_import():
             from sh import aowjgoawjoeijaowjellll  # noqa: F401
-
-        self.assertRaises(ImportError, do_import)
-
-        def do_import():
-            import sh
-            sh.awoefaowejfw
+            aowjgoawjoeijaowjellll()
 
         self.assertRaises(CommandNotFound, do_import)
 
         def do_import():
             import sh
-            sh.Command("ofajweofjawoe")
+            sh.awoefaowejfw()
+
+        self.assertRaises(CommandNotFound, do_import)
+
+        def do_import():
+            import sh
+            cmd = sh.Command("ofajweofjawoe")
+            cmd()
 
         self.assertRaises(CommandNotFound, do_import)
 
@@ -2744,18 +2746,6 @@ class MockTests(BaseTests):
         @unittest.mock.patch("sh.Command")
         def test(Command):
             Command().return_value = "some output"
-            return fn()
-
-        self.assertEqual(test(), "some output")
-        self.assertRaises(sh.CommandNotFound, fn)
-
-    def test_patch_command(self):
-        def fn():
-            return sh.afowejfow()
-
-        @unittest.mock.patch("sh.afowejfow", create=True)
-        def test(cmd):
-            cmd.return_value = "some output"
             return fn()
 
         self.assertEqual(test(), "some output")

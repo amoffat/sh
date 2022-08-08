@@ -579,22 +579,25 @@ def _which(program, paths=None):
     return found_path
 
 
-def resolve_command_path(program):
-    path = _which(program)
+def resolve_command_path(program, paths=None):
+    path = _which(program, paths=paths)
     if not path:
         # our actual command might have a dash in it, but we can't call
         # that from python (we have to use underscores), so we'll check
         # if a dash version of our underscore command exists and use that
         # if it does
         if "_" in program:
-            path = _which(program.replace("_", "-"))
+            path = _which(program.replace("_", "-"), paths=paths)
         if not path:
             return None
     return path
 
 
 def resolve_command(name, command_cls, baked_args=None):
-    path = resolve_command_path(name)
+    baked_env_paths = None
+    if baked_args and baked_args.get("_env", {}).get("PATH"):
+        baked_env_paths = baked_args["_env"]["PATH"].split(os.pathsep)
+    path = resolve_command_path(name, paths=baked_env_paths)
     cmd = None
     if path:
         cmd = command_cls(path)
@@ -1295,27 +1298,15 @@ class Command(object):
     )
 
     def __init__(self, path, search_paths=None):
-        found = _which(path, search_paths)
-
-        self._path = encode_to_py3bytes_or_py2str("")
-
+        self._unresolved_path = path
+        self._path = encode_to_py3bytes_or_py2str(path)
+        self._search_paths = search_paths
         # is the command baked (aka, partially applied)?
         self._partial = False
         self._partial_baked_args = []
         self._partial_call_args = {}
 
         # bugfix for functools.wraps.  issue #121
-        self.__name__ = str(self)
-
-        if not found:
-            raise CommandNotFound(path)
-
-        # the reason why we set the values early in the constructor, and again
-        # here, is for people who have tools that inspect the stack on
-        # exception.  if CommandNotFound is raised, we need self._path and the
-        # other attributes to be set correctly, so repr() works when they're
-        # inspecting the stack.  issue #304
-        self._path = encode_to_py3bytes_or_py2str(found)
         self.__name__ = str(self)
 
     def __getattribute__(self, name):
@@ -1424,6 +1415,13 @@ class Command(object):
         get_prepend_stack().pop()
 
     def __call__(self, *args, **kwargs):
+        # Lazy evaluation of the command path, to allow setting search path via _env
+        found = _which(self._unresolved_path, self._search_paths)
+        if not found:
+            raise CommandNotFound(self._path)
+        self._path = encode_to_py3bytes_or_py2str(found)
+        self.__name__ = str(self)
+
         kwargs = kwargs.copy()
         args = list(args)
 
@@ -3307,13 +3305,50 @@ class Environment(dict):
             # used as a context manager.
             return Cd
 
+        return LazyResolver(self, k)
+
+    # Methods that begin with "b_" are implementations of shell built-ins that
+    # people are used to, but which may not have an executable equivalent.
+    @staticmethod
+    def b_which(program, paths=None):
+        return _which(program, paths)
+
+
+class LazyResolver(object):
+    def __init__(self, environment, k):
+        self._env = environment
+        self._k = k
+        self._resolved = None
+
+    def __getattribute__(self, item):
+        if item in ("_env", "_k"):
+            return object.__getattribute__(self, item)
+        resolved = object.__getattribute__(self, "_resolved")
+        if resolved is None:
+            resolved = object.__getattribute__(self, "resolve")(self._k)
+            setattr(self, "_resolved", resolved)
+        if item == "_resolved":
+            return resolved
+
+        return getattr(resolved, item)
+
+    def __str__(self):
+        return str(self._resolved)
+
+    def __repr__(self):
+        return repr(self._resolved)
+
+    def __call__(self, *args, **kwargs):
+        return self._resolved(*args, **kwargs)
+
+    def resolve(self, k):
         # is it a command?
-        cmd = resolve_command(k, self.globs[Command.__name__], self.baked_args)
+        cmd = resolve_command(k, self._env.globs[Command.__name__], self._env.baked_args)
         if cmd:
             return cmd
 
         # is it a custom builtin?
-        builtin = getattr(self, "b_" + k, None)
+        builtin = getattr(self._env, "b_" + k, None)
         if builtin:
             return builtin
 
@@ -3329,12 +3364,6 @@ class Environment(dict):
 
         # nothing found, raise an exception
         raise CommandNotFound(k)
-
-    # Methods that begin with "b_" are implementations of shell built-ins that
-    # people are used to, but which may not have an executable equivalent.
-    @staticmethod
-    def b_which(program, paths=None):
-        return _which(program, paths)
 
 
 class Cd(object):
