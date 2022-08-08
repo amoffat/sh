@@ -133,7 +133,6 @@ def requires_progs(*progs):
 
 requires_posix = skipUnless(os.name == "posix", "Requires POSIX")
 requires_utf8 = skipUnless(sh.DEFAULT_ENCODING == "UTF-8", "System encoding must be UTF-8")
-not_macos = skipUnless(not IS_MACOS, "Doesn't work on MacOS")
 requires_py3 = skipUnless(IS_PY3, "Test only works on Python 3")
 requires_py35 = skipUnless(IS_PY3 and MINOR_VER >= 5, "Test only works on Python 3.5 or higher")
 requires_py36 = skipUnless(IS_PY3 and MINOR_VER >= 6, "Test only works on Python 3.6 or higher")
@@ -2814,10 +2813,6 @@ print("cool")
         python(py.name, "%%")
         python(py.name, "%%%")
 
-    # TODO
-    # for some reason, i can't get a good stable baseline measured in this test
-    # on osx.  so skip it for now if osx
-    @not_macos
     @requires_progs("lsof")
     def test_no_fd_leak(self):
         import sh
@@ -2849,7 +2844,7 @@ print("cool")
 
         test_pid = os.getpid()
 
-        def get_num_fds():
+        def get_fds():
             lines = sh.lsof(p=test_pid).strip().split("\n")
 
             def test(line):
@@ -2857,7 +2852,7 @@ print("cool")
                 return "CHR" in line or "PIPE" in line
 
             lines = [line for line in lines if test(line)]
-            return len(lines) - 1
+            return set(lines)
 
         py = create_tmp_test("")
 
@@ -2866,17 +2861,17 @@ print("cool")
 
         # make sure our baseline is stable.. we can remove this
         test_command()
-        baseline = get_num_fds()
+        baseline = get_fds()
         for i in xrange(10):
             test_command()
-            num_fds = get_num_fds()
-            self.assertEqual(baseline, num_fds)
+            fds = get_fds()
+            self.assertEqual(len(baseline), len(fds), fds - baseline)
 
         for opts in get_opts(kwargs):
             for i in xrange(2):
                 test_command(**opts)
-                num_fds = get_num_fds()
-                self.assertEqual(baseline, num_fds, (baseline, num_fds, opts))
+                fds = get_fds()
+                self.assertEqual(len(baseline), len(fds), (fds - baseline, opts))
 
     def test_pushd_thread_safety(self):
         import threading
