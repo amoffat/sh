@@ -83,7 +83,6 @@ TEE_STDERR = {"err", 2}
 DEFAULT_ENCODING = getpreferredencoding() or "UTF-8"
 
 IS_MACOS = platform.system() in ("AIX", "Darwin")
-THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 SH_LOGGER_NAME = __name__
 
 # normally i would hate this idea of using a global to signify whether we are
