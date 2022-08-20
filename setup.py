@@ -18,6 +18,7 @@ def read(*parts):
     with codecs.open(join(HERE, *parts), "rb", "utf-8") as f:
         return f.read()
 
+
 setup(
     name="sh",
     version=sh.__version__,
@@ -25,6 +26,9 @@ setup(
     long_description=read("README.rst"),
     author=author,
     author_email=author_email,
+    install_requires=[
+        'typing; python_version < "3.5"',
+    ],
     maintainer=author,
     maintainer_email=author_email,
     keywords=keywords,

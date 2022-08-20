@@ -63,6 +63,7 @@ from io import UnsupportedOperation
 from io import open as fdopen
 from locale import getpreferredencoding
 from types import GeneratorType, ModuleType
+from typing import Callable, ContextManager
 
 IS_PY3 = sys.version_info[0] == 3
 MINOR_VER = sys.version_info[1]
@@ -3180,6 +3181,7 @@ class StreamBufferer(object):
 
 def with_lock(lock):
     def wrapped(fn):
+        # type: (Callable,) -> Callable[..., ContextManager]
         fn = contextmanager(fn)
 
         @contextmanager
