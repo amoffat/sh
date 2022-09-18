@@ -4,7 +4,7 @@ Using Sudo
 ==========
 
 There are 3 ways of using ``sudo`` to execute commands in your script.  These
-are listed in order of usefuless and security.  In most cases, you should just
+are listed in order of usefulness and security.  In most cases, you should just
 use a variation of :ref:`contrib_sudo`.
 
 .. _contrib_sudo:
