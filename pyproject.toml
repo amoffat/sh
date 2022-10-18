@@ -1,5 +1,57 @@
 [build-system]
-requires = ["setuptools>=42.2.0", "setuptools_scm[toml]>=3.4.3"]
+requires = ["setuptools>=61.2", "setuptools_scm[toml]>=3.4.3"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "sh"
+authors = [{name = "Andrew Moffat", email = "arwmoffat@gmail.com"}]
+maintainers = [{name = "Andrew Moffat", email = "arwmoffat@gmail.com"}]
+license = {text = "MIT"}
+description = "Python subprocess replacement"
+keywords = [
+    "subprocess",
+    "process",
+    "shell",
+    "launch",
+    "program",
+]
+readme = "README.rst"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 2",
+    "Programming Language :: Python :: 2.6",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.1",
+    "Programming Language :: Python :: 3.2",
+    "Programming Language :: Python :: 3.3",
+    "Programming Language :: Python :: 3.4",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+urls = {Homepage = "https://github.com/amoffat/sh"}
+dynamic = ["version"]
+
+[tool.distutils.bdist_wheel]
+universal = 1
+
+[tool.setuptools]
+py-modules = ["sh"]
+include-package-data = false
+
 [tool.setuptools_scm]
+
+[tool.flake8]
+max-line-length = "120"
