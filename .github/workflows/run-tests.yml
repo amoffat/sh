@@ -22,7 +22,7 @@ jobs:
 
     - name: Upgrade pip
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip setuptools build
 
     - name: Install dependencies
       run: |
@@ -43,9 +43,9 @@ jobs:
       if: matrix.python-version != '2.7' && matrix.python-version != 'pypy2'
       run: |
         python -m pip install coveralls==3.1.0
-        python -m pip install .
+        python -m build -nwx .
+        python -m pip install --upgrade ./dist/*.whl
         python -m flake8 sh.py test.py
-        python setup.py check --restructuredtext --metadata --strict
         SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=0 LANG=C coverage run -a --source=sh -m unittest
         SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=1 LANG=C coverage run -a --source=sh -m unittest
         SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=0 LANG=en_US.UTF-8 coverage run -a --source=sh -m unittest
