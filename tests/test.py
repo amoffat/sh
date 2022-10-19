@@ -2458,14 +2458,23 @@ sys.stderr.write("stderr")
 import sys
 import os
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb')
-sys.stdout.write(bytes("te漢字st", "utf8"))
+sys.stdout.write(bytes("te漢字st", "utf8") + "äåéë".encode("latin_1"))
 """
         )
-        fn = partial(pythons, py.name, _encoding="ascii")
+        fn = partial(python, py.name, _encoding="ascii")
 
         self.assertRaises(UnicodeDecodeError, fn)
 
         p = pythons(py.name, _encoding="ascii", _decode_errors="ignore")
+        self.assertEqual(p, "test")
+
+        p = python(
+            py.name,
+            _encoding="ascii",
+            _decode_errors="ignore",
+            _out=sys.stdout,
+            _tee=True,
+        )
         self.assertEqual(p, "test")
 
     def test_signal_exception(self):
@@ -2656,14 +2665,16 @@ print(time())
     def test_done_callback_no_deadlock(self):
         import time
 
-        py = create_tmp_test("""
+        py = create_tmp_test(
+            """
 from sh import sleep
 
 def done(cmd, success, exit_code):
     print(cmd, success, exit_code)
 
 sleep('1', _done=done)
-""")
+"""
+        )
 
         p = python(py.name, _bg=True, _timeout=2)
 
