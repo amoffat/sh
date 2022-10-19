@@ -2977,7 +2977,7 @@ def determine_how_to_feed_output(handler, encoding, decode_errors):
         process, finish = get_stringio_chunk_consumer(handler, encoding, decode_errors)
 
     elif hasattr(handler, "write"):
-        process, finish = get_file_chunk_consumer(handler)
+        process, finish = get_file_chunk_consumer(handler, decode_errors)
 
     else:
         try:
@@ -2991,21 +2991,21 @@ def determine_how_to_feed_output(handler, encoding, decode_errors):
                 return None  # noqa: E731
 
         else:
-            process, finish = get_fd_chunk_consumer(handler)
+            process, finish = get_fd_chunk_consumer(handler, decode_errors)
 
     return process, finish
 
 
-def get_fd_chunk_consumer(handler):
+def get_fd_chunk_consumer(handler, decode_errors):
     handler = fdopen(handler, "w", closefd=False)
-    return get_file_chunk_consumer(handler)
+    return get_file_chunk_consumer(handler, decode_errors)
 
 
-def get_file_chunk_consumer(handler):
+def get_file_chunk_consumer(handler, decode_errors):
     if getattr(handler, "encoding", None):
 
         def encode(chunk):
-            return chunk.decode(handler.encoding)  # noqa: E731
+            return chunk.decode(handler.encoding, decode_errors)  # noqa: E731
 
     else:
 
