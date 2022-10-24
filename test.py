@@ -2160,9 +2160,9 @@ import os
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb')
 IS_PY3 = sys.version_info[0] == 3
 if IS_PY3:
-    sys.stdout.write(bytes("te漢字st", "utf8"))
+    sys.stdout.write(bytes("te漢字st", "utf8") + "äåéë".encode("latin_1"))
 else:
-    sys.stdout.write("te漢字st")
+    sys.stdout.write("te漢字st" + u"äåéë".encode("latin_1"))
 """)
         fn = partial(python, py.name, _encoding="ascii")
 
@@ -2171,6 +2171,9 @@ else:
         self.assertRaises(UnicodeDecodeError, s, fn)
 
         p = python(py.name, _encoding="ascii", _decode_errors="ignore")
+        self.assertEqual(p, "test")
+
+        p = python(py.name, _encoding="ascii", _decode_errors="ignore", _out=sys.stdout, _tee=True)
         self.assertEqual(p, "test")
 
     def test_signal_exception(self):
