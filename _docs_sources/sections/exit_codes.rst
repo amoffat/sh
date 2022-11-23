@@ -25,10 +25,15 @@ return codes through the base class :class:`ErrorReturnCode`:
     except ErrorReturnCode:
         print("unknown error")
 
-.. seealso::
+You can also customize which exit codes indicate an error with :ref:`ok_code`. For example:
 
-    You can customize which exit codes indicate an error with :ref:`ok_code`.
-	    
+.. code-block:: python
+
+   for i in range(10):
+    	sh.grep("string to check", f"file_{i}.txt", _ok_code=(0, 1))
+
+where the :ref:`ok_code` makes a failure to find a match a no-op.
+
 Signals
 -------
 
