@@ -2085,7 +2085,13 @@ class OProc(object):
                     pass_fds.update(ca["pass_fds"])
 
                     # don't inherit file descriptors
-                    inherited_fds = os.listdir("/dev/fd")
+                    try:
+                        inherited_fds = os.listdir("/dev/fd")
+                    except (IOError, OSError):
+                        # Some systems don't have /dev/fd. Raises OSError in
+                        # Python2, FileNotFoundError on Python3. The latter doesn't
+                        # exist on Python2, but inherits from IOError, which does.
+                        inherited_fds = os.listdir("/proc/self/fd")
                     inherited_fds = set(int(fd) for fd in inherited_fds) - pass_fds
                     for fd in inherited_fds:
                         try:
