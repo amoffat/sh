@@ -25,20 +25,14 @@ http://amoffat.github.io/sh/
 __version__ = "2.0.0"
 __project_url__ = "https://github.com/amoffat/sh"
 
-from collections import deque
-
 import asyncio
+from collections import deque
 
 try:
     from collections.abc import Mapping
 except ImportError:
     from collections import Mapping
-from contextlib import contextmanager
-from functools import partial
-from io import UnsupportedOperation, open as fdopen
-from locale import getpreferredencoding
-from types import ModuleType, GeneratorType
-from typing import Union, Type, Dict, Any
+
 import ast
 import errno
 import fcntl
@@ -64,10 +58,16 @@ import traceback
 import tty
 import warnings
 import weakref
-from queue import Queue, Empty
 from asyncio import Queue as AQueue
-from io import StringIO, BytesIO
+from contextlib import contextmanager
+from functools import partial
+from io import BytesIO, StringIO, UnsupportedOperation
+from io import open as fdopen
+from locale import getpreferredencoding
+from queue import Empty, Queue
 from shlex import quote as shlex_quote
+from types import GeneratorType, ModuleType
+from typing import Any, Dict, Type, Union
 
 if "windows" in platform.system().lower():  # pragma: no cover
     raise ImportError(
@@ -761,7 +761,6 @@ class RunningCommand(object):
         launched, or because of a timeout passed into this method.
         """
         if not self._waited_until_completion:
-
             # if we've been given a timeout, we need to poll is_alive()
             if timeout is not None:
                 waited_for = 0
@@ -936,10 +935,11 @@ class RunningCommand(object):
                 await self._aio_queue.put(None)
 
         if sys.version_info < (3, 7, 0):
-            asyncio.ensure_future(queue_connector())
+            task = asyncio.ensure_future(queue_connector())
         else:
-            asyncio.create_task(queue_connector())
+            task = asyncio.create_task(queue_connector())
 
+        self._aio_task = task
         return self
 
     async def __anext__(self):
@@ -947,6 +947,9 @@ class RunningCommand(object):
         if chunk is not None:
             return chunk
         else:
+            exc = self._aio_task.exception()
+            if exc is not None:
+                raise exc
             raise StopAsyncIteration
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -1015,7 +1018,6 @@ def special_kwarg_validator(passed_kwargs, merged_kwargs, invalid_list):
     invalid_args = []
 
     for elem in invalid_list:
-
         if callable(elem):
             fn = elem
             ret = fn(passed_kwargs, merged_kwargs)
@@ -1207,7 +1209,7 @@ class Command(object):
         # this is not a *BYTE* size, this is a *CHUNK* size...meaning, that if
         # you're buffering out/err at 1024 bytes, the internal buffer size will
         # be "internal_bufsize" CHUNKS of 1024 bytes
-        "internal_bufsize": 3 * 1024 ** 2,
+        "internal_bufsize": 3 * 1024**2,
         "env": None,
         "piped": None,
         "iter": None,
@@ -1478,7 +1480,6 @@ class Command(object):
         # if we're running in foreground mode, we need to completely bypass
         # launching a RunningCommand and OProc and just do a spawn
         if call_args["fg"]:
-
             cwd = call_args["cwd"] or os.getcwd()
             with pushd(cwd):
                 if call_args["env"] is None:
@@ -2136,7 +2137,7 @@ class OProc(object):
                 os.close(close_pipe_write)
 
             os.close(exc_pipe_write)
-            fork_exc = os.read(exc_pipe_read, 1024 ** 2)
+            fork_exc = os.read(exc_pipe_read, 1024**2)
             os.close(exc_pipe_read)
             if fork_exc:
                 fork_exc = fork_exc.decode(DEFAULT_ENCODING)
@@ -2260,7 +2261,6 @@ class OProc(object):
                 and not pipe_err
                 and self._stderr_parent_fd
             ):
-
                 stderr_pipe = None
                 if pipe is OProc.STDERR and not ca["no_pipe"]:
                     stderr_pipe = self._pipe_queue
@@ -2863,7 +2863,6 @@ class StreamWriter(object):
     the "read" method, a string, or an iterable"""
 
     def __init__(self, log, stream, stdin, bufsize_type, encoding, tty_in):
-
         self.stream = stream
         self.stdin = stdin
 

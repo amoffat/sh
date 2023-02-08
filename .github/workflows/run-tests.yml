@@ -51,50 +51,50 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.8, 3.9, 3.10]
         use-select: [0, 1]
         lang: [C, en_US.UTF-8]
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - uses: actions/cache@v2
-      name: Cache pip directory
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-3.8
+      - uses: actions/cache@v2
+        name: Cache pip directory
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-3.8
 
-    - uses: actions/cache@v2
-      name: Cache poetry deps
-      env:
-        cache-name: poetry-deps
-      with:
-        path: .venv
-        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('poetry.lock') }}-${{ matrix.python-version }}
+      - uses: actions/cache@v2
+        name: Cache poetry deps
+        env:
+          cache-name: poetry-deps
+        with:
+          path: .venv
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('poetry.lock') }}-${{ matrix.python-version }}
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Install poetry
-      run: |
-        pip install poetry
+      - name: Install poetry
+        run: |
+          pip install poetry
 
-    - name: Install dependencies
-      run: |
-        poetry config virtualenvs.in-project true
-        poetry install
+      - name: Install dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry install
 
-    - name: Run tests
-      run: |
-        SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=${{ matrix.use-select }} LANG=${{ matrix.lang }} poetry run coverage run -a -m unittest
+      - name: Run tests
+        run: |
+          SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=${{ matrix.use-select }} LANG=${{ matrix.lang }} poetry run coverage run -a -m unittest
 
-    - name: Store coverage
-      uses: actions/upload-artifact@v2
-      with:
-        name: coverage.${{ matrix.use-select }}.${{ matrix.lang }}.${{ matrix.python-version }}
-        path: .coverage
+      - name: Store coverage
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage.${{ matrix.use-select }}.${{ matrix.lang }}.${{ matrix.python-version }}
+          path: .coverage
 
   report:
     name: Report Coverage
