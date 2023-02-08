@@ -2461,14 +2461,13 @@ sys.stdout = os.fdopen(sys.stdout.fileno(), 'wb')
 sys.stdout.write(bytes("te漢字st", "utf8") + "äåéë".encode("latin_1"))
 """
         )
-        fn = partial(python, py.name, _encoding="ascii")
-
+        fn = partial(pythons, py.name, _encoding="ascii")
         self.assertRaises(UnicodeDecodeError, fn)
 
         p = pythons(py.name, _encoding="ascii", _decode_errors="ignore")
         self.assertEqual(p, "test")
 
-        p = python(
+        p = pythons(
             py.name,
             _encoding="ascii",
             _decode_errors="ignore",
