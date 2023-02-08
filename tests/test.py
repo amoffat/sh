@@ -1960,6 +1960,19 @@ while True:
         self.assertEqual("ANDREW", letters)
         self.assertTrue(all([t > 0.3 for t in times]))
 
+    def test_no_out_iter_err(self):
+        py = create_tmp_test(
+            """
+import sys
+sys.stderr.write("1\\n")
+sys.stderr.write("2\\n")
+sys.stderr.write("3\\n")
+sys.stderr.flush()
+"""
+        )
+        nums = [int(num.strip()) for num in python(py.name, _iter="err", _no_out=True)]
+        assert nums == [1, 2, 3]
+
     def test_generator_and_callback(self):
         py = create_tmp_test(
             """

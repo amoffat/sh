@@ -1072,6 +1072,14 @@ def ob_is_pipe(ob):
     return is_pipe
 
 
+def output_iterator_validator(passed_kwargs, merged_kwargs):
+    invalid = []
+    if passed_kwargs.get("no_out") and passed_kwargs.get("iter") in (True, "out"):
+        error = "You cannot iterate over output if there is no output"
+        invalid.append((("no_out", "iter"), error))
+    return invalid
+
+
 def tty_in_validator(passed_kwargs, merged_kwargs):
     # here we'll validate that people aren't randomly shotgun-debugging different tty
     # options and hoping that they'll work, without understanding what they do
@@ -1291,7 +1299,7 @@ class Command(object):
             ("piped", "no_pipe"),
             "Using a pipe doesn't make sense if you've disabled the pipe",
         ),
-        (("no_out", "iter"), "You cannot iterate over output if there is no output"),
+        output_iterator_validator,
         (("close_fds", "pass_fds"), "Passing `pass_fds` forces `close_fds` to be True"),
         tty_in_validator,
         bufsize_validator,
