@@ -25,18 +25,14 @@ http://amoffat.github.io/sh/
 __version__ = "2.0.0"
 __project_url__ = "https://github.com/amoffat/sh"
 
+import asyncio
 from collections import deque
 
 try:
     from collections.abc import Mapping
 except ImportError:
     from collections import Mapping
-from contextlib import contextmanager
-from functools import partial
-from io import UnsupportedOperation, open as fdopen
-from locale import getpreferredencoding
-from types import ModuleType, GeneratorType
-from typing import Union, Type, Dict, Any
+
 import ast
 import errno
 import fcntl
@@ -62,9 +58,16 @@ import traceback
 import tty
 import warnings
 import weakref
-from queue import Queue, Empty
-from io import StringIO, BytesIO
+from asyncio import Queue as AQueue
+from contextlib import contextmanager
+from functools import partial
+from io import BytesIO, StringIO, UnsupportedOperation
+from io import open as fdopen
+from locale import getpreferredencoding
+from queue import Empty, Queue
 from shlex import quote as shlex_quote
+from types import GeneratorType, ModuleType
+from typing import Any, Dict, Type, Union
 
 if "windows" in platform.system().lower():  # pragma: no cover
     raise ImportError(
@@ -650,6 +653,21 @@ class RunningCommand(object):
         should_wait = True
         spawn_process = True
 
+        # if we're using an async for loop on this object, we need to put the underlying
+        # iterable in no-block mode. however, we will only know if we're using an async
+        # for loop after this object is constructed. so we'll set it to False now, but
+        # then later set it to True if we need it
+        self._force_noblock_iter = False
+
+        # this event is used when we want to `await` a RunningCommand. see how it gets
+        # used in self.__await__
+        try:
+            asyncio.get_event_loop()
+        except RuntimeError:
+            self.aio_output_complete = None
+        else:
+            self.aio_output_complete = asyncio.Event()
+
         # this is used to track if we've already raised StopIteration, and if we
         # have, raise it immediately again if the user tries to call next() on
         # us.  https://github.com/amoffat/sh/issues/273
@@ -662,6 +680,9 @@ class RunningCommand(object):
             get_prepend_stack().append(self)
 
         if call_args["piped"] or call_args["iter"] or call_args["iter_noblock"]:
+            should_wait = False
+
+        if call_args["async"]:
             should_wait = False
 
         # we're running in the background, return self and let us lazily
@@ -740,7 +761,6 @@ class RunningCommand(object):
         launched, or because of a timeout passed into this method.
         """
         if not self._waited_until_completion:
-
             # if we've been given a timeout, we need to poll is_alive()
             if timeout is not None:
                 waited_for = 0
@@ -846,21 +866,29 @@ class RunningCommand(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         """allow us to iterate over the output of our command"""
 
         if self._stopped_iteration:
             raise StopIteration()
 
+        pq = self.process._pipe_queue
+
+        # the idea with this is, if we're using regular `_iter` (non-asyncio), then we
+        # want to have blocking be True when we read from the pipe queue, so our cpu
+        # doesn't spin too fast. however, if we *are* using asyncio (an async for loop),
+        # then we want non-blocking pipe queue reads, because we'll do an asyncio.sleep,
+        # in the coroutine that is doing the iteration, this way coroutines have better
+        # yielding (see queue_connector in __aiter__).
+        block_pq_read = not self._force_noblock_iter
+
         # we do this because if get blocks, we can't catch a KeyboardInterrupt
         # so the slight timeout allows for that.
         while True:
             try:
-                chunk = self.process._pipe_queue.get(
-                    True, self.call_args["iter_poll_time"]
-                )
+                chunk = pq.get(block_pq_read, self.call_args["iter_poll_time"])
             except Empty:
-                if self.call_args["iter_noblock"]:
+                if self.call_args["iter_noblock"] or self._force_noblock_iter:
                     return errno.EWOULDBLOCK
             else:
                 if chunk is None:
@@ -874,8 +902,55 @@ class RunningCommand(object):
                 except UnicodeDecodeError:
                     return chunk
 
-    # python 3
-    __next__ = next
+    def __await__(self):
+        async def wait_for_completion():
+            await self.aio_output_complete.wait()
+            return str(self)
+
+        return wait_for_completion().__await__()
+
+    def __aiter__(self):
+        # maxsize is critical to making sure our queue_connector function below yields
+        # when it awaits _aio_queue.put(chunk). if we didn't have a maxsize, our loop
+        # would happily iterate through `chunk in self` and put onto the queue without
+        # any blocking, and therefore no yielding, which would prevent other coroutines
+        # from running.
+        self._aio_queue = AQueue(maxsize=1)
+        self._force_noblock_iter = True
+
+        # the sole purpose of this coroutine is to connect our pipe_queue (which is
+        # being populated by a thread) to an asyncio-friendly queue. then, in __anext__,
+        # we can iterate over that asyncio queue.
+        async def queue_connector():
+            try:
+                # this will spin as fast as possible if there's no data to read,
+                # thanks to self._force_noblock_iter. so we sleep below.
+                for chunk in self:
+                    if chunk == errno.EWOULDBLOCK:
+                        # let us have better coroutine yielding.
+                        await asyncio.sleep(0.01)
+                    else:
+                        await self._aio_queue.put(chunk)
+            finally:
+                await self._aio_queue.put(None)
+
+        if sys.version_info < (3, 7, 0):
+            task = asyncio.ensure_future(queue_connector())
+        else:
+            task = asyncio.create_task(queue_connector())
+
+        self._aio_task = task
+        return self
+
+    async def __anext__(self):
+        chunk = await self._aio_queue.get()
+        if chunk is not None:
+            return chunk
+        else:
+            exc = self._aio_task.exception()
+            if exc is not None:
+                raise exc
+            raise StopAsyncIteration
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.call_args["with"] and get_prepend_stack():
@@ -943,7 +1018,6 @@ def special_kwarg_validator(passed_kwargs, merged_kwargs, invalid_list):
     invalid_args = []
 
     for elem in invalid_list:
-
         if callable(elem):
             fn = elem
             ret = fn(passed_kwargs, merged_kwargs)
@@ -1135,7 +1209,7 @@ class Command(object):
         # this is not a *BYTE* size, this is a *CHUNK* size...meaning, that if
         # you're buffering out/err at 1024 bytes, the internal buffer size will
         # be "internal_bufsize" CHUNKS of 1024 bytes
-        "internal_bufsize": 3 * 1024 ** 2,
+        "internal_bufsize": 3 * 1024**2,
         "env": None,
         "piped": None,
         "iter": None,
@@ -1205,6 +1279,7 @@ class Command(object):
         # return an instance of RunningCommand always. if this isn't True, then
         # sometimes we may return just a plain unicode string
         "return_cmd": False,
+        "async": False,
     }
 
     # this is a collection of validators to make sure the special kwargs make
@@ -1410,7 +1485,6 @@ class Command(object):
         # if we're running in foreground mode, we need to completely bypass
         # launching a RunningCommand and OProc and just do a spawn
         if call_args["fg"]:
-
             cwd = call_args["cwd"] or os.getcwd()
             with pushd(cwd):
                 if call_args["env"] is None:
@@ -1927,8 +2001,8 @@ class OProc(object):
             fcntl.fcntl(exc_pipe_write, fcntl.F_SETFD, flags)
 
             try:
-                # ignoring SIGHUP lets us persist even after the parent process
-                # exits.  only ignore if we're backgrounded
+                # ignoring SIGHUP lets us persist even after the controlling terminal
+                # is closed
                 if ca["bg"] is True:
                     signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
@@ -2068,7 +2142,7 @@ class OProc(object):
                 os.close(close_pipe_write)
 
             os.close(exc_pipe_write)
-            fork_exc = os.read(exc_pipe_read, 1024 ** 2)
+            fork_exc = os.read(exc_pipe_read, 1024**2)
             os.close(exc_pipe_read)
             if fork_exc:
                 fork_exc = fork_exc.decode(DEFAULT_ENCODING)
@@ -2192,7 +2266,6 @@ class OProc(object):
                 and not pipe_err
                 and self._stderr_parent_fd
             ):
-
                 stderr_pipe = None
                 if pipe is OProc.STDERR and not ca["no_pipe"]:
                     stderr_pipe = self._pipe_queue
@@ -2238,7 +2311,13 @@ class OProc(object):
             # RunningCommand.wait() does), because we want the exception to be
             # re-raised in the future, if we DO call .wait()
             handle_exit_code = None
-            if not self.command._spawned_and_waited and ca["bg_exc"]:
+            if (
+                not self.command._spawned_and_waited
+                and ca["bg_exc"]
+                # we don't want background exceptions if we're doing async stuff,
+                # because we want those to bubble up.
+                and not ca["async"]
+            ):
 
                 def fn(exit_code):
                     with process_assign_lock:
@@ -2286,6 +2365,23 @@ class OProc(object):
             # prevents that hanging
             self._stop_output_event = threading.Event()
 
+            # we need to set up a callback to fire when our `output_thread` is about
+            # to exit. this callback will set an asyncio Event, so that coroutiens can
+            # be notified that our output is finished.
+            # if the `sh` command was launched from within a thread (so we're not in
+            # the main thread), then we won't have an event loop.
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+
+                def output_complete():
+                    pass
+
+            else:
+
+                def output_complete():
+                    loop.call_soon_threadsafe(self.command.aio_output_complete.set)
+
             self._output_thread_exc_queue = Queue(1)
             thread_name = "STDOUT/ERR thread for pid %d" % self.pid
             self._output_thread = _start_daemon_thread(
@@ -2299,38 +2395,11 @@ class OProc(object):
                 self.is_alive,
                 self._quit_threads,
                 self._stop_output_event,
+                output_complete,
             )
 
     def __repr__(self):
         return "<Process %d %r>" % (self.pid, self.cmd[:500])
-
-    # these next 3 properties are primary for tests
-    @property
-    def output_thread_exc(self):
-        exc = None
-        try:
-            exc = self._output_thread_exc_queue.get(False)
-        except Empty:
-            pass
-        return exc
-
-    @property
-    def input_thread_exc(self):
-        exc = None
-        try:
-            exc = self._input_thread_exc_queue.get(False)
-        except Empty:
-            pass
-        return exc
-
-    @property
-    def bg_thread_exc(self):
-        exc = None
-        try:
-            exc = self._bg_thread_exc_queue.get(False)
-        except Empty:
-            pass
-        return exc
 
     def change_in_bufsize(self, buf):
         self._stdin_stream.stream_bufferer.change_buffering(buf)
@@ -2401,6 +2470,14 @@ class OProc(object):
         # and handle the status, otherwise let us do it.
         acquired = self._wait_lock.acquire(False)
         if not acquired:
+            # this sleep here is a hack. occasionally, is_alive can get called so
+            # rapidly that it appears to not let the wait lock be acquired in the main
+            # thread, which is attempting to call wait(). by introducing a tiny sleep
+            # (ugh), this seems to prevent other threads from equally attempting to
+            # acquire the lock. TODO find out if this is a general python bug
+            # if we don't do this, if we're unlucky, some commands may hang for a
+            # second before terminating, due to their threads spamming is_alive() calls.
+            time.sleep(0.1)
             if self.exit_code is not None:
                 return False, self.exit_code
             return True, self.exit_code
@@ -2557,7 +2634,14 @@ def background_thread(
 
 
 def output_thread(
-    log, stdout, stderr, timeout_event, is_alive, quit_thread, stop_output_event
+    log,
+    stdout,
+    stderr,
+    timeout_event,
+    is_alive,
+    quit_thread,
+    stop_output_event,
+    output_complete,
 ):
     """this function is run in a separate thread.  it reads from the
     process's stdout stream (a streamreader), and waits for it to claim that
@@ -2606,6 +2690,8 @@ def output_thread(
 
     if stderr:
         stderr.close()
+
+    output_complete()
 
 
 class DoneReadingForever(Exception):
@@ -2782,7 +2868,6 @@ class StreamWriter(object):
     the "read" method, a string, or an iterable"""
 
     def __init__(self, log, stream, stdin, bufsize_type, encoding, tty_in):
-
         self.stream = stream
         self.stdin = stdin
 

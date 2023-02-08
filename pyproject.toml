@@ -19,10 +19,9 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development :: Build Tools",
@@ -30,18 +29,18 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.6.2,<4.0"
+python = ">=3.8.1,<4.0"
 
-[tool.poetry.dev-dependencies]
-tox = "^3.24.3"
-black = "^21.7b0"
-coveralls = "^3.2.0"
-flake8 = "^3.9.2"
-rstcheck = "^3.3.1"
-Sphinx = "^4.1.2"
-sphinx-rtd-theme = "^0.5.2"
-pytest = "^6.2.4"
-mypy = "^0.910"
+[tool.poetry.group.dev.dependencies]
+tox = "^4.4.5"
+black = "^23.1.0"
+coveralls = "^3.3.1"
+flake8 = "^6.0.0"
+rstcheck = "^6.1.1"
+sphinx = "^6.1.3"
+sphinx-rtd-theme = "^1.2.0"
+pytest = "^7.2.1"
+mypy = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0a5"]

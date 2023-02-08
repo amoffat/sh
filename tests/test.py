@@ -1,7 +1,5 @@
 # -*- coding: utf8 -*-
-from contextlib import contextmanager
-from functools import wraps, partial
-from os.path import exists, join, realpath, dirname, split
+import asyncio
 import errno
 import fcntl
 import inspect
@@ -10,7 +8,6 @@ import os
 import platform
 import pty
 import resource
-import sh
 import signal
 import stat
 import sys
@@ -19,10 +16,15 @@ import time
 import unittest
 import unittest.mock
 import warnings
-from pathlib import Path
-from io import StringIO, BytesIO
+from asyncio.queues import Queue as AQueue
+from contextlib import contextmanager
+from functools import partial, wraps
 from hashlib import md5
+from io import BytesIO, StringIO
+from os.path import dirname, exists, join, realpath, split
+from pathlib import Path
 
+import sh
 
 THIS_DIR = Path(__file__).resolve().parent
 RAND_BYTES = os.urandom(10)
@@ -336,7 +338,7 @@ exit(3)
         )
 
     def test_ok_code(self):
-        from sh import ls, ErrorReturnCode_1, ErrorReturnCode_2
+        from sh import ErrorReturnCode_1, ErrorReturnCode_2, ls
 
         exc_to_test = ErrorReturnCode_2
         code_to_pass = 2
@@ -473,8 +475,9 @@ while True:
         self.assertEqual(out, match)
 
     def test_manual_stdin_file(self):
-        from sh import tr
         import tempfile
+
+        from sh import tr
 
         test_string = "testing\nherp\nderp\n"
 
@@ -550,7 +553,7 @@ print(dict(HERP=sh.HERP))
         self.assertEqual(out, "{'HERP': 'DERP'}")
 
     def test_which(self):
-        from sh import which, ls
+        from sh import ls, which
 
         self.assertEqual(which("fjoawjefojawe"), None)
         self.assertEqual(which("ls"), str(ls))
@@ -657,6 +660,7 @@ print(os.listdir("/dev/fd"))
 
     def test_no_arg(self):
         import pwd
+
         from sh import whoami
 
         u1 = whoami().strip()
@@ -1011,8 +1015,9 @@ print(sys.argv[1])
         self.assertEqual(c1, c2)
 
     def test_background(self):
-        from sh import sleep
         import time
+
+        from sh import sleep
 
         start = time.time()
         sleep_time = 0.5
@@ -1026,18 +1031,14 @@ print(sys.argv[1])
         self.assertGreater(now - start, sleep_time)
 
     def test_background_exception(self):
-        from sh import ls, ErrorReturnCode_1, ErrorReturnCode_2
-
-        p = ls("/ofawjeofj", _bg=True, _bg_exc=False)  # should not raise
-
-        exc_to_test = ErrorReturnCode_2
-        if IS_MACOS:
-            exc_to_test = ErrorReturnCode_1
-        self.assertRaises(exc_to_test, p.wait)  # should raise
+        py = create_tmp_test("exit(1)")
+        p = python(py.name, _bg=True, _bg_exc=False)  # should not raise
+        self.assertRaises(sh.ErrorReturnCode_1, p.wait)  # should raise
 
     def test_with_context(self):
-        from sh import whoami
         import getpass
+
+        from sh import whoami
 
         py = create_tmp_test(
             """
@@ -1057,8 +1058,9 @@ subprocess.Popen(sys.argv[1:], shell=False).wait()
         self.assertIn(getpass.getuser(), out)
 
     def test_with_context_args(self):
-        from sh import whoami
         import getpass
+
+        from sh import whoami
 
         py = create_tmp_test(
             """
@@ -1670,6 +1672,96 @@ for i in range(42):
         self.assertEqual(len(out), 42)
         self.assertEqual(sum(out), 861)
 
+    def test_async(self):
+        py = create_tmp_test(
+            """
+import os
+import time
+time.sleep(0.5)
+print("hello")
+"""
+        )
+
+        alternating = []
+        q = AQueue()
+
+        async def producer(q):
+            alternating.append(1)
+            msg = await python(py.name, _async=True)
+            alternating.append(1)
+            await q.put(msg.strip())
+
+        async def consumer(q):
+            await asyncio.sleep(0.1)
+            alternating.append(2)
+            msg = await q.get()
+            self.assertEqual(msg, "hello")
+            alternating.append(2)
+
+        loop = asyncio.get_event_loop()
+        fut = asyncio.gather(producer(q), consumer(q))
+        loop.run_until_complete(fut)
+        self.assertListEqual(alternating, [1, 2, 1, 2])
+
+    def test_async_exc(self):
+        py = create_tmp_test("""exit(34)""")
+
+        async def producer():
+            await python(py.name, _async=True)
+
+        loop = asyncio.get_event_loop()
+        self.assertRaises(sh.ErrorReturnCode_34, loop.run_until_complete, producer())
+
+    def test_async_iter(self):
+        py = create_tmp_test(
+            """
+for i in range(5):
+    print(i)
+"""
+        )
+        q = AQueue()
+
+        # this list will prove that our coroutines are yielding to eachother as each
+        # line is produced
+        alternating = []
+
+        async def producer(q):
+            async for line in python(py.name, _iter=True):
+                alternating.append(1)
+                await q.put(int(line.strip()))
+
+            await q.put(None)
+
+        async def consumer(q):
+            while True:
+                line = await q.get()
+                if line is None:
+                    return
+                alternating.append(2)
+
+        loop = asyncio.get_event_loop()
+        res = asyncio.gather(producer(q), consumer(q))
+        loop.run_until_complete(res)
+        self.assertListEqual(alternating, [1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
+
+    def test_async_iter_exc(self):
+        py = create_tmp_test(
+            """
+for i in range(5):
+    print(i)
+exit(34)
+"""
+        )
+
+        lines = []
+
+        async def producer():
+            async for line in python(py.name, _async=True):
+                lines.append(int(line.strip()))
+
+        loop = asyncio.get_event_loop()
+        self.assertRaises(sh.ErrorReturnCode_34, loop.run_until_complete, producer())
+
     def test_handle_both_out_and_err(self):
         py = create_tmp_test(
             """
@@ -1970,8 +2062,9 @@ exit(49)
         self.assertEqual(49, p.exit_code)
 
     def test_cwd(self):
-        from sh import pwd
         from os.path import realpath
+
+        from sh import pwd
 
         self.assertEqual(str(pwd(_cwd="/tmp")), realpath("/tmp") + "\n")
         self.assertEqual(str(pwd(_cwd="/etc")), realpath("/etc") + "\n")
@@ -2181,8 +2274,9 @@ sys.stdout.write("line1")
         )
 
     def test_timeout(self):
-        import sh
         from time import time
+
+        import sh
 
         sleep_for = 3
         timeout = 1
@@ -2256,7 +2350,7 @@ exit(1)
     # designed to check if the ErrorReturnCode constructor does not raise
     # an UnicodeDecodeError
     def test_non_ascii_error(self):
-        from sh import ls, ErrorReturnCode
+        from sh import ErrorReturnCode, ls
 
         test = "/á"
         self.assertRaises(ErrorReturnCode, ls, test, _encoding="utf8")
@@ -2750,8 +2844,9 @@ sys.stdout.flush()
         self.assertLess(abs(1 - time2), 0.5)
 
     def test_custom_timeout_signal(self):
-        from sh import TimeoutException
         import signal
+
+        from sh import TimeoutException
 
         py = create_tmp_test(
             """
@@ -3107,6 +3202,7 @@ print("字")
     def test_signal_exception_aliases(self):
         """proves that signal exceptions with numbers and names are equivalent"""
         import signal
+
         import sh
 
         sig_name = "SignalException_%d" % signal.SIGQUIT
