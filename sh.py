@@ -3418,12 +3418,6 @@ class Environment(dict):
         if k.startswith("__") and k.endswith("__"):
             raise AttributeError
 
-        if k == "cd":
-            # Don't resolve the system binary. It's useful in scripts to be
-            # able to switch directories in the current process. Can also be
-            # used as a context manager.
-            return Cd
-
         # is it a command?
         cmd = resolve_command(k, self.globs[Command.__name__], self.baked_args)
         if cmd:
@@ -3452,20 +3446,6 @@ class Environment(dict):
     @staticmethod
     def b_which(program, paths=None):
         return _which(program, paths)
-
-
-class Cd(object):
-    def __new__(cls, path=None):
-        res = super(Cd, cls).__new__(cls)
-        res.old_path = os.getcwd()
-        os.chdir(path or os.path.expanduser("~"))
-        return res
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        os.chdir(self.old_path)
 
 
 class Contrib(ModuleType):  # pragma: no cover

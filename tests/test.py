@@ -2579,34 +2579,15 @@ p.wait()
         self.assertEqual(new_wd2, child)
 
     def test_pushd_cd(self):
-        """test that pushd works like pushd/popd with built-in cd correctly"""
+        """test that pushd works like pushd/popd"""
         child = realpath(tempfile.mkdtemp())
         try:
             old_wd = os.getcwd()
             with sh.pushd(tempdir):
-                self.assertEqual(tempdir, os.getcwd())
-                sh.cd(child)
-                self.assertEqual(child, os.getcwd())
-
+                self.assertEqual(str(tempdir), os.getcwd())
             self.assertEqual(old_wd, os.getcwd())
         finally:
             os.rmdir(child)
-
-    def test_cd_homedir(self):
-        orig = os.getcwd()
-        my_dir = os.path.realpath(
-            os.path.expanduser("~")
-        )  # Use realpath because homedir may be a symlink
-        sh.cd()
-
-        self.assertNotEqual(orig, os.getcwd())
-        self.assertEqual(my_dir, os.getcwd())
-
-    def test_cd_context_manager(self):
-        orig = os.getcwd()
-        with sh.cd(tempdir):
-            self.assertEqual(tempdir, os.getcwd())
-        self.assertEqual(orig, os.getcwd())
 
     def test_non_existant_cwd(self):
         from sh import ls
@@ -3160,9 +3141,6 @@ exit(1)
 
     def test_args_deprecated(self):
         self.assertRaises(DeprecationWarning, sh.args, _env={})
-
-    def test_cd_deprecated(self):
-        self.assertRaises(DeprecationWarning, sh.cd)
 
     def test_percent_doesnt_fail_logging(self):
         """test that a command name doesn't interfere with string formatting in
