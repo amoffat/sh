@@ -1376,11 +1376,12 @@ class Command(object):
         return call_args, kwargs
 
     def bake(self, *args, **kwargs):
-        """returns a new Command object after baking(freezing) the given 
+        """returns a new Command object after baking(freezing) the given
         command arguments which are used automatically when its exec'ed
-  
-        special keyword arguments can be temporary baked and additionally
-        be overridden in __call__ or in subsequent bakes (basically setting defaults)"""
+
+        special keyword arguments can be temporary baked and additionally be
+        overridden in __call__ or in subsequent bakes (basically setting
+        defaults)"""
 
         # construct the base Command
         fn = type(self)(self._path)
