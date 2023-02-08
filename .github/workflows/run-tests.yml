@@ -16,18 +16,18 @@ jobs:
         name: Cache pip directory
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-3.8
+          key: ${{ runner.os }}-pip-3.9
 
       - uses: actions/cache@v2
         name: Cache poetry deps
         with:
           path: .venv
-          key: ${{ runner.os }}-build-${{ hashFiles('poetry.lock') }}-3.8
+          key: ${{ runner.os }}-build-${{ hashFiles('poetry.lock') }}-3.9
 
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Install poetry
         run: |
@@ -62,7 +62,7 @@ jobs:
         name: Cache pip directory
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-3.8
+          key: ${{ runner.os }}-pip-3.9
 
       - uses: actions/cache@v2
         name: Cache poetry deps
@@ -107,7 +107,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
 
       - name: Install dependencies
         run: |
