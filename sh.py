@@ -2,7 +2,7 @@
 http://amoffat.github.io/sh/
 """
 # ===============================================================================
-# Copyright (C) 2011-2021 by Andrew Moffat
+# Copyright (C) 2011-2023 by Andrew Moffat
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
