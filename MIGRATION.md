@@ -43,28 +43,6 @@ must explicitly use `_in=`.
 
 None
 
-## Removal of the custom `sh.cd`
-
-`sh.cd` was implemented as a custom function and shadowed the system `cd` binary in
-order to be useful. `sh.cd` changed the current working directory globally for the
-python script. With the removal of this custom override, calling `sh.cd` will fall back
-to your actual system binary, which will only affect the current working directory
-_for the duration of the `sh.cd` process._ In other words, it will no longer behave
-as intended.
-
-### Workaround
-
-I have inserted a breaking `DeprecationWarning` on all uses of `sh.cd` to help you find
-them quickly. Replace those instances with `sh.pushd`. It is like `sh.cd`, but operates
-as a context manager with scoping to only affect `sh` commands within the scope:
-
-```python
-import sh
-
-with sh.pushd("/tmp"):
-    sh.ls()
-```
-
 ## New processes don't launch in new session
 
 In `1.*`, `_new_session` defaulted to `True`. It now defaults to `False`. The reason
