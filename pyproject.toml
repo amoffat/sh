@@ -5,8 +5,8 @@ description = "Python subprocess replacement"
 authors = ["Andrew Moffat <arwmoffat@gmail.com>"]
 readme = "README.rst"
 maintainers = [
-    "Andrew Moffat <https://github.com/amoffat>",
-    "Erik Cederstrand <https://github.com/ecederstrand>"
+    "Andrew Moffat <arwmoffat@gmail.com>",
+    "Erik Cederstrand <erik@cederstrand.dk>"
 ]
 homepage = "https://amoffat.github.io/sh/"
 repository = "https://github.com/amoffat/sh"
