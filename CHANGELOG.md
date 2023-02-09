@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 -
+## 2.0.0 - 2/9/22
 
 - Removed magical module-like execution contexts [#636](https://github.com/amoffat/sh/issues/636)
 - Added basic asyncio support via `_async`
