@@ -71,7 +71,7 @@ the top of files that use `sh`:
 ```python
 import sh
 
-sh = sh(_return_cmd=True)
+sh = sh.bake(_return_cmd=True)
 ```
 
 ## Piping to STDIN
@@ -92,8 +92,10 @@ the process group of the python script, so that they receive SIGINTs correctly.
 
 ### Workaround
 
+To preserve the old behavior:
+
 ```python
 import sh
 
-sh = sh(_new_session=True)
+sh = sh.bake(_new_session=True)
 ```
