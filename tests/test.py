@@ -2503,6 +2503,15 @@ sys.stdout.write(bytes("te漢字st", "utf8") + "äåéë".encode("latin_1"))
         )
         self.assertEqual(p, "test")
 
+        p = python(
+            py.name,
+            _encoding="ascii",
+            _decode_errors="ignore",
+            _out=sys.stdout,
+            _tee=True,
+        )
+        self.assertEqual(p, "test")
+
     def test_signal_exception(self):
         from sh import SignalException_15
 
