@@ -622,7 +622,7 @@ class RunningCommand(object):
     exceptions."""
 
     # these are attributes that we allow to pass through to OProc
-    _OProc_attr_whitelist = {
+    _OProc_attr_allowlist = {
         "signal",
         "terminate",
         "kill",
@@ -969,7 +969,7 @@ class RunningCommand(object):
 
     def __getattr__(self, p):
         # let these three attributes pass through to the OProc object
-        if p in self._OProc_attr_whitelist:
+        if p in self._OProc_attr_allowlist:
             if self.process:
                 return getattr(self.process, p)
             else:
@@ -1114,8 +1114,8 @@ def fg_validator(passed_kwargs, merged_kwargs):
 _fg is invalid with nearly every other option, see warning and workaround here:
 
     https://amoffat.github.io/sh/sections/special_arguments.html#fg"""
-    whitelist = {"env", "fg", "cwd"}
-    offending = set(passed_kwargs.keys()) - whitelist
+    allowlist = {"env", "fg", "cwd"}
+    offending = set(passed_kwargs.keys()) - allowlist
 
     if "fg" in passed_kwargs and passed_kwargs["fg"] and offending:
         invalid.append(("fg", msg))
@@ -1280,7 +1280,7 @@ class Command(object):
         # whether or not to close all inherited fds. typically, this should be True,
         # as inheriting fds can be a security vulnerability
         "close_fds": True,
-        # a whitelist of the integer fds to pass through to the child process. setting
+        # a allowlist of the integer fds to pass through to the child process. setting
         # this forces close_fds to be True
         "pass_fds": set(),
         # return an instance of RunningCommand always. if this isn't True, then
@@ -3365,7 +3365,7 @@ class Environment(dict):
     # not resolve to functions.  we don't want to accidentally shadow real
     # commands with functions/imports that we define in sh.py.  for example,
     # "import time" may override the time system program
-    whitelist = {
+    allowlist = {
         "Command",
         "RunningCommand",
         "CommandNotFound",
@@ -3403,8 +3403,8 @@ class Environment(dict):
             k = "_args"
 
         # if we're trying to import something real, see if it's in our global scope.
-        # what defines "real" is that it's in our whitelist
-        if k in self.whitelist:
+        # what defines "real" is that it's in our allowlist
+        if k in self.allowlist:
             return self.globs[k]
 
         # somebody tried to be funny and do "from sh import *"
