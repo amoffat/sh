@@ -12,6 +12,7 @@
 - Removed the builtin override `cd` [link](https://github.com/amoffat/sh/pull/584#discussion_r698055681)
 - Altered process launching model to behave more expectedly [#495](https://github.com/amoffat/sh/issues/495)
 - Bugfix where `_no_out` isn't allowed with `_iter="err"` [#638](https://github.com/amoffat/sh/issues/638)
+- Allow keyword arguments to have a list of values [#529](https://github.com/amoffat/sh/issues/529)
 
 ## 1.14.3 - 7/17/22
 
