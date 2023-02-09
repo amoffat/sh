@@ -1,3 +1,0 @@
-include CHANGELOG.md LICENSE.txt README.rst test.py
-
-global-exclude *.pyc
