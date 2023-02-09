@@ -128,3 +128,16 @@ jobs:
         run: |
           coverage report
           coveralls --service=github
+
+  deploy:
+    name: Deploy
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref_name == "master"
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Publish
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
