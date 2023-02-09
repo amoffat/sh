@@ -3403,18 +3403,33 @@ class ExecutionContextTests(unittest.TestCase):
         import sh
 
         out = StringIO()
-        _sh = sh(_out=out)
+        _sh = sh.bake(_out=out)
         _sh.echo("-n", "TEST")
         self.assertEqual("TEST", out.getvalue())
+
+    def test_multiline_defaults(self):
+        py = create_tmp_test(
+            """
+import os
+print(os.environ["ABC"])
+"""
+        )
+
+        sh2 = sh.bake(
+            _env={
+                "ABC": "123",
+            }
+        )
+        output = sh2.python(py.name).strip()
+        assert output == "123"
 
     def test_no_interfere1(self):
         import sh
 
         out = StringIO()
-        _sh = sh(_out=out)  # noqa: F841
-        from _sh import echo
+        _sh = sh.bake(_out=out)  # noqa: F841
 
-        echo("-n", "TEST")
+        _sh.echo("-n", "TEST")
         self.assertEqual("TEST", out.getvalue())
 
         # Emptying the StringIO
@@ -3430,7 +3445,7 @@ class ExecutionContextTests(unittest.TestCase):
         out = StringIO()
         from sh import echo
 
-        _sh = sh(_out=out)  # noqa: F841
+        _sh = sh.bake(_out=out)  # noqa: F841
         echo("-n", "TEST")
         self.assertEqual("", out.getvalue())
 
@@ -3438,7 +3453,7 @@ class ExecutionContextTests(unittest.TestCase):
         import sh
 
         out = StringIO()
-        _sh = sh(_out=out)
+        _sh = sh.bake(_out=out)
 
         def nested1():
             _sh.echo("-n", "TEST1")
@@ -3452,56 +3467,13 @@ class ExecutionContextTests(unittest.TestCase):
         nested2()
         self.assertEqual("TEST1", out.getvalue())
 
-    def test_reimport_no_interfere(self):
-        import sh
-
-        out = StringIO()
-        _sh = sh(_out=out)
-        import _sh  # this reimport '_sh' from the eponymous local variable
-
-        _sh.echo("-n", "TEST")
-        self.assertEqual("TEST", out.getvalue())
-
     def test_command_with_baked_call_args(self):
         # Test that sh.Command() knows about baked call args
         import sh
 
-        _sh = sh(_ok_code=1)
+        _sh = sh.bake(_ok_code=1)
         self.assertEqual(sh.Command._call_args["ok_code"], 0)
         self.assertEqual(_sh.Command._call_args["ok_code"], 1)
-
-    def test_importer_detects_module_name(self):
-        import sh
-
-        _sh = sh()
-        omg = _sh  # noqa: F841
-        from omg import cat  # noqa: F401
-
-    def test_importer_only_works_with_sh(self):
-        def unallowed_import():
-            _os = os  # noqa: F841
-            from _os import path  # noqa: F401
-
-        self.assertRaises(ImportError, unallowed_import)
-
-    def test_reimport_from_cli(self):
-        # The REPL and CLI both need special handling to create an execution context
-        # that is safe to reimport
-        cmdstr = "; ".join(
-            (
-                "import sh, io, sys",
-                "out = io.StringIO()",
-                "_sh = sh(_out=out)",
-                "import _sh",
-                '_sh.echo("-n", "TEST")',
-                "sys.stderr.write(out.getvalue())",
-            )
-        )
-
-        err = StringIO()
-
-        python("-c", cmdstr, _err=err)
-        self.assertEqual("TEST", err.getvalue())
 
 
 if __name__ == "__main__":

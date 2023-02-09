@@ -15,6 +15,47 @@ If you were using `sh.cd(dir)`, use the context manager `with sh.pushd(dir)`
 instead. All of the commands in the managed context will have the correct
 directory.
 
+## Removed execution contexts / default arguments
+
+In `1.*` you could do could spawn a new module from the `sh` module, one which
+had customized defaults for the special keyword arguments. This module could
+then be accessed just like `sh`, and you could even import commands from it.
+
+Unfortunately the magic required to make that work was brittle. Also it was not
+aligned syntactically with the similar baking concept. We have therefore changed
+the syntax to align with baking, and also removed the ability to import directly
+from this new baked execution context.
+
+### Workaround
+
+```python
+sh2 = sh(_tty_out=False)
+sh2.ls()
+```
+
+Becomes:
+
+```python
+sh2 = sh.bake(_tty_out=False)
+sh2.ls()
+```
+
+And
+
+```python
+sh2 = sh.bake(_tty_out=False)
+from sh2 import ls
+ls()
+```
+
+Becomes:
+
+```python
+sh2 = sh.bake(_tty_out=False)
+ls = sh2.ls
+ls()
+```
+
 ## Return value now a true string
 
 In `2.*`, the return value of an executed `sh` command has changed (in most cases) from

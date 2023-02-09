@@ -33,7 +33,6 @@ try:
 except ImportError:
     from collections import Mapping
 
-import ast
 import errno
 import fcntl
 import gc
@@ -3669,170 +3668,11 @@ class SelfWrapper(ModuleType):
     def __getattr__(self, name):
         return self.__env[name]
 
-    def __call__(self, **kwargs):
-        """returns a new SelfWrapper object, where all commands spawned from it
-        have the baked_args kwargs set on them by default"""
+    def bake(self, **kwargs):
         baked_args = self.__env.baked_args.copy()
         baked_args.update(kwargs)
-        new_mod = self.__class__(self.__self_module, baked_args)
-
-        # inspect the line in the parent frame that calls and assigns the new sh
-        # variable, and get the name of the new variable we're assigning to.
-        # this is very brittle and pretty much a sin.  but it works in 99% of
-        # the time and the tests pass
-        #
-        # the reason we need to do this is because we need to remove the old
-        # cached module from sys.modules.  if we don't, it gets re-used, and any
-        # old baked params get used, which is not what we want
-        parent = inspect.stack()[1]
-        try:
-            code = parent[4][0].strip()
-        except TypeError:
-            # On the REPL or from the commandline, we don't get the source code in the
-            # top stack frame
-            # Older versions of pypy don't set parent[1] the same way as CPython or
-            # newer versions of Pypy so we have to special case that too.
-            if parent[1] in ("<stdin>", "<string>") or (
-                parent[1] == "<module>"
-                and platform.python_implementation().lower() == "pypy"
-            ):
-                # This depends on things like Python's calling convention and the layout
-                # of stack frames but it's a fix for a bug in a very cornery cornercase
-                # so....
-                dst_module_name = parent[0].f_code.co_names[-1]
-            else:
-                raise
-        else:
-            parsed = ast.parse(code)
-            try:
-                # src_module_name = parsed.body[0].value.func.id
-                dst_module_name = parsed.body[0].targets[0].id
-            except Exception:
-                # Diagnose what went wrong
-                if not isinstance(parsed.body[0], ast.Assign):
-                    raise RuntimeError(
-                        "A new execution context must be assigned to a variable"
-                    )
-                raise
-
-        sys.modules.pop(dst_module_name, None)
-        return new_mod
-
-
-def in_importlib(frame):
-    """helper for checking if a filename is in importlib guts"""
-    return frame.f_code.co_filename == "<frozen importlib._bootstrap>"
-
-
-def register_importer():
-    """registers our fancy importer that can let us import from a module name,
-    like:
-
-        import sh
-        tmp = sh()
-        from tmp import ls
-    """
-
-    def test(importer_cls):
-        try:
-            return (
-                importer_cls.__class__.__name__ == ModuleImporterFromVariables.__name__
-            )
-        except AttributeError:
-            # ran into importer which is not a class instance
-            return False
-
-    already_registered = any([True for i in sys.meta_path if test(i)])
-
-    if not already_registered:
-        importer = ModuleImporterFromVariables(
-            restrict_to=[SelfWrapper.__name__],
-        )
-        sys.meta_path.insert(0, importer)
-
-    return not already_registered
-
-
-def fetch_module_from_frame(name, frame):
-    mod = frame.f_locals.get(name, frame.f_globals.get(name, None))
-    return mod
-
-
-class ModuleImporterFromVariables(object):
-    """a fancy importer that allows us to import from a variable that was
-    recently set in either the local or global scope, like this:
-
-        sh2 = sh(_timeout=3)
-        from sh2 import ls
-
-    """
-
-    def __init__(self, restrict_to=None):
-        self.restrict_to = set(restrict_to or set())
-
-    def find_module(self, mod_fullname, path=None):
-        """mod_fullname doubles as the name of the VARIABLE holding our new sh
-        context.  for example:
-
-            derp = sh()
-            from derp import ls
-
-        here, mod_fullname will be "derp".  keep that in mind as we go through
-        the rest of this function"""
-
-        parent_frame = inspect.currentframe().f_back
-
-        if parent_frame and parent_frame.f_code.co_name == "find_spec":
-            parent_frame = parent_frame.f_back
-
-        while parent_frame and in_importlib(parent_frame):
-            parent_frame = parent_frame.f_back
-
-        # Calling PyImport_ImportModule("some_module"); via the C API may not
-        # have a parent frame. Early-out to avoid in_importlib() trying to
-        # get f_code from None when looking for 'some_module'.
-        # This also happens when using gevent apparently.
-        if not parent_frame:
-            return None
-
-        # this line is saying "hey, does mod_fullname exist as a name we've
-        # defined previously?"  the purpose of this is to ensure that
-        # mod_fullname is really a thing we've defined.  if we haven't defined
-        # it before, then we "can't" import from it
-        module = fetch_module_from_frame(mod_fullname, parent_frame)
-        if not module:
-            return None
-
-        # make sure it's a class we're allowed to import from
-        if module.__class__.__name__ not in self.restrict_to:
-            return None
-
-        return self
-
-    def find_spec(self, fullname, path=None, target=None):
-        """find_module() is deprecated since Python 3.4 in favor of find_spec()"""
-
-        from importlib.machinery import ModuleSpec
-
-        found = self.find_module(fullname, path)
-        return ModuleSpec(fullname, found) if found is not None else None
-
-    def load_module(self, mod_fullname):
-        parent_frame = inspect.currentframe().f_back
-
-        while in_importlib(parent_frame):
-            parent_frame = parent_frame.f_back
-
-        module = fetch_module_from_frame(mod_fullname, parent_frame)
-
-        # we HAVE to include the module in sys.modules, per the import PEP.
-        # older versions of python were more lenient about this being set, but
-        # not in >= python3.3, unfortunately.  this requirement necessitates the
-        # ugly code in SelfWrapper.__call__
-        sys.modules[mod_fullname] = module
-        module.__loader__ = self
-
-        return module
+        new_sh = self.__class__(self.__self_module, baked_args)
+        return new_sh
 
 
 if __name__ == "__main__":  # pragma: no cover
@@ -3842,4 +3682,3 @@ if __name__ == "__main__":  # pragma: no cover
 else:
     # we're being imported from somewhere
     sys.modules[__name__] = SelfWrapper(sys.modules[__name__])
-    register_importer()
