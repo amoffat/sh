@@ -133,7 +133,7 @@ jobs:
     name: Deploy
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref_name == "master"
+    if: github.ref_name == 'master'
     steps:
       - uses: actions/checkout@v2
 
