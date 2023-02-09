@@ -309,6 +309,7 @@ class ErrorReturnCode(Exception):
         return self.__class__, (self.full_cmd, self.stdout, self.stderr, self.truncate)
 
     def __init__(self, full_cmd, stdout, stderr, truncate=True):
+        self.exit_code = None
         self.full_cmd = full_cmd
         self.stdout = stdout
         self.stderr = stderr
