@@ -5,3 +5,4 @@ __pycache__/
 /.cache/
 /.venv/
 /build
+/dist

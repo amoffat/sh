@@ -141,6 +141,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: pip install build
+
+      - name: Build
+        run: python -m build
+
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
