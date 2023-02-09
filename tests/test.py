@@ -172,6 +172,20 @@ class BaseTests(unittest.TestCase):
             self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
 
 
+class ArgTests(BaseTests):
+    def test_list_args(self):
+        processed = sh._aggregate_keywords({"arg": [1, 2, 3]}, "=", "--")
+        self.assertListEqual(processed, ["--arg=1", "--arg=2", "--arg=3"])
+
+    def test_bool_values(self):
+        processed = sh._aggregate_keywords({"truthy": True, "falsey": False}, "=", "--")
+        self.assertListEqual(processed, ["--truthy"])
+
+    def test_space_sep(self):
+        processed = sh._aggregate_keywords({"arg": "123"}, " ", "--")
+        self.assertListEqual(processed, ["--arg", "123"])
+
+
 @requires_posix
 class FunctionalTests(BaseTests):
     def setUp(self):

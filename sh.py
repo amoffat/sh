@@ -1556,7 +1556,7 @@ def compile_args(a, kwargs, sep, prefix):
             for sub_arg in arg:
                 processed_args.append(sub_arg)
         elif isinstance(arg, dict):
-            processed_args += aggregate_keywords(arg, sep, prefix, raw=True)
+            processed_args += _aggregate_keywords(arg, sep, prefix, raw=True)
 
         # see https://github.com/amoffat/sh/issues/522
         elif arg is None or arg is False:
@@ -1565,12 +1565,12 @@ def compile_args(a, kwargs, sep, prefix):
             processed_args.append(str(arg))
 
     # aggregate the keyword arguments
-    processed_args += aggregate_keywords(kwargs, sep, prefix)
+    processed_args += _aggregate_keywords(kwargs, sep, prefix)
 
     return processed_args
 
 
-def aggregate_keywords(keywords, sep, prefix, raw=False):
+def _aggregate_keywords(keywords, sep, prefix, raw=False):
     """take our keyword arguments, and a separator, and compose the list of
     flat long (and short) arguments.  example
 
@@ -1607,34 +1607,42 @@ def aggregate_keywords(keywords, sep, prefix, raw=False):
 
     processed = []
 
-    for k, v in keywords.items():
-        # we're passing a short arg as a kwarg, example:
-        # cut(d="\t")
-        if len(k) == 1:
-            if v is not False:
-                processed.append("-" + k)
-                if v is not True:
-                    processed.append(str(v))
+    for k, maybe_list_of_v in keywords.items():
+        # turn our value(s) into a list of values so that we can process them
+        # all individually under the same key
+        list_of_v = [maybe_list_of_v]
+        if isinstance(maybe_list_of_v, (list, tuple)):
+            list_of_v = maybe_list_of_v
 
-        # we're doing a long arg
-        else:
-            if not raw:
-                k = k.replace("_", "-")
+        for v in list_of_v:
+            # we're passing a short arg as a kwarg, example:
+            # cut(d="\t")
+            if len(k) == 1:
+                if v is not False:
+                    processed.append("-" + k)
+                    if v is not True:
+                        processed.append(str(v))
 
-            # if it's true, it has no value, just pass the name
-            if v is True:
-                processed.append(prefix + k)
-            # if it's false, skip passing it
-            elif v is False:
-                pass
-            # we may need to break the argument up into multiple arguments
-            elif sep is None or sep == " ":
-                processed.append(prefix + k)
-                processed.append(str(v))
-            # otherwise just join it together into a single argument
+            # we're doing a long arg
             else:
-                arg = f"{prefix}{k}{sep}{v}"
-                processed.append(arg)
+                if not raw:
+                    k = k.replace("_", "-")
+
+                # if it's true, it has no value, just pass the name
+                if v is True:
+                    processed.append(prefix + k)
+                # if it's false, skip passing it
+                elif v is False:
+                    pass
+
+                # we may need to break the argument up into multiple arguments
+                elif sep is None or sep == " ":
+                    processed.append(prefix + k)
+                    processed.append(str(v))
+                # otherwise just join it together into a single argument
+                else:
+                    arg = f"{prefix}{k}{sep}{v}"
+                    processed.append(arg)
 
     return processed
 
@@ -3377,6 +3385,7 @@ class Environment(dict):
         "ForkException",
         "TimeoutException",
         "StreamBufferer",
+        "_aggregate_keywords",
         "__project_url__",
         "__version__",
         "__file__",
