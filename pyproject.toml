@@ -27,6 +27,14 @@ classifiers = [
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
+include = [
+    { path = "CHANGELOG.md", format = "sdist" },
+    { path = "MIGRATION.md", format = "sdist" },
+    { path = "images", format = "sdist" },
+    { path = "Makefile", format = "sdist" },
+    { path = "tests", format = "sdist" },
+    { path = "tox.ini", format = "sdist" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.8.1,<4.0"
