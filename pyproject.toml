@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sh"
-version = "2.0.0"
+version = "2.0.1"
 description = "Python subprocess replacement"
 authors = ["Andrew Moffat <arwmoffat@gmail.com>"]
 readme = "README.rst"
@@ -26,6 +26,14 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development :: Build Tools",
     "Topic :: Software Development :: Libraries :: Python Modules",
+]
+include = [
+    { path = "CHANGELOG.md", format = "sdist" },
+    { path = "MIGRATION.md", format = "sdist" },
+    { path = "images", format = "sdist" },
+    { path = "Makefile", format = "sdist" },
+    { path = "tests", format = "sdist" },
+    { path = "tox.ini", format = "sdist" },
 ]
 
 [tool.poetry.dependencies]
