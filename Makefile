@@ -10,7 +10,7 @@ test_one: build_test_image
 
 .PHONY: build_test_image
 build_test_image:
-	docker build -t amoffat/shtest -f tests/Dockerfile --build-arg cache_bust=950 .
+	docker build -t amoffat/shtest -f tests/Dockerfile --build-arg cache_bust=951 .
 
 # publishes to PYPI
 .PHONY: release
