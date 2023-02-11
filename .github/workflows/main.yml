@@ -141,6 +141,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Get current version
+        id: get_version
+        run: echo "::set-output name=version::$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)"
+
+      - name: Tag commit
+        run: |
+          git tag "$(steps.get_version.outputs.version)" "${{github.ref_name}}""
+          git push -f origin "$(steps.get_version.outputs.version)"
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
