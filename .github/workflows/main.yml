@@ -147,8 +147,8 @@ jobs:
 
       - name: Tag commit
         run: |
-          git tag "$(steps.get_version.outputs.version)" "${{github.ref_name}}"
-          git push -f origin "$(steps.get_version.outputs.version)"
+          git tag "${{steps.get_version.outputs.version}}" "${{github.ref_name}}"
+          git push -f origin "${{steps.get_version.outputs.version}}"
 
       - name: Set up Python
         uses: actions/setup-python@v2
