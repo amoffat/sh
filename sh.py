@@ -2495,7 +2495,7 @@ class OProc(object):
         # Using a small timeout provides backpressure against code that spams
         # calls to .is_alive() which may block the main thread from acquiring
         # the lock otherwise.
-        acquired = self._wait_lock.acquire(timeout=0.1)
+        acquired = self._wait_lock.acquire(timeout=0.00001)
         if not acquired:
             if self.exit_code is not None:
                 return False, self.exit_code
