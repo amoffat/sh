@@ -1,7 +1,13 @@
 # Changelog
 
+## 2.0.2 - 2/13/22
+
+- Performance regression when using a generator with `_in` [#650](https://github.com/amoffat/sh/pull/650)
+- Adding test support for python 3.11
+
 ## 2.0.0 - 2/9/22
 
+- Executed commands now return a unicode string by default
 - Removed magical module-like execution contexts [#636](https://github.com/amoffat/sh/issues/636)
 - Added basic asyncio support via `_async`
 - Dropped support for Python < 3.8

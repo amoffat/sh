@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sh"
-version = "2.0.1"
+version = "2.0.2"
 description = "Python subprocess replacement"
 authors = ["Andrew Moffat <arwmoffat@gmail.com>"]
 readme = "README.rst"
@@ -22,6 +22,7 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Topic :: Software Development :: Build Tools",

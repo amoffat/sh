@@ -2491,16 +2491,12 @@ class OProc(object):
         # so essentially what we're doing is, using this lock, checking if
         # we're calling .wait(), and if we are, let .wait() get the exit code
         # and handle the status, otherwise let us do it.
-        acquired = self._wait_lock.acquire(False)
+        #
+        # Using a small timeout provides backpressure against code that spams
+        # calls to .is_alive() which may block the main thread from acquiring
+        # the lock otherwise.
+        acquired = self._wait_lock.acquire(timeout=0.00001)
         if not acquired:
-            # this sleep here is a hack. occasionally, is_alive can get called so
-            # rapidly that it appears to not let the wait lock be acquired in the main
-            # thread, which is attempting to call wait(). by introducing a tiny sleep
-            # (ugh), this seems to prevent other threads from equally attempting to
-            # acquire the lock. TODO find out if this is a general python bug
-            # if we don't do this, if we're unlucky, some commands may hang for a
-            # second before terminating, due to their threads spamming is_alive() calls.
-            time.sleep(0.1)
             if self.exit_code is not None:
                 return False, self.exit_code
             return True, self.exit_code

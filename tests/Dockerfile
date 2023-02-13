@@ -22,7 +22,8 @@ RUN apt-get update
 RUN apt-get -y install\
     python3.8\
     python3.9\
-    python3.10
+    python3.10\
+    python3.11
 
 RUN apt-get -y install\
     python3.8-distutils\
