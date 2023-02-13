@@ -3,6 +3,7 @@
 ## 2.0.2 - 2/13/22
 
 - Performance regression when using a generator with `_in` [#650](https://github.com/amoffat/sh/pull/650)
+- Adding test support for python 3.11
 
 ## 2.0.0 - 2/9/22
 
