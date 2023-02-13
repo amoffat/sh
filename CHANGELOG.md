@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.2 - 2/13/22
+
+- Performance regression when using a generator with `_in` [#650](https://github.com/amoffat/sh/pull/650)
+
 ## 2.0.0 - 2/9/22
 
 - Executed commands now return a unicode string by default
