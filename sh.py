@@ -22,9 +22,6 @@ http://amoffat.github.io/sh/
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 # ===============================================================================
-__version__ = "2.0.0"
-__project_url__ = "https://github.com/amoffat/sh"
-
 import asyncio
 from collections import deque
 
@@ -60,6 +57,7 @@ import weakref
 from asyncio import Queue as AQueue
 from contextlib import contextmanager
 from functools import partial
+from importlib import metadata
 from io import BytesIO, StringIO, UnsupportedOperation
 from io import open as fdopen
 from locale import getpreferredencoding
@@ -67,6 +65,9 @@ from queue import Empty, Queue
 from shlex import quote as shlex_quote
 from types import GeneratorType, ModuleType
 from typing import Any, Dict, Type, Union
+
+__version__ = metadata.version("sh")
+__project_url__ = "https://github.com/amoffat/sh"
 
 if "windows" in platform.system().lower():  # pragma: no cover
     raise ImportError(
