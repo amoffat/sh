@@ -2037,7 +2037,7 @@ class OProc(object):
                 if new_session:
                     os.setsid()
                 elif new_group:
-                    os.setpgrp()
+                    os.setpgid(0, 0)
 
                 sid = os.getsid(0)
                 pgid = os.getpgid(0)
