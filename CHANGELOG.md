@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.3 - 5/13/22
+
+- Allow `ok_code` to be used with `fg` [#655](https://github.com/amoffat/sh/pull/655)
+- Make sure `new_group` never creates a new session [#675](https://github.com/amoffat/sh/pull/675)
+
 ## 2.0.2 - 2/13/22
 
 - Performance regression when using a generator with `_in` [#650](https://github.com/amoffat/sh/pull/650)
