@@ -1116,7 +1116,7 @@ def fg_validator(passed_kwargs, merged_kwargs):
 _fg is invalid with nearly every other option, see warning and workaround here:
 
     https://amoffat.github.io/sh/sections/special_arguments.html#fg"""
-    allowlist = {"env", "fg", "cwd"}
+    allowlist = {"env", "fg", "cwd", "ok_code"}
     offending = set(passed_kwargs.keys()) - allowlist
 
     if "fg" in passed_kwargs and passed_kwargs["fg"] and offending:
@@ -2037,7 +2037,7 @@ class OProc(object):
                 if new_session:
                     os.setsid()
                 elif new_group:
-                    os.setpgrp()
+                    os.setpgid(0, 0)
 
                 sid = os.getsid(0)
                 pgid = os.getpgid(0)
