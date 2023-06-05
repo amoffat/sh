@@ -80,6 +80,28 @@ Previously, if the first argument of a sh command was an instance of `RunningCom
 it was automatically fed into the process's STDIN. This is no longer the case and you
 must explicitly use `_in=`.
 
+```python
+from sh import wc,ls
+
+print(wc(ls("/home/<user>", "-l"), "-l"))
+```
+
+Becomes:
+
+```python
+from sh import wc,ls
+
+print(wc("-l", _in=ls("/home/<user>", "-l")))
+```
+
+Or:
+
+```python
+from sh import wc,ls
+
+print(wc("-l", _in=ls("/home/<user>", "-l", _return_cmd=True)))
+```
+
 ### Workaround
 
 None
