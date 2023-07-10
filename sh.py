@@ -553,7 +553,7 @@ class Logger(object):
 
     def __init__(self, name, context=None):
         self.name = name
-        self.log = logging.getLogger("{SH_LOGGER_NAME}.{name}")
+        self.log = logging.getLogger(f"{SH_LOGGER_NAME}.{name}")
         self.context = self.sanitize_context(context)
 
     def _format_msg(self, msg, *a):
