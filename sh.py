@@ -48,6 +48,7 @@ import stat
 import struct
 import sys
 import termios
+import textwrap
 import threading
 import time
 import traceback
@@ -71,10 +72,9 @@ __project_url__ = "https://github.com/amoffat/sh"
 
 if "windows" in platform.system().lower():  # pragma: no cover
     raise ImportError(
-        "sh %s is currently only supported on linux and osx. \
+        f"sh {__version__} is currently only supported on linux and osx. \
 please install pbs 0.110 (http://pypi.python.org/pypi/pbs) for windows \
 support."
-        % __version__
     )
 
 TEE_STDOUT = {True, "out", 1}
@@ -246,24 +246,15 @@ if HAS_POLL and not FORCE_USE_SELECT:
     Poller = PollPoller
 
 
-def _indent_text(text, num=4):
-    lines = []
-    for line in text.split("\n"):
-        line = (" " * num) + line
-        lines.append(line)
-    return "\n".join(lines)
-
-
 class ForkException(Exception):
     def __init__(self, orig_exc):
-        tmpl = """
+        msg = f"""
 
 Original exception:
 ===================
 
-%s
+{textwrap.indent(orig_exc, "    ")}
 """
-        msg = tmpl % _indent_text(orig_exc)
         Exception.__init__(self, msg)
 
 
@@ -321,25 +312,19 @@ class ErrorReturnCode(Exception):
             exc_stdout = exc_stdout[: self.truncate_cap]
             out_delta = len(self.stdout) - len(exc_stdout)
             if out_delta:
-                exc_stdout += (
-                    "... (%d more, please see e.stdout)" % out_delta
-                ).encode()
+                exc_stdout += (f"... ({out_delta} more, please see e.stdout)").encode()
 
         exc_stderr = self.stderr
         if truncate:
             exc_stderr = exc_stderr[: self.truncate_cap]
             err_delta = len(self.stderr) - len(exc_stderr)
             if err_delta:
-                exc_stderr += (
-                    "... (%d more, please see e.stderr)" % err_delta
-                ).encode()
+                exc_stderr += (f"... ({err_delta} more, please see e.stderr)").encode()
 
-        msg_tmpl = str("\n\n  RAN: {cmd}\n\n  STDOUT:\n{stdout}\n\n  STDERR:\n{stderr}")
-
-        msg = msg_tmpl.format(
-            cmd=self.full_cmd,
-            stdout=exc_stdout.decode(DEFAULT_ENCODING, "replace"),
-            stderr=exc_stderr.decode(DEFAULT_ENCODING, "replace"),
+        msg = (
+            f"\n\n  RAN: {self.full_cmd}"
+            f"\n\n  STDOUT:\n{exc_stdout.decode(DEFAULT_ENCODING, 'replace')}"
+            f"\n\n  STDERR:\n{exc_stderr.decode(DEFAULT_ENCODING, 'replace')}"
         )
 
         super(ErrorReturnCode, self).__init__(msg)
@@ -435,11 +420,10 @@ def get_rc_exc(rc):
         pass
 
     if rc >= 0:
-        name = "ErrorReturnCode_%d" % rc
+        name = f"ErrorReturnCode_{rc}"
         base = ErrorReturnCode
     else:
-        signame = SIGNAL_MAPPING[abs(rc)]
-        name = "SignalException_" + signame
+        name = f"SignalException_{SIGNAL_MAPPING[abs(rc)]}"
         base = SignalException
 
     exc = ErrorReturnCodeMeta(name, (base,), {"exit_code": rc})
@@ -569,12 +553,12 @@ class Logger(object):
 
     def __init__(self, name, context=None):
         self.name = name
-        self.log = logging.getLogger("%s.%s" % (SH_LOGGER_NAME, name))
+        self.log = logging.getLogger(f"{SH_LOGGER_NAME}.{name}")
         self.context = self.sanitize_context(context)
 
     def _format_msg(self, msg, *a):
         if self.context:
-            msg = "%s: %s" % (self.context, msg)
+            msg = f"{self.context}: {msg}"
         return msg % a
 
     @staticmethod
@@ -603,9 +587,9 @@ class Logger(object):
 
 def default_logger_str(cmd, call_args, pid=None):
     if pid:
-        s = "<Command %r, pid %d>" % (cmd, pid)
+        s = f"<Command {cmd!r}, pid {pid}>"
     else:
-        s = "<Command %r>" % cmd
+        s = f"<Command {cmd!r}>"
     return s
 
 
@@ -1089,8 +1073,8 @@ def tty_in_validator(passed_kwargs, merged_kwargs):
     for tty_type, std in pairs:
         if tty_type in passed_kwargs and ob_is_tty(passed_kwargs.get(std, None)):
             error = (
-                "`_%s` is a TTY already, so so it doesn't make sense to set up a"
-                " TTY with `_%s`" % (std, tty_type)
+                f"`_{std}` is a TTY already, so so it doesn't make sense to set up a"
+                f" TTY with `_{tty_type}`"
             )
             invalid.append(((tty_type, std), error))
 
@@ -1163,16 +1147,14 @@ def env_validator(passed_kwargs, merged_kwargs):
         return invalid
 
     if not isinstance(env, Mapping):
-        invalid.append(("env", "env must be dict-like. Got {!r}".format(env)))
+        invalid.append(("env", f"env must be dict-like. Got {env!r}"))
         return invalid
 
     for k, v in passed_kwargs["env"].items():
         if not isinstance(k, str):
-            invalid.append(("env", "env key {!r} must be a str".format(k)))
+            invalid.append(("env", f"env key {k!r} must be a str"))
         if not isinstance(v, str):
-            invalid.append(
-                ("env", "value {!r} of env key {!r} must be a str".format(v, k))
-            )
+            invalid.append(("env", f"value {v!r} of env key {k!r} must be a str"))
 
     return invalid
 
@@ -1378,9 +1360,9 @@ class Command(object):
         if invalid_kwargs:
             exc_msg = []
             for kwarg, error_msg in invalid_kwargs:
-                exc_msg.append("  %r: %s" % (kwarg, error_msg))
+                exc_msg.append(f"  {kwarg!r}: {error_msg}")
             exc_msg = "\n".join(exc_msg)
-            raise TypeError("Invalid special arguments:\n\n%s\n" % exc_msg)
+            raise TypeError(f"Invalid special arguments:\n\n{exc_msg}\n")
 
         return call_args, kwargs
 
@@ -1416,7 +1398,7 @@ class Command(object):
         return str(self) == str(other)
 
     def __repr__(self):
-        return "<Command %r>" % str(self)
+        return f"<Command {str(self)!r}>"
 
     def __enter__(self):
         self(_with=True)
@@ -2041,7 +2023,7 @@ class OProc(object):
 
                 sid = os.getsid(0)
                 pgid = os.getpgid(0)
-                payload = ("%d,%d" % (sid, pgid)).encode(DEFAULT_ENCODING)
+                payload = (f"{sid},{pgid}").encode(DEFAULT_ENCODING)
                 os.write(session_pipe_write, payload)
 
                 if ca["tty_out"] and not stdout_is_fd_based and not single_tty:
@@ -2143,7 +2125,7 @@ class OProc(object):
 
                 except Exception as e:
                     # dump to stderr if we cannot save it to exc_pipe_write
-                    sys.stderr.write("\nFATAL SH ERROR: %s\n" % e)
+                    sys.stderr.write(f"\nFATAL SH ERROR: {e}\n")
 
                 finally:
                     os._exit(255)
@@ -2351,7 +2333,7 @@ class OProc(object):
 
             self._quit_threads = threading.Event()
 
-            thread_name = "background thread for pid %d" % self.pid
+            thread_name = f"background thread for pid {self.pid}"
             self._bg_thread_exc_queue = Queue(1)
             self._background_thread = _start_daemon_thread(
                 background_thread,
@@ -2370,7 +2352,7 @@ class OProc(object):
             self._input_thread_exc_queue = Queue(1)
             if self._stdin_stream:
                 close_before_term = not needs_ctty
-                thread_name = "STDIN thread for pid %d" % self.pid
+                thread_name = f"STDIN thread for pid {self.pid}"
                 self._input_thread = _start_daemon_thread(
                     input_thread,
                     thread_name,
@@ -2407,7 +2389,7 @@ class OProc(object):
                     loop.call_soon_threadsafe(self.command.aio_output_complete.set)
 
             self._output_thread_exc_queue = Queue(1)
-            thread_name = "STDOUT/ERR thread for pid %d" % self.pid
+            thread_name = f"STDOUT/ERR thread for pid {self.pid}"
             self._output_thread = _start_daemon_thread(
                 output_thread,
                 thread_name,
@@ -2423,7 +2405,7 @@ class OProc(object):
             )
 
     def __repr__(self):
-        return "<Process %d %r>" % (self.pid, self.cmd[:500])
+        return f"<Process {self.pid} {self.cmd[:500]!r}>"
 
     def change_in_bufsize(self, buf):
         self._stdin_stream.stream_bufferer.change_buffering(buf)
@@ -3335,26 +3317,24 @@ def _args(**kwargs):
     """allows us to temporarily override all the special keyword parameters in
     a with context"""
 
-    kwargs_str = ",".join(["%s=%r" % (k, v) for k, v in kwargs.items()])
+    kwargs_str = ",".join([f"{k}={v!r}" for k, v in kwargs.items()])
 
     raise DeprecationWarning(
-        """
+        f"""
 
 sh.args() has been deprecated because it was never thread safe.  use the
 following instead:
 
-    sh2 = sh({kwargs})
+    sh2 = sh({kwargs_str})
     sh2.your_command()
 
 or
 
-    sh2 = sh({kwargs})
+    sh2 = sh({kwargs_str})
     from sh2 import your_command
     your_command()
 
-""".format(
-            kwargs=kwargs_str
-        )
+"""
     )
 
 
@@ -3499,7 +3479,7 @@ def sudo(orig):  # pragma: no cover
     """a nicer version of sudo that uses getpass to ask for a password, or
     allows the first argument to be a string password"""
 
-    prompt = "[sudo] password for %s: " % getpass.getuser()
+    prompt = f"[sudo] password for {getpass.getuser()}: "
 
     def stdin():
         pw = getpass.getpass(prompt=prompt) + "\n"
@@ -3614,9 +3594,8 @@ def ssh(orig):  # pragma: no cover
 
 
 def run_repl(env):  # pragma: no cover
-    banner = "\n>> sh v{version}\n>> https://github.com/amoffat/sh\n"
+    print(f"\n>> sh v{__version__}\n>> https://github.com/amoffat/sh\n")
 
-    print(banner.format(version=__version__))
     while True:
         try:
             line = input("sh> ")

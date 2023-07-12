@@ -100,7 +100,7 @@ def requires_progs(*progs):
 
     friendly_missing = ", ".join(missing)
     return unittest.skipUnless(
-        len(missing) == 0, "Missing required system programs: %s" % friendly_missing
+        len(missing) == 0, f"Missing required system programs: {friendly_missing}"
     )
 
 
@@ -115,7 +115,7 @@ def requires_poller(poller):
     use_select = bool(int(os.environ.get("SH_TESTS_USE_SELECT", "0")))
     cur_poller = "select" if use_select else "poll"
     return unittest.skipUnless(
-        cur_poller == poller, "Only enabled for select.%s" % cur_poller
+        cur_poller == poller, f"Only enabled for select.{cur_poller}"
     )
 
 
@@ -2112,17 +2112,15 @@ exit(49)
     def test_cwd_fg(self):
         td = realpath(tempfile.mkdtemp())
         py = create_tmp_test(
-            """
+            f"""
 import sh
 import os
 from os.path import realpath
 orig = realpath(os.getcwd())
 print(orig)
-sh.pwd(_cwd="{newdir}", _fg=True)
+sh.pwd(_cwd="{td}", _fg=True)
 print(realpath(os.getcwd()))
-""".format(
-                newdir=td
-            )
+"""
         )
 
         orig, newdir, restored = python(py.name).strip().split("\n")
@@ -3231,12 +3229,10 @@ print("hi")
 
         python_name = os.path.basename(sys.executable)
         py = create_tmp_test(
-            """#!/usr/bin/env {0}
+            f"""#!/usr/bin/env {python_name}
 # -*- coding: utf8 -*-
 print("字")
-""".format(
-                python_name
-            ),
+""",
             prefix="字",
             delete=False,
         )
@@ -3272,7 +3268,7 @@ print("字")
 
         import sh
 
-        sig_name = "SignalException_%d" % signal.SIGQUIT
+        sig_name = f"SignalException_{signal.SIGQUIT}"
         sig = getattr(sh, sig_name)
         from sh import SignalException_SIGQUIT
 
