@@ -8,9 +8,9 @@ maintainers = [
     "Andrew Moffat <arwmoffat@gmail.com>",
     "Erik Cederstrand <erik@cederstrand.dk>"
 ]
-homepage = "https://amoffat.github.io/sh/"
+homepage = "https://sh.readthedocs.io/"
 repository = "https://github.com/amoffat/sh"
-documentation = "https://amoffat.github.io/sh/"
+documentation = "https://sh.readthedocs.io/"
 license = "MIT"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
