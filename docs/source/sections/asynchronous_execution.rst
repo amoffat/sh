@@ -6,6 +6,24 @@ Asynchronous Execution
 sh provides a few methods for running commands and obtaining output in a
 non-blocking fashion.
 
+AsyncIO
+=======
+
+.. versionadded:: 2.0.0
+
+Sh supports asyncio on commands with the :ref:`_async=True <async_kw>` special
+kwarg. This let's you incrementally ``await`` output produced from your command.
+
+.. code-block:: python
+
+	import asyncio
+	import sh
+
+	async def main():
+	    await sh.sleep(3, _async=True)
+
+	asyncio.run(main())
+
 .. _iterable:
 	    
 Incremental Iteration

@@ -142,6 +142,17 @@ Automatically report exceptions for the background command. If you set this to
 ``False`` you should make sure to call :meth:`RunningCommand.wait` or you may
 swallow exceptions that happen in the background command.
 
+.. _async_kw:
+
+_async
+------
+.. versionadded:: 2.0.0
+
+|def| ``False``
+
+Allows your command to become awaitable. Use in combination with :ref:`_iter <iter>`
+and ``async for`` to incrementally await output as it is produced.
+
 .. _env:
 
 _env
