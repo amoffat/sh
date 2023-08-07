@@ -58,7 +58,7 @@ one of three signatures:
     :noindex:
 
     In addition to the previous signature, the function takes a
-    :class:`weakref.weakref` to the :ref:`OProc <oproc_class>` object.
+    :class:`weakref.ref` to the :ref:`OProc <oproc_class>` object.
 
 .. seealso:: :ref:`callbacks`
 

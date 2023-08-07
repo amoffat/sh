@@ -205,10 +205,15 @@ programs use exit codes other than 0 to indicate success.
 
 _new_session
 ------------
-|def| ``True``
+|def| ``False``
 
 Determines if our forked process will be executed in its own session via
 :func:`os.setsid`.
+
+.. versionchanged:: 2.0.0
+    The default value of ``_new_session`` was changed from ``True`` to ``False``
+    because it makes more sense for a launched process to default to being in
+    the process group of python script, so that it receives SIGINTs correctly.
 
 .. note::
 
@@ -314,7 +319,7 @@ _iter_noblock
 
 Same as :ref:`_iter <iter>`, except the loop will not block if there is no
 output to iterate over.  Instead, the output from the command will be
-:attr:`errno.EWOULDBLOCK`.
+:py:data:`errno.EWOULDBLOCK`.
 
 .. code-block:: python
 
@@ -362,8 +367,8 @@ A callback that is *always* called when the command completes, even if it
 completes with an exit code that would raise an exception.  After the callback
 is run, any exception that would be raised is raised.
 
-The callback is passed the :class:`RunningCommand` instance, a boolean
-indicating success, and the exit code.
+The callback is passed the :ref:`RunningCommand <running_command>` instance, a
+boolean indicating success, and the exit code.
 
 .. include:: /examples/done.rst
 		

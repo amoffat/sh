@@ -86,7 +86,7 @@ RunningCommand Class
 This represents a :ref:`Command <command_class>` instance that has been
 or is being executed.  It exists as a wrapper around the low-level :ref:`OProc
 <oproc_class>`.  Most of your interaction with sh objects are with instances of
-this class
+this class. It is only returned if ``_return_cmd=True`` when you execute a command.
 
 .. warning::
 
@@ -162,12 +162,12 @@ this class
 .. py:method:: RunningCommand.signal(sig_num)
 
     Sends *sig_num* to the process.  Typically used with a value from the
-    :mod:`signal` module, like :attr:`signal.SIGHUP` (see :manpage:`signal(7)`).
+    :mod:`signal` module, like :py:data:`signal.SIGHUP` (see :manpage:`signal(7)`).
 
 .. py:method:: RunningCommand.signal_group(sig_num)
 
     Sends *sig_num* to every process in the process group.  Typically used with
-    a value from the :mod:`signal` module, like :attr:`signal.SIGHUP` (see
+    a value from the :mod:`signal` module, like :py:data:`signal.SIGHUP` (see
     :manpage:`signal(7)`).
 
 .. py:method:: RunningCommand.terminate()
@@ -189,7 +189,7 @@ this class
 
     Returns whether or not the process is still alive.
 
-    :rtype: boolean
+    :rtype: bool
 
 .. _oproc_class:
 
@@ -242,12 +242,12 @@ OProc Class
 .. py:method:: OProc.signal(sig_num)
 
     Sends *sig_num* to the process.  Typically used with a value from the
-    :mod:`signal` module, like :attr:`signal.SIGHUP` (see :manpage:`signal(7)`).
+    :mod:`signal` module, like :py:data:`signal.SIGHUP` (see :manpage:`signal(7)`).
 
 .. py:method:: OProc.signal_group(sig_num)
 
     Sends *sig_num* to every process in the process group.  Typically used with
-    a value from the :mod:`signal` module, like :attr:`signal.SIGHUP` (see
+    a value from the :mod:`signal` module, like :py:data:`signal.SIGHUP` (see
     :manpage:`signal(7)`).
 
 .. py:method:: OProc.terminate()
@@ -274,7 +274,7 @@ ErrorReturnCode
 .. py:class:: ErrorReturnCode
 
     This is the base class for, as the name suggests, error return codes.  It
-    subclasses :data:`exceptions.Exception`.
+    subclasses :py:class:`Exception`.
 
 .. py:attribute:: ErrorReturnCode.full_cmd
 

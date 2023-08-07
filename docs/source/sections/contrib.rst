@@ -114,19 +114,19 @@ this.
 
 .. py:attribute:: SessionContent.cur_line
     
-    :type: string
+    :type: str
 
     A string of the line currently being aggregated.
 
 .. py:attribute:: SessionContent.last_line
     
-    :type: string
+    :type: str
 
     The previous line.
 
 .. py:attribute:: SessionContent.cur_char
     
-    :type: string
+    :type: str
 
     The currently written character.
 

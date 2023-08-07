@@ -28,7 +28,7 @@ that context:
     from io import StringIO
 
     buf = StringIO()
-    sh2 = sh(_out=buf)
+    sh2 = sh.bake(_out=buf)
 
     sh2.ls("/")
     sh2.whoami()
@@ -36,20 +36,3 @@ that context:
 
 Now, anything launched from ``sh2`` will send its output to the ``StringIO``
 instance ``buf``.
-
-Execution contexts may also be imported from, like it is the top-level sh
-module:
-
-.. code-block:: python
-
-    import sh
-    from io import StringIO
-
-    buf = StringIO()
-    sh2 = sh(_out=buf)
-
-    from sh2 import ls, whoami, ps
-
-    ls("/")
-    whoami()
-    ps("auxwf")

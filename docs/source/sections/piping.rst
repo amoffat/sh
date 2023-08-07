@@ -6,17 +6,17 @@ Piping
 Basic
 -----
 
-Bash style piping is performed using function composition.  Just pass
-one command as the input to another, and sh will send the output of the inner
-command to the input of the outer command:
+Bash style piping is performed using function composition.  Just pass one
+command as the input to another's ``_in`` argument, and sh will send the output of
+the inner command to the input of the outer command:
 
 .. code-block:: python
 
 	# sort this directory by biggest file
-	print(sort(du(glob("*"), "-sb"), "-rn"))
+	print(sort("-rn", _in=du(glob("*"), "-sb")))
 	
 	# print(the number of folders and files in /etc
-	print(wc(ls("/etc", "-1"), "-l"))
+	print(wc("-l", _in=ls("/etc", "-1")))
 
 .. note::
 
@@ -39,7 +39,7 @@ inner command executes first, then sends its data to the outer command:
 
 .. code-block:: python
 
-	print(wc(ls("/etc", "-1"), "-l"))
+	print(wc("-l", _in=ls("/etc", "-1")))
 	
 In the above example, ``ls`` executes, gathers its output, then sends that output
 to ``wc``.  This is fine for simple commands, but for commands where you need
@@ -47,7 +47,7 @@ parallelism, this isn't good enough.  Take the following example:
 
 .. code-block:: python
 
-	for line in tr(tail("-f", "test.log"), "[:upper:]", "[:lower:]", _iter=True):
+	for line in tr(_in=tail("-f", "test.log"), "[:upper:]", "[:lower:]", _iter=True):
 	    print(line)
 	
 **This won't work** because the ``tail -f`` command never finishes.  What you
@@ -56,7 +56,7 @@ the :ref:`_piped <piped>` special kwarg comes in handy:
 
 .. code-block:: python
 
-	for line in tr(tail("-f", "test.log", _piped=True), "[:upper:]", "[:lower:]", _iter=True):
+	for line in tr(_in=tail("-f", "test.log", _piped=True), "[:upper:]", "[:lower:]", _iter=True):
 	    print(line)
 	    
 This works by telling ``tail -f`` that it is being used in a pipeline, and that

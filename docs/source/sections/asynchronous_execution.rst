@@ -32,7 +32,7 @@ changing the buffer size of the command's output with :ref:`out_bufsize`.
 .. note::
 
     If you need a *fully* non-blocking iterator, use :ref:`iter_noblock`.  If
-    the current iteration would block, :attr:`errno.EWOULDBLOCK` will be
+    the current iteration would block, :py:data:`errno.EWOULDBLOCK` will be
     returned, otherwise you'll receive a chunk of output, as normal.
 
 .. _background:
@@ -98,7 +98,7 @@ To control whether the callback receives a line or a chunk, use
 tells the command not to call your callback anymore.
 
 The line or chunk received by the callback can either be of type ``str`` or
-``bytes``. If the output could be decoded using the provided :ref:`encoding`, a
+``bytes``. If the output could be decoded using the provided encoding, a
 ``str`` will be passed to the callback, otherwise it would be raw ``bytes``.
 
 .. note::

@@ -19,7 +19,7 @@ From here, we have two concurrent processes running:
 Child
 -----
 
-#. If :ref:`_bg=True <bg>` is set, we ignore :attr:`signal.SIGHUP`.
+#. If :ref:`_bg=True <bg>` is set, we ignore :py:data:`signal.SIGHUP`.
 #. If :ref:`_new_session=True <new_session>`, become a session leader with
    :func:`os.setsid`, else become a process group leader with
    :func:`os.setpgrp`.
