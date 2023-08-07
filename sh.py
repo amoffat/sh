@@ -27,7 +27,7 @@ from collections import deque
 
 try:
     from collections.abc import Mapping
-except ImportError:
+except ImportError:  # pragma: no cover
     from collections import Mapping
 
 import errno
@@ -69,7 +69,7 @@ from typing import Any, Dict, Type, Union
 
 try:
     __version__ = metadata.version("sh")
-except metadata.PackageNotFoundError:
+except metadata.PackageNotFoundError:  # pragma: no cover
     __version__ = "unknown"
 __project_url__ = "https://github.com/amoffat/sh"
 

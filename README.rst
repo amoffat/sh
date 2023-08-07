@@ -68,7 +68,7 @@ Coverage
 
 First run all of the tests::
 
-    $> SH_TESTS_RUNNING=1 coverage run --source=sh -m unittest
+    $> SH_TESTS_RUNNING=1 coverage run --source=sh -m pytest
 
 This will aggregate a ``.coverage``.  You may then visualize the report with::
 

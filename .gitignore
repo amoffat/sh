@@ -8,3 +8,4 @@ __pycache__/
 /dist
 /docs/build
 /TODO.md
+/htmlcov/
