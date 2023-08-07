@@ -67,7 +67,10 @@ from shlex import quote as shlex_quote
 from types import GeneratorType, ModuleType
 from typing import Any, Dict, Type, Union
 
-__version__ = metadata.version("sh")
+try:
+    __version__ = metadata.version("sh")
+except metadata.PackageNotFoundError:
+    __version__ = "unknown"
 __project_url__ = "https://github.com/amoffat/sh"
 
 if "windows" in platform.system().lower():  # pragma: no cover
