@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sh"
-version = "2.0.4"
+version = "2.0.5"
 description = "Python subprocess replacement"
 authors = ["Andrew Moffat <arwmoffat@gmail.com>"]
 readme = "README.rst"

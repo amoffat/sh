@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.5 -
+## 2.0.5 - 8/7/23
 
 - Allow nested `with` contexts [#690](https://github.com/amoffat/sh/issues/690)
 - Call correct asyncio function for getting event loop [#683](https://github.com/amoffat/sh/issues/683)
