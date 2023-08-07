@@ -1659,7 +1659,7 @@ for _ in range(6):
     print(i)
     i += 1
     sys.stdout.flush()
-    time.sleep(1)
+    time.sleep(2)
 """
         )
 
