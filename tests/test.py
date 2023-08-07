@@ -2213,14 +2213,21 @@ else:
         self.assertEqual(out, "no tty attached")
 
     def test_stringio_output(self):
-        from sh import echo
+        import sh
+
+        py = create_tmp_test(
+            """
+import sys
+sys.stdout.write(sys.argv[1])
+"""
+        )
 
         out = StringIO()
-        echo("-n", "testing 123", _out=out)
+        sh.python(py.name, "testing 123", _out=out)
         self.assertEqual(out.getvalue(), "testing 123")
 
         out = BytesIO()
-        echo("-n", "testing 123", _out=out)
+        sh.python(py.name, "testing 123", _out=out)
         self.assertEqual(out.getvalue().decode(), "testing 123")
 
     def test_stringio_input(self):
@@ -3419,9 +3426,16 @@ class ExecutionContextTests(unittest.TestCase):
     def test_basic(self):
         import sh
 
+        py = create_tmp_test(
+            """
+import sys
+sys.stdout.write(sys.argv[1])
+"""
+        )
+
         out = StringIO()
-        _sh = sh.bake(_out=out)
-        _sh.echo("-n", "TEST")
+        sh2 = sh.bake(_out=out)
+        sh2.python(py.name, "TEST")
         self.assertEqual("TEST", out.getvalue())
 
     def test_multiline_defaults(self):
@@ -3443,17 +3457,24 @@ print(os.environ["ABC"])
     def test_no_interfere1(self):
         import sh
 
+        py = create_tmp_test(
+            """
+import sys
+sys.stdout.write(sys.argv[1])
+"""
+        )
+
         out = StringIO()
         _sh = sh.bake(_out=out)  # noqa: F841
 
-        _sh.echo("-n", "TEST")
+        _sh.python(py.name, "TEST")
         self.assertEqual("TEST", out.getvalue())
 
         # Emptying the StringIO
         out.seek(0)
         out.truncate(0)
 
-        sh.echo("-n", "KO")
+        sh.python(py.name, "KO")
         self.assertEqual("", out.getvalue())
 
     def test_no_interfere2(self):
@@ -3469,16 +3490,23 @@ print(os.environ["ABC"])
     def test_set_in_parent_function(self):
         import sh
 
+        py = create_tmp_test(
+            """
+import sys
+sys.stdout.write(sys.argv[1])
+"""
+        )
+
         out = StringIO()
         _sh = sh.bake(_out=out)
 
         def nested1():
-            _sh.echo("-n", "TEST1")
+            _sh.python(py.name, "TEST1")
 
         def nested2():
             import sh
 
-            sh.echo("-n", "TEST2")
+            sh.python(py.name, "TEST2")
 
         nested1()
         nested2()
