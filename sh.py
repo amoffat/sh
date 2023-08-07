@@ -921,11 +921,7 @@ class RunningCommand(object):
             finally:
                 await self._aio_queue.put(None)
 
-        if sys.version_info < (3, 7, 0):
-            task = asyncio.ensure_future(queue_connector())
-        else:
-            task = asyncio.create_task(queue_connector())
-
+        task = asyncio.create_task(queue_connector())
         self._aio_task = task
         return self
 
