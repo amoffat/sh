@@ -6,3 +6,5 @@ __pycache__/
 /.venv/
 /build
 /dist
+/docs/build
+/TODO.md

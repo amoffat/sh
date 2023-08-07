@@ -44,4 +44,4 @@ WORKDIR /home/shtest/
 ENV PATH="/home/shtest/.local/bin:$PATH"
 RUN pip install tox flake8 black rstcheck mypy
 
-COPY README.rst sh.py .flake8 tox.ini tests/test.py /home/shtest/
+COPY README.rst sh.py .flake8 tox.ini tests/sh_test.py /home/shtest/

@@ -67,7 +67,10 @@ from shlex import quote as shlex_quote
 from types import GeneratorType, ModuleType
 from typing import Any, Dict, Type, Union
 
-__version__ = metadata.version("sh")
+try:
+    __version__ = metadata.version("sh")
+except metadata.PackageNotFoundError:
+    __version__ = "unknown"
 __project_url__ = "https://github.com/amoffat/sh"
 
 if "windows" in platform.system().lower():  # pragma: no cover
@@ -646,7 +649,7 @@ class RunningCommand(object):
         # this event is used when we want to `await` a RunningCommand. see how it gets
         # used in self.__await__
         try:
-            asyncio.get_event_loop()
+            asyncio.get_running_loop()
         except RuntimeError:
             self.aio_output_complete = None
         else:
@@ -918,11 +921,7 @@ class RunningCommand(object):
             finally:
                 await self._aio_queue.put(None)
 
-        if sys.version_info < (3, 7, 0):
-            task = asyncio.ensure_future(queue_connector())
-        else:
-            task = asyncio.create_task(queue_connector())
-
+        task = asyncio.create_task(queue_connector())
         self._aio_task = task
         return self
 
@@ -2380,7 +2379,7 @@ class OProc(object):
             # if the `sh` command was launched from within a thread (so we're not in
             # the main thread), then we won't have an event loop.
             try:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
             except RuntimeError:
 
                 def output_complete():
