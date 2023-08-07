@@ -15,16 +15,13 @@
 .. image:: https://img.shields.io/pypi/pyversions/sh.svg?style=flat-square
     :target: https://pypi.python.org/pypi/sh
     :alt: Python Versions
-.. image:: https://img.shields.io/travis/amoffat/sh/master.svg?style=flat-square
-    :target: https://travis-ci.org/amoffat/sh
-    :alt: Build Status
 .. image:: https://img.shields.io/coveralls/amoffat/sh.svg?style=flat-square
     :target: https://coveralls.io/r/amoffat/sh?branch=master
     :alt: Coverage Status
 
 |
 
-sh is a full-fledged subprocess replacement for Python 3.8 - 3.10, PyPy and PyPy3
+sh is a full-fledged subprocess replacement for Python 3.8 - 3.11, and PyPy
 that allows you to call *any* program as if it were a function:
 
 .. code:: python
@@ -37,7 +34,7 @@ sh is *not* a collection of system commands implemented in Python.
 sh relies on various Unix system calls and only works on Unix-like operating
 systems - Linux, macOS, BSDs etc. Specifically, Windows is not supported.
 
-`Complete documentation here <https://amoffat.github.io/sh>`_
+`Complete documentation here <https://sh.readthedocs.io/>`_
 
 Installation
 ============
@@ -55,11 +52,6 @@ Support
 Developers
 ==========
 
-Updating the docs
------------------
-
-Check out the `gh-pages <https://github.com/amoffat/sh/tree/gh-pages>`_ branch and follow the ``README.rst`` there.
-
 Testing
 -------
 
@@ -76,7 +68,7 @@ Coverage
 
 First run all of the tests::
 
-    $> SH_TESTS_RUNNING=1 coverage run --source=sh -m unittest
+    $> SH_TESTS_RUNNING=1 coverage run --source=sh -m pytest
 
 This will aggregate a ``.coverage``.  You may then visualize the report with::
 

@@ -100,7 +100,7 @@ def requires_progs(*progs):
 
     friendly_missing = ", ".join(missing)
     return unittest.skipUnless(
-        len(missing) == 0, "Missing required system programs: %s" % friendly_missing
+        len(missing) == 0, f"Missing required system programs: {friendly_missing}"
     )
 
 
@@ -115,7 +115,7 @@ def requires_poller(poller):
     use_select = bool(int(os.environ.get("SH_TESTS_USE_SELECT", "0")))
     cur_poller = "select" if use_select else "poll"
     return unittest.skipUnless(
-        cur_poller == poller, "Only enabled for select.%s" % cur_poller
+        cur_poller == poller, f"Only enabled for select.{cur_poller}"
     )
 
 
@@ -1101,6 +1101,13 @@ if options.opt:
             out = whoami()
         self.assertEqual(out.strip(), "")
 
+    def test_with_context_nested(self):
+        echo_path = sh.echo._path
+        with sh.echo.bake("test1", _with=True):
+            with sh.echo.bake("test2", _with=True):
+                out = sh.echo("test3")
+        self.assertEqual(out.strip(), f"test1 {echo_path} test2 {echo_path} test3")
+
     def test_binary_input(self):
         py = create_tmp_test(
             """
@@ -1652,7 +1659,7 @@ for _ in range(6):
     print(i)
     i += 1
     sys.stdout.flush()
-    time.sleep(1)
+    time.sleep(2)
 """
         )
 
@@ -2112,17 +2119,15 @@ exit(49)
     def test_cwd_fg(self):
         td = realpath(tempfile.mkdtemp())
         py = create_tmp_test(
-            """
+            f"""
 import sh
 import os
 from os.path import realpath
 orig = realpath(os.getcwd())
 print(orig)
-sh.pwd(_cwd="{newdir}", _fg=True)
+sh.pwd(_cwd="{td}", _fg=True)
 print(realpath(os.getcwd()))
-""".format(
-                newdir=td
-            )
+"""
         )
 
         orig, newdir, restored = python(py.name).strip().split("\n")
@@ -2208,14 +2213,21 @@ else:
         self.assertEqual(out, "no tty attached")
 
     def test_stringio_output(self):
-        from sh import echo
+        import sh
+
+        py = create_tmp_test(
+            """
+import sys
+sys.stdout.write(sys.argv[1])
+"""
+        )
 
         out = StringIO()
-        echo("-n", "testing 123", _out=out)
+        sh.python(py.name, "testing 123", _out=out)
         self.assertEqual(out.getvalue(), "testing 123")
 
         out = BytesIO()
-        echo("-n", "testing 123", _out=out)
+        sh.python(py.name, "testing 123", _out=out)
         self.assertEqual(out.getvalue().decode(), "testing 123")
 
     def test_stringio_input(self):
@@ -3231,12 +3243,10 @@ print("hi")
 
         python_name = os.path.basename(sys.executable)
         py = create_tmp_test(
-            """#!/usr/bin/env {0}
+            f"""#!/usr/bin/env {python_name}
 # -*- coding: utf8 -*-
 print("字")
-""".format(
-                python_name
-            ),
+""",
             prefix="字",
             delete=False,
         )
@@ -3272,7 +3282,7 @@ print("字")
 
         import sh
 
-        sig_name = "SignalException_%d" % signal.SIGQUIT
+        sig_name = f"SignalException_{signal.SIGQUIT}"
         sig = getattr(sh, sig_name)
         from sh import SignalException_SIGQUIT
 
@@ -3416,9 +3426,16 @@ class ExecutionContextTests(unittest.TestCase):
     def test_basic(self):
         import sh
 
+        py = create_tmp_test(
+            """
+import sys
+sys.stdout.write(sys.argv[1])
+"""
+        )
+
         out = StringIO()
-        _sh = sh.bake(_out=out)
-        _sh.echo("-n", "TEST")
+        sh2 = sh.bake(_out=out)
+        sh2.python(py.name, "TEST")
         self.assertEqual("TEST", out.getvalue())
 
     def test_multiline_defaults(self):
@@ -3440,17 +3457,24 @@ print(os.environ["ABC"])
     def test_no_interfere1(self):
         import sh
 
+        py = create_tmp_test(
+            """
+import sys
+sys.stdout.write(sys.argv[1])
+"""
+        )
+
         out = StringIO()
         _sh = sh.bake(_out=out)  # noqa: F841
 
-        _sh.echo("-n", "TEST")
+        _sh.python(py.name, "TEST")
         self.assertEqual("TEST", out.getvalue())
 
         # Emptying the StringIO
         out.seek(0)
         out.truncate(0)
 
-        sh.echo("-n", "KO")
+        sh.python(py.name, "KO")
         self.assertEqual("", out.getvalue())
 
     def test_no_interfere2(self):
@@ -3466,16 +3490,23 @@ print(os.environ["ABC"])
     def test_set_in_parent_function(self):
         import sh
 
+        py = create_tmp_test(
+            """
+import sys
+sys.stdout.write(sys.argv[1])
+"""
+        )
+
         out = StringIO()
         _sh = sh.bake(_out=out)
 
         def nested1():
-            _sh.echo("-n", "TEST1")
+            _sh.python(py.name, "TEST1")
 
         def nested2():
             import sh
 
-            sh.echo("-n", "TEST2")
+            sh.python(py.name, "TEST2")
 
         nested1()
         nested2()

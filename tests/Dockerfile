@@ -1,4 +1,4 @@
-FROM ubuntu:bionic
+FROM ubuntu:focal
 
 ARG cache_bust
 RUN apt update &&\
@@ -11,21 +11,21 @@ ENV LC_ALL en_US.UTF-8
 ENV TZ Etc/UTC
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get -y install\
+RUN apt -y install\
     software-properties-common\
     curl\
     sudo\
     lsof
 
-RUN add-apt-repository ppa:deadsnakes/ppa
-RUN apt-get update
-RUN apt-get -y install\
+RUN add-apt-repository -y ppa:deadsnakes/ppa
+RUN apt update
+RUN apt -y install\
     python3.8\
     python3.9\
     python3.10\
     python3.11
 
-RUN apt-get -y install\
+RUN apt -y install\
     python3.8-distutils\
     python3.9-distutils\
     && curl https://bootstrap.pypa.io/get-pip.py | python3.9 -
@@ -44,4 +44,4 @@ WORKDIR /home/shtest/
 ENV PATH="/home/shtest/.local/bin:$PATH"
 RUN pip install tox flake8 black rstcheck mypy
 
-COPY README.rst sh.py .flake8 tox.ini tests/test.py /home/shtest/
+COPY README.rst sh.py .flake8 tox.ini tests/sh_test.py /home/shtest/

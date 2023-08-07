@@ -92,7 +92,7 @@ jobs:
 
       - name: Run tests
         run: |
-          SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=${{ matrix.use-select }} LANG=${{ matrix.lang }} poetry run coverage run -a -m unittest
+          SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=${{ matrix.use-select }} LANG=${{ matrix.lang }} poetry run coverage run -a -m pytest
 
       - name: Store coverage
         uses: actions/upload-artifact@v2
