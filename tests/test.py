@@ -1101,6 +1101,13 @@ if options.opt:
             out = whoami()
         self.assertEqual(out.strip(), "")
 
+    def test_with_context_nested(self):
+        echo_path = sh.echo._path
+        with sh.echo.bake("test1", _with=True):
+            with sh.echo.bake("test2", _with=True):
+                out = sh.echo("test3")
+        self.assertEqual(out.strip(), f"test1 {echo_path} test2 {echo_path} test3")
+
     def test_binary_input(self):
         py = create_tmp_test(
             """

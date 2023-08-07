@@ -1425,7 +1425,10 @@ class Command(object):
             pcall_args.pop("with", None)
 
             call_args.update(pcall_args)
-            cmd.extend(prepend.cmd)
+            # we do not prepend commands used as a 'with' context as they will
+            # be prepended to any nested commands
+            if not kwargs.get("_with", False):
+                cmd.extend(prepend.cmd)
 
         cmd.append(self._path)
 
