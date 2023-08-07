@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.5 -
+
+- Allow nested `with` contexts [#690](https://github.com/amoffat/sh/issues/690)
+
 ## 2.0.4 - 5/13/22
 
 - Allow `ok_code` to be used with `fg` [#665](https://github.com/amoffat/sh/pull/665)
