@@ -649,7 +649,7 @@ class RunningCommand(object):
         # this event is used when we want to `await` a RunningCommand. see how it gets
         # used in self.__await__
         try:
-            asyncio.get_event_loop()
+            asyncio.get_running_loop()
         except RuntimeError:
             self.aio_output_complete = None
         else:
@@ -2383,7 +2383,7 @@ class OProc(object):
             # if the `sh` command was launched from within a thread (so we're not in
             # the main thread), then we won't have an event loop.
             try:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
             except RuntimeError:
 
                 def output_complete():
