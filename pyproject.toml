@@ -29,9 +29,12 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 include = [
-    "CHANGELOG.md",
-    "MIGRATION.md",
-    "LICENSE.txt",
+    { path = "CHANGELOG.md", format = "sdist" },
+    { path = "MIGRATION.md", format = "sdist" },
+    { path = "images", format = "sdist" },
+    { path = "Makefile", format = "sdist" },
+    { path = "tests", format = "sdist" },
+    { path = "tox.ini", format = "sdist" },
 ]
 
 [tool.poetry.dependencies]
