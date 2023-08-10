@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.6 - 8/9/23
+
+- Add back appropriate sdist files [comment](https://github.com/amoffat/sh/commit/89333ae48069a5b445b3535232195b2de6f4648f)
+
 ## 2.0.5 - 8/7/23
 
 - Allow nested `with` contexts [#690](https://github.com/amoffat/sh/issues/690)
