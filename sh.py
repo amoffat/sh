@@ -457,12 +457,12 @@ class GlobResults(list):
         list.__init__(self, results)
 
 
-def glob(path, recursive=False):
-    expanded = GlobResults(path, _old_glob(path, recursive=recursive))
+def glob(path, *args, **kwargs):
+    expanded = GlobResults(path, _old_glob(path, *args, **kwargs))
     return expanded
 
 
-glob_module.glob = glob
+glob_module.glob = glob  # type: ignore
 
 
 def canonicalize(path):
