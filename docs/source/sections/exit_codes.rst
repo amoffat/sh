@@ -3,12 +3,12 @@
 Exit Codes & Exceptions
 =======================
 
-Normal processes exit with exit code 0.  This can be seen through a
+Normal processes exit with exit code 0.  This can be seen from
 :attr:`RunningCommand.exit_code`:
 
 .. code-block:: python
 
-	output = ls("/")
+	output = ls("/", _return_cmd=True)
 	print(output.exit_code) # should be 0
 	
 If a process terminates, and the exit code is not 0, an exception is generated
