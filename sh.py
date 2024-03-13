@@ -106,7 +106,7 @@ def get_num_args(fn):
     return len(inspect.getfullargspec(fn).args)
 
 
-_unicode_methods = set(dir(''))
+_unicode_methods = set(dir(""))
 
 HAS_POLL = hasattr(select, "poll")
 POLLER_EVENT_READ = 1
