@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.7 - 5/31/24
+
+- Fix `sh.glob` arguments [#708](https://github.com/amoffat/sh/issues/708)
+- Misc modernizations
+
 ## 2.0.6 - 8/9/23
 
 - Add back appropriate sdist files [comment](https://github.com/amoffat/sh/commit/89333ae48069a5b445b3535232195b2de6f4648f)

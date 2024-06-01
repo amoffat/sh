@@ -28,7 +28,7 @@ from collections import deque
 try:
     from collections.abc import Mapping
 except ImportError:  # pragma: no cover
-    from collections import Mapping
+    from collections.abc import Mapping
 
 import errno
 import fcntl
@@ -106,7 +106,7 @@ def get_num_args(fn):
     return len(inspect.getfullargspec(fn).args)
 
 
-_unicode_methods = set(dir(str()))
+_unicode_methods = set(dir(""))
 
 HAS_POLL = hasattr(select, "poll")
 POLLER_EVENT_READ = 1
@@ -115,7 +115,7 @@ POLLER_EVENT_HUP = 4
 POLLER_EVENT_ERROR = 8
 
 
-class PollPoller(object):
+class PollPoller:
     def __init__(self):
         self._poll = select.poll()
         # file descriptor <-> file object bidirectional maps
@@ -191,7 +191,7 @@ class PollPoller(object):
         return results
 
 
-class SelectPoller(object):
+class SelectPoller:
     def __init__(self):
         self.rlist = []
         self.wlist = []
@@ -271,7 +271,7 @@ class ErrorReturnCodeMeta(type):
     """
 
     def __subclasscheck__(self, o):
-        other_bases = set([b.__name__ for b in o.__bases__])
+        other_bases = {b.__name__ for b in o.__bases__}
         return self.__name__ in other_bases or o.__name__ == self.__name__
 
 
@@ -330,7 +330,7 @@ class ErrorReturnCode(Exception):
             f"\n\n  STDERR:\n{exc_stderr.decode(DEFAULT_ENCODING, 'replace')}"
         )
 
-        super(ErrorReturnCode, self).__init__(msg)
+        super().__init__(msg)
 
 
 class SignalException(ErrorReturnCode):
@@ -372,9 +372,9 @@ class CommandNotFound(AttributeError):
 rc_exc_regex = re.compile(r"(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z]+)")
 rc_exc_cache: Dict[str, Type[ErrorReturnCode]] = {}
 
-SIGNAL_MAPPING = dict(
-    [(v, k) for k, v in signal.__dict__.items() if re.match(r"SIG[a-zA-Z]+", k)]
-)
+SIGNAL_MAPPING = {
+    v: k for k, v in signal.__dict__.items() if re.match(r"SIG[a-zA-Z]+", k)
+}
 
 
 def get_exc_from_name(name):
@@ -457,12 +457,12 @@ class GlobResults(list):
         list.__init__(self, results)
 
 
-def glob(path, recursive=False):
-    expanded = GlobResults(path, _old_glob(path, recursive=recursive))
+def glob(path, *args, **kwargs):
+    expanded = GlobResults(path, _old_glob(path, *args, **kwargs))
     return expanded
 
 
-glob_module.glob = glob
+glob_module.glob = glob  # type: ignore
 
 
 def canonicalize(path):
@@ -536,7 +536,7 @@ def resolve_command(name, command_cls, baked_args=None):
     return cmd
 
 
-class Logger(object):
+class Logger:
     """provides a memory-inexpensive logger.  a gotcha about python's builtin
     logger is that logger objects are never garbage collected.  if you create a
     thousand loggers with unique names, they'll sit there in memory until your
@@ -596,7 +596,7 @@ def default_logger_str(cmd, call_args, pid=None):
     return s
 
 
-class RunningCommand(object):
+class RunningCommand:
     """this represents an executing Command object.  it is returned as the
     result of __call__() being executed on a Command instance.  this creates a
     reference to a OProc instance, which is a low-level wrapper around the
@@ -1158,7 +1158,7 @@ def env_validator(passed_kwargs, merged_kwargs):
     return invalid
 
 
-class Command(object):
+class Command:
     """represents an un-run system program, like "ls" or "cd".  because it
     represents the program itself (and not a running instance of it), it should
     hold very little state.  in fact, the only state it does hold is baked
@@ -1773,7 +1773,7 @@ def no_interrupt(syscall, *args, **kwargs):
     return ret
 
 
-class OProc(object):
+class OProc:
     """this class is instantiated by RunningCommand for a command to be exec'd.
     it handles all the nasty business involved with correctly setting up the
     input/output to the child process.  it gets its name for subprocess.Popen
@@ -2088,12 +2088,12 @@ class OProc(object):
                     # don't inherit file descriptors
                     try:
                         inherited_fds = os.listdir("/dev/fd")
-                    except (IOError, OSError):
+                    except OSError:
                         # Some systems don't have /dev/fd. Raises OSError in
                         # Python2, FileNotFoundError on Python3. The latter doesn't
                         # exist on Python2, but inherits from IOError, which does.
                         inherited_fds = os.listdir("/proc/self/fd")
-                    inherited_fds = set(int(fd) for fd in inherited_fds) - pass_fds
+                    inherited_fds = {int(fd) for fd in inherited_fds} - pass_fds
                     for fd in inherited_fds:
                         try:
                             os.close(fd)
@@ -2870,7 +2870,7 @@ def bufsize_type_to_bufsize(bf_type):
     return bufsize
 
 
-class StreamWriter(object):
+class StreamWriter:
     """StreamWriter reads from some input (the stdin param) and writes to a fd
     (the stream param).  the stdin may be a Queue, a callable, something with
     the "read" method, a string, or an iterable"""
@@ -3073,7 +3073,7 @@ def get_stringio_chunk_consumer(handler, encoding, decode_errors):
     return process, finish
 
 
-class StreamReader(object):
+class StreamReader:
     """reads from some output (the stream) and sends what it just read to the
     handler."""
 
@@ -3160,7 +3160,7 @@ class StreamReader(object):
             self.write_chunk(chunk)
 
 
-class StreamBufferer(object):
+class StreamBufferer:
     """this is used for feeding in chunks of stdout/stderr, and breaking it up
     into chunks that will actually be put into the internal buffers.  for
     example, if you have two processes, one being piped to the other, and you
@@ -3506,7 +3506,7 @@ def sudo(orig):  # pragma: no cover
 def ssh(orig):  # pragma: no cover
     """An ssh command for automatic password login"""
 
-    class SessionContent(object):
+    class SessionContent:
         def __init__(self):
             self.chars = deque(maxlen=50000)
             self.lines = deque(maxlen=5000)
@@ -3531,7 +3531,7 @@ def ssh(orig):  # pragma: no cover
             line = "".join(self.line_chars)
             return line
 
-    class SSHInteract(object):
+    class SSHInteract:
         def __init__(self, prompt_match, pass_getter, out_handler, login_success):
             self.prompt_match = prompt_match
             self.pass_getter = pass_getter
@@ -3626,7 +3626,7 @@ class SelfWrapper(ModuleType):
         # but it seems to be the only way to make reload() behave
         # nicely.  if i make these attributes dynamic lookups in
         # __getattr__, reload sometimes chokes in weird ways...
-        super(SelfWrapper, self).__init__(
+        super().__init__(
             name=getattr(self_module, "__name__", None),
             doc=getattr(self_module, "__doc__", None),
         )

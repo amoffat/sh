@@ -1,4 +1,3 @@
-# -*- coding: utf8 -*-
 import asyncio
 import errno
 import fcntl
@@ -446,7 +445,7 @@ while True:
         def inc(*args, **kwargs):
             return python("-u", inc_py.name, *args, **kwargs)
 
-        class Derp(object):
+        class Derp:
             def __init__(self):
                 self.times = []
                 self.stdout = []
@@ -795,7 +794,7 @@ exit(2)
             self.assertEqual(gcc._path, gcc_file2)
             self.assertEqual(
                 gcc("no-error", _return_cmd=True).stdout.strip(),
-                "no-error".encode("ascii"),
+                b"no-error",
             )
 
         finally:
@@ -2308,7 +2307,7 @@ sys.stdout.write("line1")
 """
         )
 
-        class Callable(object):
+        class Callable:
             def __init__(self):
                 self.line = None
 
@@ -2647,7 +2646,7 @@ p.wait()
     def test_done_callback(self):
         import time
 
-        class Callback(object):
+        class Callback:
             def __init__(self):
                 self.called = False
                 self.exit_code = None
@@ -2792,7 +2791,7 @@ time.sleep(0.5)
     def test_done_cb_exc(self):
         from sh import ErrorReturnCode
 
-        class Callback(object):
+        class Callback:
             def __init__(self):
                 self.called = False
                 self.success = None

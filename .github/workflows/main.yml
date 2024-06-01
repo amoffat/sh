@@ -138,6 +138,10 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref_name == 'master'
+
+    permissions:
+      id-token: write
+
     steps:
       - uses: actions/checkout@v2
 
@@ -163,5 +167,3 @@ jobs:
 
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
