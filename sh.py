@@ -24,11 +24,7 @@ http://amoffat.github.io/sh/
 # ===============================================================================
 import asyncio
 from collections import deque
-
-try:
-    from collections.abc import Mapping
-except ImportError:  # pragma: no cover
-    from collections.abc import Mapping
+from collections.abc import Mapping
 
 import errno
 import fcntl
