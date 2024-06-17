@@ -1,5 +1,6 @@
 """
-http://amoffat.github.io/sh/
+https://sh.readthedocs.io/en/latest/
+https://github.com/amoffat/sh
 """
 # ===============================================================================
 # Copyright (C) 2011-2023 by Andrew Moffat
@@ -1094,7 +1095,7 @@ def fg_validator(passed_kwargs, merged_kwargs):
     msg = """\
 _fg is invalid with nearly every other option, see warning and workaround here:
 
-    https://amoffat.github.io/sh/sections/special_arguments.html#fg"""
+    https://sh.readthedocs.io/en/latest/sections/special_arguments.html#fg"""
     allowlist = {"env", "fg", "cwd", "ok_code"}
     offending = set(passed_kwargs.keys()) - allowlist
 
