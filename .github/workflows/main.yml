@@ -140,6 +140,7 @@ jobs:
     if: github.ref_name == 'master'
 
     permissions:
+      contents: write
       id-token: write
 
     steps:
@@ -147,12 +148,7 @@ jobs:
 
       - name: Get current version
         id: get_version
-        run: echo "::set-output name=version::$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)"
-
-      - name: Tag commit
-        run: |
-          git tag "${{steps.get_version.outputs.version}}" "${{github.ref_name}}"
-          git push -f origin "${{steps.get_version.outputs.version}}"
+        run: echo "version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)" >> $GITHUB_ENV
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -164,6 +160,28 @@ jobs:
 
       - name: Build
         run: python -m build
+
+      - name: Tag commit
+        run: |
+          git tag "${{steps.get_version.outputs.version}}" "${{github.ref_name}}"
+          git push -f origin "${{steps.get_version.outputs.version}}"
+
+      - name: Get changes
+        id: changelog
+        run: |
+          python dev_scripts/changelog_extract.py ${{ steps.get_version.outputs.version }} \
+            > release_changes.md
+
+      - name: Create Release
+        id: create-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          body_path: release_changes.md
+          draft: false
+          prerelease: false
+          files: dist/*
 
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1
