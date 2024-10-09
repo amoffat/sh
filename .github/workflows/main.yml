@@ -92,13 +92,13 @@ jobs:
 
       - name: Run tests
         run: |
-          SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=${{ matrix.use-select }} LANG=${{ matrix.lang }} poetry run coverage run -a -m pytest
+          SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=${{ matrix.use-select }} LANG=${{ matrix.lang }} poetry run coverage run --data-file=coverage.data -a -m pytest
 
       - name: Store coverage
         uses: actions/upload-artifact@v4
         with:
           name: coverage.${{ matrix.use-select }}.${{ matrix.lang }}.${{ matrix.python-version }}
-          path: .coverage
+          path: coverage.data
 
   report:
     name: Report Coverage
@@ -124,7 +124,7 @@ jobs:
 
       - name: Combine coverage
         run: |
-          find coverage-artifacts -name .coverage | xargs coverage combine -a
+          find coverage-artifacts -name coverage.data | xargs coverage combine -a
 
       - name: Report coverage
         env:
