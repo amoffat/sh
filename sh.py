@@ -3471,6 +3471,12 @@ def git(orig):  # pragma: no cover
     return cmd
 
 
+@contrib("bash")
+def bash(orig):
+    cmd = orig.bake("-c")
+    return cmd
+
+
 @contrib("sudo")
 def sudo(orig):  # pragma: no cover
     """a nicer version of sudo that uses getpass to ask for a password, or

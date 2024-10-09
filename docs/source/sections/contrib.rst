@@ -130,6 +130,32 @@ this.
 
     The currently written character.
 
+
+.. _contrib_bash:
+
+Bash
+---
+
+Often users may find themselves having to run bash commands directly, whether due
+to commands having special characters (e.g. dash, or dot) or other reasons. 
+This can lead into recurrently having to bake the ``bash`` command to call it directly. To 
+account for this, the contrib version provides a ``bash`` command baked in:
+
+.. py:function:: bash(*args, **kwargs)
+
+    Call bash with the prefix of "bash -c [...]".
+
+.. code-block:: python
+
+    from sh.contrib import bash
+
+    # Calling commands directly
+    bash.ls() # equivallent to "bash -c ls"
+
+    # Or adding the full commands
+    bash("command-with-dashes args")
+
+
 Extending
 =========
 
