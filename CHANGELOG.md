@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.0 - 10/8/24
+
+- Add contrib command `sh.contrib.bash` [#736](https://github.com/amoffat/sh/pull/736)
+
 ## 2.0.7 - 5/31/24
 
 - Fix `sh.glob` arguments [#708](https://github.com/amoffat/sh/issues/708)
