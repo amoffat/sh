@@ -14,22 +14,22 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         name: Cache pip directory
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-3.9
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         name: Cache poetry deps
         with:
           path: .venv
           key: ${{ runner.os }}-build-${{ hashFiles('poetry.lock') }}-3.9
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
 
@@ -60,15 +60,15 @@ jobs:
         lang: [C, en_US.UTF-8]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         name: Cache pip directory
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-3.9
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         name: Cache poetry deps
         env:
           cache-name: poetry-deps
@@ -77,7 +77,7 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('poetry.lock') }}-${{ matrix.python-version }}
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -92,13 +92,13 @@ jobs:
 
       - name: Run tests
         run: |
-          SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=${{ matrix.use-select }} LANG=${{ matrix.lang }} poetry run coverage run -a -m pytest
+          SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=${{ matrix.use-select }} LANG=${{ matrix.lang }} poetry run coverage run --data-file=coverage.data -a -m pytest
 
       - name: Store coverage
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: coverage.${{ matrix.use-select }}.${{ matrix.lang }}.${{ matrix.python-version }}
-          path: .coverage
+          path: coverage.data
 
   report:
     name: Report Coverage
@@ -106,10 +106,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # required because coveralls complains if we're not in a git dir
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
 
@@ -118,13 +118,13 @@ jobs:
           pip install coverage coveralls
 
       - name: Download coverage artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: coverage-artifacts
 
       - name: Combine coverage
         run: |
-          find coverage-artifacts -name .coverage | xargs coverage combine -a
+          find coverage-artifacts -name coverage.data | xargs coverage combine -a
 
       - name: Report coverage
         env:
@@ -140,23 +140,19 @@ jobs:
     if: github.ref_name == 'master'
 
     permissions:
+      contents: write
       id-token: write
       contents: write
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Get current version
         id: get_version
-        run: echo "::set-output name=version::$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)"
-
-      - name: Tag commit
-        run: |
-          git tag "${{steps.get_version.outputs.version}}" "${{github.ref_name}}"
-          git push -f origin "${{steps.get_version.outputs.version}}"
+        run: echo "version=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)" >> $GITHUB_ENV
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
 
@@ -165,6 +161,28 @@ jobs:
 
       - name: Build
         run: python -m build
+
+      - name: Tag commit
+        run: |
+          git tag "${{steps.get_version.outputs.version}}" "${{github.ref_name}}"
+          git push -f origin "${{steps.get_version.outputs.version}}"
+
+      - name: Get changes
+        id: changelog
+        run: |
+          python dev_scripts/changelog_extract.py ${{ steps.get_version.outputs.version }} \
+            > release_changes.md
+
+      - name: Create Release
+        id: create-release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
+          body_path: release_changes.md
+          draft: false
+          prerelease: false
+          files: dist/*
 
       - name: Publish
         uses: pypa/gh-action-pypi-publish@release/v1

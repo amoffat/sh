@@ -1,5 +1,6 @@
 """
-http://amoffat.github.io/sh/
+https://sh.readthedocs.io/en/latest/
+https://github.com/amoffat/sh
 """
 # ===============================================================================
 # Copyright (C) 2011-2023 by Andrew Moffat
@@ -24,11 +25,7 @@ http://amoffat.github.io/sh/
 # ===============================================================================
 import asyncio
 from collections import deque
-
-try:
-    from collections.abc import Mapping
-except ImportError:  # pragma: no cover
-    from collections.abc import Mapping
+from collections.abc import Mapping
 
 import errno
 import fcntl
@@ -75,9 +72,7 @@ __project_url__ = "https://github.com/amoffat/sh"
 
 if "windows" in platform.system().lower():  # pragma: no cover
     raise ImportError(
-        f"sh {__version__} is currently only supported on linux and osx. \
-please install pbs 0.110 (http://pypi.python.org/pypi/pbs) for windows \
-support."
+        f"sh {__version__} is currently only supported on Linux and macOS."
     )
 
 TEE_STDOUT = {True, "out", 1}
@@ -1098,7 +1093,7 @@ def fg_validator(passed_kwargs, merged_kwargs):
     msg = """\
 _fg is invalid with nearly every other option, see warning and workaround here:
 
-    https://amoffat.github.io/sh/sections/special_arguments.html#fg"""
+    https://sh.readthedocs.io/en/latest/sections/special_arguments.html#fg"""
     allowlist = {"env", "fg", "cwd", "ok_code"}
     offending = set(passed_kwargs.keys()) - allowlist
 
@@ -3473,6 +3468,12 @@ sys.modules[mod_name] = contrib
 def git(orig):  # pragma: no cover
     """most git commands play nicer without a TTY"""
     cmd = orig.bake(_tty_out=False)
+    return cmd
+
+
+@contrib("bash")
+def bash(orig):
+    cmd = orig.bake("-c")
     return cmd
 
 
