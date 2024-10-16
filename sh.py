@@ -28,7 +28,11 @@ from collections import deque
 from collections.abc import Mapping
 
 import errno
-import fcntl
+
+try:
+    import fcntl
+except ImportError:
+    raise RuntimeError("This only works on *nix systems. Try Docker?")
 import gc
 import getpass
 import glob as glob_module
