@@ -27,6 +27,19 @@ import asyncio
 from collections import deque
 from collections.abc import Mapping
 
+import platform
+from importlib import metadata
+
+try:
+    __version__ = metadata.version("sh")
+except metadata.PackageNotFoundError:  # pragma: no cover
+    __version__ = "unknown"
+
+if "windows" in platform.system().lower():  # pragma: no cover
+    raise ImportError(
+        f"sh {__version__} is currently only supported on Linux and macOS."
+    )
+
 import errno
 import fcntl
 import gc
@@ -35,7 +48,6 @@ import glob as glob_module
 import inspect
 import logging
 import os
-import platform
 import pty
 import pwd
 import re
@@ -55,7 +67,6 @@ import weakref
 from asyncio import Queue as AQueue
 from contextlib import contextmanager
 from functools import partial
-from importlib import metadata
 from io import BytesIO, StringIO, UnsupportedOperation
 from io import open as fdopen
 from locale import getpreferredencoding
@@ -64,16 +75,7 @@ from shlex import quote as shlex_quote
 from types import GeneratorType, ModuleType
 from typing import Any, Dict, Type, Union
 
-try:
-    __version__ = metadata.version("sh")
-except metadata.PackageNotFoundError:  # pragma: no cover
-    __version__ = "unknown"
 __project_url__ = "https://github.com/amoffat/sh"
-
-if "windows" in platform.system().lower():  # pragma: no cover
-    raise ImportError(
-        f"sh {__version__} is currently only supported on Linux and macOS."
-    )
 
 TEE_STDOUT = {True, "out", 1}
 TEE_STDERR = {"err", 2}
