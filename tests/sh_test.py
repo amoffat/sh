@@ -1732,7 +1732,7 @@ print("hello")
         py = create_tmp_test("""exit(34)""")
 
         async def producer():
-            await python(py.name, _async=True)
+            await python(py.name, _async=True, _return_cmd=False)
 
         self.assertRaises(sh.ErrorReturnCode_34, asyncio.run, producer())
 
@@ -1785,6 +1785,22 @@ exit(34)
                 lines.append(int(line.strip()))
 
         self.assertRaises(sh.ErrorReturnCode_34, asyncio.run, producer())
+
+    def test_async_return_cmd(self):
+        py = create_tmp_test(
+            """
+import sys
+sys.exit(0)
+"""
+        )
+
+        async def main():
+            result = await python(py.name, _async=True, _return_cmd=True)
+            self.assertIsInstance(result, sh.RunningCommand)
+            result_str = await python(py.name, _async=True, _return_cmd=False)
+            self.assertIsInstance(result_str, str)
+
+        asyncio.run(main())
 
     def test_handle_both_out_and_err(self):
         py = create_tmp_test(
