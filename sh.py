@@ -889,7 +889,10 @@ class RunningCommand:
     def __await__(self):
         async def wait_for_completion():
             await self.aio_output_complete.wait()
-            return str(self)
+            if self.call_args["return_cmd"]:
+                return self
+            else:
+                return str(self)
 
         return wait_for_completion().__await__()
 
