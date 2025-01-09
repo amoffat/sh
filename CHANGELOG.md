@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.1 - 1/9/25
+
+- Bugfix where `async` and `return_cmd` does not raise exceptions [#746](https://github.com/amoffat/sh/pull/746)
+
 ## 2.2.0 - 1/9/25
 
 - `return_cmd` with `await` now works correctly [#743](https://github.com/amoffat/sh/issues/743)
