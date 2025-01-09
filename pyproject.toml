@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "sh"
-version = "2.1.0"
+version = "2.2.0"
 description = "Python subprocess replacement"
 authors = ["Andrew Moffat <arwmoffat@gmail.com>"]
 readme = "README.rst"
 maintainers = [
     "Andrew Moffat <arwmoffat@gmail.com>",
-    "Erik Cederstrand <erik@cederstrand.dk>"
+    "Erik Cederstrand <erik@cederstrand.dk>",
 ]
 homepage = "https://sh.readthedocs.io/"
 repository = "https://github.com/amoffat/sh"

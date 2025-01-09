@@ -1707,7 +1707,6 @@ print("hello")
         )
 
         alternating = []
-        q = AQueue()
 
         async def producer(q):
             alternating.append(1)
@@ -1722,19 +1721,20 @@ print("hello")
             self.assertEqual(msg, "hello")
             alternating.append(2)
 
-        loop = asyncio.get_event_loop()
-        fut = asyncio.gather(producer(q), consumer(q))
-        loop.run_until_complete(fut)
+        async def main():
+            q = AQueue()
+            await asyncio.gather(producer(q), consumer(q))
+
+        asyncio.run(main())
         self.assertListEqual(alternating, [1, 2, 1, 2])
 
     def test_async_exc(self):
         py = create_tmp_test("""exit(34)""")
 
         async def producer():
-            await python(py.name, _async=True)
+            await python(py.name, _async=True, _return_cmd=False)
 
-        loop = asyncio.get_event_loop()
-        self.assertRaises(sh.ErrorReturnCode_34, loop.run_until_complete, producer())
+        self.assertRaises(sh.ErrorReturnCode_34, asyncio.run, producer())
 
     def test_async_iter(self):
         py = create_tmp_test(
@@ -1743,7 +1743,6 @@ for i in range(5):
     print(i)
 """
         )
-        q = AQueue()
 
         # this list will prove that our coroutines are yielding to eachother as each
         # line is produced
@@ -1763,9 +1762,11 @@ for i in range(5):
                     return
                 alternating.append(2)
 
-        loop = asyncio.get_event_loop()
-        res = asyncio.gather(producer(q), consumer(q))
-        loop.run_until_complete(res)
+        async def main():
+            q = AQueue()
+            await asyncio.gather(producer(q), consumer(q))
+
+        asyncio.run(main())
         self.assertListEqual(alternating, [1, 2, 1, 2, 1, 2, 1, 2, 1, 2])
 
     def test_async_iter_exc(self):
@@ -1783,8 +1784,23 @@ exit(34)
             async for line in python(py.name, _async=True):
                 lines.append(int(line.strip()))
 
-        loop = asyncio.get_event_loop()
-        self.assertRaises(sh.ErrorReturnCode_34, loop.run_until_complete, producer())
+        self.assertRaises(sh.ErrorReturnCode_34, asyncio.run, producer())
+
+    def test_async_return_cmd(self):
+        py = create_tmp_test(
+            """
+import sys
+sys.exit(0)
+"""
+        )
+
+        async def main():
+            result = await python(py.name, _async=True, _return_cmd=True)
+            self.assertIsInstance(result, sh.RunningCommand)
+            result_str = await python(py.name, _async=True, _return_cmd=False)
+            self.assertIsInstance(result_str, str)
+
+        asyncio.run(main())
 
     def test_handle_both_out_and_err(self):
         py = create_tmp_test(
