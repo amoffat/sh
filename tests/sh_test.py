@@ -1802,6 +1802,19 @@ sys.exit(0)
 
         asyncio.run(main())
 
+    def test_async_return_cmd_exc(self):
+        py = create_tmp_test(
+            """
+import sys
+sys.exit(1)
+"""
+        )
+
+        async def main():
+            await python(py.name, _async=True, _return_cmd=True)
+
+        self.assertRaises(sh.ErrorReturnCode_1, asyncio.run, main())
+
     def test_handle_both_out_and_err(self):
         py = create_tmp_test(
             """

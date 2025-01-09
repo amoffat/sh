@@ -890,6 +890,9 @@ class RunningCommand:
         async def wait_for_completion():
             await self.aio_output_complete.wait()
             if self.call_args["return_cmd"]:
+                # We know the command has completed already,
+                # but need to catch exceptions
+                self.wait()
                 return self
             else:
                 return str(self)
