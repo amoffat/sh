@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.0 - 1/9/25
+
+- `return_cmd` with `await` now works correctly [#743](https://github.com/amoffat/sh/issues/743)
+- Formal support for Python 3.12
+
 ## 2.1.0 - 10/8/24
 
 - Add contrib command `sh.contrib.bash` [#736](https://github.com/amoffat/sh/pull/736)

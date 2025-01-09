@@ -21,7 +21,7 @@
 
 |
 
-sh is a full-fledged subprocess replacement for Python 3.8 - 3.11, and PyPy
+sh is a full-fledged subprocess replacement for Python 3.8 - 3.12, and PyPy
 that allows you to call *any* program as if it were a function:
 
 .. code:: python
