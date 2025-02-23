@@ -1732,7 +1732,7 @@ def get_exc_exit_code_would_raise(exit_code, ok_codes, sigpipe_ok):
     exc = None
     success = exit_code in ok_codes
     signals_that_should_throw_exception = [
-        sig for sig in SIGNALS_THAT_SHOULD_THROW_EXCEPTION if sig + 128 not in ok_codes
+        sig for sig in SIGNALS_THAT_SHOULD_THROW_EXCEPTION if -sig not in ok_codes
     ]
     bad_sig = -exit_code in signals_that_should_throw_exception
 
