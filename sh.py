@@ -2,8 +2,9 @@
 https://sh.readthedocs.io/en/latest/
 https://github.com/amoffat/sh
 """
+
 # ===============================================================================
-# Copyright (C) 2011-2023 by Andrew Moffat
+# Copyright (C) 2011-2025 by Andrew Moffat
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +25,9 @@ https://github.com/amoffat/sh
 # THE SOFTWARE.
 # ===============================================================================
 import asyncio
+import platform
 from collections import deque
 from collections.abc import Mapping
-
-import platform
 from importlib import metadata
 
 try:
