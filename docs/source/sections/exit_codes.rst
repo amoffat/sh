@@ -49,6 +49,11 @@ exception raised in this situation is :ref:`signal_exc`, which subclasses
     except sh.SignalException_SIGKILL:
         print("killed")
 
+This behavior could be blocked by appending the negative value of the signal to
+:ref:`ok_code`. All signals that raises :ref:`signal_exc` are ``[SIGABRT, 
+SIGBUS, SIGFPE, SIGILL, SIGINT, SIGKILL, SIGPIPE, SIGQUIT, SIGSEGV, SIGTERM, 
+SIGTERM]``.
+
 .. note::
 
     You can catch :ref:`signal_exc` by using either a number or a signal name.
