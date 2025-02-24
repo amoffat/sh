@@ -2,8 +2,9 @@
 https://sh.readthedocs.io/en/latest/
 https://github.com/amoffat/sh
 """
+
 # ===============================================================================
-# Copyright (C) 2011-2023 by Andrew Moffat
+# Copyright (C) 2011-2025 by Andrew Moffat
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +25,9 @@ https://github.com/amoffat/sh
 # THE SOFTWARE.
 # ===============================================================================
 import asyncio
+import platform
 from collections import deque
 from collections.abc import Mapping
-
-import platform
 from importlib import metadata
 
 try:
@@ -1730,7 +1730,10 @@ def construct_streamreader_callback(process, handler):
 def get_exc_exit_code_would_raise(exit_code, ok_codes, sigpipe_ok):
     exc = None
     success = exit_code in ok_codes
-    bad_sig = -exit_code in SIGNALS_THAT_SHOULD_THROW_EXCEPTION
+    signals_that_should_throw_exception = [
+        sig for sig in SIGNALS_THAT_SHOULD_THROW_EXCEPTION if -sig not in ok_codes
+    ]
+    bad_sig = -exit_code in signals_that_should_throw_exception
 
     # if this is a piped command, SIGPIPE must be ignored by us and not raise an
     # exception, since it's perfectly normal for the consumer of a process's

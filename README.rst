@@ -63,6 +63,16 @@ To run a single test::
 
     $> make test='FunctionalTests.test_background' test_one
 
+Docs
+----
+
+To build the docs, make sure you've run ``poetry install`` to install the dev dependencies, then::
+
+    $> cd docs
+    $> make html
+
+This will generate the docs in ``docs/build/html``. You can open the ``index.html`` file in your browser to view the docs.
+
 Coverage
 --------
 
