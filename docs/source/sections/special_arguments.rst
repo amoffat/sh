@@ -210,6 +210,20 @@ programs use exit codes other than 0 to indicate success.
     import sh
     sh.weird_program(_ok_code=[0,3,5])
 
+If the process is killed by a signal, a :ref:`signal_exc` is raised by
+default. This behavior could be blocked by appending a negative number to
+:ref:`ok_code` that represents the signal.
+
+.. code-block:: python
+
+    import sh
+    # the process won't raise SignalException if SIGINT, SIGKILL, or SIGTERM
+    # are sent to kill the process
+    p = sh.sleep(3, _bg=True, _ok_code=[0, -2, -9, -15])
+
+    # No exception will be raised here
+    p.kill()
+
 .. seealso:: :ref:`exit_codes`
 
 .. _new_session:
