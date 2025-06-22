@@ -1481,7 +1481,7 @@ class Command:
 
         cmd.extend(final_args)
         if call_args["x"]:
-            print(' '.join(cmd))
+            print(" ".join(cmd))
 
         # if we're running in foreground mode, we need to completely bypass
         # launching a RunningCommand and OProc and just do a spawn

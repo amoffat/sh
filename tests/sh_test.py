@@ -3235,13 +3235,14 @@ sys.exit(1)
 
     def test_x(self):
         import sh
+
         stdout = StringIO()
         original_stdout = sys.stdout
         sys.stdout = stdout
 
-        echo = sh.echo('hello', 'world', _x=True, _return_cmd=True)
+        echo = sh.echo("hello", "world", _x=True, _return_cmd=True)
 
-        self.assertIn(str(' '.join(echo.cmd)), stdout.getvalue().strip())
+        self.assertIn(str(" ".join(echo.cmd)), stdout.getvalue().strip())
         sys.stdout = original_stdout
 
 
