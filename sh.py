@@ -1273,6 +1273,8 @@ class Command:
         # sometimes we may return just a plain unicode string
         "return_cmd": False,
         "async": False,
+        # whether to echo each command before executing it
+        "x": False,
     }
 
     # this is a collection of validators to make sure the special kwargs make
@@ -1478,6 +1480,8 @@ class Command:
         final_args = split_args
 
         cmd.extend(final_args)
+        if call_args["x"]:
+            print(' '.join(cmd))
 
         # if we're running in foreground mode, we need to completely bypass
         # launching a RunningCommand and OProc and just do a spawn

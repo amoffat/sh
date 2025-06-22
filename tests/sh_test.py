@@ -3233,6 +3233,17 @@ sys.exit(1)
             else:
                 self.assertEqual(p.exit_code, -sig)
 
+    def test_x(self):
+        import sh
+        stdout = StringIO()
+        original_stdout = sys.stdout
+        sys.stdout = stdout
+
+        echo = sh.echo('hello', 'world', _x=True, _return_cmd=True)
+
+        self.assertIn(str(' '.join(echo.cmd)), stdout.getvalue().strip())
+        sys.stdout = original_stdout
+
 
 class MockTests(BaseTests):
     def test_patch_command_cls(self):
