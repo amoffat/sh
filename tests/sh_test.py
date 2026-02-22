@@ -1369,6 +1369,31 @@ sys.stdout.write(str(sys.argv[1:]))
         out = python.bake(py.name).bake("bake1").bake("bake2")()
         self.assertEqual("['bake1', 'bake2']", str(out))
 
+    def test_bake_boolean_override(self):
+        """Passing a=False in __call__ should override a baked a=True."""
+        py = create_tmp_test(
+            """
+import sys
+sys.stdout.write(str(sys.argv[1:]))
+"""
+        )
+
+        # short arg: bake True, call with False should drop the flag
+        out = python.bake(py.name, a=True)(a=False)
+        self.assertNotIn("'-a'", str(out))
+
+        # short arg: bake False, call with True should add the flag
+        out = python.bake(py.name, a=False)(a=True)
+        self.assertIn("'-a'", str(out))
+
+        # long arg: bake True, call with False should drop the flag
+        out = python.bake(py.name, verbose=True)(verbose=False)
+        self.assertNotIn("'--verbose'", str(out))
+
+        # chained bakes: later bake overrides earlier
+        out = python.bake(py.name).bake(a=True).bake(a=False)()
+        self.assertNotIn("'-a'", str(out))
+
     def test_arg_preprocessor(self):
         py = create_tmp_test(
             """

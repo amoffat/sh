@@ -1388,6 +1388,19 @@ class Command:
         sep = call_args.get("long_sep", self._call_args["long_sep"])
         prefix = call_args.get("long_prefix", self._call_args["long_prefix"])
         fn._partial_baked_args.extend(compile_args(args, kwargs, sep, prefix))
+
+        # filter out previously baked args that are overridden with False
+        for key, val in kwargs.items():
+            if val is not False:
+                continue
+            if len(key) == 1:
+                flag = "-" + key
+            else:
+                flag = prefix + key.replace("_", "-")
+            fn._partial_baked_args = [
+                a for a in fn._partial_baked_args if a != flag
+            ]
+
         return fn
 
     def __str__(self):
@@ -1472,8 +1485,19 @@ class Command:
             args, kwargs, call_args["long_sep"], call_args["long_prefix"]
         )
 
+        # filter out baked args that are overridden with False in the call
+        baked_args = list(self._partial_baked_args)
+        for key, val in kwargs.items():
+            if val is not False:
+                continue
+            if len(key) == 1:
+                flag = "-" + key
+            else:
+                flag = call_args["long_prefix"] + key.replace("_", "-")
+            baked_args = [a for a in baked_args if a != flag]
+
         # makes sure our arguments are broken up correctly
-        split_args = self._partial_baked_args + processed_args
+        split_args = baked_args + processed_args
 
         final_args = split_args
 
