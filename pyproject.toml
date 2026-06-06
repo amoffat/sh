@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "sh"
-version = "2.2.3"
+version = "2.2.4"
 description = "Python subprocess replacement"
 authors = ["Andrew Moffat <arwmoffat@gmail.com>"]
 readme = "README.rst"
@@ -56,3 +56,8 @@ toml = "^0.10.2"
 [build-system]
 requires = ["poetry-core>=1.0.0a5"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+markers = [
+    "root: marks tests that require root privileges (deselected when not root)",
+]

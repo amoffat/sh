@@ -90,9 +90,13 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry install
 
-      - name: Run tests
+      - name: Run regular tests
         run: |
           SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=${{ matrix.use-select }} LANG=${{ matrix.lang }} poetry run coverage run --data-file=coverage.data -a -m pytest
+
+      - name: Run root tests
+        run: |
+          sudo -E env PATH="$PATH" SH_TESTS_RUNNING=1 SH_TESTS_USE_SELECT=${{ matrix.use-select }} LANG=${{ matrix.lang }} poetry run pytest -m root -v
 
       - name: Store coverage
         uses: actions/upload-artifact@v4

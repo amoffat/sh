@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.4 - 6/06/25
+
+- Bugfix regression where correct `gid` was not set on the launched process
+
 ## 2.2.3 - 6/05/25
 
 - Bugfix where supplemental groups were not dropped when using `_uid`

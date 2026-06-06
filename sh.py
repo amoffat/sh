@@ -2078,7 +2078,7 @@ class OProc:
 
                 if ca["uid"] is not None:
                     os.initgroups(target_name, target_gid)
-
+                    os.setgid(target_gid)
                     os.setuid(target_uid)
 
                 preexec_fn = ca["preexec_fn"]
