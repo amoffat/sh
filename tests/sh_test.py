@@ -23,8 +23,9 @@ from io import BytesIO, StringIO
 from os.path import dirname, exists, join, realpath, split
 from pathlib import Path
 
-import sh
 import pytest
+
+import sh
 
 THIS_DIR = Path(__file__).resolve().parent
 RAND_BYTES = os.urandom(10)
@@ -3212,7 +3213,7 @@ sys.exit(1)
     @requires_posix
     @requires_root
     @pytest.mark.root
-    @requires_progs("useradd", "userdel", "groupadd", "groupdel", "python")
+    @requires_progs("useradd", "userdel", "groupadd", "groupdel", "id")
     def test_uid_drops_supplementary_groups(self):
         """Verify that _uid resets supplementary groups to the target user's
         own groups via initgroups, not the calling process's groups.
@@ -3220,7 +3221,7 @@ sys.exit(1)
         Regression test for the security issue where a child launched with
         _uid=<unprivileged> still inherited root's supplementary groups.
         """
-        import json
+        import re
 
         # High IDs to avoid conflicts with real system users/groups.
         test_uid = 64001
@@ -3238,25 +3239,19 @@ sys.exit(1)
             sh.useradd("-u", str(test_uid), "-g", test_group, "-M", test_user)
             user_created = True
 
-            tmp = create_tmp_test(
-                """
-import json, os
-print(json.dumps({{"uid": os.getuid(), "gid": os.getgid(), "groups": os.getgroups()}}))
-"""
-            )
-            # NamedTemporaryFile defaults to mode 0600; make it world-readable
-            # so the low-privilege user can read the script.
-            os.chmod(tmp.name, 0o644)
+            # Use the `id` utility: it's a world-accessible standard binary
+            # that reports uid and groups without requiring any Python
+            # interpreter or tmp file accessible to the low-privilege user.
+            id_str = str(sh.id(_uid=test_uid)).strip()
 
-            # Use the true system python, which is executable by everyone. The
-            # venv-python might not be.
-            out = sh.python(tmp.name, _uid=test_uid)
-            data = json.loads(str(out))
+            uid_found = int(re.search(r"uid=(\d+)", id_str).group(1))
+            self.assertEqual(uid_found, test_uid)
 
-            self.assertEqual(data["uid"], test_uid)
-            self.assertEqual(data["gid"], test_gid)
+            gid_found = int(re.search(r"gid=(\d+)", id_str).group(1))
+            self.assertEqual(gid_found, test_gid)
 
-            child_groups = set(data["groups"])
+            groups_part = id_str.split("groups=", 1)[1] if "groups=" in id_str else ""
+            child_groups = {int(m) for m in re.findall(r"(\d+)", groups_part)}
 
             # Child must carry the test user's own group.
             self.assertIn(
