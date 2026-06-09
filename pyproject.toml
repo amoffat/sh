@@ -1,6 +1,6 @@
 [project]
 name = "sh"
-version = "2.2.6"
+version = "2.3.0"
 description = "Python subprocess replacement"
 authors = [
     {name = "Andrew Moffat", email = "arwmoffat@gmail.com"},
@@ -56,11 +56,22 @@ line-length = 88
 ignore = ["E203"]
 
 [tool.hatch.build.targets.wheel]
-include = ["sh.py", "sh.pyi", "py.typed"]
+packages = ["src/sh"]
 
 [tool.hatch.build.targets.sdist]
-include = ["sh.py", "sh.pyi", "py.typed", "tests", "CHANGELOG.md", "/Makefile", "LICENSE.txt", "README.rst", "tox.ini", "docs"]
-exclude = ["docs/build"]
+include = [
+  "/src/sh",
+  "/tests",
+  "/CHANGELOG.md",
+  "/Makefile",
+  "/LICENSE.txt",
+  "/README.rst",
+  "/tox.ini",
+  "/docs",
+]
+exclude = [
+  "/docs/build",
+]
 
 [build-system]
 requires = ["hatchling"]

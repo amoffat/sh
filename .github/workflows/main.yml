@@ -27,10 +27,10 @@ jobs:
 
       - name: Lint
         run: |
-          uv run ruff check sh.py tests/*.py
-          uv run ruff format --check sh.py tests/*.py
+          uv run ruff check src/sh/ tests/
+          uv run ruff format --check src/sh tests/
+          uv run mypy src/sh/
           uv run rstcheck README.rst
-          uv run mypy sh.py
 
   test:
     name: Run tests
