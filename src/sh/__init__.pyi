@@ -550,7 +550,9 @@ class Command(Generic[_ReturnT_co]):
         _bg: Literal[True],
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]] = ...,
+        _in: Optional[
+            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
+        ] = ...,
         _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err_to_out: Optional[bool] = ...,
@@ -585,7 +587,9 @@ class Command(Generic[_ReturnT_co]):
         _uid: Optional[int] = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[Callable[..., Tuple[List[Any], Dict[str, Any]]]] = ...,
+        _arg_preprocess: Optional[
+            Callable[..., Tuple[List[Any], Dict[str, Any]]]
+        ] = ...,
         _log_msg: Optional[Callable[..., str]] = ...,
         _close_fds: bool = ...,
         _pass_fds: AbstractSet[int] = ...,
@@ -601,7 +605,9 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]] = ...,
+        _in: Optional[
+            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
+        ] = ...,
         _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err_to_out: Optional[bool] = ...,
@@ -636,7 +642,9 @@ class Command(Generic[_ReturnT_co]):
         _uid: Optional[int] = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[Callable[..., Tuple[List[Any], Dict[str, Any]]]] = ...,
+        _arg_preprocess: Optional[
+            Callable[..., Tuple[List[Any], Dict[str, Any]]]
+        ] = ...,
         _log_msg: Optional[Callable[..., str]] = ...,
         _close_fds: bool = ...,
         _pass_fds: AbstractSet[int] = ...,
@@ -652,7 +660,9 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]] = ...,
+        _in: Optional[
+            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
+        ] = ...,
         _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err_to_out: Optional[bool] = ...,
@@ -687,7 +697,9 @@ class Command(Generic[_ReturnT_co]):
         _uid: Optional[int] = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[Callable[..., Tuple[List[Any], Dict[str, Any]]]] = ...,
+        _arg_preprocess: Optional[
+            Callable[..., Tuple[List[Any], Dict[str, Any]]]
+        ] = ...,
         _log_msg: Optional[Callable[..., str]] = ...,
         _close_fds: bool = ...,
         _pass_fds: AbstractSet[int] = ...,
@@ -703,7 +715,9 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]] = ...,
+        _in: Optional[
+            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
+        ] = ...,
         _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err_to_out: Optional[bool] = ...,
@@ -738,7 +752,9 @@ class Command(Generic[_ReturnT_co]):
         _uid: Optional[int] = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[Callable[..., Tuple[List[Any], Dict[str, Any]]]] = ...,
+        _arg_preprocess: Optional[
+            Callable[..., Tuple[List[Any], Dict[str, Any]]]
+        ] = ...,
         _log_msg: Optional[Callable[..., str]] = ...,
         _close_fds: bool = ...,
         _pass_fds: AbstractSet[int] = ...,
@@ -754,7 +770,9 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]] = ...,
+        _in: Optional[
+            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
+        ] = ...,
         _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err_to_out: Optional[bool] = ...,
@@ -789,7 +807,9 @@ class Command(Generic[_ReturnT_co]):
         _uid: Optional[int] = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[Callable[..., Tuple[List[Any], Dict[str, Any]]]] = ...,
+        _arg_preprocess: Optional[
+            Callable[..., Tuple[List[Any], Dict[str, Any]]]
+        ] = ...,
         _log_msg: Optional[Callable[..., str]] = ...,
         _close_fds: bool = ...,
         _pass_fds: AbstractSet[int] = ...,
@@ -1019,7 +1039,9 @@ class Command(Generic[_ReturnT_co]):
         _bg: Literal[True],
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]] = ...,
+        _in: Optional[
+            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
+        ] = ...,
         _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err_to_out: Optional[bool] = ...,
@@ -1054,7 +1076,9 @@ class Command(Generic[_ReturnT_co]):
         _uid: Optional[int] = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[Callable[..., Tuple[List[Any], Dict[str, Any]]]] = ...,
+        _arg_preprocess: Optional[
+            Callable[..., Tuple[List[Any], Dict[str, Any]]]
+        ] = ...,
         _log_msg: Optional[Callable[..., str]] = ...,
         _close_fds: bool = ...,
         _pass_fds: AbstractSet[int] = ...,
@@ -1070,7 +1094,9 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]] = ...,
+        _in: Optional[
+            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
+        ] = ...,
         _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err_to_out: Optional[bool] = ...,
@@ -1105,7 +1131,9 @@ class Command(Generic[_ReturnT_co]):
         _uid: Optional[int] = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[Callable[..., Tuple[List[Any], Dict[str, Any]]]] = ...,
+        _arg_preprocess: Optional[
+            Callable[..., Tuple[List[Any], Dict[str, Any]]]
+        ] = ...,
         _log_msg: Optional[Callable[..., str]] = ...,
         _close_fds: bool = ...,
         _pass_fds: AbstractSet[int] = ...,
@@ -1121,7 +1149,9 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]] = ...,
+        _in: Optional[
+            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
+        ] = ...,
         _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err_to_out: Optional[bool] = ...,
@@ -1156,7 +1186,9 @@ class Command(Generic[_ReturnT_co]):
         _uid: Optional[int] = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[Callable[..., Tuple[List[Any], Dict[str, Any]]]] = ...,
+        _arg_preprocess: Optional[
+            Callable[..., Tuple[List[Any], Dict[str, Any]]]
+        ] = ...,
         _log_msg: Optional[Callable[..., str]] = ...,
         _close_fds: bool = ...,
         _pass_fds: AbstractSet[int] = ...,
@@ -1172,7 +1204,9 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]] = ...,
+        _in: Optional[
+            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
+        ] = ...,
         _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err_to_out: Optional[bool] = ...,
@@ -1207,7 +1241,9 @@ class Command(Generic[_ReturnT_co]):
         _uid: Optional[int] = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[Callable[..., Tuple[List[Any], Dict[str, Any]]]] = ...,
+        _arg_preprocess: Optional[
+            Callable[..., Tuple[List[Any], Dict[str, Any]]]
+        ] = ...,
         _log_msg: Optional[Callable[..., str]] = ...,
         _close_fds: bool = ...,
         _pass_fds: AbstractSet[int] = ...,
@@ -1223,7 +1259,9 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]] = ...,
+        _in: Optional[
+            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
+        ] = ...,
         _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
         _err_to_out: Optional[bool] = ...,
@@ -1258,7 +1296,9 @@ class Command(Generic[_ReturnT_co]):
         _uid: Optional[int] = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[Callable[..., Tuple[List[Any], Dict[str, Any]]]] = ...,
+        _arg_preprocess: Optional[
+            Callable[..., Tuple[List[Any], Dict[str, Any]]]
+        ] = ...,
         _log_msg: Optional[Callable[..., str]] = ...,
         _close_fds: bool = ...,
         _pass_fds: AbstractSet[int] = ...,
