@@ -1,6 +1,6 @@
 [project]
 name = "sh"
-version = "2.2.6"
+version = "2.3.0"
 description = "Python subprocess replacement"
 authors = [
     {name = "Andrew Moffat", email = "arwmoffat@gmail.com"},
