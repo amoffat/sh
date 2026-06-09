@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.3.0 - 6/8/25
+
+- Fix sdist builds from littering files
+- Add all special keyword args to .pyi stub file
+
 ## 2.2.6 - 6/7/25
 
 - Include missing sdist files [#778](https://github.com/amoffat/sh/issues/778)
