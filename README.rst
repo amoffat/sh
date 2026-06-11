@@ -44,8 +44,6 @@ Installation
 Support
 =======
 * `Andrew Moffat <https://github.com/amoffat>`_ - author/maintainer
-* `Erik Cederstrand <https://github.com/ecederstrand>`_ - maintainer
-
 
 Developers
 ==========
