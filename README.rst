@@ -50,10 +50,12 @@ Support
 Developers
 ==========
 
+Open the repo in a devcontainer in VScode, or in a codespace on Github.
+
 Testing
 -------
 
-Tests are run in a docker container against all supported Python versions. To run, make the following target::
+Tests are run by tox against all supported Python versions. To run, make the following target::
 
     $> make test
 
