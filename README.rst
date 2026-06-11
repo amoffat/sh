@@ -50,6 +50,10 @@ Developers
 
 Open the repo in a devcontainer in VScode, or in a codespace on Github.
 
+.. image:: https://github.com/codespaces/badge.svg
+   :target: https://codespaces.new/amoffat/sh
+   :alt: Open in GitHub Codespaces
+
 Testing
 -------
 
