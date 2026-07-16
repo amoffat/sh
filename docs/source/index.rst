@@ -36,7 +36,7 @@ sh
     :target: https://github.com/amoffat/sh
     :alt: Github
 
-sh is a full-fledged subprocess replacement for Python 3.8+, and PyPy that
+sh is a full-fledged subprocess replacement for Python 3.10+ and PyPy that
 allows you to call any program as if it were a function:
 
 

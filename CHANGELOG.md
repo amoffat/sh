@@ -1,5 +1,9 @@
 # Changelog
 
+## unreleased
+
+- Dropped support for Python < 3.10
+
 ## 2.3.0 - 6/8/25
 
 - Fix sdist builds from littering files
