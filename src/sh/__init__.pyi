@@ -16,13 +16,14 @@ from typing import Any, Generic, IO, Literal, TypeAlias, overload
 
 from typing_extensions import TypeVar
 
-_CommandIn: TypeAlias = str | bytes | IO[Any] | Queue[Any] | RunningCommand | Iterable[Any]
+_CommandIn: TypeAlias = (
+    str | bytes | IO[Any] | Queue[Any] | RunningCommand | Iterable[Any]
+)
 _CommandOut: TypeAlias = str | int | IO[Any] | Callable[..., Any]
 _CommandTarget: TypeAlias = bool | Literal["out", "err"]
 _CommandOkCode: TypeAlias = int | list[int] | tuple[int, ...]
 _CommandDone: TypeAlias = Callable[[RunningCommand, bool, int], None]
 _CommandArgPreprocess: TypeAlias = Callable[..., tuple[list[Any], dict[str, Any]]]
-
 
 # ---------------------------------------------------------------------------
 # Version / metadata
