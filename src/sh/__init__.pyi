@@ -9,28 +9,12 @@ patterns like ``from sh import ls`` to type-check cleanly.
 """
 
 import threading
+from collections.abc import AsyncIterator, Callable, Generator, Iterable, Set
 from contextlib import contextmanager
 from queue import Queue
-from typing import (
-    AbstractSet,
-    Any,
-    AsyncIterator,
-    Callable,
-    Dict,
-    Generator,
-    Generic,
-    IO,
-    Iterable,
-    Iterator,
-    List,
-    Literal,
-    Optional,
-    Tuple,
-    Union,
-    overload,
-)
+from typing import Any, Generic, IO, Literal, overload
 
-from typing_extensions import TypeVar as _TypeVarExt
+from typing_extensions import TypeVar
 
 # ---------------------------------------------------------------------------
 # Version / metadata
@@ -397,9 +381,9 @@ class SignalException_34(SignalException): ...  # SIGRTMIN
 class SignalException_64(SignalException): ...  # SIGRTMAX
 
 class TimeoutException(Exception):
-    exit_code: Optional[int]
+    exit_code: int | None
     full_cmd: str
-    def __init__(self, exit_code: Optional[int], full_cmd: str) -> None: ...
+    def __init__(self, exit_code: int | None, full_cmd: str) -> None: ...
 
 # Internal exceptions exposed via the allowlist
 class DoneReadingForever(Exception): ...
@@ -421,23 +405,23 @@ class OProc:
     pid: int
     sid: int
     pgid: int
-    cmd: List[str]
-    call_args: Dict[str, Any]
-    exit_code: Optional[int]
+    cmd: list[str]
+    call_args: dict[str, Any]
+    exit_code: int | None
     timed_out: bool
     started: float
-    ctty: Optional[str]
+    ctty: str | None
     stdin: Any  # file-like object, Queue, or None
 
     def __init__(
         self,
         command: Any,  # RunningCommand (forward ref avoided to keep stub simple)
         parent_log: Any,
-        cmd: List[str],
+        cmd: list[str],
         stdin: Any,
         stdout: Any,
         stderr: Any,
-        call_args: Dict[str, Any],
+        call_args: dict[str, Any],
         pipe: int,
         process_assign_lock: threading.Lock,
     ) -> None: ...
@@ -465,7 +449,7 @@ class OProc:
     def terminate(self) -> None: ...
 
     # -- lifecycle --
-    def is_alive(self) -> Tuple[bool, Optional[int]]:
+    def is_alive(self) -> tuple[bool, int | None]:
         """Poll the child without blocking.
 
         Returns ``(alive, exit_code)``.  ``exit_code`` is ``None`` while the
@@ -494,8 +478,8 @@ class OProc:
 
 class RunningCommand(str):
     ran: str
-    call_args: Dict[str, Any]
-    cmd: List[str]
+    call_args: dict[str, Any]
+    cmd: list[str]
     process: OProc
 
     @property
@@ -506,7 +490,7 @@ class RunningCommand(str):
     def exit_code(self) -> int: ...
     @property
     def pid(self) -> int: ...
-    def wait(self, timeout: Optional[float] = ...) -> "RunningCommand": ...
+    def wait(self, timeout: float | None = ...) -> RunningCommand: ...
     def is_alive(self) -> bool: ...
     def kill(self) -> None: ...
     def kill_group(self) -> None: ...
@@ -516,7 +500,7 @@ class RunningCommand(str):
     def __int__(self) -> int: ...
     def __float__(self) -> float: ...
     def __long__(self) -> int: ...
-    def __await__(self) -> Generator[Any, None, "RunningCommand"]: ...
+    def __await__(self) -> Generator[Any, None, RunningCommand]: ...
     def __aiter__(self) -> AsyncIterator[str]: ...
     def __enter__(self) -> None: ...
     def __exit__(self, *args: Any) -> None: ...
@@ -528,12 +512,10 @@ class RunningCommand(str):
 
 # A Command can return a `str`` or a `Running`` command, depending on if it was
 # called with `_return_cmd` or not.
-_ReturnT_co = _TypeVarExt(
-    "_ReturnT_co", RunningCommand, str, covariant=True, default=str
-)
+_ReturnT_co = TypeVar("_ReturnT_co", RunningCommand, str, covariant=True, default=str)
 
 class Command(Generic[_ReturnT_co]):
-    def __init__(self, name: str, search_paths: Optional[List[str]] = ...) -> None: ...
+    def __init__(self, name: str, search_paths: list[str] | None = ...) -> None: ...
 
     # -----------------------------------------------------------------------
     # bake() overloads
@@ -550,53 +532,51 @@ class Command(Generic[_ReturnT_co]):
         _bg: Literal[True],
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[
-            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
-        ] = ...,
-        _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err_to_out: Optional[bool] = ...,
+        _in: (
+            str | bytes | IO[Any] | Queue[Any] | RunningCommand | Iterable[Any] | None
+        ) = ...,
+        _out: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err_to_out: bool | None = ...,
         _in_bufsize: int = ...,
         _out_bufsize: int = ...,
         _err_bufsize: int = ...,
         _internal_bufsize: int = ...,
-        _env: Optional[Dict[str, str]] = ...,
-        _piped: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter_noblock: Optional[Union[bool, Literal["out", "err"]]] = ...,
+        _env: dict[str, str] | None = ...,
+        _piped: bool | Literal["out", "err"] | None = ...,
+        _iter: bool | Literal["out", "err"] | None = ...,
+        _iter_noblock: bool | Literal["out", "err"] | None = ...,
         _iter_poll_time: float = ...,
-        _ok_code: Union[int, List[int], Tuple[int, ...]] = ...,
-        _cwd: Optional[str] = ...,
-        _long_sep: Optional[str] = ...,
+        _ok_code: int | list[int] | tuple[int, ...] = ...,
+        _cwd: str | None = ...,
+        _long_sep: str | None = ...,
         _long_prefix: str = ...,
         _tty_in: bool = ...,
         _tty_out: bool = ...,
         _unify_ttys: bool = ...,
         _encoding: str = ...,
         _decode_errors: str = ...,
-        _timeout: Optional[float] = ...,
+        _timeout: float | None = ...,
         _timeout_signal: int = ...,
         _no_out: bool = ...,
         _no_err: bool = ...,
         _no_pipe: bool = ...,
-        _tee: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _done: Optional[Callable[["RunningCommand", bool, int], None]] = ...,
-        _tty_size: Tuple[int, int] = ...,
+        _tee: bool | Literal["out", "err"] | None = ...,
+        _done: Callable[[RunningCommand, bool, int], None] | None = ...,
+        _tty_size: tuple[int, int] = ...,
         _truncate_exc: bool = ...,
-        _preexec_fn: Optional[Callable[[], None]] = ...,
-        _uid: Optional[int] = ...,
+        _preexec_fn: Callable[[], None] | None = ...,
+        _uid: int | None = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[
-            Callable[..., Tuple[List[Any], Dict[str, Any]]]
-        ] = ...,
-        _log_msg: Optional[Callable[..., str]] = ...,
+        _arg_preprocess: Callable[..., tuple[list[Any], dict[str, Any]]] | None = ...,
+        _log_msg: Callable[..., str] | None = ...,
         _close_fds: bool = ...,
-        _pass_fds: AbstractSet[int] = ...,
+        _pass_fds: Set[int] = ...,
         _return_cmd: bool = ...,
         _async: bool = ...,
         **kwargs: Any,
-    ) -> "Command[RunningCommand]": ...
+    ) -> Command[RunningCommand]: ...
     @overload
     def bake(
         self,
@@ -605,53 +585,51 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[
-            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
-        ] = ...,
-        _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err_to_out: Optional[bool] = ...,
+        _in: (
+            str | bytes | IO[Any] | Queue[Any] | RunningCommand | Iterable[Any] | None
+        ) = ...,
+        _out: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err_to_out: bool | None = ...,
         _in_bufsize: int = ...,
         _out_bufsize: int = ...,
         _err_bufsize: int = ...,
         _internal_bufsize: int = ...,
-        _env: Optional[Dict[str, str]] = ...,
-        _piped: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter_noblock: Optional[Union[bool, Literal["out", "err"]]] = ...,
+        _env: dict[str, str] | None = ...,
+        _piped: bool | Literal["out", "err"] | None = ...,
+        _iter: bool | Literal["out", "err"] | None = ...,
+        _iter_noblock: bool | Literal["out", "err"] | None = ...,
         _iter_poll_time: float = ...,
-        _ok_code: Union[int, List[int], Tuple[int, ...]] = ...,
-        _cwd: Optional[str] = ...,
-        _long_sep: Optional[str] = ...,
+        _ok_code: int | list[int] | tuple[int, ...] = ...,
+        _cwd: str | None = ...,
+        _long_sep: str | None = ...,
         _long_prefix: str = ...,
         _tty_in: bool = ...,
         _tty_out: bool = ...,
         _unify_ttys: bool = ...,
         _encoding: str = ...,
         _decode_errors: str = ...,
-        _timeout: Optional[float] = ...,
+        _timeout: float | None = ...,
         _timeout_signal: int = ...,
         _no_out: bool = ...,
         _no_err: bool = ...,
         _no_pipe: bool = ...,
-        _tee: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _done: Optional[Callable[["RunningCommand", bool, int], None]] = ...,
-        _tty_size: Tuple[int, int] = ...,
+        _tee: bool | Literal["out", "err"] | None = ...,
+        _done: Callable[[RunningCommand, bool, int], None] | None = ...,
+        _tty_size: tuple[int, int] = ...,
         _truncate_exc: bool = ...,
-        _preexec_fn: Optional[Callable[[], None]] = ...,
-        _uid: Optional[int] = ...,
+        _preexec_fn: Callable[[], None] | None = ...,
+        _uid: int | None = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[
-            Callable[..., Tuple[List[Any], Dict[str, Any]]]
-        ] = ...,
-        _log_msg: Optional[Callable[..., str]] = ...,
+        _arg_preprocess: Callable[..., tuple[list[Any], dict[str, Any]]] | None = ...,
+        _log_msg: Callable[..., str] | None = ...,
         _close_fds: bool = ...,
-        _pass_fds: AbstractSet[int] = ...,
+        _pass_fds: Set[int] = ...,
         _return_cmd: bool = ...,
         _async: Literal[True],
         **kwargs: Any,
-    ) -> "Command[RunningCommand]": ...
+    ) -> Command[RunningCommand]: ...
     @overload
     def bake(
         self,
@@ -660,53 +638,51 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[
-            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
-        ] = ...,
-        _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err_to_out: Optional[bool] = ...,
+        _in: (
+            str | bytes | IO[Any] | Queue[Any] | RunningCommand | Iterable[Any] | None
+        ) = ...,
+        _out: str | int | IO[Any] | Callable[..., Any] = ...,
+        _err: str | int | IO[Any] | Callable[..., Any] = ...,
+        _err_to_out: bool | None = ...,
         _in_bufsize: int = ...,
         _out_bufsize: int = ...,
         _err_bufsize: int = ...,
         _internal_bufsize: int = ...,
-        _env: Optional[Dict[str, str]] = ...,
-        _piped: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter_noblock: Optional[Union[bool, Literal["out", "err"]]] = ...,
+        _env: dict[str, str] | None = ...,
+        _piped: bool | Literal["out", "err"] | None = ...,
+        _iter: bool | Literal["out", "err"] | None = ...,
+        _iter_noblock: bool | Literal["out", "err"] | None = ...,
         _iter_poll_time: float = ...,
-        _ok_code: Union[int, List[int], Tuple[int, ...]] = ...,
-        _cwd: Optional[str] = ...,
-        _long_sep: Optional[str] = ...,
+        _ok_code: int | list[int] | tuple[int, ...] = ...,
+        _cwd: str | None = ...,
+        _long_sep: str | None = ...,
         _long_prefix: str = ...,
         _tty_in: bool = ...,
         _tty_out: bool = ...,
         _unify_ttys: bool = ...,
         _encoding: str = ...,
         _decode_errors: str = ...,
-        _timeout: Optional[float] = ...,
+        _timeout: float | None = ...,
         _timeout_signal: int = ...,
         _no_out: bool = ...,
         _no_err: bool = ...,
         _no_pipe: bool = ...,
-        _tee: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _done: Optional[Callable[["RunningCommand", bool, int], None]] = ...,
-        _tty_size: Tuple[int, int] = ...,
+        _tee: bool | Literal["out", "err"] | None = ...,
+        _done: Callable[[RunningCommand, bool, int], None] | None = ...,
+        _tty_size: tuple[int, int] = ...,
         _truncate_exc: bool = ...,
-        _preexec_fn: Optional[Callable[[], None]] = ...,
-        _uid: Optional[int] = ...,
+        _preexec_fn: Callable[[], None] | None = ...,
+        _uid: int | None = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[
-            Callable[..., Tuple[List[Any], Dict[str, Any]]]
-        ] = ...,
-        _log_msg: Optional[Callable[..., str]] = ...,
+        _arg_preprocess: Callable[..., tuple[list[Any], dict[str, Any]]] | None = ...,
+        _log_msg: Callable[..., str] | None = ...,
         _close_fds: bool = ...,
-        _pass_fds: AbstractSet[int] = ...,
+        _pass_fds: Set[int] = ...,
         _return_cmd: Literal[True],
         _async: bool = ...,
         **kwargs: Any,
-    ) -> "Command[RunningCommand]": ...
+    ) -> Command[RunningCommand]: ...
     @overload
     def bake(
         self,
@@ -715,53 +691,51 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[
-            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
-        ] = ...,
-        _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err_to_out: Optional[bool] = ...,
+        _in: (
+            str | bytes | IO[Any] | Queue[Any] | RunningCommand | Iterable[Any] | None
+        ) = ...,
+        _out: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err_to_out: bool | None = ...,
         _in_bufsize: int = ...,
         _out_bufsize: int = ...,
         _err_bufsize: int = ...,
         _internal_bufsize: int = ...,
-        _env: Optional[Dict[str, str]] = ...,
-        _piped: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter_noblock: Optional[Union[bool, Literal["out", "err"]]] = ...,
+        _env: dict[str, str] | None = ...,
+        _piped: bool | Literal["out", "err"] | None = ...,
+        _iter: bool | Literal["out", "err"] | None = ...,
+        _iter_noblock: bool | Literal["out", "err"] | None = ...,
         _iter_poll_time: float = ...,
-        _ok_code: Union[int, List[int], Tuple[int, ...]] = ...,
-        _cwd: Optional[str] = ...,
-        _long_sep: Optional[str] = ...,
+        _ok_code: int | list[int] | tuple[int, ...] = ...,
+        _cwd: str | None = ...,
+        _long_sep: str | None = ...,
         _long_prefix: str = ...,
         _tty_in: bool = ...,
         _tty_out: bool = ...,
         _unify_ttys: bool = ...,
         _encoding: str = ...,
         _decode_errors: str = ...,
-        _timeout: Optional[float] = ...,
+        _timeout: float | None = ...,
         _timeout_signal: int = ...,
         _no_out: bool = ...,
         _no_err: bool = ...,
         _no_pipe: bool = ...,
-        _tee: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _done: Optional[Callable[["RunningCommand", bool, int], None]] = ...,
-        _tty_size: Tuple[int, int] = ...,
+        _tee: bool | Literal["out", "err"] | None = ...,
+        _done: Callable[[RunningCommand, bool, int], None] | None = ...,
+        _tty_size: tuple[int, int] = ...,
         _truncate_exc: bool = ...,
-        _preexec_fn: Optional[Callable[[], None]] = ...,
-        _uid: Optional[int] = ...,
+        _preexec_fn: Callable[[], None] | None = ...,
+        _uid: int | None = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[
-            Callable[..., Tuple[List[Any], Dict[str, Any]]]
-        ] = ...,
-        _log_msg: Optional[Callable[..., str]] = ...,
+        _arg_preprocess: Callable[..., tuple[list[Any], dict[str, Any]]] | None = ...,
+        _log_msg: Callable[..., str] | None = ...,
         _close_fds: bool = ...,
-        _pass_fds: AbstractSet[int] = ...,
+        _pass_fds: Set[int] = ...,
         _return_cmd: Literal[False],
         _async: bool = ...,
         **kwargs: Any,
-    ) -> "Command[str]": ...
+    ) -> Command[str]: ...
     @overload
     def bake(
         self,
@@ -770,53 +744,49 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[
-            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
-        ] = ...,
-        _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err_to_out: Optional[bool] = ...,
+        _in: str | bytes | IO[Any] | Queue[Any] | RunningCommand | Iterable[Any] = ...,
+        _out: str | int | IO[Any] | Callable[..., Any] = ...,
+        _err: str | int | IO[Any] | Callable[..., Any] = ...,
+        _err_to_out: bool | None = ...,
         _in_bufsize: int = ...,
         _out_bufsize: int = ...,
         _err_bufsize: int = ...,
         _internal_bufsize: int = ...,
-        _env: Optional[Dict[str, str]] = ...,
-        _piped: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter_noblock: Optional[Union[bool, Literal["out", "err"]]] = ...,
+        _env: dict[str, str] | None = ...,
+        _piped: bool | Literal["out", "err"] | None = ...,
+        _iter: bool | Literal["out", "err"] | None = ...,
+        _iter_noblock: bool | Literal["out", "err"] | None = ...,
         _iter_poll_time: float = ...,
-        _ok_code: Union[int, List[int], Tuple[int, ...]] = ...,
-        _cwd: Optional[str] = ...,
-        _long_sep: Optional[str] = ...,
+        _ok_code: int | list[int] | tuple[int, ...] = ...,
+        _cwd: str | None = ...,
+        _long_sep: str | None = ...,
         _long_prefix: str = ...,
         _tty_in: bool = ...,
         _tty_out: bool = ...,
         _unify_ttys: bool = ...,
         _encoding: str = ...,
         _decode_errors: str = ...,
-        _timeout: Optional[float] = ...,
+        _timeout: float | None = ...,
         _timeout_signal: int = ...,
         _no_out: bool = ...,
         _no_err: bool = ...,
         _no_pipe: bool = ...,
-        _tee: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _done: Optional[Callable[["RunningCommand", bool, int], None]] = ...,
-        _tty_size: Tuple[int, int] = ...,
+        _tee: bool | Literal["out", "err"] | None = ...,
+        _done: Callable[[RunningCommand, bool, int], None] | None = ...,
+        _tty_size: tuple[int, int] = ...,
         _truncate_exc: bool = ...,
-        _preexec_fn: Optional[Callable[[], None]] = ...,
-        _uid: Optional[int] = ...,
+        _preexec_fn: Callable[[], None] | None = ...,
+        _uid: int | None = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[
-            Callable[..., Tuple[List[Any], Dict[str, Any]]]
-        ] = ...,
-        _log_msg: Optional[Callable[..., str]] = ...,
+        _arg_preprocess: Callable[..., tuple[list[Any], dict[str, Any]]] | None = ...,
+        _log_msg: Callable[..., str] | None = ...,
         _close_fds: bool = ...,
-        _pass_fds: AbstractSet[int] = ...,
+        _pass_fds: Set[int] = ...,
         _return_cmd: bool = ...,
         _async: bool = ...,
         **kwargs: Any,
-    ) -> "Command[_ReturnT_co]":
+    ) -> Command[_ReturnT_co]:
         """Return a new Command with arguments and/or special kwargs pre-baked.
 
         Baked arguments and special kwargs act as persistent defaults that are
@@ -1010,7 +980,7 @@ class Command(Generic[_ReturnT_co]):
             Close all inherited file descriptors in the child (except stdin,
             stdout, stderr).  Automatically enabled when ``_pass_fds`` is set.
 
-        _pass_fds : AbstractSet[int], default set()
+        _pass_fds : Set[int], default set()
             Allowlist of integer file descriptors to keep open in the child.
             Setting this forces ``_close_fds`` to ``True``.
 
@@ -1039,49 +1009,47 @@ class Command(Generic[_ReturnT_co]):
         _bg: Literal[True],
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[
-            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
-        ] = ...,
-        _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err_to_out: Optional[bool] = ...,
+        _in: (
+            str | bytes | IO[Any] | Queue[Any] | RunningCommand | Iterable[Any] | None
+        ) = ...,
+        _out: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err_to_out: bool | None = ...,
         _in_bufsize: int = ...,
         _out_bufsize: int = ...,
         _err_bufsize: int = ...,
         _internal_bufsize: int = ...,
-        _env: Optional[Dict[str, str]] = ...,
-        _piped: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter_noblock: Optional[Union[bool, Literal["out", "err"]]] = ...,
+        _env: dict[str, str] | None = ...,
+        _piped: bool | Literal["out", "err"] | None = ...,
+        _iter: bool | Literal["out", "err"] | None = ...,
+        _iter_noblock: bool | Literal["out", "err"] | None = ...,
         _iter_poll_time: float = ...,
-        _ok_code: Union[int, List[int], Tuple[int, ...]] = ...,
-        _cwd: Optional[str] = ...,
-        _long_sep: Optional[str] = ...,
+        _ok_code: int | list[int] | tuple[int, ...] = ...,
+        _cwd: str | None = ...,
+        _long_sep: str | None = ...,
         _long_prefix: str = ...,
         _tty_in: bool = ...,
         _tty_out: bool = ...,
         _unify_ttys: bool = ...,
         _encoding: str = ...,
         _decode_errors: str = ...,
-        _timeout: Optional[float] = ...,
+        _timeout: float | None = ...,
         _timeout_signal: int = ...,
         _no_out: bool = ...,
         _no_err: bool = ...,
         _no_pipe: bool = ...,
-        _tee: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _done: Optional[Callable[["RunningCommand", bool, int], None]] = ...,
-        _tty_size: Tuple[int, int] = ...,
+        _tee: bool | Literal["out", "err"] | None = ...,
+        _done: Callable[[RunningCommand, bool, int], None] | None = ...,
+        _tty_size: tuple[int, int] = ...,
         _truncate_exc: bool = ...,
-        _preexec_fn: Optional[Callable[[], None]] = ...,
-        _uid: Optional[int] = ...,
+        _preexec_fn: Callable[[], None] | None = ...,
+        _uid: int | None = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[
-            Callable[..., Tuple[List[Any], Dict[str, Any]]]
-        ] = ...,
-        _log_msg: Optional[Callable[..., str]] = ...,
+        _arg_preprocess: Callable[..., tuple[list[Any], dict[str, Any]]] | None = ...,
+        _log_msg: Callable[..., str] | None = ...,
         _close_fds: bool = ...,
-        _pass_fds: AbstractSet[int] = ...,
+        _pass_fds: Set[int] = ...,
         _return_cmd: bool = ...,
         _async: bool = ...,
         **kwargs: Any,
@@ -1094,49 +1062,47 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[
-            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
-        ] = ...,
-        _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err_to_out: Optional[bool] = ...,
+        _in: (
+            str | bytes | IO[Any] | Queue[Any] | RunningCommand | Iterable[Any] | None
+        ) = ...,
+        _out: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err_to_out: bool | None = ...,
         _in_bufsize: int = ...,
         _out_bufsize: int = ...,
         _err_bufsize: int = ...,
         _internal_bufsize: int = ...,
-        _env: Optional[Dict[str, str]] = ...,
-        _piped: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter_noblock: Optional[Union[bool, Literal["out", "err"]]] = ...,
+        _env: dict[str, str] | None = ...,
+        _piped: bool | Literal["out", "err"] | None = ...,
+        _iter: bool | Literal["out", "err"] | None = ...,
+        _iter_noblock: bool | Literal["out", "err"] | None = ...,
         _iter_poll_time: float = ...,
-        _ok_code: Union[int, List[int], Tuple[int, ...]] = ...,
-        _cwd: Optional[str] = ...,
-        _long_sep: Optional[str] = ...,
+        _ok_code: int | list[int] | tuple[int, ...] = ...,
+        _cwd: str | None = ...,
+        _long_sep: str | None = ...,
         _long_prefix: str = ...,
         _tty_in: bool = ...,
         _tty_out: bool = ...,
         _unify_ttys: bool = ...,
         _encoding: str = ...,
         _decode_errors: str = ...,
-        _timeout: Optional[float] = ...,
+        _timeout: float | None = ...,
         _timeout_signal: int = ...,
         _no_out: bool = ...,
         _no_err: bool = ...,
         _no_pipe: bool = ...,
-        _tee: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _done: Optional[Callable[["RunningCommand", bool, int], None]] = ...,
-        _tty_size: Tuple[int, int] = ...,
+        _tee: bool | Literal["out", "err"] | None = ...,
+        _done: Callable[[RunningCommand, bool, int], None] | None = ...,
+        _tty_size: tuple[int, int] = ...,
         _truncate_exc: bool = ...,
-        _preexec_fn: Optional[Callable[[], None]] = ...,
-        _uid: Optional[int] = ...,
+        _preexec_fn: Callable[[], None] | None = ...,
+        _uid: int | None = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[
-            Callable[..., Tuple[List[Any], Dict[str, Any]]]
-        ] = ...,
-        _log_msg: Optional[Callable[..., str]] = ...,
+        _arg_preprocess: Callable[..., tuple[list[Any], dict[str, Any]]] | None = ...,
+        _log_msg: Callable[..., str] | None = ...,
         _close_fds: bool = ...,
-        _pass_fds: AbstractSet[int] = ...,
+        _pass_fds: Set[int] = ...,
         _return_cmd: bool = ...,
         _async: Literal[True],
         **kwargs: Any,
@@ -1149,49 +1115,47 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[
-            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
-        ] = ...,
-        _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err_to_out: Optional[bool] = ...,
+        _in: (
+            str | bytes | IO[Any] | Queue[Any] | RunningCommand | Iterable[Any] | None
+        ) = ...,
+        _out: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err_to_out: bool | None = ...,
         _in_bufsize: int = ...,
         _out_bufsize: int = ...,
         _err_bufsize: int = ...,
         _internal_bufsize: int = ...,
-        _env: Optional[Dict[str, str]] = ...,
-        _piped: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter_noblock: Optional[Union[bool, Literal["out", "err"]]] = ...,
+        _env: dict[str, str] | None = ...,
+        _piped: bool | Literal["out", "err"] | None = ...,
+        _iter: bool | Literal["out", "err"] | None = ...,
+        _iter_noblock: bool | Literal["out", "err"] | None = ...,
         _iter_poll_time: float = ...,
-        _ok_code: Union[int, List[int], Tuple[int, ...]] = ...,
-        _cwd: Optional[str] = ...,
-        _long_sep: Optional[str] = ...,
+        _ok_code: int | list[int] | tuple[int, ...] = ...,
+        _cwd: str | None = ...,
+        _long_sep: str | None = ...,
         _long_prefix: str = ...,
         _tty_in: bool = ...,
         _tty_out: bool = ...,
         _unify_ttys: bool = ...,
         _encoding: str = ...,
         _decode_errors: str = ...,
-        _timeout: Optional[float] = ...,
+        _timeout: float | None = ...,
         _timeout_signal: int = ...,
         _no_out: bool = ...,
         _no_err: bool = ...,
         _no_pipe: bool = ...,
-        _tee: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _done: Optional[Callable[["RunningCommand", bool, int], None]] = ...,
-        _tty_size: Tuple[int, int] = ...,
+        _tee: bool | Literal["out", "err"] | None = ...,
+        _done: Callable[[RunningCommand, bool, int], None] | None = ...,
+        _tty_size: tuple[int, int] = ...,
         _truncate_exc: bool = ...,
-        _preexec_fn: Optional[Callable[[], None]] = ...,
-        _uid: Optional[int] = ...,
+        _preexec_fn: Callable[[], None] | None = ...,
+        _uid: int | None = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[
-            Callable[..., Tuple[List[Any], Dict[str, Any]]]
-        ] = ...,
-        _log_msg: Optional[Callable[..., str]] = ...,
+        _arg_preprocess: Callable[..., tuple[list[Any], dict[str, Any]]] | None = ...,
+        _log_msg: Callable[..., str] | None = ...,
         _close_fds: bool = ...,
-        _pass_fds: AbstractSet[int] = ...,
+        _pass_fds: Set[int] = ...,
         _return_cmd: Literal[True],
         _async: bool = ...,
         **kwargs: Any,
@@ -1204,49 +1168,47 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[
-            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
-        ] = ...,
-        _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err_to_out: Optional[bool] = ...,
+        _in: (
+            str | bytes | IO[Any] | Queue[Any] | RunningCommand | Iterable[Any] | None
+        ) = ...,
+        _out: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err_to_out: bool | None = ...,
         _in_bufsize: int = ...,
         _out_bufsize: int = ...,
         _err_bufsize: int = ...,
         _internal_bufsize: int = ...,
-        _env: Optional[Dict[str, str]] = ...,
-        _piped: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter_noblock: Optional[Union[bool, Literal["out", "err"]]] = ...,
+        _env: dict[str, str] | None = ...,
+        _piped: bool | Literal["out", "err"] | None = ...,
+        _iter: bool | Literal["out", "err"] | None = ...,
+        _iter_noblock: bool | Literal["out", "err"] | None = ...,
         _iter_poll_time: float = ...,
-        _ok_code: Union[int, List[int], Tuple[int, ...]] = ...,
-        _cwd: Optional[str] = ...,
-        _long_sep: Optional[str] = ...,
+        _ok_code: int | list[int] | tuple[int, ...] = ...,
+        _cwd: str | None = ...,
+        _long_sep: str | None = ...,
         _long_prefix: str = ...,
         _tty_in: bool = ...,
         _tty_out: bool = ...,
         _unify_ttys: bool = ...,
         _encoding: str = ...,
         _decode_errors: str = ...,
-        _timeout: Optional[float] = ...,
+        _timeout: float | None = ...,
         _timeout_signal: int = ...,
         _no_out: bool = ...,
         _no_err: bool = ...,
         _no_pipe: bool = ...,
-        _tee: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _done: Optional[Callable[["RunningCommand", bool, int], None]] = ...,
-        _tty_size: Tuple[int, int] = ...,
+        _tee: bool | Literal["out", "err"] | None = ...,
+        _done: Callable[[RunningCommand, bool, int], None] | None = ...,
+        _tty_size: tuple[int, int] = ...,
         _truncate_exc: bool = ...,
-        _preexec_fn: Optional[Callable[[], None]] = ...,
-        _uid: Optional[int] = ...,
+        _preexec_fn: Callable[[], None] | None = ...,
+        _uid: int | None = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[
-            Callable[..., Tuple[List[Any], Dict[str, Any]]]
-        ] = ...,
-        _log_msg: Optional[Callable[..., str]] = ...,
+        _arg_preprocess: Callable[..., tuple[list[Any], dict[str, Any]]] | None = ...,
+        _log_msg: Callable[..., str] | None = ...,
         _close_fds: bool = ...,
-        _pass_fds: AbstractSet[int] = ...,
+        _pass_fds: Set[int] = ...,
         _return_cmd: Literal[False],
         _async: bool = ...,
         **kwargs: Any,
@@ -1259,49 +1221,47 @@ class Command(Generic[_ReturnT_co]):
         _bg: bool = ...,
         _bg_exc: bool = ...,
         _with: bool = ...,
-        _in: Optional[
-            Union[str, bytes, IO[Any], "Queue[Any]", RunningCommand, Iterable[Any]]
-        ] = ...,
-        _out: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err: Optional[Union[str, int, IO[Any], Callable[..., Any]]] = ...,
-        _err_to_out: Optional[bool] = ...,
+        _in: (
+            str | bytes | IO[Any] | Queue[Any] | RunningCommand | Iterable[Any] | None
+        ) = ...,
+        _out: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err: str | int | IO[Any] | Callable[..., Any] | None = ...,
+        _err_to_out: bool | None = ...,
         _in_bufsize: int = ...,
         _out_bufsize: int = ...,
         _err_bufsize: int = ...,
         _internal_bufsize: int = ...,
-        _env: Optional[Dict[str, str]] = ...,
-        _piped: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _iter_noblock: Optional[Union[bool, Literal["out", "err"]]] = ...,
+        _env: dict[str, str] | None = ...,
+        _piped: bool | Literal["out", "err"] | None = ...,
+        _iter: bool | Literal["out", "err"] | None = ...,
+        _iter_noblock: bool | Literal["out", "err"] | None = ...,
         _iter_poll_time: float = ...,
-        _ok_code: Union[int, List[int], Tuple[int, ...]] = ...,
-        _cwd: Optional[str] = ...,
-        _long_sep: Optional[str] = ...,
+        _ok_code: int | list[int] | tuple[int, ...] = ...,
+        _cwd: str | None = ...,
+        _long_sep: str | None = ...,
         _long_prefix: str = ...,
         _tty_in: bool = ...,
         _tty_out: bool = ...,
         _unify_ttys: bool = ...,
         _encoding: str = ...,
         _decode_errors: str = ...,
-        _timeout: Optional[float] = ...,
+        _timeout: float | None = ...,
         _timeout_signal: int = ...,
         _no_out: bool = ...,
         _no_err: bool = ...,
         _no_pipe: bool = ...,
-        _tee: Optional[Union[bool, Literal["out", "err"]]] = ...,
-        _done: Optional[Callable[["RunningCommand", bool, int], None]] = ...,
-        _tty_size: Tuple[int, int] = ...,
+        _tee: bool | Literal["out", "err"] | None = ...,
+        _done: Callable[[RunningCommand, bool, int], None] | None = ...,
+        _tty_size: tuple[int, int] = ...,
         _truncate_exc: bool = ...,
-        _preexec_fn: Optional[Callable[[], None]] = ...,
-        _uid: Optional[int] = ...,
+        _preexec_fn: Callable[[], None] | None = ...,
+        _uid: int | None = ...,
         _new_session: bool = ...,
         _new_group: bool = ...,
-        _arg_preprocess: Optional[
-            Callable[..., Tuple[List[Any], Dict[str, Any]]]
-        ] = ...,
-        _log_msg: Optional[Callable[..., str]] = ...,
+        _arg_preprocess: Callable[..., tuple[list[Any], dict[str, Any]]] | None = ...,
+        _log_msg: Callable[..., str] | None = ...,
         _close_fds: bool = ...,
-        _pass_fds: AbstractSet[int] = ...,
+        _pass_fds: Set[int] = ...,
         _return_cmd: bool = ...,
         _async: bool = ...,
         **kwargs: Any,
@@ -1319,7 +1279,7 @@ class Command(Generic[_ReturnT_co]):
 
     # some private properties accessed by the tests
     _path: str
-    _call_args: Dict[str, Any]
+    _call_args: dict[str, Any]
 
     def __str__(self) -> str: ...
     def __repr__(self) -> str: ...
@@ -1327,7 +1287,7 @@ class Command(Generic[_ReturnT_co]):
     def __enter__(self) -> None: ...
     def __exit__(self, *args: Any) -> None: ...
     # sub-command access (e.g. git.log, docker.container.ls)
-    def __getattr__(self, name: str) -> "Command[_ReturnT_co]": ...
+    def __getattr__(self, name: str) -> Command[_ReturnT_co]: ...
 
 # ---------------------------------------------------------------------------
 # StreamBufferer — exposed via allowlist
@@ -1344,21 +1304,21 @@ class StreamBufferer:
         decode_errors: str = ...,
     ) -> None: ...
     def change_buffering(self, new_type: int) -> None: ...
-    def process(self, chunk: bytes) -> List[bytes]: ...
-    def flush(self) -> List[bytes]: ...
+    def process(self, chunk: bytes) -> list[bytes]: ...
+    def flush(self) -> list[bytes]: ...
 
 # ---------------------------------------------------------------------------
 # pushd — context manager for temporary directory changes
 # ---------------------------------------------------------------------------
 
 @contextmanager
-def pushd(path: str) -> Iterator[None]: ...
+def pushd(path: str) -> Generator[None]: ...
 
 # ---------------------------------------------------------------------------
 # glob — path expansion helper
 # ---------------------------------------------------------------------------
 
-def glob(path: str, *args: Any, **kwargs: Any) -> List[str]: ...
+def glob(path: str, *args: Any, **kwargs: Any) -> list[str]: ...
 
 # The return value on this technically isn't correct, it should be the type of
 # the sh module, but I don't know how to write that. # FIXME
