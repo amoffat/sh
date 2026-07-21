@@ -44,7 +44,7 @@ class ErrorReturnCodeMeta(type): ...
 
 class ErrorReturnCode(Exception):
     __metaclass__: ClassVar = ErrorReturnCodeMeta
-    
+
     exit_code: int
     full_cmd: str
     stdout: bytes
