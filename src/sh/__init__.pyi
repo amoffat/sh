@@ -14,7 +14,7 @@ from collections.abc import AsyncIterator, Callable, Generator, Iterable, Set
 from contextlib import contextmanager
 from queue import Queue
 from types import GenericAlias, TracebackType
-from typing import Any, ClassVar, Generic, IO, Literal, TypeAlias, overload
+from typing import IO, Any, ClassVar, Final, Generic, Literal, Self, TypeAlias, overload
 
 from typing_extensions import TypeVar
 
@@ -510,9 +510,21 @@ class OProc:
 
 class RunningCommand(str):
     ran: str
-    call_args: dict[str, Any]
     cmd: list[str]
+    call_args: dict[str, Any]
     process: OProc
+
+    # proxied `process` attributes via `__getattr__` from `_OProc_attr_allowlist`
+    # (stubtest would complain if we'd use methods and properties here)
+    signal: Final[Callable[[int], None]]
+    terminate: Final[Callable[[], None]]
+    kill: Final[Callable[[], None]]
+    kill_group: Final[Callable[[], None]]
+    signal_group: Final[Callable[[int], None]]
+    pid: Final[int]
+    sid: Final[int]
+    pgid: Final[int]
+    ctty: Final[str | None]
 
     @property
     def stdout(self) -> bytes: ...
@@ -520,22 +532,43 @@ class RunningCommand(str):
     def stderr(self) -> bytes: ...
     @property
     def exit_code(self) -> int: ...
-    @property
-    def pid(self) -> int: ...
+
+    #
+    def __init__(
+        self,
+        cmd: list[str],
+        call_args: dict[str, Any],
+        stdin: _CommandIn,
+        stdout: _CommandOut,
+        stderr: _CommandOut,
+    ) -> None: ...
+
+    #
     def wait(self, timeout: float | None = ...) -> RunningCommand: ...
     def is_alive(self) -> bool: ...
-    def kill(self) -> None: ...
-    def kill_group(self) -> None: ...
-    def terminate(self) -> None: ...
-    def signal(self, sig: int) -> None: ...
-    def signal_group(self, sig: int) -> None: ...
+    def handle_command_exit_code(self, code: int) -> None: ...
+
+    #
     def __int__(self) -> int: ...
     def __float__(self) -> float: ...
+
+    #
     def __await__(self) -> Generator[Any, None, RunningCommand]: ...
     def __aiter__(self) -> AsyncIterator[str]: ...
-    def __enter__(self) -> None: ...
-    def __exit__(self, *args: Any) -> None: ...
+    async def __anext__(self) -> str: ...
+
+    #
+    def __iter__(self) -> Self: ...
     def __next__(self) -> str: ...
+
+    #
+    def __enter__(self) -> None: ...
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None: ...
 
 # ---------------------------------------------------------------------------
 # Command — represents an un-run system program
