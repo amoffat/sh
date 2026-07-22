@@ -8,10 +8,12 @@ mechanism that tells type checkers about this dynamic resolution, enabling
 patterns like ``from sh import ls`` to type-check cleanly.
 """
 
+import _thread
 import threading
 from collections.abc import AsyncIterator, Callable, Generator, Iterable, Set
 from contextlib import contextmanager
 from queue import Queue
+from types import GenericAlias, TracebackType
 from typing import Any, ClassVar, Generic, IO, Literal, TypeAlias, overload
 
 from typing_extensions import TypeVar
@@ -544,7 +546,12 @@ class RunningCommand(str):
 _ReturnT_co = TypeVar("_ReturnT_co", RunningCommand, str, covariant=True, default=str)
 
 class Command(Generic[_ReturnT_co]):
-    def __init__(self, name: str, search_paths: list[str] | None = ...) -> None: ...
+    thread_local: ClassVar[_thread._local] = ...
+    RunningCommandCls: ClassVar[type[RunningCommand]] = ...
+
+    @classmethod
+    def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
+    def __init__(self, path: str, search_paths: list[str] | None = ...) -> None: ...
 
     # -----------------------------------------------------------------------
     # bake() overloads
@@ -1296,9 +1303,15 @@ class Command(Generic[_ReturnT_co]):
     def __repr__(self) -> str: ...
     def __eq__(self, other: object) -> bool: ...
     def __enter__(self) -> None: ...
-    def __exit__(self, *args: Any) -> None: ...
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None: ...
+
     # sub-command access (e.g. git.log, docker.container.ls)
-    def __getattr__(self, name: str) -> Command[_ReturnT_co]: ...
+    def __getattribute__(self, name: str) -> Command[_ReturnT_co]: ...
 
 # ---------------------------------------------------------------------------
 # StreamBufferer — exposed via allowlist

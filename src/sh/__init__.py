@@ -72,7 +72,7 @@ from io import open as fdopen
 from locale import getpreferredencoding
 from queue import Empty, Queue
 from shlex import quote as shlex_quote
-from types import GeneratorType, ModuleType
+from types import GeneratorType, GenericAlias, ModuleType
 from typing import Any, Dict, Type, Union
 
 __project_url__ = "https://github.com/amoffat/sh"
@@ -1463,8 +1463,7 @@ class Command:
 
     # Allow subscripting at runtime (e.g. Command[RunningCommand]) so that
     # type annotations and cast() calls work without a TypeError.
-    def __class_getitem__(cls, item):
-        return cls
+    __class_getitem__ = classmethod(GenericAlias)
 
     def __enter__(self):
         self(_with=True)
