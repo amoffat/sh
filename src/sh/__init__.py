@@ -618,9 +618,6 @@ class RunningCommand:
         "sid",
         "pgid",
         "ctty",
-        "input_thread_exc",
-        "output_thread_exc",
-        "bg_thread_exc",
     }
 
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
