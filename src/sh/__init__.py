@@ -119,7 +119,7 @@ class PollPoller:
         self.fd_lookup = {}
         self.fo_lookup = {}
 
-    def __nonzero__(self):
+    def __bool__(self):
         return len(self.fd_lookup) != 0
 
     def __len__(self):
@@ -194,7 +194,7 @@ class SelectPoller:
         self.wlist = []
         self.xlist = []
 
-    def __nonzero__(self):
+    def __bool__(self):
         return len(self.rlist) + len(self.wlist) + len(self.xlist) != 0
 
     def __len__(self):
@@ -977,9 +977,6 @@ class RunningCommand:
                 if self.stdout:
                     return repr(self.stdout)
             return repr("")
-
-    def __long__(self):
-        return int(str(self).strip())
 
     def __float__(self):
         return float(str(self).strip())
