@@ -13,8 +13,20 @@ import threading
 from collections.abc import AsyncIterator, Callable, Generator, Iterable, Set
 from contextlib import contextmanager
 from queue import Queue
-from types import GenericAlias, TracebackType
-from typing import IO, Any, ClassVar, Final, Generic, Literal, Self, TypeAlias, overload
+from types import GenericAlias, ModuleType, TracebackType
+from typing import (
+    IO,
+    Any,
+    ClassVar,
+    Final,
+    Generic,
+    Literal,
+    Protocol,
+    Self,
+    TypeAlias,
+    overload,
+    type_check_only,
+)
 
 from typing_extensions import TypeVar
 
@@ -31,6 +43,7 @@ _CommandArgPreprocess: TypeAlias = Callable[..., tuple[list[Any], dict[str, Any]
 # Version / metadata
 # ---------------------------------------------------------------------------
 
+__all__ = []
 __version__: str
 __project_url__: str
 DEFAULT_ENCODING: str
@@ -42,6 +55,7 @@ DEFAULT_ENCODING: str
 class ForkException(Exception):
     def __init__(self, orig_exc: str) -> None: ...
 
+@type_check_only
 class ErrorReturnCodeMeta(type): ...
 
 class ErrorReturnCode(Exception):
@@ -421,6 +435,7 @@ class TimeoutException(Exception):
 class DoneReadingForever(Exception): ...
 class NotYetReadyToRead(Exception): ...
 
+@type_check_only
 class OProc:
     """Manages fork/exec and I/O wiring for a child process (Open Process).
 
@@ -1379,18 +1394,33 @@ def glob(path: str, *args: Any, **kwargs: Any) -> list[str]: ...
 
 # The return value on this technically isn't correct, it should be the type of
 # the sh module, but I don't know how to write that. # FIXME
-def bake(*args: Any, **kwargs: Any) -> Command[str]: ...
-def _aggregate_keywords(*, kwargs: dict, sep: str, prefix: str): ...
+def bake(**kwargs: Any) -> Command[str]: ...
+def _aggregate_keywords(
+    *,
+    kwargs: dict[str, Any],
+    sep: str,
+    prefix: str,
+    raw: bool = False,
+) -> list[str]: ...
 
 # ---------------------------------------------------------------------------
 # contrib — namespace of pre-baked command wrappers
 # ---------------------------------------------------------------------------
 
-class contrib:
-    git: Command[str]
-    bash: Command[str]
-    sudo: Command[str]
-    ssh: Command[str]
+_FnT = TypeVar("_FnT", bound=Callable[[Command[Any]], Command[Any]])
+
+@type_check_only
+class _ContribWrapper(Protocol):
+    def __call__(self, fn: _FnT) -> _FnT: ...
+
+# `types.ModuleType.__getattr__` returns `Any`, so type-checkers will assume every
+# `Contrib` attribute is `Any`.
+@type_check_only
+class Contrib(ModuleType):
+    @classmethod
+    def __call__(cls, name: str) -> _ContribWrapper: ...
+
+contrib: Final[Contrib] = ...
 
 # ---------------------------------------------------------------------------
 # Module-level __getattr__
