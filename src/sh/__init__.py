@@ -366,7 +366,7 @@ class CommandNotFound(AttributeError):
     pass
 
 
-rc_exc_regex = re.compile(r"(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z]+)")
+rc_exc_regex = re.compile(r"(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z0-9]+)")
 rc_exc_cache: Dict[str, Type[ErrorReturnCode]] = {}
 
 SIGNAL_MAPPING = {
