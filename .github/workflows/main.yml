@@ -30,6 +30,7 @@ jobs:
           uv run ruff check src/sh/ tests/
           uv run ruff format --check src/sh tests/
           uv run mypy src/sh/
+          uv run stubtest sh
           uv run rstcheck README.rst
 
   test:
