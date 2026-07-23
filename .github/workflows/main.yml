@@ -31,6 +31,7 @@ jobs:
           uv run ruff format --check src/sh tests/
           uv run mypy src/sh/
           uv run stubtest sh
+          uv run pyrefly coverage check src/sh
           uv run rstcheck README.rst
 
   test:
