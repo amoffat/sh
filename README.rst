@@ -17,7 +17,7 @@
 
 |
 
-sh is a full-fledged subprocess replacement for Python 3.8 - 3.14, and PyPy
+sh is a full-fledged subprocess replacement for Python 3.10 - 3.14, and PyPy
 that allows you to call *any* program as if it were a function:
 
 .. code:: python
@@ -44,16 +44,20 @@ Installation
 Support
 =======
 * `Andrew Moffat <https://github.com/amoffat>`_ - author/maintainer
-* `Erik Cederstrand <https://github.com/ecederstrand>`_ - maintainer
-
 
 Developers
 ==========
 
+Open the repo in a devcontainer in VScode, or in a codespace on Github.
+
+.. image:: https://github.com/codespaces/badge.svg
+   :target: https://codespaces.new/amoffat/sh
+   :alt: Open in GitHub Codespaces
+
 Testing
 -------
 
-Tests are run in a docker container against all supported Python versions. To run, make the following target::
+Tests are run by tox against all supported Python versions. To run, make the following target::
 
     $> make test
 

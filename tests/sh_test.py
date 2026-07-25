@@ -2709,6 +2709,16 @@ sys.stdout.write(bytes("te漢字st", "utf8") + "äåéë".encode("latin_1"))
         )
         self.assertEqual(p, "test")
 
+    def test_signal_exception_sigusr(self):
+        """Regression test for gh-791: SIGUSR1/SIGUSR2 names contain digits,
+        which previously caused the signal-name regex to truncate them."""
+        import sh
+
+        self.assertIsNotNone(sh.SignalException_SIGUSR1)
+        self.assertIsNotNone(sh.SignalException_SIGUSR2)
+        self.assertTrue(issubclass(sh.SignalException_SIGUSR1, sh.SignalException))
+        self.assertTrue(issubclass(sh.SignalException_SIGUSR2, sh.SignalException))
+
     def test_signal_exception(self):
         from sh import SignalException_15
 

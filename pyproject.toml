@@ -1,6 +1,6 @@
 [project]
 name = "sh"
-version = "2.3.0"
+version = "2.4.0"
 description = "Python subprocess replacement"
 authors = [
     {name = "Andrew Moffat", email = "arwmoffat@gmail.com"},
@@ -10,7 +10,7 @@ maintainers = [
 ]
 readme = "README.rst"
 license = {text = "MIT"}
-requires-python = ">=3.8.1,<4.0"
+requires-python = ">=3.10,<4.0"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
@@ -18,8 +18,6 @@ classifiers = [
     "Intended Audience :: System Administrators",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -47,6 +45,7 @@ dev = [
     "sphinx-rtd-theme>=1.2.2",
     "pytest>=7.4.0",
     "mypy>=1.4.1",
+    "pyrefly>=1.1.1",
 ]
 
 [tool.ruff]

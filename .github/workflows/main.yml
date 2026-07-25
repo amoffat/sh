@@ -30,6 +30,8 @@ jobs:
           uv run ruff check src/sh/ tests/
           uv run ruff format --check src/sh tests/
           uv run mypy src/sh/
+          uv run stubtest sh
+          uv run pyrefly coverage check src/sh
           uv run rstcheck README.rst
 
   test:
@@ -38,7 +40,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         use-select: [0, 1]
         lang: [C, en_US.UTF-8]
 

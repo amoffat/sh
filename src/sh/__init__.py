@@ -72,8 +72,8 @@ from io import open as fdopen
 from locale import getpreferredencoding
 from queue import Empty, Queue
 from shlex import quote as shlex_quote
-from types import GeneratorType, ModuleType
-from typing import Any, Dict, Type, Union
+from types import GeneratorType, GenericAlias, ModuleType
+from typing import Any
 
 __project_url__ = "https://github.com/amoffat/sh"
 
@@ -119,7 +119,7 @@ class PollPoller:
         self.fd_lookup = {}
         self.fo_lookup = {}
 
-    def __nonzero__(self):
+    def __bool__(self):
         return len(self.fd_lookup) != 0
 
     def __len__(self):
@@ -194,7 +194,7 @@ class SelectPoller:
         self.wlist = []
         self.xlist = []
 
-    def __nonzero__(self):
+    def __bool__(self):
         return len(self.rlist) + len(self.wlist) + len(self.xlist) != 0
 
     def __len__(self):
@@ -241,7 +241,7 @@ class SelectPoller:
 # by zhangyafeikimi when he discovered that if the fds created internally by sh
 # numbered > 1024, select.select failed (a limitation of select.select).  this
 # can happen if your script opens a lot of files
-Poller: Union[Type[SelectPoller], Type[PollPoller]] = SelectPoller
+Poller: type[SelectPoller | PollPoller] = SelectPoller
 if HAS_POLL and not FORCE_USE_SELECT:
     Poller = PollPoller
 
@@ -366,8 +366,8 @@ class CommandNotFound(AttributeError):
     pass
 
 
-rc_exc_regex = re.compile(r"(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z]+)")
-rc_exc_cache: Dict[str, Type[ErrorReturnCode]] = {}
+rc_exc_regex = re.compile(r"(ErrorReturnCode|SignalException)_((\d+)|SIG[a-zA-Z0-9]+)")
+rc_exc_cache: dict[str, type[ErrorReturnCode]] = {}
 
 SIGNAL_MAPPING = {
     v: k for k, v in signal.__dict__.items() if re.match(r"SIG[a-zA-Z]+", k)
@@ -618,9 +618,6 @@ class RunningCommand:
         "sid",
         "pgid",
         "ctty",
-        "input_thread_exc",
-        "output_thread_exc",
-        "bg_thread_exc",
     }
 
     def __init__(self, cmd, call_args, stdin, stdout, stderr):
@@ -978,9 +975,6 @@ class RunningCommand:
                     return repr(self.stdout)
             return repr("")
 
-    def __long__(self):
-        return int(str(self).strip())
-
     def __float__(self):
         return float(str(self).strip())
 
@@ -1174,7 +1168,7 @@ class Command:
     thread_local = threading.local()
     RunningCommandCls = RunningCommand
 
-    _call_args: Dict[str, Any] = {
+    _call_args: dict[str, Any] = {
         "fg": False,  # run command in foreground
         # run a command in the background.  commands run in the background
         # ignore SIGHUP and do not automatically exit when the parent process
@@ -1466,8 +1460,7 @@ class Command:
 
     # Allow subscripting at runtime (e.g. Command[RunningCommand]) so that
     # type annotations and cast() calls work without a TypeError.
-    def __class_getitem__(cls, item):
-        return cls
+    __class_getitem__ = classmethod(GenericAlias)
 
     def __enter__(self):
         self(_with=True)
