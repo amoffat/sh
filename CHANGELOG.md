@@ -1,8 +1,12 @@
 # Changelog
 
-## unreleased
+## 2.4.0 - 7/25/26
 
 - Dropped support for Python < 3.10
+- Significantly improved `.pyi` typing stub with modern type aliases and annotations
+- `Command` now supports generic subscript syntax (`Command[str]`) via `GenericAlias`
+- Bugfix where signal names containing numbers were not matched correctly
+- `stubtest` and `pyrefly coverage check` now run in CI
 
 ## 2.3.0 - 6/8/25
 
