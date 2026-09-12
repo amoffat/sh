@@ -1417,21 +1417,21 @@ class Command:
         if extra_args or extra_kwargs:
             all_layers.append((extra_args, extra_kwargs))
 
-        # Index: for each kwarg key, the earliest layer index where its value
-        # is False.  A True in layer i is suppressed iff first_false[key] > i,
+        # Index: for each kwarg key, the latest layer index where its value
+        # is False.  A True in layer i is suppressed iff last_false[key] > i,
         # i.e. a False override exists somewhere after that layer.  Building
         # this index in one O(L*K) pass eliminates the inner per-key scan.
-        first_false: dict = {}
+        last_false: dict = {}
         for i, (_, layer_kwargs) in enumerate(all_layers):
             for k, v in layer_kwargs.items():
-                if v is False and k not in first_false:
-                    first_false[k] = i
+                if v is False:
+                    last_false[k] = i
 
         result = []
         for i, (layer_args, layer_kwargs) in enumerate(all_layers):
             filtered_kwargs = {}
             for k, v in layer_kwargs.items():
-                if v is True and k in first_false and first_false[k] > i:
+                if v is True and k in last_false and last_false[k] > i:
                     continue
                 filtered_kwargs[k] = v
 

@@ -1476,6 +1476,19 @@ sys.stdout.write(str(sys.argv[1:]))
         out = pythons.bake(py.name).bake(a=True).bake(a=False)()
         self.assertNotIn("'-a'", out)
 
+    def test_bake_repeated_boolean_override(self):
+        py = create_tmp_test("import sys; print(sys.argv[1:], end='')")
+        for key, flag in (("a", "-a"), ("verbose", "--verbose")):
+            with self.subTest(key=key):
+                enabled = pythons.bake(py.name, **{key: False}).bake(**{key: True})
+                self.assertEqual(enabled(**{key: False}), "[]")
+
+                disabled = enabled.bake(**{key: False})
+                self.assertEqual(disabled(), "[]")
+                self.assertNotIn(flag, str(disabled))
+                self.assertEqual(disabled(**{key: True}), str([flag]))
+                self.assertEqual(enabled(), str([flag]))
+
     def test_arg_preprocessor(self):
         py = create_tmp_test(
             """
