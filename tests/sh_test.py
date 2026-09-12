@@ -1485,7 +1485,7 @@ sys.stdout.write(str(sys.argv[1:]))
 
                 disabled = enabled.bake(**{key: False})
                 self.assertEqual(disabled(), "[]")
-                self.assertNotIn(flag, str(disabled))
+                self.assertEqual(str(disabled), str(pythons.bake(py.name)))
                 self.assertEqual(disabled(**{key: True}), str([flag]))
                 self.assertEqual(enabled(), str([flag]))
 
