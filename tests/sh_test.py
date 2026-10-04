@@ -1768,22 +1768,26 @@ for i in range(5):
         py = create_tmp_test(
             """
 import sys
-import os
-import time
 import signal
+import time
 
-i = 0
 def sig_handler(sig, frame):
     global i
     i = 42
 
 signal.signal(signal.SIGINT, sig_handler)
 
-for _ in range(6):
+for i in range(4):
     print(i)
-    i += 1
     sys.stdout.flush()
-    time.sleep(2)
+
+deadline = time.monotonic() + 10
+while i != 42:
+    if time.monotonic() >= deadline:
+        raise RuntimeError("Timed out waiting for SIGINT")
+    time.sleep(0.01)
+print(i)
+print(i + 1)
 """
         )
 
@@ -1796,7 +1800,7 @@ for _ in range(6):
                 process.signal(SIGINT)
                 return True
 
-        p = python(py.name, _out=agg, _tee=True)
+        p = python(py.name, _out=agg, _tee=True, _timeout=15)
         p.wait()
 
         self.assertEqual(p.process.exit_code, 0)
