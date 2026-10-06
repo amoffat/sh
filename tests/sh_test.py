@@ -1940,6 +1940,29 @@ sys.exit(1)
 
         self.assertRaises(sh.ErrorReturnCode_1, asyncio.run, main())
 
+    def test_async_gather(self):
+        from collections.abc import Hashable
+
+        py = create_tmp_test(
+            """
+import time
+time.sleep(0.05)
+print("ok")
+"""
+        )
+
+        async def main():
+            cmd1 = python(py.name, _async=True)
+            cmd2 = python(py.name, _async=True)
+            self.assertIsInstance(cmd1, Hashable)
+            self.assertEqual(len(set([cmd1, cmd2])), 2)
+            self.assertEqual(len({cmd1: 1, cmd2: 2}), 2)
+            results = await asyncio.gather(cmd1, cmd2)
+            return [r.strip() for r in results]
+
+        results = asyncio.run(main())
+        self.assertEqual(results, ["ok", "ok"])
+
     def test_handle_both_out_and_err(self):
         py = create_tmp_test(
             """
