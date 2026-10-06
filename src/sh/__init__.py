@@ -949,6 +949,8 @@ class RunningCommand:
     def __eq__(self, other):
         return id(self) == id(other)
 
+    __hash__ = object.__hash__
+
     def __contains__(self, item):
         return item in str(self)
 
