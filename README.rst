@@ -57,13 +57,13 @@ Open the repo in a devcontainer in VScode, or in a codespace on Github.
 Testing
 -------
 
-Tests are run by tox against all supported Python versions. To run, make the following target::
+Install the development dependencies with ``uv sync``. Tests are run by tox against all supported Python versions. To run, make the following target::
 
     $> make test
 
 To run a single test::
 
-    $> make test='FunctionalTests.test_background' test_one
+    $> make test=tests/sh_test.py::FunctionalTests::test_background test_one
 
 Docs
 ----
