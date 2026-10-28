@@ -1605,7 +1605,7 @@ def compile_args(*, args, kwargs, sep, prefix):
                 arg = [arg.path]
 
             for sub_arg in arg:
-                processed_args.append(sub_arg)
+                processed_args.append(str(sub_arg))
         elif isinstance(arg, dict):
             processed_args += _aggregate_keywords(
                 kwargs=arg,

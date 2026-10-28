@@ -205,6 +205,14 @@ class BaseTests(unittest.TestCase):
 
 
 class ArgTests(BaseTests):
+    def test_positional_sequence_string_coercion(self):
+        values = [Path("a file.txt"), 3, 1.5, "", "--literal"]
+        expected = str(python.bake(*[str(value) for value in values]))
+        for sequence_type in (list, tuple):
+            with self.subTest(sequence_type=sequence_type):
+                command = python.bake(sequence_type(values))
+                self.assertEqual(str(command), expected)
+
     def test_list_args(self):
         processed = sh._aggregate_keywords(
             kwargs={"arg": [1, 2, 3]}, sep="=", prefix="--"
@@ -294,6 +302,25 @@ print(args[0])
 
         out = python(py.name, 3).strip()
         self.assertEqual(out, "3")
+
+    def test_positional_sequence_string_coercion(self):
+        py = create_tmp_test(
+            """
+import sys
+print(repr(sys.argv[1:]))
+"""
+        )
+        values = [Path("a file.txt"), 3, 1.5, "", "--literal"]
+        expected = repr([str(value) for value in values])
+        for sequence_type in (list, tuple):
+            for baked in (False, True):
+                with self.subTest(sequence_type=sequence_type, baked=baked):
+                    args = sequence_type(values)
+                    if baked:
+                        output = pythons.bake(py.name, args)()
+                    else:
+                        output = pythons(py.name, args)
+                    self.assertEqual(output.strip(), expected)
 
     def test_arg_string_coercion(self):
         py = create_tmp_test(
