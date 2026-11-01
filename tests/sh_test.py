@@ -3885,3 +3885,64 @@ sys.stdout.write(sys.argv[1])
         _sh = sh.bake(_ok_code=1)
         self.assertEqual(sh.Command._call_args["ok_code"], 0)
         self.assertEqual(_sh.Command._call_args["ok_code"], 1)
+
+    def test_running_command_repr_non_blocking_bg(self):
+        # https://github.com/amoffat/sh/issues/801
+        import time
+
+        py = create_tmp_test(
+            """
+import time
+time.sleep(2)
+"""
+        )
+        p = python(py.name, _bg=True)
+        try:
+            start = time.time()
+            r = repr(p)
+            elapsed = time.time() - start
+            self.assertLess(elapsed, 1.0)
+            self.assertIn("RunningCommand", r)
+            self.assertIn(str(p.pid), r)
+        finally:
+            p.kill()
+
+    def test_running_command_repr_non_blocking_async(self):
+        # https://github.com/amoffat/sh/issues/801
+        import asyncio
+        import time
+
+        py = create_tmp_test(
+            """
+import time
+time.sleep(2)
+"""
+        )
+
+        async def main():
+            p = python(py.name, _async=True)
+            try:
+                start = time.time()
+                r = repr(p)
+                elapsed = time.time() - start
+                self.assertLess(elapsed, 1.0)
+                self.assertIn("RunningCommand", r)
+                self.assertIn(str(p.pid), r)
+            finally:
+                p.kill()
+                try:
+                    await p
+                except Exception:
+                    pass
+
+        asyncio.run(main())
+
+    def test_running_command_repr_when_completed(self):
+        py = create_tmp_test(
+            """
+print("finished")
+"""
+        )
+        p = python(py.name)
+        self.assertEqual(repr(p), "finished\n")
+        self.assertEqual(repr(p), str(p))
