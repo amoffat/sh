@@ -967,6 +967,11 @@ class RunningCommand:
         raise AttributeError
 
     def __repr__(self):
+        if self.process and self.is_alive():
+            if self.process.pid:
+                return f"<RunningCommand {self.ran!r}, pid {self.process.pid}>"
+            return f"<RunningCommand {self.ran!r}>"
+
         try:
             return str(self)
         except UnicodeDecodeError:
