@@ -77,6 +77,8 @@ from typing import Any
 
 __project_url__ = "https://github.com/amoffat/sh"
 
+_UNSET = object()
+
 TEE_STDOUT = {True, "out", 1}
 TEE_STDERR = {"err", 2}
 
@@ -1393,7 +1395,7 @@ class Command:
         return fn
 
     def _compile_baked_args(
-        self, extra_args=(), extra_kwargs=None, sep=None, prefix=None
+        self, extra_args=(), extra_kwargs=None, sep=_UNSET, prefix=None
     ):
         """Compile all baked arg layers plus any extra args/kwargs into a flat
         list of strings.
@@ -1406,7 +1408,7 @@ class Command:
         """
         if extra_kwargs is None:
             extra_kwargs = {}
-        if sep is None:
+        if sep is _UNSET:
             sep = self._partial_call_args.get("long_sep", self._call_args["long_sep"])
         if prefix is None:
             prefix = self._partial_call_args.get(

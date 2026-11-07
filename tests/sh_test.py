@@ -1033,6 +1033,22 @@ print(sys.argv[1])
         out = python_baked().strip()
         self.assertEqual(out, correct)
 
+    def test_custom_separator_none(self):
+        py = create_tmp_test(
+            """
+import sys
+print(repr(sys.argv[1:]))
+"""
+        )
+        expected = repr(["--long-option", "value"])
+        for command in (python, python.bake(_long_sep="=baked=")):
+            for use_dict in (False, True):
+                with self.subTest(command=repr(command), use_dict=use_dict):
+                    args = [{"long-option": "value"}] if use_dict else []
+                    kwargs = {} if use_dict else {"long_option": "value"}
+                    out = command(py.name, *args, _long_sep=None, **kwargs).strip()
+                    self.assertEqual(out, expected)
+
     def test_custom_separator_space(self):
         py = create_tmp_test(
             """
