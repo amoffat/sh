@@ -2358,20 +2358,19 @@ else:
 import sys
 import os
 
-if os.isatty(sys.stdout.fileno()):
-    sys.stdout.write("tty attached")
-    sys.stdout.flush()
+if sys.stdout.isatty():
+    columns, rows = os.get_terminal_size(sys.stdout.fileno())
+    print(rows, columns)
 else:
-    sys.stdout.write("no tty attached")
-    sys.stdout.flush()
+    print("no tty attached")
 """
         )
 
-        out = pythons(py.name, _tty_out=True)
-        self.assertEqual(out, "tty attached")
+        out = pythons(py.name, _tty_size=(42, 93))
+        self.assertEqual(out, "42 93\n")
 
         out = pythons(py.name, _tty_out=False)
-        self.assertEqual(out, "no tty attached")
+        self.assertEqual(out, "no tty attached\n")
 
     def test_stringio_output(self):
         import sh
@@ -2924,6 +2923,36 @@ sleep('1', _done=done)
         wait_elapsed = time.time() - wait_start
 
         self.assertLess(abs(wait_elapsed - 1.0), 1.0)
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux native launch")
+    def test_command_does_not_run_python_after_fork(self):
+        # At-fork callbacks cannot be unregistered, so install one in its own process.
+        script = create_tmp_test(
+            r"""
+import os
+import sh
+
+os.register_at_fork(after_in_child=lambda: os.write(1, b"ran child hook\n"))
+print(sh.env(_env=dict(RESULT="ok")), end="")
+"""
+        )
+        self.assertEqual(pythons(script.name), "RESULT=ok\n")
+
+    @unittest.skipUnless(sys.platform == "linux", "Linux child reaping")
+    def test_externally_reaped_child_has_no_exit_status(self):
+        script = create_tmp_test(
+            """
+import signal
+import sh
+
+signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+try:
+    sh.false()
+except ChildProcessError:
+    print("already reaped")
+"""
+        )
+        self.assertEqual(pythons(script.name), "already reaped\n")
 
     def test_fork_exc(self):
         from sh import ForkException

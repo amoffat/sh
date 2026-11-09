@@ -55,6 +55,7 @@ import select
 import signal
 import stat
 import struct
+import subprocess
 import sys
 import termios
 import textwrap
@@ -2030,28 +2031,77 @@ class OProc:
         if needs_ctty:
             self.ctty = os.ttyname(self._stdin_child_fd)
 
-        gc_enabled = gc.isenabled()
-        if gc_enabled:
-            gc.disable()
-
-        # for synchronizing
-        session_pipe_read, session_pipe_write = os.pipe()
-        exc_pipe_read, exc_pipe_write = os.pipe()
-
-        # this pipe is for synchronizing with the child that the parent has
-        # closed its in/out/err fds.  this is a bug on OSX (but not linux),
-        # where we can lose output sometimes, due to a race, if we do
-        # os.close(self._stdout_child_fd) in the parent after the child starts
-        # writing.
-        if IS_MACOS:
-            close_pipe_read, close_pipe_write = os.pipe()
-        else:
-            close_pipe_read, close_pipe_write = None, None
-
-        # session id, group id, process id
+        self._popen = None
         self.sid = None
         self.pgid = None
-        self.pid = os.fork()
+        if (
+            sys.platform == "linux"
+            and ca["close_fds"]
+            and not (needs_ctty or ca["bg"] or new_group or ca["pass_fds"])
+            and ca["uid"] is None
+            and not callable(ca["preexec_fn"])
+        ):
+            # Configure our own stdout PTY before the program can write to it.
+            try:
+                if ca["tty_out"] and not stdout_is_fd_based:
+                    tty.setraw(self._stdout_child_fd)
+                    setwinsize(self._stdout_child_fd, ca["tty_size"])
+                self.sid = os.getsid(0)
+                self.pgid = os.getpgrp()
+                self._popen = subprocess.Popen(
+                    [arg.encode(ca["encoding"]) for arg in cmd],
+                    stdin=self._stdin_child_fd,
+                    stdout=self._stdout_child_fd,
+                    stderr=self._stderr_child_fd,
+                    cwd=ca["cwd"] or None,
+                    env=ca["env"],
+                    start_new_session=new_session,
+                )
+            except Exception as exc:
+                # Resource exhaustion during launch is a parent-side failure.
+                if (
+                    isinstance(exc, OSError)
+                    and exc.filename is None
+                    and exc.errno
+                    in (errno.EAGAIN, errno.ENOMEM, errno.EMFILE, errno.ENFILE)
+                ):
+                    raise
+                raise ForkException(traceback.format_exc()) from None
+            finally:
+                if self._popen is None:
+                    for fd in (
+                        self._stdin_parent_fd,
+                        self._stdout_parent_fd,
+                        self._stderr_parent_fd,
+                        self._stdin_child_fd,
+                        self._stdout_child_fd,
+                        self._stderr_child_fd,
+                        self._pipe_fd,
+                    ):
+                        if fd is not None:
+                            os.close(fd)
+            self.pid = self._popen.pid
+            if new_session:
+                self.sid = self.pgid = self.pid
+        else:
+            gc_enabled = gc.isenabled()
+            if gc_enabled:
+                gc.disable()
+
+            # for synchronizing
+            session_pipe_read, session_pipe_write = os.pipe()
+            exc_pipe_read, exc_pipe_write = os.pipe()
+
+            # this pipe is for synchronizing with the child that the parent has
+            # closed its in/out/err fds.  this is a bug on OSX (but not linux),
+            # where we can lose output sometimes, due to a race, if we do
+            # os.close(self._stdout_child_fd) in the parent after the child starts
+            # writing.
+            if IS_MACOS:
+                close_pipe_read, close_pipe_write = os.pipe()
+            else:
+                close_pipe_read, close_pipe_write = None, None
+            self.pid = os.fork()
 
         # child
         if self.pid == 0:  # pragma: no cover
@@ -2209,35 +2259,36 @@ class OProc:
 
         # parent
         else:
-            if gc_enabled:
+            if self._popen is None and gc_enabled:
                 gc.enable()
 
             os.close(self._stdin_child_fd)
             os.close(self._stdout_child_fd)
             os.close(self._stderr_child_fd)
 
-            # tell our child process that we've closed our write_fds, so it is
-            # ok to proceed towards exec.  see the comment where this pipe is
-            # opened, for why this is necessary
-            if IS_MACOS:
-                os.close(close_pipe_read)
-                os.write(close_pipe_write, str(1).encode(DEFAULT_ENCODING))
-                os.close(close_pipe_write)
+            if self._popen is None:
+                # tell our child process that we've closed our write_fds, so it is
+                # ok to proceed towards exec.  see the comment where this pipe is
+                # opened, for why this is necessary
+                if IS_MACOS:
+                    os.close(close_pipe_read)
+                    os.write(close_pipe_write, str(1).encode(DEFAULT_ENCODING))
+                    os.close(close_pipe_write)
 
-            os.close(exc_pipe_write)
-            fork_exc = os.read(exc_pipe_read, 1024**2)
-            os.close(exc_pipe_read)
-            if fork_exc:
-                fork_exc = fork_exc.decode(DEFAULT_ENCODING)
-                raise ForkException(fork_exc)
+                os.close(exc_pipe_write)
+                fork_exc = os.read(exc_pipe_read, 1024**2)
+                os.close(exc_pipe_read)
+                if fork_exc:
+                    fork_exc = fork_exc.decode(DEFAULT_ENCODING)
+                    raise ForkException(fork_exc)
 
-            os.close(session_pipe_write)
-            sid, pgid = (
-                os.read(session_pipe_read, 1024).decode(DEFAULT_ENCODING).split(",")
-            )
-            os.close(session_pipe_read)
-            self.sid = int(sid)
-            self.pgid = int(pgid)
+                os.close(session_pipe_write)
+                sid, pgid = (
+                    os.read(session_pipe_read, 1024).decode(DEFAULT_ENCODING).split(",")
+                )
+                os.close(session_pipe_read)
+                self.sid = int(sid)
+                self.pgid = int(pgid)
 
             # used to determine what exception to raise.  if our process was
             # killed via a timeout counter, we'll raise something different than
@@ -2567,13 +2618,7 @@ class OProc:
 
         witnessed_end = False
         try:
-            # WNOHANG is just that...we're calling waitpid without hanging...
-            # essentially polling the process.  the return result is (0, 0) if
-            # there's no process status, so we check that pid == self.pid below
-            # in order to determine how to proceed
-            pid, exit_code = no_interrupt(os.waitpid, self.pid, os.WNOHANG)
-            if pid == self.pid:
-                self.exit_code = handle_process_exit_code(exit_code)
+            if self._waitpid(os.WNOHANG):
                 witnessed_end = True
 
                 return False, self.exit_code
@@ -2587,6 +2632,22 @@ class OProc:
             self._wait_lock.release()
             if witnessed_end:
                 self._process_just_ended()
+
+    def _waitpid(self, flags):
+        try:
+            pid, status = no_interrupt(os.waitpid, self.pid, flags)
+        except ChildProcessError:
+            if self._popen is not None:
+                # Another waiter reaped it. Popen uses zero when no status is available.
+                self._popen.returncode = 0
+            raise
+        if not pid:
+            return False
+        self.exit_code = handle_process_exit_code(status)
+        if self._popen is not None:
+            # OProc reaped this child. Popen's finalizer must not wait for it again.
+            self._popen.returncode = self.exit_code
+        return True
 
     def _process_just_ended(self):
         if self._timeout_timer:
@@ -2616,8 +2677,7 @@ class OProc:
 
             if self.exit_code is None:
                 self.log.debug("exit code not set, waiting on pid")
-                pid, exit_code = no_interrupt(os.waitpid, self.pid, 0)  # blocks
-                self.exit_code = handle_process_exit_code(exit_code)
+                self._waitpid(0)
                 witnessed_end = True
 
             else:

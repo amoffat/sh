@@ -6,7 +6,16 @@ Architecture Overview
 Launch
 ======
 
-When it comes time to launch a process
+On Linux, commands with the default process options use :class:`subprocess.Popen`.
+The parent sets up the output terminal before launch, and the child executes the
+program without running Python's at-fork callbacks. Other threads can continue
+using native libraries while the command starts. As with :class:`subprocess.Popen`,
+``SIGPIPE`` and the file-size signals ``SIGXFZ`` and ``SIGXFSZ``, where available,
+have their default dispositions in the new program.
+
+Commands using ``_bg=True``, ``_tty_in=True``, ``_uid``, ``_new_group=True``,
+``_pass_fds``, ``_close_fds=False`` or ``_preexec_fn`` use the fork path described
+below. Other platforms also use this path.
 
 #. Open pipes and/or TTYs STDIN/OUT/ERR.
 #. Open a pipe for communicating pre-exec exceptions from the child to the
