@@ -264,8 +264,9 @@ _preexec_fn
 
 |def| ``None``
 
-A function to be run directly before the child process calls :func:`os.execv`.
-Typically not used by normal users.
+A function to run in the forked child before :func:`os.execv`. In a multithreaded
+process, the callback can deadlock on a lock held by another thread at the time
+of the fork.
 
 .. _pass_fds:
 
