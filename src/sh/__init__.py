@@ -3299,6 +3299,7 @@ class StreamBufferer:
                     self._use_up_buffer_first = False
                     to_write = self.buffer
                     self.buffer = []
+                    self.n_buffer_count = 0
                     to_write.append(chunk)
                     return to_write
 
@@ -3359,6 +3360,7 @@ class StreamBufferer:
         try:
             ret = "".encode(self.encoding).join(self.buffer)
             self.buffer = []
+            self.n_buffer_count = 0
             return ret
         finally:
             self._buffering_lock.release()
