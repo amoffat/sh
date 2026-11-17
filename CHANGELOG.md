@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Reset pending byte counts when draining stream buffers, so switching back to fixed-size buffering does not emit incomplete chunks.
+
 ## 2.4.0 - 7/25/26
 
 - Dropped support for Python < 3.10
