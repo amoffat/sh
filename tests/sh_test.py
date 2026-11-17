@@ -3772,6 +3772,31 @@ class StreamBuffererTests(unittest.TestCase):
         self.assertEqual(b.process(b"\nthree\nfour"), [b"two\n", b"three\n"])
         self.assertEqual(b.flush(), b"four")
 
+    def test_rebuffer_after_draining_pending_bytes(self):
+        from sh import StreamBufferer
+
+        for initial_type in (1, 8):
+            with self.subTest(initial_type=initial_type):
+                bufferer = StreamBufferer(initial_type)
+                self.assertEqual(bufferer.process(b"abc"), [])
+                bufferer.change_buffering(0)
+                self.assertEqual(bufferer.process(b"d"), [b"abc", b"d"])
+                bufferer.change_buffering(4)
+                self.assertEqual(bufferer.process(b"x"), [])
+                self.assertEqual(bufferer.process(b"yz"), [])
+                self.assertEqual(bufferer.process(b"12"), [b"xyz1"])
+                self.assertEqual(bufferer.flush(), b"2")
+
+    def test_flush_resets_pending_byte_count(self):
+        from sh import StreamBufferer
+
+        bufferer = StreamBufferer(4)
+        self.assertEqual(bufferer.process(b"abc"), [])
+        self.assertEqual(bufferer.flush(), b"abc")
+        self.assertEqual(bufferer.process(b"d"), [])
+        self.assertEqual(bufferer.process(b"efg"), [b"defg"])
+        self.assertEqual(bufferer.flush(), b"")
+
     def test_chunk_buffered(self):
         from sh import StreamBufferer
 
