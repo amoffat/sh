@@ -542,6 +542,28 @@ while True:
 
         self.assertEqual(out, test_string.upper())
 
+    def test_manual_stdin_read_only_object(self):
+        class ReadOnly:
+            def __init__(self, data):
+                self.stream = (
+                    BytesIO(data) if isinstance(data, bytes) else StringIO(data)
+                )
+
+            def read(self, size=-1):
+                return self.stream.read(size)
+
+        py = create_stdin_transform_test()
+        for data in (b"", b"hello\n", b"x" * 3000, "", "hello\n", "caf\u00e9\n" * 800):
+            with self.subTest(data_type=type(data), size=len(data)):
+                out = pythons(
+                    py.name,
+                    _in=ReadOnly(data),
+                    _encoding="utf-8",
+                    _timeout=2,
+                )
+                text = data.decode("utf-8") if isinstance(data, bytes) else data
+                self.assertEqual(out, text.upper())
+
     def test_manual_stdin_queue(self):
         py = create_stdin_transform_test()
         try:

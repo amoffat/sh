@@ -2899,18 +2899,13 @@ def get_file_chunk_reader(stdin):
     bufsize = 1024
 
     def fn():
-        # python 3.* includes a fileno on stringios, but accessing it throws an
-        # exception.  that exception is how we'll know we can't do a poll on
-        # stdin
-        is_real_file = True
-        try:
-            stdin.fileno()
-        except UnsupportedOperation:
-            is_real_file = False
+        # Read-only file-like objects may have no fileno, and in-memory
+        # streams raise UnsupportedOperation. Neither can be polled.
+        is_real_file = get_fileno(stdin) is not None
 
         # this poll is for files that may not yet be ready to read.  we test
         # for fileno because StringIO/BytesIO cannot be used in a poll
-        if is_real_file and hasattr(stdin, "fileno"):
+        if is_real_file:
             poller = Poller()
             poller.register_read(stdin)
             changed = poller.poll(0.1)
